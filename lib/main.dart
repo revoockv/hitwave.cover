@@ -8,6 +8,8 @@ import 'package:watch_it/watch_it.dart';
 import 'features/auth/domain/repositories/auth_repository.dart';
 import 'features/auth/presentation/di/auth_di.dart';
 import 'features/auth/presentation/pages/auth_page.dart';
+import 'features/song/domain/repositories/song_repository.dart';
+import 'features/song/presentation/di/song_di.dart';
 
 /// App-wide GetIt instance for dependency injection.
 final getIt = GetIt.instance;
@@ -16,6 +18,7 @@ final getIt = GetIt.instance;
 Future<void> registerAppDependencies() async {
   getIt.reset();
   await registerAuthFeature();
+  await registerSongFeature();
 }
 
 /// Runs all one-time initialization tasks at app startup.
@@ -25,6 +28,9 @@ Future<void> registerAppDependencies() async {
 Future<void> runAppInitiations() async {
   final authRepository = getIt<AuthRepository>();
   await authRepository.init();
+
+  final songRepository = getIt<SongRepository>();
+  await songRepository.init();
 }
 
 void main() async {
