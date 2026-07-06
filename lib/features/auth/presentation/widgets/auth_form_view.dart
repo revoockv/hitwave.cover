@@ -4,8 +4,8 @@ import 'package:watch_it/watch_it.dart';
 import 'package:get_it/get_it.dart';
 
 import '../../../../core/domain/result.dart';
-import '../../domain/usecases/sign_in.dart';
-import '../../domain/usecases/sign_up.dart';
+import '../../domain/usecases/sign_in_use_case.dart';
+import '../../domain/usecases/sign_up_use_case.dart';
 
 /// Displays the sign-in / sign-up form for unauthenticated users.
 ///
@@ -59,11 +59,11 @@ class _AuthFormViewState extends State<AuthFormView> {
     final getIt = GetIt.instance;
 
     final result = _isSignUp
-        ? await getIt<SignUp>()(
+        ? await getIt<SignUpUseCase>()(
             email: _emailController.text.trim(),
             password: _passwordController.text,
           )
-        : await getIt<SignIn>()(
+        : await getIt<SignInUseCase>()(
             email: _emailController.text.trim(),
             password: _passwordController.text,
           );

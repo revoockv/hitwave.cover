@@ -6,9 +6,9 @@ import '../../data/datasources/firebase_auth_service.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/repositories/auth_repository.dart';
-import '../../domain/usecases/sign_in.dart';
-import '../../domain/usecases/sign_out.dart';
-import '../../domain/usecases/sign_up.dart';
+import '../../domain/usecases/sign_in_use_case.dart';
+import '../../domain/usecases/sign_out_use_case.dart';
+import '../../domain/usecases/sign_up_use_case.dart';
 
 /// Registers all auth feature dependencies in GetIt.
 ///
@@ -43,7 +43,7 @@ Future<void> registerAuthFeature() async {
     instanceName: 'auth.session',
   );
 
-  getIt.registerSingleton<SignIn>(SignIn(repository));
-  getIt.registerSingleton<SignUp>(SignUp(repository));
-  getIt.registerSingleton<SignOut>(SignOut(repository));
+  getIt.registerSingleton<SignInUseCase>(SignInUseCase(repository));
+  getIt.registerSingleton<SignUpUseCase>(SignUpUseCase(repository));
+  getIt.registerSingleton<SignOutUseCase>(SignOutUseCase(repository));
 }

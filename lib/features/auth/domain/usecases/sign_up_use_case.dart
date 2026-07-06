@@ -6,11 +6,11 @@ import '../repositories/auth_repository.dart';
 ///
 /// Wraps the repository [signUp] method as a single-responsibility use case.
 /// Returns [Result<void>] indicating success or failure.
-final class SignUp {
+final class SignUpUseCase {
   final AuthRepository _repository;
 
-  /// Creates a new [SignUp] use case.
-  SignUp(this._repository);
+  /// Creates a new [SignUpUseCase] use case.
+  SignUpUseCase(this._repository);
 
   /// Registers a new user with the given [email] and [password].
   ///

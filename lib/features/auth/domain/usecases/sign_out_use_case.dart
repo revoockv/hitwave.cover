@@ -6,11 +6,11 @@ import '../repositories/auth_repository.dart';
 ///
 /// Wraps the repository [signOut] method as a single-responsibility use case.
 /// Returns [Result<void>] indicating success or failure.
-final class SignOut {
+final class SignOutUseCase {
   final AuthRepository _repository;
 
-  /// Creates a new [SignOut] use case.
-  SignOut(this._repository);
+  /// Creates a new [SignOutUseCase] use case.
+  SignOutUseCase(this._repository);
 
   /// Signs out the currently signed-in user.
   ///

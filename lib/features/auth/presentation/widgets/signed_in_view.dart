@@ -4,7 +4,7 @@ import 'package:get_it/get_it.dart';
 
 import '../../../../core/domain/result.dart';
 import '../../domain/entities/user.dart';
-import '../../domain/usecases/sign_out.dart';
+import '../../domain/usecases/sign_out_use_case.dart';
 
 /// Displays a welcome screen for authenticated users with a sign-out option.
 ///
@@ -19,7 +19,7 @@ class SignedInView extends StatelessWidget {
   Future<void> _handleSignOut(BuildContext context) async {
     final getIt = GetIt.instance;
 
-    final result = await getIt<SignOut>()();
+    final result = await getIt<SignOutUseCase>()();
 
     if (!context.mounted) return;
 
