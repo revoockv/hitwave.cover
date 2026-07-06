@@ -7,18 +7,22 @@ import 'edit_song_dialog.dart';
 /// Displays a single song with its name, author, and optional album.
 ///
 /// Shows an edit and delete button for CRUD operations.
+/// Tapping the tile navigates to the lyrics page.
 final class SongTile extends StatelessWidget {
   /// The [Song] to display.
   final Song song;
 
+  /// Callback when the tile is tapped.
+  final void Function(Song song) onTap;
+
   /// Creates a new [SongTile].
-  const SongTile({required this.song, super.key});
+  const SongTile({required this.song, required this.onTap, super.key});
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
       title: Text(song.name),
-      subtitle: Text(song.album ?? song.author),
+      subtitle: Text(song.author),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
@@ -32,6 +36,7 @@ final class SongTile extends StatelessWidget {
           ),
         ],
       ),
+      onTap: () => onTap(song),
     );
   }
 

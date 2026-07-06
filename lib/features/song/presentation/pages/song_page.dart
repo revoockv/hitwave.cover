@@ -5,6 +5,7 @@ import '../../domain/entities/song.dart';
 import '../../domain/use_cases/watch_list_of_songs_use_case.dart';
 import '../widgets/add_song_view.dart';
 import '../widgets/song_list_view.dart';
+import 'lyrics_page.dart';
 
 /// Main song management page.
 ///
@@ -28,7 +29,18 @@ final class SongPage extends WatchingWidget {
           ),
         ],
       ),
-      body: SongListView(songs: songs),
+      body: SongListView(
+        songs: songs,
+        onSongTap: (Song song) => _navigateToLyrics(context, song),
+      ),
+    );
+  }
+
+  void _navigateToLyrics(BuildContext context, Song song) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (BuildContext context) => LyricsPage(song: song),
+      ),
     );
   }
 

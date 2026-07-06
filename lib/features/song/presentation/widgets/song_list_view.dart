@@ -7,16 +7,17 @@ import 'song_tile.dart';
 ///
 /// Each song is rendered as a [SongTile] widget.
 final class SongListView extends StatelessWidget {
-  /// The [ValueNotifier] containing the list of songs.
+  /// The list of songs.
   final List<Song> songs;
 
+  /// Callback when a song tile is tapped.
+  final void Function(Song song) onSongTap;
+
   /// Creates a new [SongListView].
-  const SongListView({required this.songs, super.key});
+  const SongListView({required this.songs, required this.onSongTap, super.key});
 
   @override
   Widget build(BuildContext context) {
-
-
     if (songs.isEmpty) {
       return const Center(
         child: Text('Список пісень порожній'),
@@ -26,7 +27,7 @@ final class SongListView extends StatelessWidget {
     return ListView.builder(
       itemCount: songs.length,
       itemBuilder: (BuildContext context, int index) {
-        return SongTile(song: songs[index]);
+        return SongTile(song: songs[index], onTap: onSongTap);
       },
     );
   }
