@@ -19,7 +19,7 @@ class SignedInView extends StatelessWidget {
 
     if (!context.mounted) return;
 
-    if (result is FailureResult) {
+    if (result.isFailure) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Помилка виходу з системи.'),

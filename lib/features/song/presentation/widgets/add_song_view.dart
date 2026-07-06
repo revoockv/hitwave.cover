@@ -97,7 +97,7 @@ final class AddSongView extends WatchingWidget {
 
     isLoading.value = true;
 
-    final Result<void> result = await addSongUseCase(
+    final Result result = await addSongUseCase(
       author: author,
       name: name,
       album: album,
@@ -105,13 +105,12 @@ final class AddSongView extends WatchingWidget {
     );
 
     isLoading.value = false;
-
-    if (result is SuccessResult<void>) {
+    if (result.isSuccess) {
       Navigator.pop(context);
-    } else if (result is FailureResult<void>) {
+    } else {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result.message)),
+        SnackBar(content: Text(result.errorMessage!)),
       );
     }
   }

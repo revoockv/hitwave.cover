@@ -50,7 +50,7 @@ final class AuthRepositoryImpl implements AuthRepository {
       await _authService.signIn(email: email, password: password);
       return Result.success();
     } catch (e) {
-      return Result.failure(e as String);
+      return Result.failure(e.toString());
     }
   }
 
@@ -63,7 +63,7 @@ final class AuthRepositoryImpl implements AuthRepository {
       await _authService.signUp(email: email, password: password);
       return Result.success();
     } catch (e) {
-      return Result.failure(e as String);
+      return Result.failure(e.toString());
     }
   }
 
@@ -73,7 +73,7 @@ final class AuthRepositoryImpl implements AuthRepository {
       await _authService.signOut();
       return Result.success();
     } catch (e) {
-      return Result.failure(e as String);
+      return Result.failure(e.toString());
     }
   }
 }

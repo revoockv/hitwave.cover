@@ -58,12 +58,12 @@ final class DeleteSongDialog extends WatchingWidget {
 
     isLoading.value = false;
 
-    if (result is SuccessResult<void>) {
+    if (result.isSuccess) {
       Navigator.pop(context);
-    } else if (result is FailureResult<void>) {
+    } else {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result.message)),
+        SnackBar(content: Text(result.errorMessage!)),
       );
     }
   }

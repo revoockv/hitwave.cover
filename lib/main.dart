@@ -6,10 +6,13 @@ import 'package:get_it/get_it.dart';
 import 'package:watch_it/watch_it.dart';
 
 import 'features/auth/domain/repositories/auth_repository.dart';
+import 'features/auth/domain/use_cases/watch_current_session_use_case.dart';
 import 'features/auth/presentation/di/auth_di.dart';
+import 'features/auth/presentation/di/auth_getters.dart';
 import 'features/auth/presentation/pages/auth_page.dart';
 import 'features/song/domain/repositories/song_repository.dart';
 import 'features/song/presentation/di/song_di.dart';
+import 'features/song/presentation/pages/song_page.dart';
 
 /// App-wide GetIt instance for dependency injection.
 final getIt = GetIt.instance;
@@ -45,16 +48,19 @@ void main() async {
 
 /// The root application widget.
 ///
-/// Renders the auth page after Firebase and GetIt have been initialized.
-class HitwaveCoverApp extends StatelessWidget {
+/// Renders the auth page when not authenticated, or the song page when
+/// authenticated.
+class HitwaveCoverApp extends WatchingWidget {
   /// Creates a new [HitwaveCoverApp].
   const HitwaveCoverApp({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final user = watchValue((WatchCurrentSessionUseCase watchCurrentUser) => watchCurrentUser());
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: const AuthPage(),
+      home: user != null ? const SongPage() : const AuthPage(),
     );
   }
 }

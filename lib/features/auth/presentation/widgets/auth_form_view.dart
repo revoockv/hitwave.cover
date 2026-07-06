@@ -68,9 +68,9 @@ class _AuthFormViewState extends State<AuthFormView> {
       _isLoading = false;
     });
 
-    if (result is FailureResult) {
+    if (result.isFailure) {
       setState(() {
-        _errorMessage = result.message;
+        _errorMessage = result.errorMessage;
       });
       return;
     }

@@ -104,17 +104,15 @@ final class SongRepositoryImpl implements SongRepository {
         coverIds: const [],
       );
 
-      final Uint8List audioData = Uint8List.fromList(const <int>[]);
-
       await _songService.addSong(
         userId: userId,
         song: song,
-        audioData: audioData,
+        audioData: Uint8List.fromList(const <int>[]),
       );
 
       return Result.success();
     } catch (e) {
-      return Result.failure(e as String);
+      return Result.failure('Помилка при додаванні пісні: $e');
     }
   }
 
@@ -144,7 +142,7 @@ final class SongRepositoryImpl implements SongRepository {
       await _songService.updateSong(userId: userId, song: song);
       return Result.success();
     } catch (e) {
-      return Result.failure(e as String);
+      return Result.failure('Помилка при оновленні пісні: $e');
     }
   }
 
@@ -161,7 +159,7 @@ final class SongRepositoryImpl implements SongRepository {
       await _songService.deleteSong(userId: userId, songId: songId);
       return Result.success();
     } catch (e) {
-      return Result.failure(e as String);
+      return Result.failure('Помилка при видаленні пісні: $e');
     }
   }
 
@@ -195,7 +193,7 @@ final class SongRepositoryImpl implements SongRepository {
 
       return Result.success();
     } catch (e) {
-      return Result.failure(e as String);
+      return Result.failure('Помилка: $e');
     }
   }
 
@@ -230,7 +228,7 @@ final class SongRepositoryImpl implements SongRepository {
 
       return Result.success();
     } catch (e) {
-      return Result.failure(e as String);
+      return Result.failure('Помилка: $e');
     }
   }
 
@@ -253,7 +251,7 @@ final class SongRepositoryImpl implements SongRepository {
 
       return Result.success();
     } catch (e) {
-      return Result.failure(e as String);
+      return Result.failure('Помилка: $e');
     }
   }
 }
