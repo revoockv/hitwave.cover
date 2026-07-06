@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:watch_it/watch_it.dart';
-
-import 'package:get_it/get_it.dart';
 
 import '../../../../core/domain/result.dart';
-import '../../domain/usecases/sign_in_use_case.dart';
-import '../../domain/usecases/sign_up_use_case.dart';
+import '../di/auth_getters.dart';
 
 /// Displays the sign-in / sign-up form for unauthenticated users.
 ///
@@ -56,14 +52,12 @@ class _AuthFormViewState extends State<AuthFormView> {
       _errorMessage = null;
     });
 
-    final getIt = GetIt.instance;
-
     final result = _isSignUp
-        ? await getIt<SignUpUseCase>()(
+        ? await signUpUseCase(
             email: _emailController.text.trim(),
             password: _passwordController.text,
           )
-        : await getIt<SignInUseCase>()(
+        : await signInUseCase(
             email: _emailController.text.trim(),
             password: _passwordController.text,
           );

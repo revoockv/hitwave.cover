@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart' show ValueNotifier;
 
 import '../../domain/entities/user.dart';
 import '../../domain/repositories/auth_repository.dart';

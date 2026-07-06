@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:hitwave.cover/features/auth/domain/use_cases/watch_current_session_use_case.dart';
 import 'package:watch_it/watch_it.dart';
 
-import '../../domain/repositories/auth_repository.dart';
 import '../widgets/auth_form_view.dart';
 import '../widgets/signed_in_view.dart';
+import '../di/auth_getters.dart';
 
 /// Main authentication page that handles sign-in, sign-up, and sign-out.
 ///
@@ -15,8 +16,7 @@ class AuthPage extends WatchingWidget {
 
   @override
   Widget build(BuildContext context) {
-    final session = watchValue((AuthRepository r) => r.session);
-    final user = session;
+    final user = watchValue((WatchCurrentSessionUseCase watchCurrentUser) => watchCurrentUser());
 
     if (user != null) {
       return SignedInView(user: user);

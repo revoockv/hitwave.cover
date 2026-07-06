@@ -1,14 +1,15 @@
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart' show ValueNotifier;
 import 'package:get_it/get_it.dart';
 
 import '../../data/datasources/firebase_auth_service.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/repositories/auth_repository.dart';
-import '../../domain/usecases/sign_in_use_case.dart';
-import '../../domain/usecases/sign_out_use_case.dart';
-import '../../domain/usecases/sign_up_use_case.dart';
+import '../../domain/use_cases/sign_in_use_case.dart';
+import '../../domain/use_cases/sign_out_use_case.dart';
+import '../../domain/use_cases/sign_up_use_case.dart';
+import '../../domain/use_cases/watch_current_session_use_case.dart';
 
 /// Registers all auth feature dependencies in GetIt.
 ///
@@ -46,4 +47,7 @@ Future<void> registerAuthFeature() async {
   getIt.registerSingleton<SignInUseCase>(SignInUseCase(repository));
   getIt.registerSingleton<SignUpUseCase>(SignUpUseCase(repository));
   getIt.registerSingleton<SignOutUseCase>(SignOutUseCase(repository));
+  getIt.registerSingleton<WatchCurrentSessionUseCase>(
+    WatchCurrentSessionUseCase(repository),
+  );
 }
