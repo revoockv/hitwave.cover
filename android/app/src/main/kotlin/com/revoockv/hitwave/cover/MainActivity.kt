@@ -1,4 +1,4 @@
-package com.example.hitwave.cover
+package com.revoockv.hitwave.cover
 
 import io.flutter.embedding.android.FlutterActivity
 
