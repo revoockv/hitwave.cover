@@ -1,26 +1,19 @@
-import 'dart:typed_data';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 
 import '../models/cover_model.dart';
 import '../models/song_model.dart';
 
-
 /// Firebase backend implementation of the song management service.
 ///
-/// Wraps the Firebase Firestore and Storage SDKs and provides CRUD operations
-/// for songs and covers, organized by the current user's ID.
+/// Wraps the Firebase Firestore SDK and provides CRUD operations for songs
+/// and covers, organized by the current user's ID.
 final class FirebaseSongService {
   final FirebaseFirestore _firestore;
-  final firebase_storage.FirebaseStorage _storage;
 
   /// Creates a new [FirebaseSongService].
   FirebaseSongService({
     required FirebaseFirestore firestore,
-    required firebase_storage.FirebaseStorage storage,
-  })  : _firestore = firestore,
-        _storage = storage;
+  }) : _firestore = firestore;
 
   /// Returns the Firestore reference for the user's songs collection.
   CollectionReference<Map<String, dynamic>> _songsCollection(String userId) {
@@ -35,24 +28,13 @@ final class FirebaseSongService {
     return _songsCollection(userId).doc(songId).collection('covers');
   }
 
-  /// Returns the Storage reference for a song's audio files.
-  firebase_storage.Reference _songAudioRef(String userId, String songId) {
-    return _storage.ref().child('users/$userId/songs/$songId');
-  }
-
-  /// Returns the Storage reference for a cover's audio file.
-  firebase_storage.Reference _coverAudioRef(String userId, String songId, String coverId) {
-    return _storage.ref().child('users/$userId/songs/$songId/covers/$coverId');
-  }
-
-  /// Adds a new song document to Firestore and uploads the audio to Storage.
+  /// Adds a new song document to Firestore.
   ///
   /// Returns the document ID of the newly created song.
   /// Throws a [String] error message when the operation fails.
   Future<String> addSong({
     required String userId,
     required SongModel song,
-    required Uint8List audioData,
   }) async {
     try {
       final docRef = _songsCollection(userId).doc();
@@ -67,8 +49,6 @@ final class FirebaseSongService {
       };
 
       await docRef.set(songData);
-
-      await _songAudioRef(userId, docRef.id).putData(audioData);
 
       return docRef.id;
     } catch (e) {
@@ -99,7 +79,7 @@ final class FirebaseSongService {
     }
   }
 
-  /// Deletes a song document from Firestore and all its covers from Storage.
+  /// Deletes a song document from Firestore and all its covers.
   ///
   /// Throws a [String] error message when the operation fails.
   Future<void> deleteSong({
@@ -111,7 +91,7 @@ final class FirebaseSongService {
       final coversSnapshot = await _coversCollection(userId, songId).get();
 
       for (final coverDoc in coversSnapshot.docs) {
-        await _coverAudioRef(userId, songId, coverDoc.id).delete();
+        await coverDoc.reference.delete();
       }
 
       await songDocRef.delete();
@@ -143,7 +123,7 @@ final class FirebaseSongService {
         });
   }
 
-  /// Adds a new cover document to Firestore and uploads the audio to Storage.
+  /// Adds a new cover document to Firestore.
   ///
   /// Returns the document ID of the newly created cover.
   /// Throws a [String] error message when the operation fails.
@@ -151,7 +131,6 @@ final class FirebaseSongService {
     required String userId,
     required String songId,
     required CoverModel cover,
-    required Uint8List audioData,
   }) async {
     try {
       final docRef = _coversCollection(userId, songId).doc();
@@ -162,8 +141,6 @@ final class FirebaseSongService {
       };
 
       await docRef.set(coverData);
-
-      await _coverAudioRef(userId, songId, docRef.id).putData(audioData);
 
       await _songsCollection(userId).doc(songId).update({
         'coverIds': FieldValue.arrayUnion([docRef.id]),
@@ -182,7 +159,6 @@ final class FirebaseSongService {
     required String userId,
     required String songId,
     required CoverModel cover,
-    required Uint8List audioData,
   }) async {
     try {
       final docRef = _coversCollection(userId, songId).doc(cover.id);
@@ -192,14 +168,12 @@ final class FirebaseSongService {
       };
 
       await docRef.update(coverData);
-
-      await _coverAudioRef(userId, songId, cover.id).putData(audioData);
     } catch (e) {
       throw 'Помилка при оновленні обкладинки: $e';
     }
   }
 
-  /// Deletes a cover document from Firestore and its audio from Storage.
+  /// Deletes a cover document from Firestore.
   ///
   /// Also removes the cover ID from the parent song's coverIds array.
   /// Throws a [String] error message when the operation fails.
@@ -209,8 +183,6 @@ final class FirebaseSongService {
     required String coverId,
   }) async {
     try {
-      await _coverAudioRef(userId, songId, coverId).delete();
-
       final coversRef = _coversCollection(userId, songId).doc(coverId);
       await coversRef.delete();
 

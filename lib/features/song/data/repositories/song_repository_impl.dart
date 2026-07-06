@@ -1,8 +1,6 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
-import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:flutter/foundation.dart' show ValueNotifier;
 import 'package:logger/logger.dart';
 
@@ -21,7 +19,6 @@ import '../models/song_model.dart';
 final class SongRepositoryImpl implements SongRepository {
   final FirebaseSongService _songService;
   final firebase_auth.FirebaseAuth _auth;
-  final firebase_storage.FirebaseStorage _storage;
   final Logger _logger;
 
   /// Exposes the current song list as a [ValueNotifier].
@@ -38,11 +35,9 @@ final class SongRepositoryImpl implements SongRepository {
   SongRepositoryImpl({
     required FirebaseSongService songService,
     required firebase_auth.FirebaseAuth auth,
-    required firebase_storage.FirebaseStorage storage,
     required Logger logger,
   })  : _songService = songService,
         _auth = auth,
-        _storage = storage,
         _logger = logger;
 
   @override
@@ -118,7 +113,6 @@ final class SongRepositoryImpl implements SongRepository {
       await _songService.addSong(
         userId: userId,
         song: song,
-        audioData: Uint8List.fromList(const <int>[]),
       );
 
       _logger.i('AddSong: success — song "$name" by "$author" added');
@@ -208,13 +202,10 @@ final class SongRepositoryImpl implements SongRepository {
         notes: notes,
       );
 
-      final Uint8List audioData = Uint8List.fromList(audioBytes);
-
       await _songService.addCover(
         userId: userId,
         songId: songId,
         cover: cover,
-        audioData: audioData,
       );
 
       _logger.i('AddCover: success — cover added to song "$songId"');
@@ -248,13 +239,10 @@ final class SongRepositoryImpl implements SongRepository {
         notes: notes,
       );
 
-      final Uint8List audioData = Uint8List.fromList(audioBytes);
-
       await _songService.updateCover(
         userId: userId,
         songId: songId,
         cover: cover,
-        audioData: audioData,
       );
 
       _logger.i('UpdateCover: success — cover "$coverId" updated on song "$songId"');
