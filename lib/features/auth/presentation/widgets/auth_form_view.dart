@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/domain/result.dart';
 import '../di/auth_getters.dart';
 
 /// Displays the sign-in / sign-up form for unauthenticated users.

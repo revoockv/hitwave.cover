@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/domain/result.dart';
 import '../../domain/entities/user.dart';
 import '../di/auth_getters.dart';
 

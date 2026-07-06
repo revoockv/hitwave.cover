@@ -3,10 +3,10 @@ import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart' show ValueNotifier;
 import 'package:get_it/get_it.dart';
+import 'package:logger/logger.dart';
 
 import '../../data/datasources/firebase_song_service.dart';
 import '../../data/repositories/song_repository_impl.dart';
-import '../../domain/entities/cover.dart';
 import '../../domain/entities/song.dart';
 import '../../domain/repositories/song_repository.dart';
 import '../../domain/use_cases/add_cover_use_case.dart';
@@ -36,6 +36,7 @@ Future<void> registerSongFeature() async {
     songService: getIt<FirebaseSongService>(),
     auth: firebase_auth.FirebaseAuth.instance,
     storage: FirebaseStorage.instance,
+    logger: getIt.get(),
   );
 
   getIt.registerSingleton<SongRepository>(

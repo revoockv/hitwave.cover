@@ -5,10 +5,10 @@ import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
 import 'package:watch_it/watch_it.dart';
 
+import 'core/presentation/di/core_di.dart';
 import 'features/auth/domain/repositories/auth_repository.dart';
 import 'features/auth/domain/use_cases/watch_current_session_use_case.dart';
 import 'features/auth/presentation/di/auth_di.dart';
-import 'features/auth/presentation/di/auth_getters.dart';
 import 'features/auth/presentation/pages/auth_page.dart';
 import 'features/song/domain/repositories/song_repository.dart';
 import 'features/song/presentation/di/song_di.dart';
@@ -18,10 +18,17 @@ import 'features/song/presentation/pages/song_page.dart';
 final getIt = GetIt.instance;
 
 /// Registers all application dependencies before running the app.
+///
+/// Registers core dependencies (Logger) first, then all feature dependencies.
 Future<void> registerAppDependencies() async {
-  getIt.reset();
+  await getIt.reset(); // Await the reset just in case
+
+  await registerCoreDI();
   await registerAuthFeature();
   await registerSongFeature();
+
+  // Force GetIt to ensure all singletons are completely instantiated
+  await getIt.allReady();
 }
 
 /// Runs all one-time initialization tasks at app startup.

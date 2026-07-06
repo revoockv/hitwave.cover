@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart' show ValueNotifier;
+import 'package:logger/logger.dart';
 
 import '../../domain/entities/user.dart';
 import '../../domain/repositories/auth_repository.dart';
@@ -12,6 +13,7 @@ import '../models/user_model.dart';
 /// as a [ValueNotifier<User?]` for reactive UI updates.
 final class AuthRepositoryImpl implements AuthRepository {
   final FirebaseAuthService _authService;
+  final Logger _logger;
 
   /// Exposes the current authentication session as a [ValueNotifier].
   ///
@@ -22,11 +24,12 @@ final class AuthRepositoryImpl implements AuthRepository {
   ValueNotifier<User?> get session => _session;
 
   /// Creates a new [AuthRepositoryImpl].
-  AuthRepositoryImpl(this._authService);
+  AuthRepositoryImpl(this._authService, this._logger);
 
   @override
   Future<void> init() async {
     await FirebaseAuthService.init();
+    _logger.i('Auth repository init: subscribed to auth state changes');
     _authService.userChanges().listen((firebaseUser) {
       if (firebaseUser != null) {
         _session.value = UserModel(
@@ -47,9 +50,12 @@ final class AuthRepositoryImpl implements AuthRepository {
     required String password,
   }) async {
     try {
+      _logger.i('SignIn: starting for email="$email"');
       await _authService.signIn(email: email, password: password);
+      _logger.i('SignIn: success — user "$email" signed in');
       return Result.success();
     } catch (e) {
+      _logger.e('SignIn: failure — $e');
       return Result.failure(e.toString());
     }
   }
@@ -60,9 +66,12 @@ final class AuthRepositoryImpl implements AuthRepository {
     required String password,
   }) async {
     try {
+      _logger.i('SignUp: starting for email="$email"');
       await _authService.signUp(email: email, password: password);
+      _logger.i('SignUp: success — user "$email" registered');
       return Result.success();
     } catch (e) {
+      _logger.e('SignUp: failure — $e');
       return Result.failure(e.toString());
     }
   }
@@ -70,9 +79,12 @@ final class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Result<void>> signOut() async {
     try {
+      _logger.i('SignOut: starting');
       await _authService.signOut();
+      _logger.i('SignOut: success — user signed out');
       return Result.success();
     } catch (e) {
+      _logger.e('SignOut: failure — $e');
       return Result.failure(e.toString());
     }
   }

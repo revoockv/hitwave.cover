@@ -3,7 +3,6 @@ import 'package:watch_it/watch_it.dart';
 
 import '../../domain/entities/song.dart';
 import '../../domain/use_cases/watch_list_of_songs_use_case.dart';
-import '../di/song_getters.dart';
 import '../widgets/add_song_view.dart';
 import '../widgets/song_list_view.dart';
 

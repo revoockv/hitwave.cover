@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:flutter/foundation.dart' show ValueNotifier;
+import 'package:logger/logger.dart';
 
 import '../../../../core/domain/result.dart';
 import '../../domain/entities/cover.dart';
@@ -21,6 +22,7 @@ final class SongRepositoryImpl implements SongRepository {
   final FirebaseSongService _songService;
   final firebase_auth.FirebaseAuth _auth;
   final firebase_storage.FirebaseStorage _storage;
+  final Logger _logger;
 
   /// Exposes the current song list as a [ValueNotifier].
   ///
@@ -37,22 +39,28 @@ final class SongRepositoryImpl implements SongRepository {
     required FirebaseSongService songService,
     required firebase_auth.FirebaseAuth auth,
     required firebase_storage.FirebaseStorage storage,
+    required Logger logger,
   })  : _songService = songService,
         _auth = auth,
-        _storage = storage;
+        _storage = storage,
+        _logger = logger;
 
   @override
   Future<void> init() async {
     _currentUserId = _auth.currentUser?.uid;
     if (_currentUserId == null) {
+      _logger.i('Song repository init: no authenticated user, skipping subscription');
       return;
     }
+
+    _logger.i('Song repository init: subscribed to songs for user $_currentUserId');
 
     _songService.watchSongs(_currentUserId!).listen(
       (List<SongModel> models) {
         _processModels(models);
       },
       onError: (Object e) {
+        _logger.e('Song repository watchSongs stream error: $e');
         _songs.value = const [];
       },
     );
@@ -90,8 +98,11 @@ final class SongRepositoryImpl implements SongRepository {
     required String lyrics,
   }) async {
     try {
+      _logger.i('AddSong: starting for author="$author", name="$name"');
+
       final userId = _currentUserId;
       if (userId == null) {
+        _logger.w('AddSong: failed — користувач не авторизований');
         return Result.failure('Користувач не авторизований.');
       }
 
@@ -110,8 +121,10 @@ final class SongRepositoryImpl implements SongRepository {
         audioData: Uint8List.fromList(const <int>[]),
       );
 
+      _logger.i('AddSong: success — song "$name" by "$author" added');
       return Result.success();
     } catch (e) {
+      _logger.e('AddSong: failure — $e');
       return Result.failure('Помилка при додаванні пісні: $e');
     }
   }
@@ -125,8 +138,11 @@ final class SongRepositoryImpl implements SongRepository {
     required String lyrics,
   }) async {
     try {
+      _logger.i('UpdateSong: starting for songId="$songId", name="$name"');
+
       final userId = _currentUserId;
       if (userId == null) {
+        _logger.w('UpdateSong: failed — користувач не авторизований');
         return Result.failure('Користувач не авторизований.');
       }
 
@@ -140,8 +156,10 @@ final class SongRepositoryImpl implements SongRepository {
       );
 
       await _songService.updateSong(userId: userId, song: song);
+      _logger.i('UpdateSong: success — song "$name" updated');
       return Result.success();
     } catch (e) {
+      _logger.e('UpdateSong: failure — $e');
       return Result.failure('Помилка при оновленні пісні: $e');
     }
   }
@@ -151,14 +169,19 @@ final class SongRepositoryImpl implements SongRepository {
     required String songId,
   }) async {
     try {
+      _logger.i('DeleteSong: starting for songId="$songId"');
+
       final userId = _currentUserId;
       if (userId == null) {
+        _logger.w('DeleteSong: failed — користувач не авторизований');
         return Result.failure('Користувач не авторизований.');
       }
 
       await _songService.deleteSong(userId: userId, songId: songId);
+      _logger.i('DeleteSong: success — song "$songId" deleted');
       return Result.success();
     } catch (e) {
+      _logger.e('DeleteSong: failure — $e');
       return Result.failure('Помилка при видаленні пісні: $e');
     }
   }
@@ -170,8 +193,11 @@ final class SongRepositoryImpl implements SongRepository {
     String? notes,
   }) async {
     try {
+      _logger.i('AddCover: starting for songId="$songId", size=${audioBytes.length} bytes');
+
       final userId = _currentUserId;
       if (userId == null) {
+        _logger.w('AddCover: failed — користувач не авторизований');
         return Result.failure('Користувач не авторизований.');
       }
 
@@ -191,8 +217,10 @@ final class SongRepositoryImpl implements SongRepository {
         audioData: audioData,
       );
 
+      _logger.i('AddCover: success — cover added to song "$songId"');
       return Result.success();
     } catch (e) {
+      _logger.e('AddCover: failure — $e');
       return Result.failure('Помилка: $e');
     }
   }
@@ -205,8 +233,11 @@ final class SongRepositoryImpl implements SongRepository {
     String? notes,
   }) async {
     try {
+      _logger.i('UpdateCover: starting for songId="$songId", coverId="$coverId", size=${audioBytes.length} bytes');
+
       final userId = _currentUserId;
       if (userId == null) {
+        _logger.w('UpdateCover: failed — користувач не авторизований');
         return Result.failure('Користувач не авторизований.');
       }
 
@@ -226,8 +257,10 @@ final class SongRepositoryImpl implements SongRepository {
         audioData: audioData,
       );
 
+      _logger.i('UpdateCover: success — cover "$coverId" updated on song "$songId"');
       return Result.success();
     } catch (e) {
+      _logger.e('UpdateCover: failure — $e');
       return Result.failure('Помилка: $e');
     }
   }
@@ -238,8 +271,11 @@ final class SongRepositoryImpl implements SongRepository {
     required String coverId,
   }) async {
     try {
+      _logger.i('DeleteCover: starting for songId="$songId", coverId="$coverId"');
+
       final userId = _currentUserId;
       if (userId == null) {
+        _logger.w('DeleteCover: failed — користувач не авторизований');
         return Result.failure('Користувач не авторизований.');
       }
 
@@ -249,8 +285,10 @@ final class SongRepositoryImpl implements SongRepository {
         coverId: coverId,
       );
 
+      _logger.i('DeleteCover: success — cover "$coverId" deleted from song "$songId"');
       return Result.success();
     } catch (e) {
+      _logger.e('DeleteCover: failure — $e');
       return Result.failure('Помилка: $e');
     }
   }
