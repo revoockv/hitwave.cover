@@ -97,7 +97,7 @@ final class AddSongView extends WatchingWidget {
 
     isLoading.value = true;
 
-    final Result<void> result = await addSongUseCase.call(
+    final Result<void> result = await addSongUseCase(
       author: author,
       name: name,
       album: album,

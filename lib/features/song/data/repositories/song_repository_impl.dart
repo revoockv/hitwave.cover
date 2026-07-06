@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:typed_data';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:flutter/foundation.dart' show ValueNotifier;
@@ -59,25 +58,26 @@ final class SongRepositoryImpl implements SongRepository {
     );
   }
 
-  void _processModels(List<SongModel> models) {
-    final List<Song> songs = [];
+  void _processModels(List<SongModel> models) async {
+    final String userId = _currentUserId!;
 
-    for (final model in models) {
-      final List<Cover> covers = [];
+    final List<Song> songs = await Future.wait(
+      models.map(
+        (SongModel model) async {
+          final List<Cover> covers = model.coverIds.isEmpty
+              ? const []
+              : await _songService.getCovers(userId, model.id).then(
+                  (List<CoverModel> coverModels) {
+                    return coverModels.map((CoverModel coverModel) {
+                      return coverModel.toEntity();
+                    }).toList();
+                  },
+                );
 
-      if (model.coverIds.isNotEmpty) {
-        _songService.watchCovers(_currentUserId!, model.id).listen(
-          (List<CoverModel> coverModels) {
-            for (final coverModel in coverModels) {
-              covers.add(coverModel.toEntity());
-            }
-          },
-          onError: (_) {},
-        );
-      }
-
-      songs.add(model.toEntity(covers: covers));
-    }
+          return model.toEntity(covers: covers);
+        },
+      ),
+    );
 
     _songs.value = songs;
   }
@@ -104,7 +104,7 @@ final class SongRepositoryImpl implements SongRepository {
         coverIds: const [],
       );
 
-      final Uint8List audioData = const <int>[];
+      final Uint8List audioData = Uint8List.fromList(const <int>[]);
 
       await _songService.addSong(
         userId: userId,

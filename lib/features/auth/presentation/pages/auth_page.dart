@@ -4,7 +4,6 @@ import 'package:watch_it/watch_it.dart';
 
 import '../widgets/auth_form_view.dart';
 import '../widgets/signed_in_view.dart';
-import '../di/auth_getters.dart';
 
 /// Main authentication page that handles sign-in, sign-up, and sign-out.
 ///

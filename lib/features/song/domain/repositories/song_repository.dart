@@ -6,8 +6,7 @@ import '../entities/song.dart';
 
 /// Defines the contract for song management operations.
 ///
-/// Implementations handle the actual song and cover CRUD operations,
-/// typically delegating to Firebase Firestore and Storage.
+/// Implementations handle the actual song and cover CRUD operations.
 abstract interface class SongRepository {
   /// Returns a [ValueNotifier] containing the current list of songs.
   ///
@@ -82,6 +81,6 @@ abstract interface class SongRepository {
   /// Initializes the repository and starts listening for song changes.
   ///
   /// Must be called once at app startup via [runAppInitiations].
-  /// Subscribes to Firestore changes and updates the [songs] ValueNotifier.
+  /// Subscribes to underlying data source changes and updates the [songs] ValueNotifier.
   Future<void> init();
 }

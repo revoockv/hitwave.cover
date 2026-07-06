@@ -8,25 +8,25 @@ import 'song_tile.dart';
 /// Each song is rendered as a [SongTile] widget.
 final class SongListView extends StatelessWidget {
   /// The [ValueNotifier] containing the list of songs.
-  final ValueNotifier<List<Song>> songs;
+  final List<Song> songs;
 
   /// Creates a new [SongListView].
   const SongListView({required this.songs, super.key});
 
   @override
   Widget build(BuildContext context) {
-    final List<Song> songList = songs.value;
 
-    if (songList.isEmpty) {
+
+    if (songs.isEmpty) {
       return const Center(
         child: Text('Список пісень порожній'),
       );
     }
 
     return ListView.builder(
-      itemCount: songList.length,
+      itemCount: songs.length,
       itemBuilder: (BuildContext context, int index) {
-        return SongTile(song: songList[index]);
+        return SongTile(song: songs[index]);
       },
     );
   }

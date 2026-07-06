@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:watch_it/watch_it.dart';
 
+import '../../domain/entities/song.dart';
+import '../../domain/use_cases/watch_list_of_songs_use_case.dart';
 import '../di/song_getters.dart';
-import '../domain/repositories/song_repository.dart';
-import 'widgets/song_list_view.dart';
-import 'widgets/add_song_view.dart';
+import '../widgets/add_song_view.dart';
+import '../widgets/song_list_view.dart';
 
 /// Main song management page.
 ///
@@ -16,7 +17,7 @@ final class SongPage extends WatchingWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ValueNotifier<List<Song>> songs = watchValue((SongRepository r) => r.songs);
+    final List<Song> songs = watchValue((WatchListOfSongsUseCase watchListOfSongs) => watchListOfSongs());
 
     return Scaffold(
       appBar: AppBar(

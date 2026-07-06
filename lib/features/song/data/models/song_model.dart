@@ -53,7 +53,7 @@ final class SongModel {
       name: entity.name,
       album: entity.album,
       lyrics: entity.lyrics,
-      coverIds: entity.covers.map((cover) => cover.id).toList(),
+      coverIds:(entity.covers.isNotEmpty)?entity.covers.map((cover) => cover.id).toList():[],
     );
   }
 }

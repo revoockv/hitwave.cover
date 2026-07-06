@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:hitwave.cover/features/song/domain/entities/song.dart';
 
+import 'delete_song_dialog.dart';
+import 'edit_song_dialog.dart';
+
 /// Displays a single song with its name, author, and optional album.
 ///
 /// Shows an edit and delete button for CRUD operations.
@@ -35,14 +38,14 @@ final class SongTile extends StatelessWidget {
   void _showEditDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (BuildContext dialogContext) => _EditSongDialog(song: song),
+      builder: (BuildContext dialogContext) => EditSongDialog(song: song),
     );
   }
 
   void _showDeleteConfirmation(BuildContext context) {
     showDialog(
       context: context,
-      builder: (BuildContext dialogContext) => _DeleteSongDialog(song: song),
+      builder: (BuildContext dialogContext) => DeleteSongDialog(song: song),
     );
   }
 }

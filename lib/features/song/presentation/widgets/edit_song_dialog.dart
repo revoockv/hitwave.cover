@@ -10,12 +10,12 @@ import 'package:hitwave.cover/features/song/domain/entities/song.dart';
 ///
 /// Contains fields for author, name, optional album, and lyrics,
 /// pre-populated with the current song data.
-final class _EditSongDialog extends WatchingWidget {
+final class EditSongDialog extends WatchingWidget {
   /// The [Song] to edit.
   final Song song;
 
-  /// Creates a new [_EditSongDialog].
-  const _EditSongDialog({required this.song});
+  /// Creates a new [EditSongDialog].
+  const EditSongDialog({required this.song});
 
   static const double _padding = 16;
 
@@ -104,7 +104,7 @@ final class _EditSongDialog extends WatchingWidget {
 
     isLoading.value = true;
 
-    final Result<void> result = await updateSongUseCase.call(
+    final Result<void> result = await updateSongUseCase(
       songId: songId,
       author: author,
       name: name,

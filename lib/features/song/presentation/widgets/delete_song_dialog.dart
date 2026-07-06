@@ -9,12 +9,12 @@ import 'package:hitwave.cover/features/song/domain/entities/song.dart';
 /// A confirmation dialog for deleting a song.
 ///
 /// Shows the song name and asks for confirmation before deleting.
-final class _DeleteSongDialog extends WatchingWidget {
+final class DeleteSongDialog extends WatchingWidget {
   /// The [Song] to delete.
   final Song song;
 
-  /// Creates a new [_DeleteSongDialog].
-  const _DeleteSongDialog({required this.song});
+  /// Creates a new [DeleteSongDialog].
+  const DeleteSongDialog({required this.song});
 
   @override
   Widget build(BuildContext context) {
@@ -54,7 +54,7 @@ final class _DeleteSongDialog extends WatchingWidget {
   ) async {
     isLoading.value = true;
 
-    final Result<void> result = await deleteSongUseCase.call(songId: songId);
+    final Result<void> result = await deleteSongUseCase(songId: songId);
 
     isLoading.value = false;
 

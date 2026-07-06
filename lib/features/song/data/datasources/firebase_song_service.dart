@@ -3,8 +3,9 @@ import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 
-import 'song_model.dart';
-import 'cover_model.dart';
+import '../models/cover_model.dart';
+import '../models/song_model.dart';
+
 
 /// Firebase backend implementation of the song management service.
 ///
@@ -36,12 +37,12 @@ final class FirebaseSongService {
 
   /// Returns the Storage reference for a song's audio files.
   firebase_storage.Reference _songAudioRef(String userId, String songId) {
-    return _storage.ref().child('users').doc(userId).child('songs').child(songId);
+    return _storage.ref().child('users/$userId/songs/$songId');
   }
 
   /// Returns the Storage reference for a cover's audio file.
   firebase_storage.Reference _coverAudioRef(String userId, String songId, String coverId) {
-    return _storage.ref().child('users').doc(userId).child('songs').child(songId).child('covers').child(coverId);
+    return _storage.ref().child('users/$userId/songs/$songId/covers/$coverId');
   }
 
   /// Adds a new song document to Firestore and uploads the audio to Storage.
@@ -240,5 +241,24 @@ final class FirebaseSongService {
             );
           }).toList();
         });
+  }
+
+  /// Fetches all covers for a specific song as a [Future].
+  ///
+  /// Returns a list of [CoverModel] sorted by date.
+  Future<List<CoverModel>> getCovers(String userId, String songId) async {
+    final snapshot = await _coversCollection(userId, songId)
+        .orderBy('timestamp', descending: true)
+        .get();
+
+    return snapshot.docs.map((doc) {
+      final data = doc.data();
+      return CoverModel(
+        id: doc.id,
+        timestamp: (data['timestamp'] as Timestamp?)?.millisecondsSinceEpoch ?? 0,
+        audioBytes: const <int>[],
+        notes: data['notes'] as String?,
+      );
+    }).toList();
   }
 }
