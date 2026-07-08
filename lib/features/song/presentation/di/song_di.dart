@@ -52,3 +52,12 @@ Future<void> registerSongFeature() async {
   getIt.registerSingleton<UpdateCoverUseCase>(UpdateCoverUseCase(repository));
   getIt.registerSingleton<DeleteCoverUseCase>(DeleteCoverUseCase(repository));
 }
+
+/// Initializes the song feature after registration.
+///
+/// Starts the repository's subscription to Firestore, which feeds the
+/// songs [ValueNotifier].
+Future<void> initSongFeature() async {
+  final repository = GetIt.instance<SongRepository>();
+  await repository.init();
+}

@@ -1,7 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 
-import '../../../../firebase_options.dart';
+import 'firebase_options.dart';
 
 /// Firebase backend implementation of the authentication service.
 ///

@@ -52,3 +52,12 @@ Future<void> registerAuthFeature() async {
     WatchCurrentSessionUseCase(repository),
   );
 }
+
+/// Initializes the auth feature after registration.
+///
+/// Starts the repository's subscription to Firebase auth state changes,
+/// which feeds the session [ValueNotifier].
+Future<void> initAuthFeature() async {
+  final repository = GetIt.instance<AuthRepository>();
+  await repository.init();
+}

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../widgets/auth_form_view.dart';
+import '../widgets/auth_form_widget.dart';
 
 /// Main authentication page shown when the user is not signed in.
 class AuthPage extends StatelessWidget {
@@ -9,6 +9,6 @@ class AuthPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const AuthFormView();
+    return const AuthFormWidget();
   }
 }
