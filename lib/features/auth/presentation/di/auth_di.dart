@@ -2,7 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:flutter/foundation.dart' show ValueNotifier;
 import 'package:get_it/get_it.dart';
 
-import '../../data/datasources/firebase_auth_service.dart';
+import '../../data/data_sources/firebase_auth_service.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/repositories/auth_repository.dart';

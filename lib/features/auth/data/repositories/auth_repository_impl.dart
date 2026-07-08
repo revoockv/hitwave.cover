@@ -4,7 +4,7 @@ import 'package:logger/logger.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../../../core/domain/result.dart';
-import '../datasources/firebase_auth_service.dart';
+import '../data_sources/firebase_auth_service.dart';
 import '../models/user_model.dart';
 
 /// Firebase-based implementation of [AuthRepository].

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 /// Controller for the authentication form.
 ///
 /// Manages all form state (email, password, loading, error, mode) with ValueNotifiers.
-/// Used by [AuthFormWidget] to replace setState with reactive state management.
+/// Used by [AuthForm] to replace setState with reactive state management.
 final class AuthFormController {
   /// Controller for the email text field.
   late final TextEditingController emailController = TextEditingController();
@@ -27,6 +27,9 @@ final class AuthFormController {
   late final ValueNotifier<String?> errorMessage = ValueNotifier(null);
 
   /// Resets all form state to initial values.
+  ///
+  /// Clears email and password fields, resets loading/error flags,
+  /// and sets the form back to sign-in mode.
   void reset() {
     emailController.clear();
     passwordController.clear();
@@ -36,6 +39,8 @@ final class AuthFormController {
   }
 
   /// Disposes all controllers and notifiers.
+  ///
+  /// Must be called when the owning widget is disposed to prevent memory leaks.
   void dispose() {
     emailController.dispose();
     passwordController.dispose();

@@ -7,14 +7,32 @@ import '../../domain/entities/user.dart';
 /// Displays a welcome screen for authenticated users with a sign-out option.
 ///
 /// Watches the current session and shows user info when signed in.
-class SignedInWidget extends WatchingWidget {
-  const SignedInWidget({super.key});
-
+class SignedIn extends WatchingWidget {
+  /// Padding applied to the scaffold body.
   static const double _padding = 24;
+
+  /// Size of the check-circle icon.
   static const double _iconSize = 80;
+
+  /// Small spacing between columns.
   static const double _spacingSmall = 16;
+
+  /// Large spacing between columns.
   static const double _spacingLarge = 48;
 
+  /// Red color extracted as static const for error snackbar.
+  static const Color _errorColor = Colors.red;
+
+
+  /// Error message text for sign-out failure.
+  static const String _errorMessage = 'Помилка виходу з системи.';
+
+  /// Creates a new [SignedIn].
+  const SignedIn({super.key});
+
+  /// Handles the sign-out action.
+  ///
+  /// Calls [signOutUseCase] and shows a snackbar with [_errorMessage] on failure.
   Future<void> _handleSignOut(BuildContext context) async {
     final result = await signOutUseCase();
 
@@ -23,13 +41,14 @@ class SignedInWidget extends WatchingWidget {
     if (result.isFailure) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Помилка виходу з системи.'),
-          backgroundColor: Colors.red,
+          content: Text(_errorMessage),
+          backgroundColor: _errorColor,
         ),
       );
     }
   }
 
+  /// Builds the signed-in welcome screen.
   @override
   Widget build(BuildContext context) {
     final User? user = watchValue((watchUseCase) => watchCurrentSessionUseCase);
@@ -46,13 +65,13 @@ class SignedInWidget extends WatchingWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Spacer(),
-              _SignedIcon(size: _iconSize),
+              const _SignedIconWidget(size: _iconSize),
               const SizedBox(height: _spacingSmall),
-              const _SignedTitle(),
+              const _SignedTitleWidget(),
               const SizedBox(height: _spacingSmall),
-              _SignedEmail(email: user.email),
+              _SignedEmailWidget(email: user.email),
               const SizedBox(height: _spacingLarge),
-              _SignedOutButton(onPressed: () => _handleSignOut(context)),
+              _SignedOutButtonWidget(onPressed: () => _handleSignOut(context)),
               const Spacer(),
             ],
           ),
@@ -62,11 +81,15 @@ class SignedInWidget extends WatchingWidget {
   }
 }
 
-class _SignedIcon extends StatelessWidget {
-  const _SignedIcon({required this.size});
+/// Check-circle icon displayed on the signed-in screen.
+class _SignedIconWidget extends StatelessWidget {
+  /// Creates a new [_SignedIconWidget].
+  const _SignedIconWidget({required this.size});
 
+  /// The size of the icon.
   final double size;
 
+  /// Builds the check-circle icon.
   @override
   Widget build(BuildContext context) {
     return Icon(
@@ -77,11 +100,15 @@ class _SignedIcon extends StatelessWidget {
   }
 }
 
-class _SignedTitle extends StatelessWidget {
-  const _SignedTitle();
-
+/// Welcome title displayed on the signed-in screen.
+class _SignedTitleWidget extends StatelessWidget {
+  /// Title text shown to the signed-in user.
   static const String _titleText = 'Вітаємо!';
 
+  /// Creates a new [_SignedTitleWidget].
+  const _SignedTitleWidget();
+
+  /// Builds the welcome title text.
   @override
   Widget build(BuildContext context) {
     return Text(
@@ -94,13 +121,18 @@ class _SignedTitle extends StatelessWidget {
   }
 }
 
-class _SignedEmail extends StatelessWidget {
-  const _SignedEmail({required this.email});
-
+/// Email address displayed on the signed-in screen.
+class _SignedEmailWidget extends StatelessWidget {
+  /// Alpha value for the email text opacity.
   static const double _alpha = 0.7;
 
+  /// Creates a new [_SignedEmailWidget].
+  const _SignedEmailWidget({required this.email});
+
+  /// The email address of the signed-in user.
   final String email;
 
+  /// Builds the email display text.
   @override
   Widget build(BuildContext context) {
     return Text(
@@ -113,17 +145,29 @@ class _SignedEmail extends StatelessWidget {
   }
 }
 
-class _SignedOutButton extends StatelessWidget {
-  const _SignedOutButton({required this.onPressed});
+/// Sign-out button displayed on the signed-in screen.
+class _SignedOutButtonWidget extends StatelessWidget {
+  /// Height of the sign-out button.
+  static const double _buttonHeight = 48;
 
+  /// Border radius of the sign-out button.
+  static const double _buttonRadius = 12;
+
+  /// Font size for the sign-out button text.
+  static const double _fontSize = 16;
+
+  /// Text shown on the sign-out button.
+  static const String _buttonText = 'Вийти';
+  static const Color _errorColor = Colors.red;
+  static const Color _buttonForegroundColor = Colors.white;
+
+  /// Creates a new [_SignedOutButtonWidget].
+  const _SignedOutButtonWidget({required this.onPressed});
+
+  /// Callback invoked when the sign-out button is pressed.
   final VoidCallback onPressed;
 
-  static const double _buttonHeight = 48;
-  static const double _buttonRadius = 12;
-  static const double _fontSize = 16;
-  static const String _buttonText = 'Вийти';
-  static const String _errorMessage = 'Помилка виходу з системи.';
-
+  /// Builds the sign-out button.
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -132,8 +176,8 @@ class _SignedOutButton extends StatelessWidget {
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.red,
-          foregroundColor: Colors.white,
+          backgroundColor: _errorColor,
+          foregroundColor: _buttonForegroundColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(_buttonRadius),
           ),

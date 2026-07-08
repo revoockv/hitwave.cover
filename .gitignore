@@ -11,7 +11,6 @@
 .svn/
 .swiftpm/
 migrate_working_dir/
-lib/firebase_options.dart
 # IntelliJ related
 *.iml
 *.ipr
@@ -52,4 +51,4 @@ firebase.json
 
 # OS
 Thumbs.db
-/lib/features/auth/data/datasources/firebase_options.dart
+/lib/features/auth/data/data_sources/firebase_options.dart
