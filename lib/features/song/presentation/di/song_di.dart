@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:flutter/foundation.dart' show ValueNotifier;
 import 'package:get_it/get_it.dart';
 
-import '../../data/datasources/firebase_song_service.dart';
+import '../../data/data_sources/firebase_song_service.dart';
 import '../../data/repositories/song_repository_impl.dart';
 import '../../domain/entities/song.dart';
 import '../../domain/repositories/song_repository.dart';

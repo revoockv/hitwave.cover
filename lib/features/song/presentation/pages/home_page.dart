@@ -8,8 +8,8 @@ import '../../../backup/domain/use_cases/watch_backup_status_use_case.dart';
 import '../../../backup/presentation/di/backup_getters.dart';
 import '../../domain/entities/song.dart';
 import '../../domain/use_cases/watch_list_of_songs_use_case.dart';
-import '../widgets/add_song_view.dart';
-import '../widgets/song_list_view.dart';
+import '../widgets/add_song_view_widget.dart';
+import '../widgets/song_list_widget.dart';
 import 'lyrics_page.dart';
 
 /// Main home page with song management and backup controls.
@@ -17,6 +17,33 @@ import 'lyrics_page.dart';
 /// Displays a list of songs with options to add, export, and import songs.
 /// Uses [WatchingWidget] to reactively watch song list and backup status changes.
 final class HomePage extends WatchingWidget {
+  /// Semi-transparent black color for backup status overlay.
+  static const Color _overlayColor = Colors.black54;
+
+  /// Page title text.
+  static const String _homePageTitle = 'Мої пісні';
+
+  /// Tooltip text for the import button.
+  static const String _importTooltip = 'Імпортувати';
+
+  /// Tooltip text for the export button.
+  static const String _exportTooltip = 'Експортувати';
+
+  /// Status string for idle backup state.
+  static const String _backupStatusIdle = 'idle';
+
+  /// Status string for successful backup state.
+  static const String _backupStatusSuccess = 'success';
+
+  /// Success message shown after export completes.
+  static const String _exportCompletedMessage = 'Експорт завершено';
+
+  /// Allowed file extension for file picker.
+  static const String _jsonExtension = 'json';
+
+  /// Success message shown after import completes.
+  static const String _importCompletedMessage = 'Імпорт завершено';
+
   /// Creates a new [HomePage].
   const HomePage({super.key});
 
@@ -31,17 +58,17 @@ final class HomePage extends WatchingWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Мої пісні'),
+        title: const Text(_homePageTitle),
         actions: <Widget>[
           IconButton(
             icon: const Icon(Icons.upload_file),
             onPressed: () => _handleImport(context),
-            tooltip: 'Імпортувати',
+            tooltip: _importTooltip,
           ),
           IconButton(
             icon: const Icon(Icons.download),
             onPressed: () => _handleExport(context),
-            tooltip: 'Експортувати',
+            tooltip: _exportTooltip,
           ),
           IconButton(
             icon: const Icon(Icons.add),
@@ -49,14 +76,14 @@ final class HomePage extends WatchingWidget {
           ),
         ],
       ),
-      body: SongListView(
+      body: SongListViewWidget(
         songs: songs,
         onSongTap: (Song song) => _navigateToLyrics(context, song),
       ),
-      bottomSheet: status != 'idle' && status != 'success'
+      bottomSheet: status != _backupStatusIdle && status != _backupStatusSuccess
           ? Container(
               padding: const EdgeInsets.all(16),
-              color: Colors.black54,
+              color: HomePage._overlayColor,
               child: Text(
                 status,
                 style: const TextStyle(color: Colors.white),
@@ -76,7 +103,7 @@ final class HomePage extends WatchingWidget {
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Експорт завершено')),
+          const SnackBar(content: Text(_exportCompletedMessage)),
         );
       }
     } catch ( e) {
@@ -92,7 +119,7 @@ final class HomePage extends WatchingWidget {
     try {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: <String>['json'],
+        allowedExtensions: <String>[_jsonExtension],
       );
 
       if (result == null || result.files.single.path == null) {
@@ -104,7 +131,7 @@ final class HomePage extends WatchingWidget {
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Імпорт завершено')),
+          const SnackBar(content: Text(_importCompletedMessage)),
         );
       }
     } catch ( e) {
@@ -127,7 +154,7 @@ final class HomePage extends WatchingWidget {
   void _showAddSongDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (BuildContext dialogContext) => AddSongView(),
+      builder: (BuildContext dialogContext) => AddSongDialogWidget(),
     );
   }
 }

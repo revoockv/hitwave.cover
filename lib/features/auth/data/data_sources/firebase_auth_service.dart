@@ -8,6 +8,24 @@ import 'firebase_options.dart';
 /// Wraps the Firebase Auth SDK and provides Stream-based auth state changes
 /// along with sign-in/sign-out/sign-up operations.
 final class FirebaseAuthService {
+  static const String _invalidEmail = 'invalid-email';
+  static const String _userNotFound = 'user-not-found';
+  static const String _wrongPassword = 'wrong-password';
+  static const String _emailAlreadyInUse = 'email-already-in-use';
+  static const String _weakPassword = 'weak-password';
+  static const String _userDisabled = 'user-disabled';
+  static const String _tooManyRequests = 'too-many-requests';
+  static const String _invalidCredential = 'invalid-credential';
+  static const String _invalidEmailMessage = 'Невірний формат email адреси.';
+  static const String _userNotFoundMessage = 'Користувач з таким email не знайдений.';
+  static const String _wrongPasswordMessage = 'Невірний пароль.';
+  static const String _emailAlreadyInUseMessage = 'Цей email вже використовується.';
+  static const String _weakPasswordMessage = 'Пароль занадто простий.';
+  static const String _userDisabledMessage = 'Цей акаунт був відключений.';
+  static const String _tooManyRequestsMessage = 'Занадто багато спроб. Спробуйте пізніше.';
+  static const String _invalidCredentialMessage = 'Невірні облікові дані.';
+  static const String _genericErrorMessage = 'Сталася помилка. Спробуйте пізніше.';
+
   final firebase_auth.FirebaseAuth _firebaseAuth;
 
   /// Creates a new [FirebaseAuthService].
@@ -89,24 +107,24 @@ final class FirebaseAuthService {
   /// Maps a Firebase error code to a user-friendly error message.
   String _mapFirebaseError(String code) {
     switch (code) {
-      case 'invalid-email':
-        return 'Невірний формат email адреси.';
-      case 'user-not-found':
-        return 'Користувач з таким email не знайдений.';
-      case 'wrong-password':
-        return 'Невірний пароль.';
-      case 'email-already-in-use':
-        return 'Цей email вже використовується.';
-      case 'weak-password':
-        return 'Пароль занадто простий.';
-      case 'user-disabled':
-        return 'Цей акаунт був відключений.';
-      case 'too-many-requests':
-        return 'Занадто багато спроб. Спробуйте пізніше.';
-      case 'invalid-credential':
-        return 'Невірні облікові дані.';
+      case _invalidEmail:
+        return _invalidEmailMessage;
+      case _userNotFound:
+        return _userNotFoundMessage;
+      case _wrongPassword:
+        return _wrongPasswordMessage;
+      case _emailAlreadyInUse:
+        return _emailAlreadyInUseMessage;
+      case _weakPassword:
+        return _weakPasswordMessage;
+      case _userDisabled:
+        return _userDisabledMessage;
+      case _tooManyRequests:
+        return _tooManyRequestsMessage;
+      case _invalidCredential:
+        return _invalidCredentialMessage;
       default:
-        return 'Сталася помилка. Спробуйте пізніше.';
+        return _genericErrorMessage;
     }
   }
 }

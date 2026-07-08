@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart' show ValueNotifier;
 import 'package:hitwave.cover/core/domain/result.dart';
 import 'package:hitwave.cover/features/backup/data/models/backup_data_model.dart';
-import 'package:hitwave.cover/features/song/data/datasources/firebase_song_service.dart';
+import 'package:hitwave.cover/features/song/data/data_sources/firebase_song_service.dart';
 import 'package:hitwave.cover/features/song/data/models/song_model.dart';
 import 'package:hitwave.cover/features/song/domain/entities/song.dart';
 import 'package:hitwave.cover/features/song/domain/repositories/song_repository.dart';
@@ -16,11 +16,24 @@ import '../../domain/repositories/backup_repository.dart';
 /// Handles exporting songs to JSON files and importing songs from JSON files,
 /// persisting them to Firebase using [FirebaseSongService].
 final class BackupRepositoryImpl implements BackupRepository {
+  static const String _statusIdle = 'idle';
+  static const String _statusExporting = 'exporting';
+  static const String _statusImporting = 'importing';
+  static const String _statusSuccess = 'success';
+  static const String _statusUnauthorizedError = 'Помилка: користувач не авторизований';
+  static const String _userNotAuthenticated = 'Користувач не авторизований.';
+  static const String _idField = 'id';
+  static const String _authorField = 'author';
+  static const String _nameField = 'name';
+  static const String _albumField = 'album';
+  static const String _lyricsField = 'lyrics';
+  static const String _coverIdsField = 'coverIds';
+
   final FirebaseSongService _songService;
   final SongRepository _songRepository;
   final Logger _logger;
 
-  final ValueNotifier<String> _status = ValueNotifier('idle');
+  final ValueNotifier<String> _status = ValueNotifier(_statusIdle);
 
   @override
   ValueNotifier<String> get status => _status;
@@ -44,11 +57,11 @@ final class BackupRepositoryImpl implements BackupRepository {
       final userId = _currentUserId;
       if (userId == null) {
         _logger.w('ExportSongs: failed — користувач не авторизований');
-        _status.value = 'Помилка: користувач не авторизований';
-        return Result.failure('Користувач не авторизований.');
+        _status.value = _statusUnauthorizedError;
+        return Result.failure(_userNotAuthenticated);
       }
 
-      _status.value = 'exporting';
+      _status.value = _statusExporting;
 
       final songs = _songRepository.songs.value;
 
@@ -63,7 +76,7 @@ final class BackupRepositoryImpl implements BackupRepository {
       _logger.i(
         'ExportSongs: success — exported ${songs.length} songs to "$filePath"',
       );
-      _status.value = 'success';
+      _status.value = _statusSuccess;
       return Result.success();
     } catch (e) {
       _logger.e('ExportSongs: failure — $e');
@@ -80,11 +93,11 @@ final class BackupRepositoryImpl implements BackupRepository {
       final userId = _currentUserId;
       if (userId == null) {
         _logger.w('ImportSongs: failed — користувач не авторизований');
-        _status.value = 'Помилка: користувач не авторизований';
-        return Result.failure('Користувач не авторизований.');
+        _status.value = _statusUnauthorizedError;
+        return Result.failure(_userNotAuthenticated);
       }
 
-      _status.value = 'importing';
+      _status.value = _statusImporting;
 
       final file = File(filePath);
       final jsonString = await file.readAsString();
@@ -94,18 +107,18 @@ final class BackupRepositoryImpl implements BackupRepository {
       for (final songJson in backupDataModel.songs) {
         final songModel = SongModel(
           id: '',
-          author: songJson['author'] as String,
-          name: songJson['name'] as String,
-          album: songJson['album'] as String?,
-          lyrics: songJson['lyrics'] as String,
-          coverIds: List<String>.from(songJson['coverIds'] as List<dynamic>),
+          author: songJson[_authorField] as String,
+          name: songJson[_nameField] as String,
+          album: songJson[_albumField] as String?,
+          lyrics: songJson[_lyricsField] as String,
+          coverIds: List<String>.from(songJson[_coverIdsField] as List<dynamic>),
         );
 
         await _songService.addSong(userId: userId, song: songModel);
       }
 
       _logger.i('ImportSongs: success — ${backupDataModel.songs.length} songs imported');
-      _status.value = 'success';
+      _status.value = _statusSuccess;
       return Result.success();
     } catch (e) {
       _logger.e('ImportSongs: failure — $e');
@@ -117,12 +130,12 @@ final class BackupRepositoryImpl implements BackupRepository {
   /// Encodes a [Song] entity into a JSON-serializable map.
   Map<String, dynamic> _encodeSong(Song song) {
     return {
-      'id': song.id,
-      'author': song.author,
-      'name': song.name,
-      'album': song.album,
-      'lyrics': song.lyrics,
-      'coverIds': song.covers.map((cover) => cover.id).toList(),
+      _idField: song.id,
+      _authorField: song.author,
+      _nameField: song.name,
+      _albumField: song.album,
+      _lyricsField: song.lyrics,
+      _coverIdsField: song.covers.map((cover) => cover.id).toList(),
     };
   }
 }

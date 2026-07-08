@@ -8,6 +8,20 @@ import '../models/song_model.dart';
 /// Wraps the Firebase Firestore SDK and provides CRUD operations for songs
 /// and covers, organized by the current user's ID.
 final class FirebaseSongService {
+  static const String _usersCollection = 'users';
+  static const String _songsCollectionName = 'songs';
+  static const String _coversCollectionName = 'covers';
+  static const String _idField = 'id';
+  static const String _authorField = 'author';
+  static const String _nameField = 'name';
+  static const String _albumField = 'album';
+  static const String _lyricsField = 'lyrics';
+  static const String _coverIdsField = 'coverIds';
+  static const String _createdAtField = 'createdAt';
+  static const String _updatedAtField = 'updatedAt';
+  static const String _timestampField = 'timestamp';
+  static const String _notesField = 'notes';
+
   final FirebaseFirestore _firestore;
 
   /// Creates a new [FirebaseSongService].
@@ -17,7 +31,7 @@ final class FirebaseSongService {
 
   /// Returns the Firestore reference for the user's songs collection.
   CollectionReference<Map<String, dynamic>> _songsCollection(String userId) {
-    return _firestore.collection('users').doc(userId).collection('songs');
+    return _firestore.collection(_usersCollection).doc(userId).collection(_songsCollectionName);
   }
 
   /// Returns the Firestore reference for a song's covers subcollection.
@@ -25,7 +39,7 @@ final class FirebaseSongService {
     String userId,
     String songId,
   ) {
-    return _songsCollection(userId).doc(songId).collection('covers');
+    return _songsCollection(userId).doc(songId).collection(_coversCollectionName);
   }
 
   /// Adds a new song document to Firestore.
@@ -39,13 +53,13 @@ final class FirebaseSongService {
     try {
       final docRef = _songsCollection(userId).doc();
       final songData = <String, dynamic>{
-        'id': docRef.id,
-        'author': song.author,
-        'name': song.name,
-        'album': song.album,
-        'lyrics': song.lyrics,
-        'coverIds': <String>[],
-        'createdAt': FieldValue.serverTimestamp(),
+        _idField: docRef.id,
+        _authorField: song.author,
+        _nameField: song.name,
+        _albumField: song.album,
+        _lyricsField: song.lyrics,
+        _coverIdsField: <String>[],
+        _createdAtField: FieldValue.serverTimestamp(),
       };
 
       await docRef.set(songData);
@@ -66,11 +80,11 @@ final class FirebaseSongService {
     try {
       final docRef = _songsCollection(userId).doc(song.id);
       final songData = <String, dynamic>{
-        'author': song.author,
-        'name': song.name,
-        'album': song.album,
-        'lyrics': song.lyrics,
-        'updatedAt': FieldValue.serverTimestamp(),
+        _authorField: song.author,
+        _nameField: song.name,
+        _albumField: song.album,
+        _lyricsField: song.lyrics,
+        _updatedAtField: FieldValue.serverTimestamp(),
       };
 
       await docRef.update(songData);
@@ -106,18 +120,18 @@ final class FirebaseSongService {
   /// changes (add, update, delete).
   Stream<List<SongModel>> watchSongs(String userId) {
     return _songsCollection(userId)
-        .orderBy('name')
+        .orderBy(_nameField)
         .snapshots()
         .map((snapshot) {
           return snapshot.docs.map((doc) {
             final data = doc.data();
             return SongModel(
               id: doc.id,
-              author: data['author'] as String,
-              name: data['name'] as String,
-              album: data['album'] as String?,
-              lyrics: data['lyrics'] as String,
-              coverIds: List<String>.from(data['coverIds'] as List<dynamic>),
+              author: data[_authorField] as String,
+              name: data[_nameField] as String,
+              album: data[_albumField] as String?,
+              lyrics: data[_lyricsField] as String,
+              coverIds: List<String>.from(data[_coverIdsField] as List<dynamic>),
             );
           }).toList();
         });
@@ -135,15 +149,15 @@ final class FirebaseSongService {
     try {
       final docRef = _coversCollection(userId, songId).doc();
       final coverData = <String, dynamic>{
-        'id': docRef.id,
-        'timestamp': FieldValue.serverTimestamp(),
-        'notes': cover.notes,
+        _idField: docRef.id,
+        _timestampField: FieldValue.serverTimestamp(),
+        _notesField: cover.notes,
       };
 
       await docRef.set(coverData);
 
       await _songsCollection(userId).doc(songId).update({
-        'coverIds': FieldValue.arrayUnion([docRef.id]),
+        _coverIdsField: FieldValue.arrayUnion([docRef.id]),
       });
 
       return docRef.id;
@@ -163,8 +177,8 @@ final class FirebaseSongService {
     try {
       final docRef = _coversCollection(userId, songId).doc(cover.id);
       final coverData = <String, dynamic>{
-        'timestamp': FieldValue.serverTimestamp(),
-        'notes': cover.notes,
+        _timestampField: FieldValue.serverTimestamp(),
+        _notesField: cover.notes,
       };
 
       await docRef.update(coverData);
@@ -187,7 +201,7 @@ final class FirebaseSongService {
       await coversRef.delete();
 
       await _songsCollection(userId).doc(songId).update({
-        'coverIds': FieldValue.arrayRemove([coverId]),
+        _coverIdsField: FieldValue.arrayRemove([coverId]),
       });
     } catch (e) {
       throw 'Помилка при видаленні обкладинки: $e';
@@ -200,16 +214,16 @@ final class FirebaseSongService {
   /// changes (add, update, delete).
   Stream<List<CoverModel>> watchCovers(String userId, String songId) {
     return _coversCollection(userId, songId)
-        .orderBy('timestamp', descending: true)
+        .orderBy(_timestampField, descending: true)
         .snapshots()
         .map((snapshot) {
           return snapshot.docs.map((doc) {
             final data = doc.data();
             return CoverModel(
               id: doc.id,
-              timestamp: (data['timestamp'] as Timestamp?)?.millisecondsSinceEpoch ?? 0,
+              timestamp: (data[_timestampField] as Timestamp?)?.millisecondsSinceEpoch ?? 0,
               audioBytes: const <int>[],
-              notes: data['notes'] as String?,
+              notes: data[_notesField] as String?,
             );
           }).toList();
         });
@@ -220,16 +234,16 @@ final class FirebaseSongService {
   /// Returns a list of [CoverModel] sorted by date.
   Future<List<CoverModel>> getCovers(String userId, String songId) async {
     final snapshot = await _coversCollection(userId, songId)
-        .orderBy('timestamp', descending: true)
+        .orderBy(_timestampField, descending: true)
         .get();
 
     return snapshot.docs.map((doc) {
       final data = doc.data();
       return CoverModel(
         id: doc.id,
-        timestamp: (data['timestamp'] as Timestamp?)?.millisecondsSinceEpoch ?? 0,
+        timestamp: (data[_timestampField] as Timestamp?)?.millisecondsSinceEpoch ?? 0,
         audioBytes: const <int>[],
-        notes: data['notes'] as String?,
+        notes: data[_notesField] as String?,
       );
     }).toList();
   }

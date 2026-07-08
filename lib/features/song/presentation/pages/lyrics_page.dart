@@ -1,7 +1,8 @@
-import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:hitwave.cover/features/song/domain/entities/song.dart';
+import 'package:hitwave.cover/features/song/presentation/controllers/lyrics_page_controller.dart';
+import 'package:hitwave.cover/features/song/presentation/widgets/lyrics_controls_widget.dart';
 
 /// Lyrics display page with auto-scroll functionality.
 ///
@@ -19,194 +20,92 @@ final class LyricsPage extends StatefulWidget {
 }
 
 class _LyricsPageState extends State<LyricsPage> {
-  late final TextEditingController textController;
-  late final ScrollController scrollController;
-  late final ScrollController editScrollController;
-  late final FocusNode focusNode;
+  /// Speed label text.
+  static const String _speedLabel = 'Швидкість';
 
-  Timer? scrollTimer;
-  Timer? hideControlsTimer;
+  /// Stop button label text.
+  static const String _stopLabel = 'Зупинити';
 
-  double speed = 0.5;
-  bool isScrolling = false;
+  /// Start button label text.
+  static const String _startLabel = 'Старт';
 
-  static const double minSpeed = 0.0;
-  static const double maxSpeed = 1.0;
-  static const int scrollIntervalMs = 16;
-  static const int hideControlsDelayMs = 3000;
+  /// Font family for lyrics text.
+  static const String _robotoFontFamily = 'Roboto';
 
-  bool controlsVisible = true;
+  /// Semi-transparent black overlay color.
+  static const Color _overlayColor = Color(0xB3000000);
+
+  /// Solid white color.
+  static const Color _whiteColor = Colors.white;
+
+  /// Solid black color.
+  static const Color _blackColor = Colors.black;
+
+  /// Horizontal padding for controls bar.
+  static const double _controlsHorizontalPadding = 16;
+
+  /// Vertical padding for controls bar.
+  static const double _controlsVerticalPadding = 8;
+
+  /// Border radius for controls bar.
+  static const double _controlsRadius = 16;
+
+  /// Spacing between controls bar children.
+  static const double _controlsSpacing = 8;
+
+  /// Font size for labels and values.
+  static const double _labelFontSize = 16;
+
+  /// Slider track height.
+  static const double _trackHeight = 4;
+
+  /// Spacing between play button and slider value.
+  static const double _playButtonSpacing = 16;
+
+  /// Font size for lyrics text.
+  static const double _lyricsFontSize = 18;
+
+  late final LyricsPageController _controller;
 
   @override
   void initState() {
     super.initState();
-    textController = TextEditingController(text: widget.song.lyrics);
-    scrollController = ScrollController();
-    editScrollController = ScrollController();
-    focusNode = FocusNode();
+    _controller = LyricsPageController();
+    _controller.initControllers(widget.song.lyrics);
   }
 
   @override
   void dispose() {
-    scrollTimer?.cancel();
-    hideControlsTimer?.cancel();
-    textController.dispose();
-    scrollController.dispose();
-    editScrollController.dispose();
-    focusNode.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
-  void resetHideTimer() {
-    hideControlsTimer?.cancel();
-    setState(() {
-      controlsVisible = true;
-    });
-    hideControlsTimer = Timer(
-      const Duration(milliseconds: hideControlsDelayMs),
-      () {
-        if (!isScrolling || !mounted) return;
-        setState(() {
-          controlsVisible = false;
-        });
-      },
-    );
-  }
-
-  void hideKeyboard() {
-    if (focusNode.hasFocus) {
-      focusNode.unfocus();
+  void _hideKeyboard() {
+    if (_controller.focusNode.hasFocus) {
+      _controller.focusNode.unfocus();
     }
   }
 
-  void startScrolling() {
-    if (isScrolling) return;
-
-    setState(() {
-      isScrolling = true;
-    });
-
-    hideKeyboard();
-    scrollTimer?.cancel();
-    scrollTimer = Timer.periodic(
-      const Duration(milliseconds: scrollIntervalMs),
-      (_) {
-        if (!scrollController.hasClients) return;
-
-        final maxScroll = scrollController.position.maxScrollExtent;
-        final currentScroll = scrollController.offset;
-
-        if (currentScroll >= maxScroll) {
-          stopScrolling();
-          return;
-        }
-
-        final scrollIncrement = speed * 0.3125;
-        final newOffset = (currentScroll + scrollIncrement).clamp(
-          0.0,
-          maxScroll,
-        );
-
-        scrollController.jumpTo(newOffset);
-      },
-    );
-
-    resetHideTimer();
+  void _startScrolling() {
+    if (_controller.isScrolling.value) return;
+    _controller.startScrolling(_resetHideTimer, _hideKeyboard);
   }
 
-  void stopScrolling() {
-    scrollTimer?.cancel();
-    scrollTimer = null;
-
-    setState(() {
-      isScrolling = false;
-    });
-
-    resetHideTimer();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (editScrollController.hasClients) {
-        final maxScroll = editScrollController.position.maxScrollExtent;
-        if (maxScroll > 0) {
-          editScrollController.jumpTo(maxScroll);
-        }
-      }
-    });
+  void _stopScrolling() {
+    _controller.stopScrolling(_resetHideTimer);
   }
 
-  void toggleScroll() {
-    if (isScrolling) {
-      stopScrolling();
+  void _resetHideTimer() {
+    _controller.resetHideTimer();
+  }
+
+  void _toggleScroll() {
+    if (_controller.isScrolling.value) {
+      _stopScrolling();
     } else {
-      if (textController.text.trim().isEmpty) return;
-      startScrolling();
+      if (_controller.textController.text.trim().isEmpty) return;
+      _startScrolling();
     }
-  }
-
-  Widget buildControls() {
-    return AnimatedOpacity(
-      opacity: controlsVisible ? 1.0 : 0.0,
-      duration: const Duration(milliseconds: 300),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-        decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.7),
-          borderRadius: const BorderRadius.vertical(
-            bottom: Radius.circular(16),
-          ),
-        ),
-        child: Row(
-          children: [
-            const SizedBox(width: 8),
-            const Text(
-              'Швидкість',
-              style: TextStyle(color: Colors.white, fontSize: 14),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: SliderTheme(
-                data: const SliderThemeData(
-                  thumbColor: Colors.white,
-                  trackHeight: 4,
-                ),
-                child: Slider(
-                  value: speed,
-                  min: minSpeed,
-                  max: maxSpeed,
-                  divisions: 100,
-                  label: speed.toStringAsFixed(1),
-                  onChanged: (value) {
-                    setState(() {
-                      speed = value;
-                    });
-                    hideKeyboard();
-                    resetHideTimer();
-                  },
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              speed.toStringAsFixed(1),
-              style: const TextStyle(color: Colors.white, fontSize: 16),
-            ),
-            const SizedBox(width: 16),
-            ElevatedButton.icon(
-              onPressed: toggleScroll,
-              icon: Icon(
-                isScrolling ? Icons.stop : Icons.play_arrow,
-                color: Colors.black,
-              ),
-              label: Text(isScrolling ? 'Зупинити' : 'Старт'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: Colors.black,
-              ),
-            ),
-            const SizedBox(width: 16),
-          ],
-        ),
-      ),
-    );
   }
 
   @override
@@ -226,45 +125,70 @@ class _LyricsPageState extends State<LyricsPage> {
       ),
       body: Column(
         children: [
-          buildControls(),
+          LyricsControlsWidget(
+            controller: _controller,
+            speedLabel: _speedLabel,
+            stopLabel: _stopLabel,
+            startLabel: _startLabel,
+            overlayColor: _overlayColor,
+            whiteColor: _whiteColor,
+            blackColor: _blackColor,
+            controlsHorizontalPadding: _controlsHorizontalPadding,
+            controlsVerticalPadding: _controlsVerticalPadding,
+            controlsRadius: _controlsRadius,
+            controlsSpacing: _controlsSpacing,
+            labelFontSize: _labelFontSize,
+            trackHeight: _trackHeight,
+            playButtonSpacing: _playButtonSpacing,
+            toggleScroll: _toggleScroll,
+            hideKeyboard: _hideKeyboard,
+            resetHideTimer: _resetHideTimer,
+          ),
           Expanded(
             child: GestureDetector(
               onTap: () {
-                if (isScrolling) {
-                  resetHideTimer();
+                if (_controller.isScrolling.value) {
+                  _resetHideTimer();
                   FocusScope.of(context).unfocus();
                 } else {
-                  resetHideTimer();
+                  _resetHideTimer();
                 }
               },
-              child: isScrolling
-                  ? SingleChildScrollView(
-                      controller: scrollController,
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Align(
-                          alignment: Alignment.topLeft,
-                          child: Text(
-                            textController.text,
-                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontSize: 18),
+              child: ValueListenableBuilder<bool>(
+                valueListenable: _controller.isScrolling,
+                builder: (context, isScrollingValue, child) {
+                  return isScrollingValue
+                      ? SingleChildScrollView(
+                          controller: _controller.scrollController,
+                          child: Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Align(
+                              alignment: Alignment.topLeft,
+                              child: Text(
+                                _controller.textController.text,
+                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                      fontSize: _lyricsFontSize,
+                                    ),
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                    )
-                  : TextField(
-                      controller: textController,
-                      focusNode: focusNode,
-                      scrollController: editScrollController,
-                      textInputAction: TextInputAction.done,
-                      onEditingComplete: hideKeyboard,
-                      maxLines: null,
-                      minLines: 1,
-                      decoration: const InputDecoration(
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.all(24),
-                      ),
-                      style: const TextStyle(fontSize: 18, fontFamily: 'Roboto'),
-                    ),
+                        )
+                      : TextField(
+                          controller: _controller.textController,
+                          focusNode: _controller.focusNode,
+                          scrollController: _controller.editScrollController,
+                          textInputAction: TextInputAction.done,
+                          onEditingComplete: _hideKeyboard,
+                          maxLines: null,
+                          minLines: 1,
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.all(24),
+                          ),
+                          style: const TextStyle(fontSize: _lyricsFontSize, fontFamily: _robotoFontFamily),
+                        );
+                },
+              ),
             ),
           ),
         ],

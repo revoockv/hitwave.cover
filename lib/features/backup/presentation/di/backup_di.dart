@@ -6,7 +6,7 @@ import '../../domain/repositories/backup_repository.dart';
 import '../../domain/use_cases/export_songs_use_case.dart';
 import '../../domain/use_cases/import_songs_use_case.dart';
 import '../../domain/use_cases/watch_backup_status_use_case.dart';
-import '../../../song/data/datasources/firebase_song_service.dart';
+import '../../../song/data/data_sources/firebase_song_service.dart';
 import '../../../song/domain/repositories/song_repository.dart';
 
 /// Registers all backup feature dependencies in GetIt.

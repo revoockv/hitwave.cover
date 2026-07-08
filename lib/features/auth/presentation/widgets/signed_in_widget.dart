@@ -7,7 +7,7 @@ import '../../domain/entities/user.dart';
 /// Displays a welcome screen for authenticated users with a sign-out option.
 ///
 /// Watches the current session and shows user info when signed in.
-class SignedIn extends WatchingWidget {
+class SignedInWidget extends WatchingWidget {
   /// Padding applied to the scaffold body.
   static const double _padding = 24;
 
@@ -27,8 +27,8 @@ class SignedIn extends WatchingWidget {
   /// Error message text for sign-out failure.
   static const String _errorMessage = 'Помилка виходу з системи.';
 
-  /// Creates a new [SignedIn].
-  const SignedIn({super.key});
+  /// Creates a new [SignedInWidget].
+  const SignedInWidget({super.key});
 
   /// Handles the sign-out action.
   ///

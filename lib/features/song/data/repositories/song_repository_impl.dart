@@ -8,7 +8,7 @@ import '../../../../core/domain/result.dart';
 import '../../domain/entities/cover.dart';
 import '../../domain/entities/song.dart';
 import '../../domain/repositories/song_repository.dart';
-import '../datasources/firebase_song_service.dart';
+import '../data_sources/firebase_song_service.dart';
 import '../models/cover_model.dart';
 import '../models/song_model.dart';
 
@@ -17,6 +17,8 @@ import '../models/song_model.dart';
 /// Subscribes to Firebase Firestore song changes and exposes the current
 /// song list as a [ValueNotifier<List<Song>]> for reactive UI updates.
 final class SongRepositoryImpl implements SongRepository {
+  static const String _userNotAuthenticated = 'Користувач не авторизований.';
+
   final FirebaseSongService _songService;
   final firebase_auth.FirebaseAuth _auth;
   final Logger _logger;
@@ -98,7 +100,7 @@ final class SongRepositoryImpl implements SongRepository {
       final userId = _currentUserId;
       if (userId == null) {
         _logger.w('AddSong: failed — користувач не авторизований');
-        return Result.failure('Користувач не авторизований.');
+        return Result.failure(_userNotAuthenticated);
       }
 
       final song = SongModel(
@@ -137,7 +139,7 @@ final class SongRepositoryImpl implements SongRepository {
       final userId = _currentUserId;
       if (userId == null) {
         _logger.w('UpdateSong: failed — користувач не авторизований');
-        return Result.failure('Користувач не авторизований.');
+        return Result.failure(_userNotAuthenticated);
       }
 
       final song = SongModel(
@@ -168,7 +170,7 @@ final class SongRepositoryImpl implements SongRepository {
       final userId = _currentUserId;
       if (userId == null) {
         _logger.w('DeleteSong: failed — користувач не авторизований');
-        return Result.failure('Користувач не авторизований.');
+        return Result.failure(_userNotAuthenticated);
       }
 
       await _songService.deleteSong(userId: userId, songId: songId);
@@ -192,7 +194,7 @@ final class SongRepositoryImpl implements SongRepository {
       final userId = _currentUserId;
       if (userId == null) {
         _logger.w('AddCover: failed — користувач не авторизований');
-        return Result.failure('Користувач не авторизований.');
+        return Result.failure(_userNotAuthenticated);
       }
 
       final cover = CoverModel(
@@ -229,7 +231,7 @@ final class SongRepositoryImpl implements SongRepository {
       final userId = _currentUserId;
       if (userId == null) {
         _logger.w('UpdateCover: failed — користувач не авторизований');
-        return Result.failure('Користувач не авторизований.');
+        return Result.failure(_userNotAuthenticated);
       }
 
       final cover = CoverModel(
@@ -264,7 +266,7 @@ final class SongRepositoryImpl implements SongRepository {
       final userId = _currentUserId;
       if (userId == null) {
         _logger.w('DeleteCover: failed — користувач не авторизований');
-        return Result.failure('Користувач не авторизований.');
+        return Result.failure(_userNotAuthenticated);
       }
 
       await _songService.deleteCover(

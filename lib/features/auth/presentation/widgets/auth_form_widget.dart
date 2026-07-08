@@ -7,15 +7,15 @@ import '../controllers/auth_form_controller.dart';
 ///
 /// Supports toggling between login and registration modes. Manages all
 /// form state through [AuthFormController] with ValueNotifiers — no setState.
-class AuthForm extends StatefulWidget {
-  /// Creates a new [AuthForm].
-  const AuthForm({super.key});
+class AuthFormWidget extends StatefulWidget {
+  /// Creates a new [AuthFormWidget].
+  const AuthFormWidget({super.key});
 
   @override
-  State<AuthForm> createState() => _AuthFormState();
+  State<AuthFormWidget> createState() => _AuthFormState();
 }
 
-class _AuthFormState extends State<AuthForm> {
+class _AuthFormState extends State<AuthFormWidget> {
   static const double _paddingSize = 24.0;
   static const double _topSpacing = 48.0;
   static const double _sectionSpacing = 32.0;
@@ -114,6 +114,12 @@ class _FormTitleWidget extends StatelessWidget {
   /// Spacing below the headline text.
   static const double _headlineSpacing = 8.0;
 
+  /// Text shown in sign-up mode.
+  static const String _signUpText = 'Реєстрація';
+
+  /// Text shown in sign-in mode.
+  static const String _signInText = 'Вхід';
+
   /// Creates a new [_FormTitleWidget].
   const _FormTitleWidget({required this.controller});
 
@@ -128,8 +134,8 @@ class _FormTitleWidget extends StatelessWidget {
       builder: (context, isSignUp, child) {
         return Padding(
           padding: const EdgeInsets.only(bottom: _headlineSpacing),
-          child: Text(
-            isSignUp ? 'Реєстрація' : 'Вхід',
+            child: Text(
+              isSignUp ? _signUpText : _signInText,
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),

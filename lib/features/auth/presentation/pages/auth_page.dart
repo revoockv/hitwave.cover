@@ -12,6 +12,6 @@ class AuthPage extends StatelessWidget {
   /// Builds the authentication page with the [AuthForm] widget.
   @override
   Widget build(BuildContext context) {
-    return const AuthForm();
+    return const AuthFormWidget();
   }
 }

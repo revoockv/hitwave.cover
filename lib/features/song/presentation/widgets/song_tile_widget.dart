@@ -1,22 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:hitwave.cover/features/song/domain/entities/song.dart';
 
-import 'delete_song_dialog.dart';
-import 'edit_song_dialog.dart';
+import 'delete_song_dialog_widget.dart';
+import 'edit_song_dialog_widget.dart';
 
 /// Displays a single song with its name, author, and optional album.
 ///
 /// Shows an edit and delete button for CRUD operations.
 /// Tapping the tile navigates to the lyrics page.
-final class SongTile extends StatelessWidget {
+final class SongTileWidget extends StatelessWidget {
+  /// Icon size for the trailing buttons.
+  static const double iconSize = 20.0;
+
   /// The [Song] to display.
   final Song song;
 
   /// Callback when the tile is tapped.
   final void Function(Song song) onTap;
 
-  /// Creates a new [SongTile].
-  const SongTile({required this.song, required this.onTap, super.key});
+  /// Creates a new [SongTileWidget].
+  const SongTileWidget({required this.song, required this.onTap, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -26,31 +29,35 @@ final class SongTile extends StatelessWidget {
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          IconButton(
-            icon: const Icon(Icons.edit),
+           IconButton(
+            icon: const Icon(Icons.edit, size: SongTileWidget.iconSize),
             onPressed: () => _showEditDialog(context),
           ),
           IconButton(
-            icon: const Icon(Icons.delete),
+            icon: const Icon(Icons.delete, size: SongTileWidget.iconSize),
             onPressed: () => _showDeleteConfirmation(context),
           ),
         ],
       ),
-      onTap: () => onTap(song),
+      onTap: () => _handleTap(song),
     );
+  }
+
+  void _handleTap(Song song) {
+    onTap(song);
   }
 
   void _showEditDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (BuildContext dialogContext) => EditSongDialog(song: song),
+      builder: (BuildContext dialogContext) => EditSongDialogWidget(song: song),
     );
   }
 
   void _showDeleteConfirmation(BuildContext context) {
     showDialog(
       context: context,
-      builder: (BuildContext dialogContext) => DeleteSongDialog(song: song),
+      builder: (BuildContext dialogContext) => DeleteSongDialogWidget(song: song),
     );
   }
 }
