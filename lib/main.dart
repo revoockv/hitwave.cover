@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:get_it/get_it.dart';
 import 'package:watch_it/watch_it.dart';
 
 import 'core/presentation/di/core_di.dart';
@@ -12,7 +11,8 @@ import 'features/auth/presentation/di/auth_di.dart';
 import 'features/auth/presentation/pages/auth_page.dart';
 import 'features/song/domain/repositories/song_repository.dart';
 import 'features/song/presentation/di/song_di.dart';
-import 'features/song/presentation/pages/song_page.dart';
+import 'features/song/presentation/pages/home_page.dart';
+import 'features/backup/presentation/di/backup_di.dart';
 
 /// App-wide GetIt instance for dependency injection.
 final getIt = GetIt.instance;
@@ -26,6 +26,7 @@ Future<void> registerAppDependencies() async {
   await registerCoreDI();
   await registerAuthFeature();
   await registerSongFeature();
+  await registerBackupFeature();
 
   // Force GetIt to ensure all singletons are completely instantiated
   await getIt.allReady();
@@ -67,7 +68,7 @@ class HitwaveCoverApp extends WatchingWidget {
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: user != null ? const SongPage() : const AuthPage(),
+      home: user != null ? const HomePage() : const AuthPage(),
     );
   }
 }

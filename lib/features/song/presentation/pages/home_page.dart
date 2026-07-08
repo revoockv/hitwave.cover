@@ -1,0 +1,133 @@
+
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:watch_it/watch_it.dart';
+
+import '../../../backup/domain/use_cases/watch_backup_status_use_case.dart';
+import '../../../backup/presentation/di/backup_getters.dart';
+import '../../domain/entities/song.dart';
+import '../../domain/use_cases/watch_list_of_songs_use_case.dart';
+import '../widgets/add_song_view.dart';
+import '../widgets/song_list_view.dart';
+import 'lyrics_page.dart';
+
+/// Main home page with song management and backup controls.
+///
+/// Displays a list of songs with options to add, export, and import songs.
+/// Uses [WatchingWidget] to reactively watch song list and backup status changes.
+final class HomePage extends WatchingWidget {
+  /// Creates a new [HomePage].
+  const HomePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final List<Song> songs = watchValue(
+      (WatchListOfSongsUseCase watchListOfSongs) => watchListOfSongs(),
+    );
+    final String status = watchValue(
+      (WatchBackupStatusUseCase watchBackupStatus) => watchBackupStatus(),
+    );
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Мої пісні'),
+        actions: <Widget>[
+          IconButton(
+            icon: const Icon(Icons.upload_file),
+            onPressed: () => _handleImport(context),
+            tooltip: 'Імпортувати',
+          ),
+          IconButton(
+            icon: const Icon(Icons.download),
+            onPressed: () => _handleExport(context),
+            tooltip: 'Експортувати',
+          ),
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: () => _showAddSongDialog(context),
+          ),
+        ],
+      ),
+      body: SongListView(
+        songs: songs,
+        onSongTap: (Song song) => _navigateToLyrics(context, song),
+      ),
+      bottomSheet: status != 'idle' && status != 'success'
+          ? Container(
+              padding: const EdgeInsets.all(16),
+              color: Colors.black54,
+              child: Text(
+                status,
+                style: const TextStyle(color: Colors.white),
+              ),
+            )
+          : null,
+    );
+  }
+
+  Future<void> _handleExport(BuildContext context) async {
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final filePath = '${directory.path}/backup_$timestamp.json';
+
+      await exportSongsUseCase(filePath);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Експорт завершено')),
+        );
+      }
+    } catch ( e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Помилка експорту: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleImport(BuildContext context) async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: <String>['json'],
+      );
+
+      if (result == null || result.files.single.path == null) {
+        return;
+      }
+
+      final filePath = result.files.single.path!;
+      await importSongsUseCase(filePath);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Імпорт завершено')),
+        );
+      }
+    } catch ( e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Помилка імпорту: $e')),
+        );
+      }
+    }
+  }
+
+  void _navigateToLyrics(BuildContext context, Song song) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (BuildContext context) => LyricsPage(song: song),
+      ),
+    );
+  }
+
+  void _showAddSongDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) => AddSongView(),
+    );
+  }
+}
