@@ -187,7 +187,6 @@ final class SongListModeWidget extends StatelessWidget {
     final List<Song> sortedSongs = _getSortedSongs();
 
     return ListView.builder(
-      shrinkWrap: true,
       itemCount: sortedSongs.length,
       itemBuilder: (BuildContext context, int index) {
         return SongTileWidget(song: sortedSongs[index], onTap: onSongTap);
@@ -239,30 +238,56 @@ final class ArtistModeWidget extends StatelessWidget {
       return const Center(child: Text(_emptySongListMessage));
     }
 
-    return Column(
+    return ListView(
       children: <Widget>[
-        Align(alignment: Alignment.topLeft,
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: ArtistListViewWidget(
             songs: songs,
             selectedArtist: selectedArtist,
             onArtistSelected: onArtistSelected,
           ),
         ),
-        Expanded(
-          child: Container(
-            child: selectedArtist.isNotEmpty
-                ? _buildArtistSongs()
-                : Container(),
-          ),
-        ),
+        ..._buildArtistSongTiles(),
       ],
     );
   }
 
-  Widget _buildArtistSongs() {
+  List<Widget> _buildArtistSongTiles() {
+    if (selectedArtist.isEmpty) {
+      return const <Widget>[];
+    }
+
     final List<Song> artistSongs = _getSongsByArtist(selectedArtist);
 
-    return SongListModeWidget(songs: artistSongs, onSongTap: onSongTap);
+    if (artistSongs.isEmpty) {
+      return [const Center(child: Text(_emptySongListMessage))];
+    }
+
+    final List<Song> sortedSongs = _getSortedSongs(artistSongs);
+
+    return <Widget>[
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: sortedSongs.length,
+          itemBuilder: (BuildContext context, int index) {
+            return SongTileWidget(
+              song: sortedSongs[index],
+              onTap: onSongTap,
+            );
+          },
+        ),
+      ),
+    ];
+  }
+
+  List<Song> _getSortedSongs(List<Song> songList) {
+    final List<Song> sorted = List<Song>.from(songList);
+    sorted.sort((Song a, Song b) => a.name.compareTo(b.name));
+    return sorted;
   }
 
   List<String> _getUniqueArtists() {
@@ -278,7 +303,7 @@ final class ArtistModeWidget extends StatelessWidget {
 /// Displays songs as a [ListView] or horizontal artist/song lists.
 ///
 /// Each song is rendered as a [SongTileWidget] widget.
-final class SongListViewWidget extends StatelessWidget {
+final class SongsWidget extends StatelessWidget {
   /// The list of songs.
   final List<Song> songs;
 
@@ -294,8 +319,8 @@ final class SongListViewWidget extends StatelessWidget {
   /// Callback when a song tile is tapped.
   final void Function(Song song) onSongTap;
 
-  /// Creates a new [SongListViewWidget].
-  const SongListViewWidget({
+  /// Creates a new [SongsWidget].
+  const SongsWidget({
     required this.songs,
     required this.viewMode,
     required this.onArtistSelected,

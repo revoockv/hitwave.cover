@@ -8,7 +8,7 @@ import '../../domain/entities/song.dart';
 import '../../domain/use_cases/watch_list_of_songs_use_case.dart';
 import '../controllers/song_view_controller.dart';
 import '../widgets/add_song_view_widget.dart';
-import '../widgets/song_list_widget.dart';
+import '../widgets/songs_widget.dart';
 import 'lyrics_page.dart';
 
 /// View mode for the song list display.
@@ -143,7 +143,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ],
               ),
-              body: SongListViewWidget(
+              body: SongsWidget(
                 songs: songs,
                 viewMode: viewMode,
                 selectedArtist: selectedArtist,
