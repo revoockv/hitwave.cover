@@ -55,6 +55,9 @@ final class HomePage extends WatchingStatefulWidget {
   /// Padding for backup status overlay.
   static const double _contentPadding = 16;
 
+  /// Alpha value for song count text opacity.
+  static const double _songCountAlpha = 0.6;
+
   /// Creates a new [HomePage].
   const HomePage({super.key});
 
@@ -95,10 +98,24 @@ class _HomePageState extends State<HomePage> {
           builder: (BuildContext buildContext, String selectedArtist, Widget? child) {
             return Scaffold(
               appBar: AppBar(
-                title: Text(
-                  viewMode == SongViewMode.artist && selectedArtist.isNotEmpty
-                      ? selectedArtist
-                      : HomePage._homePageTitle,
+                title: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Text(
+                      viewMode == SongViewMode.artist && selectedArtist.isNotEmpty
+                          ? selectedArtist
+                          : HomePage._homePageTitle,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 8),
+                      child: Text(
+                        '(${_getDisplayedSongCount(songs, viewMode, selectedArtist)})',
+                        style: TextStyle(
+                          color: Theme.of(context).textTheme.bodyLarge?.color?.withValues(alpha: HomePage._songCountAlpha),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 actions: <Widget>[
                   IconButton(
@@ -152,6 +169,13 @@ class _HomePageState extends State<HomePage> {
 
   void _handleToggleViewMode() {
     _songViewController.toggleViewMode();
+  }
+
+  int _getDisplayedSongCount(List<Song> songs, SongViewMode viewMode, String selectedArtist) {
+    if (viewMode == SongViewMode.artist && selectedArtist.isNotEmpty) {
+      return songs.where((Song song) => song.author == selectedArtist).length;
+    }
+    return songs.length;
   }
 
   Future<void> _handleExport(BuildContext context) async {

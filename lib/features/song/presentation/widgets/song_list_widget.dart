@@ -4,15 +4,25 @@ import 'package:hitwave.cover/features/song/presentation/pages/home_page.dart';
 
 import 'song_tile_widget.dart';
 
-/// Displays artist names as horizontal scrollable chips.
+/// Displays artist names as wrapable chips with song counts.
 ///
-/// Each artist is rendered as a [Chip] that can be selected to filter songs.
+/// Each artist is rendered as a [FilterChip] showing the artist name and the
+/// number of songs they have. Chips wrap to multiple lines when needed.
 final class ArtistListViewWidget extends StatelessWidget {
   /// Empty artist list message.
   static const String _emptyArtistListMessage = 'Артисти не знайдені';
 
   /// Semi-transparent alpha value for selected chip background.
   static const double _selectedChipAlpha = 0.2;
+
+  /// Spacing between artist chips.
+  static const double _chipSpacing = 8;
+
+  /// Run spacing between wrapped chip rows.
+  static const double _chipRunSpacing = 8;
+
+  /// Alpha value for song count text opacity.
+  static const double _songCountAlpha = 0.6;
 
   /// The list of all songs to extract unique artists from.
   final List<Song> songs;
@@ -45,28 +55,39 @@ final class ArtistListViewWidget extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: uniqueArtists.map((String artist) {
-            final bool isSelected = artist == selectedArtist;
+      child: Wrap(
+        spacing: ArtistListViewWidget._chipSpacing,
+        runSpacing: ArtistListViewWidget._chipRunSpacing,
+        children: uniqueArtists.map((String artist) {
+          final bool isSelected = artist == selectedArtist;
+          final int songCount = _getSongCountForArtist(artist);
 
-            return Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: FilterChip(
-                label: Text(artist),
-                selected: isSelected,
-                onSelected: (bool value) {
-                  if (value) {
-                    onArtistSelected(artist);
-                  }
-                },
-                selectedColor: Theme.of(context).primaryColor.withValues(alpha: _selectedChipAlpha),
-                checkmarkColor: Theme.of(context).primaryColor,
-              ),
-            );
-          }).toList(),
-        ),
+          return FilterChip(
+            label: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Text(artist),
+                Padding(
+                  padding: const EdgeInsets.only(left: 4),
+                  child: Text(
+                    '($songCount)',
+                    style: TextStyle(
+                      color: Theme.of(context).textTheme.bodyLarge?.color?.withValues(alpha: ArtistListViewWidget._songCountAlpha),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            selected: isSelected,
+            onSelected: (bool value) {
+              if (value) {
+                onArtistSelected(artist);
+              }
+            },
+            selectedColor: Theme.of(context).primaryColor.withValues(alpha: _selectedChipAlpha),
+            checkmarkColor: Theme.of(context).primaryColor,
+          );
+        }).toList(),
       ),
     );
   }
@@ -74,6 +95,10 @@ final class ArtistListViewWidget extends StatelessWidget {
   List<String> _getUniqueArtists() {
     final Set<String> artistSet = songs.map((Song song) => song.author).toSet();
     return artistSet.toList();
+  }
+
+  int _getSongCountForArtist(String artist) {
+    return songs.where((Song song) => song.author == artist).length;
   }
 }
 
