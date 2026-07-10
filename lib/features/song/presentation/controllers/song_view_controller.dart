@@ -14,7 +14,7 @@ final class SongViewController {
 
   /// Creates a new [SongViewManager] with default values.
   SongViewController()
-      : viewMode = ValueNotifier<SongViewMode>(SongViewMode.list),
+      : viewMode = ValueNotifier<SongViewMode>(SongViewMode.artist),
         selectedArtist = ValueNotifier<String>('');
 
   /// Switches the view mode and clears the selected artist.

@@ -8,6 +8,7 @@ import 'song_tile_widget.dart';
 ///
 /// Each artist is rendered as a [FilterChip] showing the artist name and the
 /// number of songs they have. Chips wrap to multiple lines when needed.
+/// Uses a blocky, vibrant style with clear selected/unselected states.
 final class ArtistListViewWidget extends StatelessWidget {
   /// Empty artist list message.
   static const String _emptyArtistListMessage = 'Артисти не знайдені';
@@ -15,14 +16,32 @@ final class ArtistListViewWidget extends StatelessWidget {
   /// Semi-transparent alpha value for selected chip background.
   static const double _selectedChipAlpha = 0.2;
 
+  /// Border radius for artist chips (blocky rounded corners).
+  static const double _chipBorderRadius = 12;
+
+  /// Padding inside artist chips.
+  static const EdgeInsets _chipPadding = EdgeInsets.symmetric(
+    horizontal: 12,
+    vertical: 8,
+  );
+
+  /// Unselected chip border width.
+  static const double _unselectedBorderWidth = 1;
+
+  /// Selected chip border width.
+  static const double _selectedBorderWidth = 1.5;
+
   /// Spacing between artist chips.
   static const double _chipSpacing = 8;
 
   /// Run spacing between wrapped chip rows.
   static const double _chipRunSpacing = 8;
 
-  /// Alpha value for song count text opacity.
-  static const double _songCountAlpha = 0.6;
+  /// Alpha value for song count text.
+  static const double _songCountAlpha = 0.7;
+
+  /// Alpha value for unselected chip border.
+  static const double _unselectedBorderAlpha = 0.3;
 
   /// The list of all songs to extract unique artists from.
   final List<Song> songs;
@@ -46,9 +65,7 @@ final class ArtistListViewWidget extends StatelessWidget {
     final List<String> uniqueArtists = _getUniqueArtists();
 
     if (uniqueArtists.isEmpty) {
-      return const Center(
-        child: Text(_emptyArtistListMessage),
-      );
+      return const Center(child: Text(_emptyArtistListMessage));
     }
 
     uniqueArtists.sort();
@@ -61,18 +78,27 @@ final class ArtistListViewWidget extends StatelessWidget {
         children: uniqueArtists.map((String artist) {
           final bool isSelected = artist == selectedArtist;
           final int songCount = _getSongCountForArtist(artist);
+          final ColorScheme colorScheme = Theme.of(context).colorScheme;
 
           return FilterChip(
             label: Row(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                Text(artist),
+                Text(
+                  artist,
+                  style: TextStyle(
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                  ),
+                ),
                 Padding(
-                  padding: const EdgeInsets.only(left: 4),
+                  padding: const EdgeInsets.only(left: 6),
                   child: Text(
                     '($songCount)',
                     style: TextStyle(
-                      color: Theme.of(context).textTheme.bodyLarge?.color?.withValues(alpha: ArtistListViewWidget._songCountAlpha),
+                      color: colorScheme.onSurface.withValues(
+                        alpha: ArtistListViewWidget._songCountAlpha,
+                      ),
+                      fontWeight: FontWeight.w400,
                     ),
                   ),
                 ),
@@ -84,8 +110,38 @@ final class ArtistListViewWidget extends StatelessWidget {
                 onArtistSelected(artist);
               }
             },
-            selectedColor: Theme.of(context).primaryColor.withValues(alpha: _selectedChipAlpha),
-            checkmarkColor: Theme.of(context).primaryColor,
+            selectedColor: colorScheme.primary.withValues(
+              alpha: _selectedChipAlpha,
+            ),
+            labelStyle: const TextStyle(fontWeight: FontWeight.w400),
+            visualDensity: VisualDensity.compact,
+            padding: ArtistListViewWidget._chipPadding,
+            side: BorderSide(
+              color: isSelected
+                  ? colorScheme.primary
+                  : colorScheme.outline.withValues(
+                      alpha: ArtistListViewWidget._unselectedBorderAlpha,
+                    ),
+              width: isSelected
+                  ? ArtistListViewWidget._selectedBorderWidth
+                  : ArtistListViewWidget._unselectedBorderWidth,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(
+                ArtistListViewWidget._chipBorderRadius,
+              ),
+              side: BorderSide(
+                color: isSelected
+                    ? colorScheme.primary
+                    : colorScheme.outline.withValues(
+                        alpha: ArtistListViewWidget._unselectedBorderAlpha,
+                      ),
+                width: isSelected
+                    ? ArtistListViewWidget._selectedBorderWidth
+                    : ArtistListViewWidget._unselectedBorderWidth,
+              ),
+            ),
+            checkmarkColor: colorScheme.primary,
           );
         }).toList(),
       ),
@@ -125,14 +181,13 @@ final class SongListModeWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (songs.isEmpty) {
-      return const Center(
-        child: Text(_emptySongListMessage),
-      );
+      return const Center(child: Text(_emptySongListMessage));
     }
 
     final List<Song> sortedSongs = _getSortedSongs();
 
     return ListView.builder(
+      shrinkWrap: true,
       itemCount: sortedSongs.length,
       itemBuilder: (BuildContext context, int index) {
         return SongTileWidget(song: sortedSongs[index], onTap: onSongTap);
@@ -144,62 +199,6 @@ final class SongListModeWidget extends StatelessWidget {
     final List<Song> sorted = List<Song>.from(songs);
     sorted.sort((Song a, Song b) => a.name.compareTo(b.name));
     return sorted;
-  }
-}
-
-/// Displays songs for a selected artist in a horizontal list.
-///
-/// Shows an empty message when no songs exist for the artist, or a
-/// horizontally scrollable list of [SongTileWidget] widgets otherwise.
-final class ArtistSongsListWidget extends StatelessWidget {
-  /// Empty songs for artist message.
-  static const String _emptyArtistSongsMessage = 'У цього артиста немає пісень';
-
-  /// Height of the horizontal song list.
-  static const double _horizontalListHeight = 120;
-
-  /// Width of each song tile in horizontal list.
-  static const double _horizontalSongTileWidth = 280;
-
-  /// The list of songs for the selected artist.
-  final List<Song> songs;
-
-  /// Callback when a song tile is tapped.
-  final void Function(Song song) onSongTap;
-
-  /// Creates a new [ArtistSongsListWidget].
-  const ArtistSongsListWidget({
-    required this.songs,
-    required this.onSongTap,
-    super.key,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    if (songs.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.all(16),
-        child: Center(child: Text(_emptyArtistSongsMessage)),
-      );
-    }
-
-    return SizedBox(
-      height: ArtistSongsListWidget._horizontalListHeight,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: songs.length,
-        itemBuilder: (BuildContext context, int index) {
-          final Song song = songs[index];
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: SizedBox(
-              width: ArtistSongsListWidget._horizontalSongTileWidth,
-              child: SongTileWidget(song: song, onTap: onSongTap),
-            ),
-          );
-        },
-      ),
-    );
   }
 }
 
@@ -237,32 +236,33 @@ final class ArtistModeWidget extends StatelessWidget {
     final List<String> uniqueArtists = _getUniqueArtists();
 
     if (uniqueArtists.isEmpty) {
-      return const Center(
-        child: Text(_emptySongListMessage),
-      );
+      return const Center(child: Text(_emptySongListMessage));
     }
 
     return Column(
       children: <Widget>[
-        ArtistListViewWidget(
-          songs: songs,
-          selectedArtist: selectedArtist,
-          onArtistSelected: onArtistSelected,
+        Align(alignment: Alignment.topLeft,
+          child: ArtistListViewWidget(
+            songs: songs,
+            selectedArtist: selectedArtist,
+            onArtistSelected: onArtistSelected,
+          ),
         ),
-        if (selectedArtist.isNotEmpty) ..._buildArtistSongs(),
+        Expanded(
+          child: Container(
+            child: selectedArtist.isNotEmpty
+                ? _buildArtistSongs()
+                : Container(),
+          ),
+        ),
       ],
     );
   }
 
-  List<Widget> _buildArtistSongs() {
+  Widget _buildArtistSongs() {
     final List<Song> artistSongs = _getSongsByArtist(selectedArtist);
 
-    return [
-      ArtistSongsListWidget(
-        songs: artistSongs,
-        onSongTap: onSongTap,
-      ),
-    ];
+    return SongListModeWidget(songs: artistSongs, onSongTap: onSongTap);
   }
 
   List<String> _getUniqueArtists() {
@@ -279,7 +279,6 @@ final class ArtistModeWidget extends StatelessWidget {
 ///
 /// Each song is rendered as a [SongTileWidget] widget.
 final class SongListViewWidget extends StatelessWidget {
-
   /// The list of songs.
   final List<Song> songs;
 
@@ -312,10 +311,7 @@ final class SongListViewWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (viewMode == SongViewMode.list) {
-      return SongListModeWidget(
-        songs: songs,
-        onSongTap: onSongTap,
-      );
+      return SongListModeWidget(songs: songs, onSongTap: onSongTap);
     }
 
     return ArtistModeWidget(
