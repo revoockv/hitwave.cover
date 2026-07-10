@@ -1,6 +1,5 @@
 import 'dart:convert';
-import 'dart:html' as html;
-
+import 'package:universal_html/html.dart' as html;
 import 'package:file_picker/file_picker.dart';
 
 import 'backup_data_source.dart';
@@ -49,11 +48,15 @@ final class BackupDataSourceWeb implements BackupDataSource {
 
   @override
   Future<void> triggerExportDownload(String jsonString) async {
+// --- WEB ARCHITECTURE ---
+    // universal_html lets this compile on Android without breaking!
     final blob = html.Blob([jsonString]);
-    final url = html.Url.createObjectUrl(blob);
-    final anchor = html.AnchorElement(href: url);
+    final url = html.Url.createObjectUrlFromBlob(blob);
+
+    final anchor = html.document.createElement('a') as html.AnchorElement;
+    anchor.href = url;
     anchor.download = _backupFileName;
     anchor.click();
-    html.Url.revokeObjectUrl(url);
-  }
+
+    html.Url.revokeObjectUrl(url); }
 }
