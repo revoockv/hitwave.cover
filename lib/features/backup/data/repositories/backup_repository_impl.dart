@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
@@ -19,6 +20,7 @@ import '../../domain/repositories/backup_repository.dart';
 /// internally — the interface exposes no file paths.
 final class BackupRepositoryImpl implements BackupRepository {
   static const String _statusIdle = 'idle';
+  static const String _jsonIndent = '  ';
   static const String _statusExporting = 'exporting';
   static const String _statusImporting = 'importing';
   static const String _statusSuccess = 'success';
@@ -70,13 +72,6 @@ final class BackupRepositoryImpl implements BackupRepository {
 
       _status.value = _statusExporting;
 
-      final String? filePath = await _dataSource.pickExportDirectory();
-      if (filePath == null) {
-        _logger.i('ExportSongs: cancelled by user');
-        _status.value = _pickerCancelled;
-        return Result.success();
-      }
-
       final songs = _songRepository.songs.value;
 
       final model = BackupDataModel(
@@ -84,10 +79,24 @@ final class BackupRepositoryImpl implements BackupRepository {
         songs: songs.map(_encodeSong).toList(),
       );
 
-      final file = File(filePath);
-      await file.writeAsString(model.toJson());
+      if (_dataSource.supportsDirectorySelection) {
+        final String? filePath = await _dataSource.pickExportDirectory();
+        if (filePath == null) {
+          _logger.i('ExportSongs: cancelled by user');
+          _status.value = _pickerCancelled;
+          return Result.success();
+        }
 
-      _logger.i('ExportSongs: success — exported ${songs.length} songs to "$filePath"');
+        final file = File(filePath);
+        await file.writeAsString(model.toJson());
+
+        _logger.i('ExportSongs: success — exported ${songs.length} songs to "$filePath"');
+      } else {
+        final jsonString = const JsonEncoder.withIndent(_jsonIndent).convert(model.toJson());
+        await _dataSource.triggerExportDownload(jsonString);
+        _logger.i('ExportSongs: success — exported ${songs.length} songs (web download)');
+      }
+
       _status.value = _statusSuccess;
       return Result.success();
     } catch (e) {

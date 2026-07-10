@@ -9,10 +9,13 @@ import 'backup_data_source.dart';
 ///
 /// Handles file selection for import (picks a JSON file and reads its content)
 /// and directory selection for export (picks a directory path).
-final class BackupDataSourceImpl implements BackupDataSource {
+final class BackupDataSourceMobile implements BackupDataSource {
   static const String _backupFileName = 'backup.json';
   static const List<String> _allowedExtensions = ['json'];
   static const String _exportDialogTitle = 'Оберіть папку для експорту';
+
+  @override
+  bool get supportsDirectorySelection => true;
 
   @override
   Future<String?> pickBackupFile() async {
@@ -50,5 +53,10 @@ final class BackupDataSourceImpl implements BackupDataSource {
     } catch (e) {
       return null;
     }
+  }
+
+  @override
+  Future<void> triggerExportDownload(String jsonString) async {
+    // No-op on mobile/desktop — files are written to disk directly.
   }
 }

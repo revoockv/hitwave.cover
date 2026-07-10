@@ -1,10 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
-import 'package:flutter/foundation.dart' show ValueNotifier;
+import 'package:flutter/foundation.dart' show ValueNotifier, kIsWeb;
 import 'package:get_it/get_it.dart';
 import 'package:logger/logger.dart';
 
 import '../../data/data_sources/backup_data_source.dart';
-import '../../data/data_sources/backup_data_source_impl.dart';
+import '../../data/data_sources/backup_data_source_mobile.dart';
+import '../../data/data_sources/backup_data_source_web.dart';
 import '../../data/repositories/backup_repository_impl.dart';
 import '../../domain/repositories/backup_repository.dart';
 import '../../domain/use_cases/export_songs_use_case.dart';
@@ -22,7 +23,7 @@ Future<void> registerBackupFeature() async {
   final getIt = GetIt.instance;
 
   getIt.registerSingleton<BackupDataSource>(
-    BackupDataSourceImpl(),
+    kIsWeb ? BackupDataSourceWeb() : BackupDataSourceMobile(),
   );
 
   final repository = BackupRepositoryImpl(
