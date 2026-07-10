@@ -5,7 +5,9 @@ import '../../../../core/domain/result.dart';
 /// Defines the contract for backup and restore operations via files.
 ///
 /// Implementations handle exporting songs to a JSON file and importing
-/// songs from a JSON file, persisting them to Firebase.
+/// songs from a JSON file, persisting them to Firebase. File picker
+/// operations are encapsulated within the repository — no file paths
+/// are exposed to the interface.
 abstract interface class BackupRepository {
   /// Returns the current backup status as a [ValueNotifier].
   ///
@@ -13,16 +15,19 @@ abstract interface class BackupRepository {
   /// importing, success, or error message.
   ValueNotifier<String> get status;
 
-  /// Exports all songs to a JSON file at the given [filePath].
+  /// Exports all songs to a JSON file in a user-selected directory.
   ///
+  /// Prompts the user to select an export directory via file picker,
+  /// then writes all songs to a `backup.json` file within that directory.
   /// Returns [SuccessResult] on success, or [FailureResult] with an error
   /// message when the export fails.
-  Future<Result<void>> exportSongs(String filePath);
+  Future<Result<void>> exportSongs();
 
-  /// Imports songs from a JSON file at the given [filePath].
+  /// Imports songs from a user-selected JSON file.
   ///
-  /// Reads the backup file, parses it, and adds all songs to Firebase.
-  /// Returns [SuccessResult] on success, or [FailureResult] with an error
+  /// Prompts the user to select a backup file via file picker, reads
+  /// the backup data, and adds all songs to Firebase. Returns
+  /// [SuccessResult] on success, or [FailureResult] with an error
   /// message when the import fails.
-  Future<Result<void>> importSongs(String filePath);
+  Future<Result<void>> importSongs();
 }

@@ -1,6 +1,10 @@
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:flutter/foundation.dart' show ValueNotifier;
 import 'package:get_it/get_it.dart';
+import 'package:logger/logger.dart';
 
+import '../../data/data_sources/backup_data_source.dart';
+import '../../data/data_sources/backup_data_source_impl.dart';
 import '../../data/repositories/backup_repository_impl.dart';
 import '../../domain/repositories/backup_repository.dart';
 import '../../domain/use_cases/export_songs_use_case.dart';
@@ -11,16 +15,22 @@ import '../../../song/domain/repositories/song_repository.dart';
 
 /// Registers all backup feature dependencies in GetIt.
 ///
-/// Creates singleton instances for the backup repository implementation,
-/// then registers the status ValueNotifier with the instance key
-/// `backup.status`. Registers all use cases as singletons.
+/// Creates singleton instances for the backup data source, repository
+/// implementation, then registers the status ValueNotifier with the
+/// instance key `backup.status`. Registers all use cases as singletons.
 Future<void> registerBackupFeature() async {
   final getIt = GetIt.instance;
+
+  getIt.registerSingleton<BackupDataSource>(
+    BackupDataSourceImpl(),
+  );
 
   final repository = BackupRepositoryImpl(
     songService: getIt<FirebaseSongService>(),
     songRepository: getIt<SongRepository>(),
-    logger: getIt.get(),
+    dataSource: getIt<BackupDataSource>(),
+    auth: firebase_auth.FirebaseAuth.instance,
+    logger: getIt<Logger>(),
   );
 
   getIt.registerSingleton<BackupRepository>(repository);

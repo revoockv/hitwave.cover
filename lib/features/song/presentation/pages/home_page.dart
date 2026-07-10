@@ -1,7 +1,5 @@
 
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:watch_it/watch_it.dart';
 
 import '../../../backup/domain/use_cases/watch_backup_status_use_case.dart';
@@ -37,9 +35,6 @@ final class HomePage extends WatchingWidget {
 
   /// Success message shown after export completes.
   static const String _exportCompletedMessage = 'Експорт завершено';
-
-  /// Allowed file extension for file picker.
-  static const String _jsonExtension = 'json';
 
   /// Success message shown after import completes.
   static const String _importCompletedMessage = 'Імпорт завершено';
@@ -95,18 +90,14 @@ final class HomePage extends WatchingWidget {
 
   Future<void> _handleExport(BuildContext context) async {
     try {
-      final directory = await getApplicationDocumentsDirectory();
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final filePath = '${directory.path}/backup_$timestamp.json';
-
-      await exportSongsUseCase(filePath);
+      await exportSongsUseCase();
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text(_exportCompletedMessage)),
         );
       }
-    } catch ( e) {
+    } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Помилка експорту: $e')),
@@ -117,24 +108,14 @@ final class HomePage extends WatchingWidget {
 
   Future<void> _handleImport(BuildContext context) async {
     try {
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: <String>[_jsonExtension],
-      );
-
-      if (result == null || result.files.single.path == null) {
-        return;
-      }
-
-      final filePath = result.files.single.path!;
-      await importSongsUseCase(filePath);
+      await importSongsUseCase();
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text(_importCompletedMessage)),
         );
       }
-    } catch ( e) {
+    } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Помилка імпорту: $e')),
