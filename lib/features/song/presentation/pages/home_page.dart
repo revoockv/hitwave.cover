@@ -1,4 +1,4 @@
- 
+
 import 'package:flutter/material.dart';
 import 'package:watch_it/watch_it.dart';
 
@@ -52,6 +52,8 @@ final class HomePage extends WatchingStatefulWidget {
   /// Success message shown after import completes.
   static const String _importCompletedMessage = 'Імпорт завершено';
 
+  /// Padding for backup status overlay.
+  static const double _contentPadding = 16;
 
   /// Creates a new [HomePage].
   const HomePage({super.key});
@@ -133,7 +135,7 @@ class _HomePageState extends State<HomePage> {
               ),
               bottomSheet: status != HomePage._backupStatusIdle && status != HomePage._backupStatusSuccess
                   ? Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: EdgeInsets.all(HomePage._contentPadding),
                       color: HomePage._overlayColor,
                       child: Text(
                         status,
