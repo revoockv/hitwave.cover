@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hitwave.cover/features/song/domain/entities/song.dart';
 import 'package:hitwave.cover/features/song/presentation/pages/home_page.dart';
+import '../../../../core/presentation/theme.dart';
 
 import 'song_tile_widget.dart';
 
@@ -71,7 +72,7 @@ final class ArtistListViewWidget extends StatelessWidget {
     uniqueArtists.sort();
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: EdgeInsets.symmetric(horizontal: kLargePadding, vertical: kSmallVerticalPadding),
       child: Wrap(
         spacing: ArtistListViewWidget._chipSpacing,
         runSpacing: ArtistListViewWidget._chipRunSpacing,
@@ -91,7 +92,7 @@ final class ArtistListViewWidget extends StatelessWidget {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.only(left: 6),
+                  padding: EdgeInsets.only(left: kSmallPadding),
                   child: Text(
                     '($songCount)',
                     style: TextStyle(
@@ -241,7 +242,7 @@ final class ArtistModeWidget extends StatelessWidget {
     return ListView(
       children: <Widget>[
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: EdgeInsets.symmetric(horizontal: kLargePadding, vertical: kSmallVerticalPadding),
           child: ArtistListViewWidget(
             songs: songs,
             selectedArtist: selectedArtist,
@@ -268,7 +269,7 @@ final class ArtistModeWidget extends StatelessWidget {
 
     return <Widget>[
       Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: EdgeInsets.symmetric(horizontal: kLargePadding),
         child: ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),

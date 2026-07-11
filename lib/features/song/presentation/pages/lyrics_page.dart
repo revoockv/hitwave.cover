@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:hitwave.cover/features/song/domain/entities/song.dart';
 import 'package:hitwave.cover/features/song/presentation/controllers/lyrics_page_controller.dart';
 import 'package:hitwave.cover/features/song/presentation/widgets/lyrics_controls_widget.dart';
+import '../../../../core/presentation/theme.dart';
 
 /// Lyrics display page with auto-scroll functionality.
 ///
@@ -112,7 +113,7 @@ class _LyricsPageState extends State<LyricsPage> {
                       ? SingleChildScrollView(
                           controller: _controller.scrollController,
                           child: Padding(
-                            padding: const EdgeInsets.all(24),
+                            padding: EdgeInsets.all(kExtraLargePadding),
                             child: Align(
                               alignment: Alignment.topLeft,
                               child: Text(
@@ -134,7 +135,7 @@ class _LyricsPageState extends State<LyricsPage> {
                           minLines: 1,
                           decoration: const InputDecoration(
                             border: InputBorder.none,
-                            contentPadding: EdgeInsets.all(24),
+                            contentPadding: EdgeInsets.all(kExtraLargePadding),
                           ),
                           style: const TextStyle(fontSize: _lyricsFontSize, fontFamily: _robotoFontFamily),
                         );

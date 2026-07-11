@@ -6,6 +6,7 @@ import '../../../backup/domain/use_cases/watch_backup_status_use_case.dart';
 import '../../../backup/presentation/di/backup_getters.dart';
 import '../../domain/entities/song.dart';
 import '../../domain/use_cases/watch_list_of_songs_use_case.dart';
+import '../../../../core/presentation/theme.dart';
 import '../controllers/song_view_controller.dart';
 import '../widgets/add_song_view_widget.dart';
 import '../widgets/songs_widget.dart';
@@ -25,6 +26,14 @@ enum SongViewMode {
 /// Displays a list of songs with options to add, export, and import songs.
 /// Uses [WatchingWidget] to reactively watch song list and backup status changes.
 final class HomePage extends WatchingStatefulWidget {
+  /// Creates a new [HomePage].
+  const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
   /// Semi-transparent black color for backup status overlay.
   static const Color _overlayColor = Colors.black54;
 
@@ -58,14 +67,6 @@ final class HomePage extends WatchingStatefulWidget {
   /// Alpha value for song count text opacity.
   static const double _songCountAlpha = 0.6;
 
-  /// Creates a new [HomePage].
-  const HomePage({super.key});
-
-  @override
-  State<HomePage> createState() => _HomePageState();
-}
-
-class _HomePageState extends State<HomePage> {
   /// Manager for song view mode and selected artist state.
   late final SongViewController _songViewController;
 
@@ -104,14 +105,14 @@ class _HomePageState extends State<HomePage> {
                     Text(
                       viewMode == SongViewMode.artist && selectedArtist.isNotEmpty
                           ? selectedArtist
-                          : HomePage._homePageTitle,
+                          : _homePageTitle,
                     ),
                     Padding(
-                      padding: const EdgeInsets.only(left: 8),
+                      padding: EdgeInsets.only(left: kStandardPadding),
                       child: Text(
                         '(${_getDisplayedSongCount(songs, viewMode, selectedArtist)})',
                         style: TextStyle(
-                          color: Theme.of(context).textTheme.bodyLarge?.color?.withValues(alpha: HomePage._songCountAlpha),
+                          color: Theme.of(context).textTheme.bodyLarge?.color?.withValues(alpha: _songCountAlpha),
                         ),
                       ),
                     ),
@@ -125,17 +126,17 @@ class _HomePageState extends State<HomePage> {
                           : Icons.view_agenda,
                     ),
                     onPressed: _handleToggleViewMode,
-                    tooltip: HomePage._viewModeTooltip,
+                    tooltip: _viewModeTooltip,
                   ),
                   IconButton(
                     icon: const Icon(Icons.upload_file),
                     onPressed: () => _handleImport(context),
-                    tooltip: HomePage._importTooltip,
+                    tooltip: _importTooltip,
                   ),
                   IconButton(
                     icon: const Icon(Icons.download),
                     onPressed: () => _handleExport(context),
-                    tooltip: HomePage._exportTooltip,
+                    tooltip: _exportTooltip,
                   ),
                   IconButton(
                     icon: const Icon(Icons.add),
@@ -150,10 +151,10 @@ class _HomePageState extends State<HomePage> {
                 onArtistSelected: _songViewController.selectArtist,
                 onSongTap: (Song song) => _navigateToLyrics(context, song),
               ),
-              bottomSheet: status != HomePage._backupStatusIdle && status != HomePage._backupStatusSuccess
+              bottomSheet: status != _backupStatusIdle && status != _backupStatusSuccess
                   ? Container(
-                      padding: EdgeInsets.all(HomePage._contentPadding),
-                      color: HomePage._overlayColor,
+                      padding: EdgeInsets.all(_contentPadding),
+                      color: _overlayColor,
                       child: Text(
                         status,
                         style: const TextStyle(color: Colors.white),
@@ -184,7 +185,7 @@ class _HomePageState extends State<HomePage> {
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text(HomePage._exportCompletedMessage)),
+          SnackBar(content: Text(_exportCompletedMessage)),
         );
       }
     } catch (e) {
@@ -202,7 +203,7 @@ class _HomePageState extends State<HomePage> {
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text(HomePage._importCompletedMessage)),
+          SnackBar(content: Text(_importCompletedMessage)),
         );
       }
     } catch (e) {

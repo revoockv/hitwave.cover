@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hitwave.cover/features/song/presentation/controllers/lyrics_page_controller.dart';
+import '../../../../core/presentation/theme.dart';
 
 /// Controls bar widget for the lyrics page.
 ///
@@ -137,7 +138,7 @@ class LyricsControlsWidget extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 6),
+                    padding: EdgeInsets.only(bottom: kSmallPadding),
                     child: Text(
                       speedLabel,
                       style: textTheme.bodySmall?.copyWith(

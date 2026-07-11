@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/domain/result.dart';
+import '../../../../core/presentation/theme.dart';
 import '../di/song_getters.dart';
 
 import 'package:hitwave.cover/features/song/domain/entities/song.dart';
@@ -9,9 +10,17 @@ import 'package:hitwave.cover/features/song/domain/entities/song.dart';
 ///
 /// Shows the song name and asks for confirmation before deleting.
 final class DeleteSongDialogWidget extends StatefulWidget {
-  /// Icon size for the loading indicator.
-  static const double _loadingIconSize = 20;
+  /// The [Song] to delete.
+  final Song song;
 
+  /// Creates a new [DeleteSongDialogWidget].
+  const DeleteSongDialogWidget({required this.song, super.key});
+
+  @override
+  State<DeleteSongDialogWidget> createState() => _DeleteSongDialogState();
+}
+
+class _DeleteSongDialogState extends State<DeleteSongDialogWidget> {
   /// Dialog title text.
   static const String _dialogTitle = 'Видалити пісню';
 
@@ -27,17 +36,6 @@ final class DeleteSongDialogWidget extends StatefulWidget {
   /// Delete button text.
   static const String _deleteButtonText = 'Видалити';
 
-  /// The [Song] to delete.
-  final Song song;
-
-  /// Creates a new [DeleteSongDialogWidget].
-  const DeleteSongDialogWidget({required this.song, super.key});
-
-  @override
-  State<DeleteSongDialogWidget> createState() => _DeleteSongDialogState();
-}
-
-class _DeleteSongDialogState extends State<DeleteSongDialogWidget> {
   late final ValueNotifier<bool> isLoading;
 
   @override
@@ -55,12 +53,12 @@ class _DeleteSongDialogState extends State<DeleteSongDialogWidget> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text(DeleteSongDialogWidget._dialogTitle),
-      content: Text('${DeleteSongDialogWidget._confirmationPrompt}${widget.song.name}${DeleteSongDialogWidget._questionMark}'),
+      title: Text(_dialogTitle),
+      content: Text('$_confirmationPrompt${widget.song.name}$_questionMark'),
       actions: <Widget>[
         TextButton(
           onPressed: () => _handleCancel(context),
-          child: const Text(DeleteSongDialogWidget._cancelButtonText),
+          child: Text(_cancelButtonText),
         ),
         ValueListenableBuilder<bool>(
           valueListenable: isLoading,
@@ -69,11 +67,11 @@ class _DeleteSongDialogState extends State<DeleteSongDialogWidget> {
               onPressed: loading ? null : () => _deleteSong(context, widget.song.id, isLoading),
               child: loading
                   ? const SizedBox(
-                      width: DeleteSongDialogWidget._loadingIconSize,
-                      height: DeleteSongDialogWidget._loadingIconSize,
+                      width: kLoadingIconSize,
+                      height: kLoadingIconSize,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text(DeleteSongDialogWidget._deleteButtonText),
+                  : Text(_deleteButtonText),
             );
           },
         ),
