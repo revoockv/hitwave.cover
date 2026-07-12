@@ -8,8 +8,8 @@ import '../../domain/entities/song.dart';
 import '../../domain/use_cases/watch_list_of_songs_use_case.dart';
 import '../../../../core/presentation/theme.dart';
 import '../controllers/song_view_controller.dart';
-import '../widgets/add_song_view_widget.dart';
 import '../widgets/songs_widget.dart';
+import 'add_song_page.dart';
 import 'lyrics_page.dart';
 
 /// View mode for the song list display.
@@ -140,7 +140,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                   IconButton(
                     icon: const Icon(Icons.add),
-                    onPressed: () => _showAddSongDialog(context),
+                    onPressed: () => _showAddSongPage(context),
                   ),
                 ],
               ),
@@ -223,10 +223,11 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void _showAddSongDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext dialogContext) => AddSongDialogWidget(),
+  void _showAddSongPage(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (BuildContext context) => const AddSongPage(),
+      ),
     );
   }
 }
