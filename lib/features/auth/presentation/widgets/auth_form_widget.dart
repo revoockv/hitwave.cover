@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/presentation/theme.dart';
+
 import '../di/auth_getters.dart';
 import '../controllers/auth_form_controller.dart';
 
@@ -16,11 +18,8 @@ class AuthFormWidget extends StatefulWidget {
 }
 
 class _AuthFormState extends State<AuthFormWidget> {
-  static const double _paddingSize = 24.0;
   static const double _topSpacing = 48.0;
   static const double _sectionSpacing = 32.0;
-  static const double _buttonSpacing = 24.0;
-  static const double _toggleSpacing = 16.0;
   static const String _validationError = 'Будь ласка, заповніть всі поля.';
 
   late final AuthFormController _controller = AuthFormController();
@@ -63,14 +62,17 @@ class _AuthFormState extends State<AuthFormWidget> {
 
     _controller.isLoading.value = false;
 
-    if (result.isFailure) {
-      _controller.errorMessage.value = result.errorMessage;
-      return;
-    }
+    result.when(success: _onSubmitSucceeded, failure: _onSubmitFailed);
+  }
 
-    if (mounted) {
-      Navigator.of(context).pop();
-    }
+  /// Closes the form after a successful sign-in or sign-up.
+  void _onSubmitSucceeded(void _) {
+    Navigator.of(context).pop();
+  }
+
+  /// Shows the error of a failed sign-in or sign-up under the form.
+  void _onSubmitFailed(String error) {
+    _controller.errorMessage.value = error;
   }
 
   /// Builds the authentication form UI.
@@ -79,7 +81,7 @@ class _AuthFormState extends State<AuthFormWidget> {
     return Scaffold(
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(_paddingSize),
+          padding: const EdgeInsets.all(AppTheme.spacingLarge),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -92,12 +94,12 @@ class _AuthFormState extends State<AuthFormWidget> {
                 controller: _controller,
                 onSubmitted: _submit,
               ),
-              const SizedBox(height: _buttonSpacing),
+              const SizedBox(height: AppTheme.spacingLarge),
               _SubmitButtonWidget(
                 controller: _controller,
                 onPressed: _submit,
               ),
-              const SizedBox(height: _toggleSpacing),
+              const SizedBox(height: AppTheme.spacingMedium),
                _ToggleButtonWidget(controller: _controller),
             ],
           ),
@@ -111,9 +113,6 @@ class _AuthFormState extends State<AuthFormWidget> {
 
 /// Title text that switches between sign-in and sign-up labels.
 class _FormTitleWidget extends StatelessWidget {
-  /// Spacing below the headline text.
-  static const double _headlineSpacing = 8.0;
-
   /// Text shown in sign-up mode.
   static const String _signUpText = 'Реєстрація';
 
@@ -133,7 +132,7 @@ class _FormTitleWidget extends StatelessWidget {
       valueListenable: controller.isSignUp,
       builder: (context, isSignUp, child) {
         return Padding(
-          padding: const EdgeInsets.only(bottom: _headlineSpacing),
+          padding: const EdgeInsets.only(bottom: AppTheme.spacingSmall),
             child: Text(
               isSignUp ? _signUpText : _signInText,
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
@@ -152,9 +151,6 @@ class _ErrorMessageWidget extends StatelessWidget {
   /// Font size for error text.
   static const double _errorFontSize = 14.0;
 
-  /// Bottom padding for the error message.
-  static const double _errorBottomPadding = 16.0;
-
   /// Error color extracted as static const.
   static const Color _errorColor = Colors.red;
 
@@ -172,7 +168,7 @@ class _ErrorMessageWidget extends StatelessWidget {
       builder: (context, errorMessage, child) {
         if (errorMessage == null) return const SizedBox.shrink();
         return Padding(
-          padding: EdgeInsets.only(bottom: _errorBottomPadding),
+          padding: const EdgeInsets.only(bottom: AppTheme.spacingMedium),
           child: Text(
             errorMessage,
             style: const TextStyle(
@@ -189,15 +185,6 @@ class _ErrorMessageWidget extends StatelessWidget {
 
 /// Email text field for the authentication form.
 class _EmailFieldWidget extends StatelessWidget {
-  /// Horizontal padding inside the text field.
-  static const double _fieldPaddingHorizontal = 24.0;
-
-  /// Vertical padding inside the text field.
-  static const double _fieldPaddingVertical = 16.0;
-
-  /// Bottom spacing below the email field.
-  static const double _fieldBottomSpacing = 16.0;
-
   /// Label text for the email field.
   static const String _emailLabelText = 'Email';
 
@@ -211,19 +198,19 @@ class _EmailFieldWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(bottom: _fieldBottomSpacing),
+      padding: const EdgeInsets.only(bottom: AppTheme.spacingMedium),
       child: TextField(
         controller: controller.emailController,
         focusNode: controller.emailFocus,
         keyboardType: TextInputType.emailAddress,
         textInputAction: TextInputAction.next,
         onEditingComplete: _onEditingComplete,
-        decoration: InputDecoration(
+        decoration: const InputDecoration(
           labelText: _emailLabelText,
-          border: const OutlineInputBorder(),
+          border: OutlineInputBorder(),
           contentPadding: EdgeInsets.symmetric(
-            horizontal: _fieldPaddingHorizontal,
-            vertical: _fieldPaddingVertical,
+            horizontal: AppTheme.spacingLarge,
+            vertical: AppTheme.spacingMedium,
           ),
         ),
       ),
@@ -238,12 +225,6 @@ class _EmailFieldWidget extends StatelessWidget {
 
 /// Password text field for the authentication form.
 class _PasswordFieldWidget extends StatelessWidget {
-  /// Horizontal padding inside the text field.
-  static const double _fieldPaddingHorizontal = 24.0;
-
-  /// Vertical padding inside the text field.
-  static const double _fieldPaddingVertical = 16.0;
-
   /// Label text for the password field.
   static const String _passwordLabelText = 'Пароль';
 
@@ -268,12 +249,12 @@ class _PasswordFieldWidget extends StatelessWidget {
       obscureText: true,
       textInputAction: TextInputAction.done,
       onEditingComplete: onSubmitted,
-      decoration: InputDecoration(
+      decoration: const InputDecoration(
         labelText: _passwordLabelText,
-        border: const OutlineInputBorder(),
+        border: OutlineInputBorder(),
         contentPadding: EdgeInsets.symmetric(
-          horizontal: _fieldPaddingHorizontal,
-          vertical: _fieldPaddingVertical,
+          horizontal: AppTheme.spacingLarge,
+          vertical: AppTheme.spacingMedium,
         ),
       ),
     );
@@ -337,7 +318,7 @@ class _SubmitButtonWidget extends StatelessWidget {
               ),
             ),
             child: isLoading
-                ? SizedBox(
+                ? const SizedBox(
                     height: _indicatorSize,
                     width: _indicatorSize,
                     child: CircularProgressIndicator(
