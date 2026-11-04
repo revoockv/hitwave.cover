@@ -1,8 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
-import 'package:flutter/foundation.dart' show ValueNotifier, kIsWeb;
-import 'package:get_it/get_it.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:logger/logger.dart';
+import 'package:watch_it/watch_it.dart';
 
+import '../../../../core/presentation/di/core_di.dart';
+import '../../../song/data/data_sources/firebase_song_service.dart';
+import '../../../song/domain/repositories/song_repository.dart';
 import '../../data/data_sources/backup_data_source.dart';
 import '../../data/data_sources/backup_data_source_mobile.dart';
 import '../../data/data_sources/backup_data_source_web.dart';
@@ -11,39 +14,30 @@ import '../../domain/repositories/backup_repository.dart';
 import '../../domain/use_cases/export_songs_use_case.dart';
 import '../../domain/use_cases/import_songs_use_case.dart';
 import '../../domain/use_cases/watch_backup_status_use_case.dart';
-import '../../../song/data/data_sources/firebase_song_service.dart';
-import '../../../song/domain/repositories/song_repository.dart';
 
-/// Registers all backup feature dependencies in GetIt.
-///
-/// Creates singleton instances for the backup data source, repository
-/// implementation, then registers the status ValueNotifier with the
-/// instance key `backup.status`. Registers all use cases as singletons.
-Future<void> registerBackupFeature() async {
-  final getIt = GetIt.instance;
+/// Registers the backup feature; the repository waits for the song repository.
+void registerAndInitBackup() {
+  // 1. data sources
+  di.registerLazySingleton<BackupDataSource>(_createDataSource);
 
-  getIt.registerSingleton<BackupDataSource>(
-    kIsWeb ? BackupDataSourceWeb() : BackupDataSourceMobile(),
+  // 2. repositories
+  di.registerSingletonWithDependencies<BackupRepository>(
+    () => BackupRepositoryImpl(
+      songService: di<FirebaseSongService>(),
+      songRepository: di<SongRepository>(),
+      dataSource: di<BackupDataSource>(),
+      auth: firebase_auth.FirebaseAuth.instance,
+      logger: di<Logger>(),
+    ),
+    dependsOn: <Type>[SongRepository],
+    dispose: disposeResource,
   );
 
-  final repository = BackupRepositoryImpl(
-    songService: getIt<FirebaseSongService>(),
-    songRepository: getIt<SongRepository>(),
-    dataSource: getIt<BackupDataSource>(),
-    auth: firebase_auth.FirebaseAuth.instance,
-    logger: getIt<Logger>(),
-  );
-
-  getIt.registerSingleton<BackupRepository>(repository);
-
-  getIt.registerSingleton<ValueNotifier<String>>(
-    repository.status,
-    instanceName: 'backup.status',
-  );
-
-  getIt.registerSingleton<ExportSongsUseCase>(ExportSongsUseCase(repository));
-  getIt.registerSingleton<ImportSongsUseCase>(ImportSongsUseCase(repository));
-  getIt.registerSingleton<WatchBackupStatusUseCase>(
-    WatchBackupStatusUseCase(repository),
-  );
+  // 3. use cases
+  di.registerLazySingleton<ExportSongsUseCase>(() => ExportSongsUseCase(di<BackupRepository>()));
+  di.registerLazySingleton<ImportSongsUseCase>(() => ImportSongsUseCase(di<BackupRepository>()));
+  di.registerLazySingleton<WatchBackupStatusUseCase>(() => WatchBackupStatusUseCase(di<BackupRepository>()));
 }
+
+/// The file picker implementation of the current platform.
+BackupDataSource _createDataSource() => kIsWeb ? BackupDataSourceWeb() : BackupDataSourceMobile();

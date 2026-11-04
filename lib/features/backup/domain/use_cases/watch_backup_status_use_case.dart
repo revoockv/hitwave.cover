@@ -1,8 +1,8 @@
-import 'package:flutter/foundation.dart' show ValueNotifier;
+import 'package:flutter/foundation.dart' show ValueListenable;
 
 import '../repositories/backup_repository.dart';
 
-/// Use case that exposes the current backup status as a [ValueNotifier].
+/// Use case that exposes the current backup status as a [ValueListenable].
 ///
 /// Allows the UI to reactively watch the backup status string (idle,
 /// exporting, importing, success, or error message).
@@ -12,10 +12,10 @@ final class WatchBackupStatusUseCase {
   /// Creates a new [WatchBackupStatusUseCase].
   WatchBackupStatusUseCase(this._repository);
 
-  /// Returns the backup status [ValueNotifier].
+  /// Returns the backup status [ValueListenable].
   ///
   /// Emits a [String] describing the current backup operation state.
-  ValueNotifier<String> call() {
-    return _repository.status;
+  ValueListenable<String> call() {
+    return _repository.watchStatus();
   }
 }

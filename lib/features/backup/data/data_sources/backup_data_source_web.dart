@@ -13,6 +13,7 @@ import 'backup_data_source.dart';
 final class BackupDataSourceWeb implements BackupDataSource {
   static const List<String> _allowedExtensions = ['json'];
   static const String _backupFileName = 'backup.json';
+  static const String _anchorTag = 'a';
 
   @override
   bool get supportsDirectorySelection => false;
@@ -48,15 +49,15 @@ final class BackupDataSourceWeb implements BackupDataSource {
 
   @override
   Future<void> triggerExportDownload(String jsonString) async {
-// --- WEB ARCHITECTURE ---
-    // universal_html lets this compile on Android without breaking!
+    // universal_html lets this compile on Android without breaking.
     final blob = html.Blob([jsonString]);
     final url = html.Url.createObjectUrlFromBlob(blob);
 
-    final anchor = html.document.createElement('a') as html.AnchorElement;
+    final anchor = html.document.createElement(_anchorTag) as html.AnchorElement;
     anchor.href = url;
     anchor.download = _backupFileName;
     anchor.click();
 
-    html.Url.revokeObjectUrl(url); }
+    html.Url.revokeObjectUrl(url);
+  }
 }
