@@ -1,46 +1,30 @@
-import 'package:flutter/foundation.dart' show ValueNotifier;
-import 'package:get_it/get_it.dart';
-import 'package:hitwave.cover/features/song/domain/entities/song.dart';
-import 'package:hitwave.cover/features/song/domain/use_cases/add_cover_use_case.dart';
-import 'package:hitwave.cover/features/song/domain/use_cases/add_song_use_case.dart';
-import 'package:hitwave.cover/features/song/domain/use_cases/delete_cover_use_case.dart';
-import 'package:hitwave.cover/features/song/domain/use_cases/delete_song_use_case.dart';
-import 'package:hitwave.cover/features/song/domain/use_cases/update_cover_use_case.dart';
-import 'package:hitwave.cover/features/song/domain/use_cases/update_song_use_case.dart';
-import 'package:hitwave.cover/features/song/domain/use_cases/watch_list_of_songs_use_case.dart';
 import 'package:watch_it/watch_it.dart';
 
-/// Returns the watch list of songs use case.
-ValueNotifier<List<Song>> get watchListOfSongsUseCase {
-  return GetIt.instance<WatchListOfSongsUseCase>()();
-}
+import '../../domain/use_cases/add_cover_use_case.dart';
+import '../../domain/use_cases/add_song_use_case.dart';
+import '../../domain/use_cases/delete_cover_use_case.dart';
+import '../../domain/use_cases/delete_song_use_case.dart';
+import '../../domain/use_cases/update_cover_use_case.dart';
+import '../../domain/use_cases/update_song_use_case.dart';
+import '../../domain/use_cases/watch_list_of_songs_use_case.dart';
 
-/// Returns the add song use case.
-AddSongUseCase get addSongUseCase {
-  return GetIt.instance<AddSongUseCase>();
-}
+/// The use case that watches the list of songs; call it to get the [ValueListenable].
+WatchListOfSongsUseCase get watchListOfSongsUseCase => di<WatchListOfSongsUseCase>();
 
-/// Returns the update song use case.
-UpdateSongUseCase get updateSongUseCase {
-  return GetIt.instance<UpdateSongUseCase>();
-}
+/// The use case that adds a song.
+AddSongUseCase get addSongUseCase => di<AddSongUseCase>();
 
-/// Returns the delete song use case.
-DeleteSongUseCase get deleteSongUseCase {
-  return GetIt.instance<DeleteSongUseCase>();
-}
+/// The use case that updates a song.
+UpdateSongUseCase get updateSongUseCase => di<UpdateSongUseCase>();
 
-/// Returns the add cover use case.
-AddCoverUseCase get addCoverUseCase {
-  return GetIt.instance<AddCoverUseCase>();
-}
+/// The use case that deletes a song.
+DeleteSongUseCase get deleteSongUseCase => di<DeleteSongUseCase>();
 
-/// Returns the update cover use case.
-UpdateCoverUseCase get updateCoverUseCase {
-  return GetIt.instance<UpdateCoverUseCase>();
-}
+/// The use case that adds a cover to a song.
+AddCoverUseCase get addCoverUseCase => di<AddCoverUseCase>();
 
-/// Returns the delete cover use case.
-DeleteCoverUseCase get deleteCoverUseCase {
-  return GetIt.instance<DeleteCoverUseCase>();
-}
+/// The use case that updates a cover.
+UpdateCoverUseCase get updateCoverUseCase => di<UpdateCoverUseCase>();
+
+/// The use case that deletes a cover.
+DeleteCoverUseCase get deleteCoverUseCase => di<DeleteCoverUseCase>();

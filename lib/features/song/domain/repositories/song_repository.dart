@@ -1,6 +1,6 @@
-import 'package:flutter/foundation.dart' show ValueNotifier;
+import 'package:flutter/foundation.dart' show ValueListenable;
 
-import '../../../../core/domain/result.dart';
+import '../../../../core/domain/entities/result.dart';
 
 import '../entities/song.dart';
 
@@ -8,11 +8,10 @@ import '../entities/song.dart';
 ///
 /// Implementations handle the actual song and cover CRUD operations.
 abstract interface class SongRepository {
-  /// Returns a [ValueNotifier] containing the current list of songs.
+  /// The current list of songs, sorted by name.
   ///
-  /// Songs are sorted by name. This is exposed as a [ValueNotifier] so the
-  /// UI can reactively watch changes when songs are added, updated, or deleted.
-  ValueNotifier<List<Song>> get songs;
+  /// Changes when songs are added, updated, or deleted.
+  ValueListenable<List<Song>> watchSongs();
 
   /// Adds a new song with the given [author], [name], optional [album], and [lyrics].
   ///
@@ -77,10 +76,4 @@ abstract interface class SongRepository {
     required String songId,
     required String coverId,
   });
-
-  /// Initializes the repository and starts listening for song changes.
-  ///
-  /// Must be called once at app startup via [runAppInitiations].
-  /// Subscribes to underlying data source changes and updates the [songs] ValueNotifier.
-  Future<void> init();
 }

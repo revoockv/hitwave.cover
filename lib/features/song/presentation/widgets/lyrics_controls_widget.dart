@@ -44,11 +44,17 @@ class LyricsControlsWidget extends StatelessWidget {
   /// Slider overlay alpha.
   static const double _overlayAlpha = 0.2;
 
-  /// Spacing between slider and value text.
-  static const double _sliderValueSpacing = 8;
-
   /// Shadow color (black).
   static const Color _shadowColor = Colors.black;
+
+  /// Lowest scroll speed of the slider.
+  static const double _minSpeed = 0.0;
+
+  /// Highest scroll speed of the slider.
+  static const double _maxSpeed = 1.0;
+
+  /// Number of slider steps.
+  static const int _sliderDivisions = 100;
 
   /// The lyrics page controller.
   final LyricsPageController controller;
@@ -138,7 +144,7 @@ class LyricsControlsWidget extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
-                    padding: EdgeInsets.only(bottom: kSmallPadding),
+                    padding: const EdgeInsets.only(bottom: AppTheme.spacingTiny),
                     child: Text(
                       speedLabel,
                       style: textTheme.bodySmall?.copyWith(
@@ -155,8 +161,8 @@ class LyricsControlsWidget extends StatelessWidget {
                             child: SliderTheme(
                               data: SliderThemeData(
                                 trackHeight: LyricsControlsWidget._trackHeight,
-                                thumbShape: RoundSliderThumbShape(enabledThumbRadius: LyricsControlsWidget._thumbRadius),
-                                overlayShape: RoundSliderOverlayShape(overlayRadius: LyricsControlsWidget._overlayRadius),
+                                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: LyricsControlsWidget._thumbRadius),
+                                overlayShape: const RoundSliderOverlayShape(overlayRadius: LyricsControlsWidget._overlayRadius),
                                 activeTrackColor: colorScheme.primary,
                                 inactiveTrackColor: colorScheme.surfaceContainerHighest.withValues(alpha: LyricsControlsWidget._inactiveTrackAlpha),
                                 thumbColor: colorScheme.primary,
@@ -174,7 +180,7 @@ class LyricsControlsWidget extends StatelessWidget {
                               ),
                             ),
                           ),
-                          SizedBox(width: LyricsControlsWidget._sliderValueSpacing),
+                          const SizedBox(width: AppTheme.spacingSmall),
                           Text(
                             speedValue.toStringAsFixed(1),
                             style: textTheme.bodyMedium?.copyWith(
@@ -195,7 +201,3 @@ class LyricsControlsWidget extends StatelessWidget {
     );
   }
 }
-
-const double _minSpeed = 0.0;
-const double _maxSpeed = 1.0;
-const int _sliderDivisions = 100;

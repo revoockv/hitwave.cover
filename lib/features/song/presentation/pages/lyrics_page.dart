@@ -113,7 +113,7 @@ class _LyricsPageState extends State<LyricsPage> {
                       ? SingleChildScrollView(
                           controller: _controller.scrollController,
                           child: Padding(
-                            padding: EdgeInsets.all(kExtraLargePadding),
+                            padding: const EdgeInsets.all(AppTheme.spacingLarge),
                             child: Align(
                               alignment: Alignment.topLeft,
                               child: Text(
@@ -135,7 +135,7 @@ class _LyricsPageState extends State<LyricsPage> {
                           minLines: 1,
                           decoration: const InputDecoration(
                             border: InputBorder.none,
-                            contentPadding: EdgeInsets.all(kExtraLargePadding),
+                            contentPadding: EdgeInsets.all(AppTheme.spacingLarge),
                           ),
                           style: const TextStyle(fontSize: _lyricsFontSize, fontFamily: _robotoFontFamily),
                         );

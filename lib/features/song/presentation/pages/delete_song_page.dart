@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/domain/result.dart';
+import '../../../../core/domain/entities/result.dart';
 import '../../../../core/presentation/theme.dart';
 import '../di/song_getters.dart';
 
@@ -56,15 +56,16 @@ class _DeleteSongPageState extends State<DeleteSongPage> {
 
     if (!context.mounted) return;
 
-    if (result.isSuccess) {
-      Navigator.pop(context);
-    } else {
-      if (!context.mounted) return;
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result.errorMessage!)),
-      );
-    }
+    Navigator.pop(context);
+    result.when(success: _onSucceeded, failure: _onFailed);
+  }
+
+  /// Nothing more to do after a successful action: the page is already closed.
+  void _onSucceeded(void _) {}
+
+  /// Shows the error of a failed action.
+  void _onFailed(String error) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
   }
 
   VoidCallback _onCancel(BuildContext context) {
@@ -79,12 +80,12 @@ class _DeleteSongPageState extends State<DeleteSongPage> {
         title: const Text(_pageTitle),
       ),
       body: Padding(
-        padding: EdgeInsets.all(kLargePadding),
+        padding: const EdgeInsets.all(AppTheme.spacingMedium),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             Text('$_confirmMessagePrefix${widget.song.name}$_questionMark'),
-            SizedBox(height: kLargePadding),
+            const SizedBox(height: AppTheme.spacingMedium),
             Row(
               children: <Widget>[
                 Expanded(
@@ -93,7 +94,7 @@ class _DeleteSongPageState extends State<DeleteSongPage> {
                     child: const Text(_cancelButtonText),
                   ),
                 ),
-                SizedBox(width: kStandardPadding),
+                const SizedBox(width: AppTheme.spacingSmall),
                 Expanded(
                   child: ValueListenableBuilder<bool>(
                     valueListenable: isLoading,
@@ -101,9 +102,9 @@ class _DeleteSongPageState extends State<DeleteSongPage> {
                       return ElevatedButton(
                         onPressed: loading ? null : () => _deleteSong(context, widget.song.id),
                         child: loading
-                            ? SizedBox(
-                                width: kLoadingIconSize,
-                                height: kLoadingIconSize,
+                            ? const SizedBox(
+                                width: AppTheme.loadingIndicatorSize,
+                                height: AppTheme.loadingIndicatorSize,
                                 child: CircularProgressIndicator(strokeWidth: 2),
                               )
                             : const Text(_deleteButtonText),

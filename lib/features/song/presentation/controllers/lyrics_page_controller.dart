@@ -2,22 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-/// Default scroll speed.
-const double _defaultSpeed = 0.5;
-
-
-
-/// Scroll interval in milliseconds.
-const int _scrollIntervalMs = 16;
-
-/// Controls auto-hide delay in milliseconds.
-const int _hideControlsDelayMs = 3000;
-
-/// Scroll increment multiplier.
-const double _scrollIncrementMultiplier = 0.3125;
-
-
-
 /// Controller for lyrics page reactive state.
 ///
 /// Exposes [speed], [isScrolling], and [controlsVisible] as [ValueNotifier]
@@ -25,6 +9,18 @@ const double _scrollIncrementMultiplier = 0.3125;
 /// Also owns the [textController], [scrollController], [editScrollController],
 /// and [focusNode] so the UI layer has no stateful elements.
 final class LyricsPageController {
+  /// Default scroll speed.
+  static const double _defaultSpeed = 0.5;
+
+  /// Scroll interval in milliseconds.
+  static const int _scrollIntervalMs = 16;
+
+  /// Controls auto-hide delay in milliseconds.
+  static const int _hideControlsDelayMs = 3000;
+
+  /// Scroll increment multiplier.
+  static const double _scrollIncrementMultiplier = 0.3125;
+
   /// Current scroll speed (0.0 to 1.0).
   final ValueNotifier<double> speed = ValueNotifier(_defaultSpeed);
 
@@ -67,7 +63,10 @@ final class LyricsPageController {
     focusNode.dispose();
   }
 
+  /// Timer that advances the auto-scroll; `null` while not scrolling.
   Timer? scrollTimer;
+
+  /// Timer that hides the controls after inactivity.
   Timer? hideControlsTimer;
 
   /// Resets the controls auto-hide timer.
