@@ -25,20 +25,23 @@ final class SongViewController {
 
   /// Creates a new [SongViewController] with default values.
   SongViewController()
-      : viewMode = ValueNotifier<SongViewMode>(SongViewMode.artist),
-        selectedArtist = ValueNotifier<String>(_noArtist);
+    : viewMode = ValueNotifier<SongViewMode>(SongViewMode.artist),
+      selectedArtist = ValueNotifier<String>(_noArtist);
 
   /// Switches the view mode and clears the selected artist.
   void toggleViewMode() {
-    viewMode.value = viewMode.value == SongViewMode.list
-        ? SongViewMode.artist
-        : SongViewMode.list;
+    viewMode.value = viewMode.value == SongViewMode.list ? SongViewMode.artist : SongViewMode.list;
     selectedArtist.value = _noArtist;
   }
 
   /// Selects an artist by name.
   void selectArtist(String artist) {
     selectedArtist.value = artist;
+  }
+
+  /// Clears the selected artist and goes back to the artist list.
+  void clearArtist() {
+    selectedArtist.value = _noArtist;
   }
 
   /// Disposes the underlying [ValueNotifier] instances.

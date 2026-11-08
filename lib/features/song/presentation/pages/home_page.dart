@@ -33,6 +33,9 @@ final class HomePage extends WatchingWidget {
   /// Tooltip of the switch to the artist view.
   static const String _artistModeTooltip = 'Групувати за виконавцями';
 
+  /// Tooltip of the back button to the artist list.
+  static const String _allArtistsTooltip = 'Усі виконавці';
+
   /// Tooltip of the overflow menu.
   static const String _menuTooltip = 'Ще';
 
@@ -92,58 +95,72 @@ final class HomePage extends WatchingWidget {
     final bool isArtistMode = viewMode == SongViewMode.artist;
     final String title = isArtistMode && selectedArtist.isNotEmpty ? selectedArtist : _homePageTitle;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text.rich(
-          TextSpan(
-            text: title,
-            children: <InlineSpan>[
-              TextSpan(
-                text: '$_countSeparator${_getDisplayedSongCount(songs, viewMode, selectedArtist)}',
-                style: TextStyle(color: colorScheme.onSurfaceVariant),
-              ),
-            ],
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        actions: <Widget>[
-          IconButton(
-            icon: Icon(isArtistMode ? Icons.view_list_outlined : Icons.people_outline),
-            onPressed: controller.toggleViewMode,
-            tooltip: isArtistMode ? _listModeTooltip : _artistModeTooltip,
-          ),
-          PopupMenuButton<_HomeMenuAction>(
-            tooltip: _menuTooltip,
-            enabled: !isBackupRunning,
-            onSelected: (_HomeMenuAction action) => _onMenuSelected(context, action),
-            itemBuilder: _buildMenuItems,
-          ),
-        ],
-        bottom: isBackupRunning
-            ? const PreferredSize(
-                preferredSize: Size.fromHeight(_progressHeight),
-                child: LinearProgressIndicator(minHeight: _progressHeight),
-              )
-            : null,
-      ),
-      body: SongsWidget(
-        songs: songs,
-        viewMode: viewMode,
-        selectedArtist: selectedArtist,
-        onArtistSelected: controller.selectArtist,
-        onSongTap: (Song song) => _navigateToLyrics(context, song),
-        onSongEdit: (Song song) => _showEditSongPage(context, song),
-        onSongDelete: (Song song) => _onSongDeletePressed(context, song),
-        onAddPressed: () => _showAddSongPage(context),
-      ),
-      floatingActionButton: songs.isEmpty
-          ? null
-          : FloatingActionButton.extended(
-              onPressed: () => _showAddSongPage(context),
-              icon: const Icon(Icons.add),
-              label: const Text(_addLabel),
+    final bool hasSelectedArtist = isArtistMode && songs.any((Song song) => song.author == selectedArtist);
+
+    return PopScope(
+      canPop: !hasSelectedArtist,
+      onPopInvokedWithResult: (bool didPop, Object? result) => _onBackInvoked(controller, didPop),
+      child: Scaffold(
+        appBar: AppBar(
+          leading: hasSelectedArtist
+              ? IconButton(
+                  tooltip: _allArtistsTooltip,
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: controller.clearArtist,
+                )
+              : null,
+          title: Text.rich(
+            TextSpan(
+              text: title,
+              children: <InlineSpan>[
+                TextSpan(
+                  text: '$_countSeparator${_getDisplayedSongCount(songs, viewMode, selectedArtist)}',
+                  style: TextStyle(color: colorScheme.onSurfaceVariant),
+                ),
+              ],
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          actions: <Widget>[
+            IconButton(
+              icon: Icon(isArtistMode ? Icons.view_list_outlined : Icons.people_outline),
+              onPressed: controller.toggleViewMode,
+              tooltip: isArtistMode ? _listModeTooltip : _artistModeTooltip,
+            ),
+            PopupMenuButton<_HomeMenuAction>(
+              tooltip: _menuTooltip,
+              enabled: !isBackupRunning,
+              onSelected: (_HomeMenuAction action) => _onMenuSelected(context, action),
+              itemBuilder: _buildMenuItems,
+            ),
+          ],
+          bottom: isBackupRunning
+              ? const PreferredSize(
+                  preferredSize: Size.fromHeight(_progressHeight),
+                  child: LinearProgressIndicator(minHeight: _progressHeight),
+                )
+              : null,
+        ),
+        body: SongsWidget(
+          songs: songs,
+          viewMode: viewMode,
+          selectedArtist: selectedArtist,
+          onArtistSelected: controller.selectArtist,
+          onSongTap: (Song song) => _navigateToLyrics(context, song),
+          onSongEdit: (Song song) => _showEditSongPage(context, song),
+          onSongDelete: (Song song) => _onSongDeletePressed(context, song),
+          onAddPressed: () => _showAddSongPage(context),
+          onArtistCleared: controller.clearArtist,
+        ),
+        floatingActionButton: songs.isEmpty
+            ? null
+            : FloatingActionButton.extended(
+                onPressed: () => _showAddSongPage(context),
+                icon: const Icon(Icons.add),
+                label: const Text(_addLabel),
+              ),
+      ),
     );
   }
 
@@ -170,6 +187,12 @@ final class HomePage extends WatchingWidget {
       return songs.where((Song song) => song.author == selectedArtist).length;
     }
     return songs.length;
+  }
+
+  void _onBackInvoked(SongViewController controller, bool didPop) {
+    if (!didPop) {
+      controller.clearArtist();
+    }
   }
 
   void _onSongDeletePressed(BuildContext context, Song song) {
