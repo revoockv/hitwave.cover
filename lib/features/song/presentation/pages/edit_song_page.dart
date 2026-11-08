@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:watch_it/watch_it.dart';
 
 import '../../../../core/domain/entities/result.dart';
+import '../../../../core/domain/entities/result_state.dart';
 import '../../../../core/presentation/theme.dart';
 import '../../domain/entities/song.dart';
 import '../controllers/song_form_controller.dart';
@@ -11,7 +13,13 @@ import '../widgets/song_form_widget.dart';
 ///
 /// The fields start with the current song data. Closes after a successful
 /// save; on failure stays open and shows the error.
-final class EditSongPage extends StatefulWidget {
+final class EditSongPage extends WatchingWidget {
+  /// Title of the page.
+  static const String _pageTitle = 'Редагувати пісню';
+
+  /// Label of the save button.
+  static const String _saveButtonText = 'Зберегти зміни';
+
   /// The [Song] to edit.
   final Song song;
 
@@ -19,82 +27,44 @@ final class EditSongPage extends StatefulWidget {
   const EditSongPage({required this.song, super.key});
 
   @override
-  State<EditSongPage> createState() => _EditSongPageState();
-}
-
-class _EditSongPageState extends State<EditSongPage> {
-  static const String _pageTitle = 'Редагувати пісню';
-
-  static const String _saveButtonText = 'Зберегти зміни';
-
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-
-  late final SongFormController _controller;
-
-  /// Initializes the controller with the song data.
-  @override
-  void initState() {
-    super.initState();
-    _controller = SongFormController();
-    _controller.initEdit(
-      author: widget.song.author,
-      name: widget.song.name,
-      album: widget.song.album,
-      lyrics: widget.song.lyrics,
-    );
-  }
-
-  /// Disposes all controllers and notifiers.
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  Future<void> _onSave() async {
-    _controller.isLoading.value = true;
-
-    final Result<void> result = await updateSongUseCase(
-      songId: widget.song.id,
-      author: _controller.author,
-      name: _controller.name,
-      album: _controller.album,
-      lyrics: _controller.lyrics,
-    );
-
-    if (!mounted) return;
-
-    _controller.isLoading.value = false;
-    result.when(success: _onSucceeded, failure: _onFailed);
-  }
-
-  /// Closes the page after a successful save.
-  void _onSucceeded(void _) {
-    Navigator.of(context).pop();
-  }
-
-  /// Shows the error of a failed save; the entered data stays in the form.
-  void _onFailed(String error) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
-  }
-
-  /// Builds the edit song page.
-  @override
   Widget build(BuildContext context) {
+    final SongFormController controller = createOnce(_createController, dispose: _disposeController);
+    registerHandler(target: controller, handler: _onSaveChanged);
+
     return Scaffold(
       appBar: AppBar(title: const Text(_pageTitle)),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: AppTheme.maxContentWidth),
-          child: SongFormWidget(
-            controller: _controller,
-            formKey: _formKey,
-            submitLabel: _saveButtonText,
-            isLoading: _controller.isLoading,
-            onSubmit: _onSave,
-          ),
+          child: SongFormWidget(controller: controller, submitLabel: _saveButtonText),
         ),
       ),
     );
+  }
+
+  SongFormController _createController() => SongFormController(save: _updateSong, song: song);
+
+  static void _disposeController(SongFormController controller) => controller.dispose();
+
+  /// Updates this song with the entered values.
+  Future<Result<void>> _updateSong({
+    required String author,
+    required String name,
+    String? album,
+    required String lyrics,
+  }) {
+    return updateSongUseCase(songId: song.id, author: author, name: name, album: album, lyrics: lyrics);
+  }
+
+  /// Closes the page after a save; shows the error of a failed one.
+  void _onSaveChanged(BuildContext context, ResultState<void> state, void Function() cancel) {
+    switch (state) {
+      case SuccessResultState<void>():
+        Navigator.of(context).pop();
+      case FailureResultState<void>(:final String message):
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      case IdleResultState<void>() || LoadingResultState<void>():
+        break;
+    }
   }
 }

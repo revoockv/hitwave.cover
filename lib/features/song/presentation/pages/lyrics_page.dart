@@ -1,25 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:hitwave.cover/features/song/domain/entities/song.dart';
-import 'package:hitwave.cover/features/song/presentation/controllers/lyrics_page_controller.dart';
-import 'package:hitwave.cover/features/song/presentation/widgets/lyrics_controls_widget.dart';
+import 'package:watch_it/watch_it.dart';
+
 import '../../../../core/presentation/theme.dart';
+import '../../domain/entities/song.dart';
+import '../controllers/lyrics_page_controller.dart';
+import '../widgets/lyrics_controls_widget.dart';
 
 /// Lyrics display page with auto-scroll functionality.
 ///
 /// Shows the song title, author, and lyrics with a speed-controlled
 /// auto-scroll feature. Controls auto-hide after inactivity.
-final class LyricsPage extends StatefulWidget {
-  /// The song whose lyrics to display.
-  final Song song;
-
-  /// Creates a new [LyricsPage].
-  const LyricsPage({required this.song, super.key});
-
-  @override
-  State<LyricsPage> createState() => _LyricsPageState();
-}
-
-class _LyricsPageState extends State<LyricsPage> {
+final class LyricsPage extends WatchingWidget {
   /// Speed label text.
   static const String _speedLabel = 'Швидкість';
 
@@ -43,58 +34,17 @@ class _LyricsPageState extends State<LyricsPage> {
     _controlsClearance,
   );
 
-  late final LyricsPageController _controller;
+  /// The song whose lyrics to display.
+  final Song song;
 
-  @override
-  void initState() {
-    super.initState();
-    _controller = LyricsPageController();
-    _controller.initControllers(widget.song.lyrics);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _hideKeyboard() {
-    if (_controller.focusNode.hasFocus) {
-      _controller.focusNode.unfocus();
-    }
-  }
-
-  void _startScrolling() {
-    if (_controller.isScrolling.value) return;
-    _controller.startScrolling(_resetHideTimer, _hideKeyboard);
-  }
-
-  void _stopScrolling() {
-    _controller.stopScrolling(_resetHideTimer);
-  }
-
-  void _resetHideTimer() {
-    _controller.resetHideTimer();
-  }
-
-  void _toggleScroll() {
-    if (_controller.isScrolling.value) {
-      _stopScrolling();
-    } else {
-      if (_controller.textController.text.trim().isEmpty) return;
-      _startScrolling();
-    }
-  }
-
-  void _onLyricsTapped() {
-    _resetHideTimer();
-    if (_controller.isScrolling.value) {
-      FocusScope.of(context).unfocus();
-    }
-  }
+  /// Creates a new [LyricsPage].
+  const LyricsPage({required this.song, super.key});
 
   @override
   Widget build(BuildContext context) {
+    final LyricsPageController controller = createOnce(_createController, dispose: _disposeController);
+    final bool isScrolling = watch(controller.isScrolling).value;
+
     final ThemeData theme = Theme.of(context);
     final TextStyle? lyricsStyle = theme.textTheme.bodyLarge?.copyWith(
       fontSize: _lyricsFontSize,
@@ -106,9 +56,9 @@ class _LyricsPageState extends State<LyricsPage> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text(widget.song.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+            Text(song.name, maxLines: 1, overflow: TextOverflow.ellipsis),
             Text(
-              widget.song.author,
+              song.author,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
@@ -121,42 +71,37 @@ class _LyricsPageState extends State<LyricsPage> {
           Positioned.fill(
             child: GestureDetector(
               behavior: HitTestBehavior.translucent,
-              onTap: _onLyricsTapped,
+              onTap: controller.onLyricsTapped,
               child: Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: AppTheme.maxContentWidth),
-                  child: ValueListenableBuilder<bool>(
-                    valueListenable: _controller.isScrolling,
-                    builder: (BuildContext context, bool isScrolling, Widget? child) {
-                      return isScrolling
-                          ? SingleChildScrollView(
-                              controller: _controller.scrollController,
-                              padding: _lyricsPadding,
-                              child: SizedBox(
-                                width: double.infinity,
-                                child: Text(_controller.textController.text, style: lyricsStyle),
-                              ),
-                            )
-                          : TextField(
-                              controller: _controller.textController,
-                              focusNode: _controller.focusNode,
-                              scrollController: _controller.editScrollController,
-                              textInputAction: TextInputAction.done,
-                              onEditingComplete: _hideKeyboard,
-                              maxLines: null,
-                              expands: true,
-                              textAlignVertical: TextAlignVertical.top,
-                              decoration: const InputDecoration(
-                                filled: false,
-                                border: InputBorder.none,
-                                enabledBorder: InputBorder.none,
-                                focusedBorder: InputBorder.none,
-                                contentPadding: _lyricsPadding,
-                              ),
-                              style: lyricsStyle,
-                            );
-                    },
-                  ),
+                  child: isScrolling
+                      ? SingleChildScrollView(
+                          controller: controller.scrollController,
+                          padding: _lyricsPadding,
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: Text(controller.textController.text, style: lyricsStyle),
+                          ),
+                        )
+                      : TextField(
+                          controller: controller.textController,
+                          focusNode: controller.focusNode,
+                          scrollController: controller.editScrollController,
+                          textInputAction: TextInputAction.done,
+                          onEditingComplete: controller.hideKeyboard,
+                          maxLines: null,
+                          expands: true,
+                          textAlignVertical: TextAlignVertical.top,
+                          decoration: const InputDecoration(
+                            filled: false,
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            contentPadding: _lyricsPadding,
+                          ),
+                          style: lyricsStyle,
+                        ),
                 ),
               ),
             ),
@@ -169,12 +114,10 @@ class _LyricsPageState extends State<LyricsPage> {
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: AppTheme.maxContentWidth),
                 child: LyricsControlsWidget(
-                  controller: _controller,
+                  controller: controller,
                   speedLabel: _speedLabel,
                   stopLabel: _stopLabel,
                   startLabel: _startLabel,
-                  toggleScroll: _toggleScroll,
-                  resetHideTimer: _resetHideTimer,
                 ),
               ),
             ),
@@ -183,4 +126,8 @@ class _LyricsPageState extends State<LyricsPage> {
       ),
     );
   }
+
+  LyricsPageController _createController() => LyricsPageController(lyrics: song.lyrics);
+
+  static void _disposeController(LyricsPageController controller) => controller.dispose();
 }

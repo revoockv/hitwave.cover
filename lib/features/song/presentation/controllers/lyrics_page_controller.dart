@@ -31,23 +31,43 @@ final class LyricsPageController {
   final ValueNotifier<bool> controlsVisible = ValueNotifier(true);
 
   /// Controller for the lyrics text field.
-  late final TextEditingController textController;
+  final TextEditingController textController;
 
   /// Controller for the auto-scrolling lyrics view.
-  late final ScrollController scrollController;
+  final ScrollController scrollController = ScrollController();
 
   /// Controller for the edit-mode lyrics view.
-  late final ScrollController editScrollController;
+  final ScrollController editScrollController = ScrollController();
 
   /// Focus node for the lyrics text field.
-  late final FocusNode focusNode;
+  final FocusNode focusNode = FocusNode();
 
-  /// Initializes the text and scroll controllers with the given lyrics.
-  void initControllers(String lyrics) {
-    textController = TextEditingController(text: lyrics);
-    scrollController = ScrollController();
-    editScrollController = ScrollController();
-    focusNode = FocusNode();
+  /// Creates the controller with the [lyrics] to show.
+  LyricsPageController({required String lyrics}) : textController = TextEditingController(text: lyrics);
+
+  /// Hides the keyboard of the lyrics field.
+  void hideKeyboard() {
+    if (focusNode.hasFocus) {
+      focusNode.unfocus();
+    }
+  }
+
+  /// Starts auto-scrolling, or stops it when it runs; nothing to scroll in empty lyrics.
+  void toggleScroll() {
+    if (isScrolling.value) {
+      stopScrolling();
+      return;
+    }
+    if (textController.text.trim().isEmpty) return;
+    startScrolling();
+  }
+
+  /// Shows the controls again after a tap on the lyrics.
+  void onLyricsTapped() {
+    resetHideTimer();
+    if (isScrolling.value) {
+      hideKeyboard();
+    }
   }
 
   /// Cancels all timers and disposes all [ValueNotifier] and controller fields.
@@ -76,13 +96,10 @@ final class LyricsPageController {
   void resetHideTimer() {
     hideControlsTimer?.cancel();
     controlsVisible.value = true;
-    hideControlsTimer = Timer(
-      const Duration(milliseconds: _hideControlsDelayMs),
-      () {
-        if (!isScrolling.value || !controlsVisible.value) return;
-        controlsVisible.value = false;
-      },
-    );
+    hideControlsTimer = Timer(const Duration(milliseconds: _hideControlsDelayMs), () {
+      if (!isScrolling.value || !controlsVisible.value) return;
+      controlsVisible.value = false;
+    });
   }
 
   /// Starts auto-scrolling the lyrics text.
@@ -90,43 +107,34 @@ final class LyricsPageController {
   /// Cancels any existing scroll timer, sets [isScrolling] to true,
   /// and starts a periodic timer that scrolls by [_scrollIncrementMultiplier]
   /// every [_scrollIntervalMs] milliseconds.
-  void startScrolling(
-    void Function() resetHideTimer,
-    void Function() hideKeyboard,
-  ) {
+  void startScrolling() {
     if (isScrolling.value) return;
 
     isScrolling.value = true;
     hideKeyboard();
     scrollTimer?.cancel();
-    scrollTimer = Timer.periodic(
-      const Duration(milliseconds: _scrollIntervalMs),
-      (_) {
-        if (!scrollController.hasClients) return;
+    scrollTimer = Timer.periodic(const Duration(milliseconds: _scrollIntervalMs), (_) {
+      if (!scrollController.hasClients) return;
 
-        final maxScroll = scrollController.position.maxScrollExtent;
-        final currentScroll = scrollController.offset;
+      final maxScroll = scrollController.position.maxScrollExtent;
+      final currentScroll = scrollController.offset;
 
-        if (currentScroll >= maxScroll) {
-          stopScrolling(resetHideTimer);
-          return;
-        }
+      if (currentScroll >= maxScroll) {
+        stopScrolling();
+        return;
+      }
 
-        final scrollIncrement = speed.value * _scrollIncrementMultiplier;
-        final newOffset = (currentScroll + scrollIncrement).clamp(
-          0.0,
-          maxScroll,
-        );
+      final scrollIncrement = speed.value * _scrollIncrementMultiplier;
+      final newOffset = (currentScroll + scrollIncrement).clamp(0.0, maxScroll);
 
-        scrollController.jumpTo(newOffset);
-      },
-    );
+      scrollController.jumpTo(newOffset);
+    });
 
     resetHideTimer();
   }
 
   /// Stops auto-scrolling and scrolls to the bottom of the lyrics.
-  void stopScrolling(void Function() resetHideTimer) {
+  void stopScrolling() {
     scrollTimer?.cancel();
     scrollTimer = null;
 
@@ -141,14 +149,5 @@ final class LyricsPageController {
         }
       }
     });
-  }
-
-  /// Toggles auto-scrolling on or off.
-  bool toggleScroll(String lyricsText) {
-    if (isScrolling.value) {
-      return false;
-    }
-    if (lyricsText.trim().isEmpty) return false;
-    return true;
   }
 }

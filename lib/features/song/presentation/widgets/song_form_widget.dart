@@ -1,14 +1,16 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
+import 'package:watch_it/watch_it.dart';
 
+import '../../../../core/domain/entities/result_state.dart';
 import '../../../../core/presentation/theme.dart';
 import '../controllers/song_form_controller.dart';
 
 /// Song form shared by the add and edit pages.
 ///
 /// Shows the author, name, album and lyrics fields with inline validation and
-/// a submit button pinned to the bottom. Knows nothing about use cases: it
-/// validates the [formKey] and calls [onSubmit].
+/// a submit button pinned to the bottom. Knows nothing about use cases: the
+/// button calls [SongFormController.save], which validates the form first.
 final class SongFormWidget extends StatelessWidget {
   /// Visible lines of the lyrics field before it scrolls.
   static const int _lyricsMinLines = 8;
@@ -34,27 +36,11 @@ final class SongFormWidget extends StatelessWidget {
   /// Controller holding the field values.
   final SongFormController controller;
 
-  /// Key of the [Form], validated before [onSubmit].
-  final GlobalKey<FormState> formKey;
-
   /// Label of the submit button.
   final String submitLabel;
 
-  /// Whether the save is in progress.
-  final ValueListenable<bool> isLoading;
-
-  /// Called when the form is valid and the user submits it.
-  final VoidCallback onSubmit;
-
   /// Creates a new [SongFormWidget].
-  const SongFormWidget({
-    required this.controller,
-    required this.formKey,
-    required this.submitLabel,
-    required this.isLoading,
-    required this.onSubmit,
-    super.key,
-  });
+  const SongFormWidget({required this.controller, required this.submitLabel, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -62,12 +48,12 @@ final class SongFormWidget extends StatelessWidget {
       children: <Widget>[
         Expanded(
           child: Form(
-            key: formKey,
+            key: controller.formKey,
             child: ListView(
               padding: const EdgeInsets.all(AppTheme.spacingMedium),
               children: <Widget>[
                 TextFormField(
-                  controller: controller.authorController,
+                  controller: controller.author,
                   textCapitalization: TextCapitalization.words,
                   textInputAction: TextInputAction.next,
                   decoration: const InputDecoration(labelText: _authorLabel, prefixIcon: Icon(Icons.person_outline)),
@@ -75,7 +61,7 @@ final class SongFormWidget extends StatelessWidget {
                 ),
                 const SizedBox(height: AppTheme.spacingMedium),
                 TextFormField(
-                  controller: controller.nameController,
+                  controller: controller.name,
                   textCapitalization: TextCapitalization.sentences,
                   textInputAction: TextInputAction.next,
                   decoration: const InputDecoration(labelText: _nameLabel, prefixIcon: Icon(Icons.music_note_outlined)),
@@ -83,7 +69,7 @@ final class SongFormWidget extends StatelessWidget {
                 ),
                 const SizedBox(height: AppTheme.spacingMedium),
                 TextFormField(
-                  controller: controller.albumController,
+                  controller: controller.album,
                   textCapitalization: TextCapitalization.sentences,
                   textInputAction: TextInputAction.next,
                   decoration: const InputDecoration(
@@ -94,7 +80,7 @@ final class SongFormWidget extends StatelessWidget {
                 ),
                 const SizedBox(height: AppTheme.spacingMedium),
                 TextFormField(
-                  controller: controller.lyricsController,
+                  controller: controller.lyrics,
                   textCapitalization: TextCapitalization.sentences,
                   keyboardType: TextInputType.multiline,
                   minLines: _lyricsMinLines,
@@ -111,35 +97,11 @@ final class SongFormWidget extends StatelessWidget {
           top: false,
           child: Padding(
             padding: const EdgeInsets.all(AppTheme.spacingMedium),
-            child: ValueListenableBuilder<bool>(
-              valueListenable: isLoading,
-              builder: (BuildContext context, bool loading, Widget? child) {
-                return SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: loading ? null : _onSubmitPressed,
-                    child: loading
-                        ? const SizedBox.square(
-                            dimension: AppTheme.loadingIndicatorSize,
-                            child: CircularProgressIndicator(strokeWidth: AppTheme.loadingIndicatorStroke),
-                          )
-                        : Text(submitLabel),
-                  ),
-                );
-              },
-            ),
+            child: _SaveButtonWidget(state: controller, label: submitLabel, onPressed: controller.save),
           ),
         ),
       ],
     );
-  }
-
-  void _onSubmitPressed() {
-    final FormState? form = formKey.currentState;
-    if (form == null || !form.validate()) {
-      return;
-    }
-    onSubmit();
   }
 
   static String? _validateRequired(String? value) {
@@ -147,5 +109,38 @@ final class SongFormWidget extends StatelessWidget {
       return _requiredError;
     }
     return null;
+  }
+}
+
+/// Save button that shows progress while the save runs.
+final class _SaveButtonWidget extends WatchingWidget {
+  /// State of the save.
+  final ValueListenable<ResultState<void>> state;
+
+  /// Label of the button.
+  final String label;
+
+  /// Called when the button is pressed.
+  final VoidCallback onPressed;
+
+  /// Creates a new [_SaveButtonWidget].
+  const _SaveButtonWidget({required this.state, required this.label, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isLoading = watch(state).value.isLoading;
+
+    return SizedBox(
+      width: double.infinity,
+      child: FilledButton(
+        onPressed: isLoading ? null : onPressed,
+        child: isLoading
+            ? const SizedBox.square(
+                dimension: AppTheme.loadingIndicatorSize,
+                child: CircularProgressIndicator(strokeWidth: AppTheme.loadingIndicatorStroke),
+              )
+            : Text(label),
+      ),
+    );
   }
 }
