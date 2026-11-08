@@ -37,6 +37,14 @@ abstract interface class SongRepository {
     required String lyrics,
   });
 
+  /// Saves the auto-scroll [speed] of the lyrics of the song identified by [songId].
+  ///
+  /// Returns [Result.ok] on success, or a failure with an error message.
+  Future<Result<void>> updateSongScrollSpeed({
+    required String songId,
+    required double speed,
+  });
+
   /// Deletes a song identified by [songId] and all its associated covers.
   ///
   /// Returns [SuccessResult] on success, or [FailureResult] with an error message

@@ -23,6 +23,9 @@ final class SongModel {
   /// The list of cover IDs associated with this song.
   final List<String> coverIds;
 
+  /// Saved auto-scroll speed of the lyrics, or `null` when never set.
+  final double? scrollSpeed;
+
   /// Creates a new [SongModel] instance.
   const SongModel({
     required this.id,
@@ -31,6 +34,7 @@ final class SongModel {
     this.album,
     required this.lyrics,
     required this.coverIds,
+    this.scrollSpeed,
   });
 
   /// Converts this model to a domain [Song] entity.
@@ -42,6 +46,7 @@ final class SongModel {
       album: album,
       lyrics: lyrics,
       covers: covers,
+      scrollSpeed: scrollSpeed,
     );
   }
 
@@ -54,6 +59,7 @@ final class SongModel {
       album: entity.album,
       lyrics: entity.lyrics,
       coverIds:(entity.covers.isNotEmpty)?entity.covers.map((cover) => cover.id).toList():[],
+      scrollSpeed: entity.scrollSpeed,
     );
   }
 }

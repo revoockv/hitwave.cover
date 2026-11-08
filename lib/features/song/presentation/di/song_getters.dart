@@ -5,6 +5,7 @@ import '../../domain/use_cases/add_song_use_case.dart';
 import '../../domain/use_cases/delete_cover_use_case.dart';
 import '../../domain/use_cases/delete_song_use_case.dart';
 import '../../domain/use_cases/update_cover_use_case.dart';
+import '../../domain/use_cases/update_song_scroll_speed_use_case.dart';
 import '../../domain/use_cases/update_song_use_case.dart';
 import '../../domain/use_cases/watch_list_of_songs_use_case.dart';
 
@@ -16,6 +17,9 @@ AddSongUseCase get addSongUseCase => di<AddSongUseCase>();
 
 /// The use case that updates a song.
 UpdateSongUseCase get updateSongUseCase => di<UpdateSongUseCase>();
+
+/// The use case that saves the auto-scroll speed of a song.
+UpdateSongScrollSpeedUseCase get updateSongScrollSpeedUseCase => di<UpdateSongScrollSpeedUseCase>();
 
 /// The use case that deletes a song.
 DeleteSongUseCase get deleteSongUseCase => di<DeleteSongUseCase>();

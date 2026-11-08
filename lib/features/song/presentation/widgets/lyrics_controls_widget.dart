@@ -15,12 +15,6 @@ final class LyricsControlsWidget extends WatchingWidget {
   /// Fade duration of the panel.
   static const Duration _fadeDuration = Duration(milliseconds: 250);
 
-  /// Lowest scroll speed of the slider.
-  static const double _minSpeed = 0.0;
-
-  /// Highest scroll speed of the slider.
-  static const double _maxSpeed = 1.0;
-
   /// Number of slider steps.
   static const int _sliderDivisions = 20;
 
@@ -95,11 +89,12 @@ final class LyricsControlsWidget extends WatchingWidget {
                           Expanded(
                             child: Slider(
                               value: speed,
-                              min: _minSpeed,
-                              max: _maxSpeed,
+                              min: LyricsPageController.minSpeed,
+                              max: LyricsPageController.maxSpeed,
                               divisions: _sliderDivisions,
                               label: speed.toStringAsFixed(_speedDigits),
                               onChanged: _onSpeedChanged,
+                              onChangeEnd: controller.saveSpeed,
                             ),
                           ),
                           Text(

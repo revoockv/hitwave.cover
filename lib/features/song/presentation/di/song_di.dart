@@ -13,6 +13,7 @@ import '../../domain/use_cases/add_song_use_case.dart';
 import '../../domain/use_cases/delete_cover_use_case.dart';
 import '../../domain/use_cases/delete_song_use_case.dart';
 import '../../domain/use_cases/update_cover_use_case.dart';
+import '../../domain/use_cases/update_song_scroll_speed_use_case.dart';
 import '../../domain/use_cases/update_song_use_case.dart';
 import '../../domain/use_cases/watch_list_of_songs_use_case.dart';
 
@@ -41,6 +42,7 @@ void registerAndInitSong() {
   di.registerLazySingleton<WatchListOfSongsUseCase>(() => WatchListOfSongsUseCase(di<SongRepository>()));
   di.registerLazySingleton<AddSongUseCase>(() => AddSongUseCase(di<SongRepository>()));
   di.registerLazySingleton<UpdateSongUseCase>(() => UpdateSongUseCase(di<SongRepository>()));
+  di.registerLazySingleton<UpdateSongScrollSpeedUseCase>(() => UpdateSongScrollSpeedUseCase(di<SongRepository>()));
   di.registerLazySingleton<DeleteSongUseCase>(() => DeleteSongUseCase(di<SongRepository>()));
   di.registerLazySingleton<AddCoverUseCase>(() => AddCoverUseCase(di<SongRepository>()));
   di.registerLazySingleton<UpdateCoverUseCase>(() => UpdateCoverUseCase(di<SongRepository>()));

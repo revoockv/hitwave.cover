@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:watch_it/watch_it.dart';
 
+import '../../../../core/domain/entities/result.dart';
+import '../../../../core/domain/entities/result_state.dart';
 import '../../../../core/presentation/theme.dart';
 import '../../domain/entities/song.dart';
 import '../controllers/lyrics_page_controller.dart';
+import '../di/song_getters.dart';
 import '../widgets/lyrics_controls_widget.dart';
 
 /// Lyrics display page with auto-scroll functionality.
@@ -26,13 +29,17 @@ final class LyricsPage extends WatchingWidget {
   /// Bottom space so the last line can scroll above the control panel.
   static const double _controlsClearance = 120;
 
-  /// Padding around the lyrics text.
+  /// Padding around the lyrics text while editing.
   static const EdgeInsets _lyricsPadding = EdgeInsets.fromLTRB(
     AppTheme.spacingLarge,
     AppTheme.spacingLarge,
     AppTheme.spacingLarge,
     _controlsClearance,
   );
+
+  /// Part of the screen height left empty above the lyrics while scrolling,
+  /// so there is time before the first lines move up.
+  static const double _leadInFactor = 0.4;
 
   /// The song whose lyrics to display.
   final Song song;
@@ -44,6 +51,8 @@ final class LyricsPage extends WatchingWidget {
   Widget build(BuildContext context) {
     final LyricsPageController controller = createOnce(_createController, dispose: _disposeController);
     final bool isScrolling = watch(controller.isScrolling).value;
+    registerHandler(target: controller.speedSave, handler: _onSpeedSaveChanged);
+    final double leadIn = MediaQuery.sizeOf(context).height * _leadInFactor;
 
     final ThemeData theme = Theme.of(context);
     final TextStyle? lyricsStyle = theme.textTheme.bodyLarge?.copyWith(
@@ -78,7 +87,7 @@ final class LyricsPage extends WatchingWidget {
                   child: isScrolling
                       ? SingleChildScrollView(
                           controller: controller.scrollController,
-                          padding: _lyricsPadding,
+                          padding: _lyricsPadding.copyWith(top: leadIn),
                           child: SizedBox(
                             width: double.infinity,
                             child: Text(controller.textController.text, style: lyricsStyle),
@@ -127,7 +136,17 @@ final class LyricsPage extends WatchingWidget {
     );
   }
 
-  LyricsPageController _createController() => LyricsPageController(lyrics: song.lyrics);
+  LyricsPageController _createController() =>
+      LyricsPageController(lyrics: song.lyrics, initialSpeed: song.scrollSpeed, saveSpeed: _saveSpeed);
+
+  /// Saves [speed] with this song.
+  Future<Result<void>> _saveSpeed(double speed) => updateSongScrollSpeedUseCase(songId: song.id, speed: speed);
+
+  /// Shows an error when the speed could not be saved.
+  void _onSpeedSaveChanged(BuildContext context, ResultState<void> state, void Function() cancel) {
+    if (state is! FailureResultState<void>) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.message)));
+  }
 
   static void _disposeController(LyricsPageController controller) => controller.dispose();
 }

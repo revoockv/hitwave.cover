@@ -22,6 +22,9 @@ final class Song {
   /// The list of covers associated with this song.
   final List<Cover> covers;
 
+  /// Saved auto-scroll speed of the lyrics (0.0–1.0), or `null` when never set.
+  final double? scrollSpeed;
+
   /// Creates a new [Song] instance.
   const Song({
     required this.id,
@@ -30,5 +33,6 @@ final class Song {
     this.album,
     required this.lyrics,
     required this.covers,
+    this.scrollSpeed,
   });
 }

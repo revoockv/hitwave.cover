@@ -22,6 +22,7 @@ final class SongRepositoryImpl implements SongRepository, DisposableResource {
   static const String _addSongFailedMessage = 'Помилка при додаванні пісні.';
   static const String _updateSongFailedMessage = 'Помилка при оновленні пісні.';
   static const String _deleteSongFailedMessage = 'Помилка при видаленні пісні.';
+  static const String _updateSpeedFailedMessage = 'Не вдалося зберегти швидкість.';
   static const String _addCoverFailedMessage = 'Помилка при додаванні обкладинки.';
   static const String _updateCoverFailedMessage = 'Помилка при оновленні обкладинки.';
   static const String _deleteCoverFailedMessage = 'Помилка при видаленні обкладинки.';
@@ -36,6 +37,8 @@ final class SongRepositoryImpl implements SongRepository, DisposableResource {
   static const String _addSongLog = 'AddSong';
   static const String _updateSongLog = 'UpdateSong';
   static const String _deleteSongLog = 'DeleteSong';
+  static const String _updateSpeedLog = 'UpdateSongScrollSpeed';
+  static const String _speedLog = '", speed=';
   static const String _addCoverLog = 'AddCover';
   static const String _updateCoverLog = 'UpdateCover';
   static const String _deleteCoverLog = 'DeleteCover';
@@ -193,6 +196,30 @@ final class SongRepositoryImpl implements SongRepository, DisposableResource {
     } on Exception catch (e) {
       _logger.e('$_updateSongLog$_failureLog$e');
       return const Result.failure(_updateSongFailedMessage);
+    }
+  }
+
+  @override
+  Future<Result<void>> updateSongScrollSpeed({
+    required String songId,
+    required double speed,
+  }) async {
+    _logger.i('$_updateSpeedLog$_startingLog$songId$_speedLog$speed');
+
+    final String? userId = _currentUserId;
+    if (userId == null) {
+      _logger.w('$_updateSpeedLog$_notAuthenticatedLog');
+      return const Result.failure(_userNotAuthenticated);
+    }
+
+    try {
+      await _songService.updateSongScrollSpeed(userId: userId, songId: songId, speed: speed);
+
+      _logger.i('$_updateSpeedLog$_successLog$songId$_closingQuoteLog');
+      return Result.ok;
+    } on Exception catch (e) {
+      _logger.e('$_updateSpeedLog$_failureLog$e');
+      return const Result.failure(_updateSpeedFailedMessage);
     }
   }
 

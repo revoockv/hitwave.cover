@@ -21,6 +21,7 @@ final class FirebaseSongService {
   static const String _updatedAtField = 'updatedAt';
   static const String _timestampField = 'timestamp';
   static const String _notesField = 'notes';
+  static const String _scrollSpeedField = 'scrollSpeed';
 
   final FirebaseFirestore _firestore;
 
@@ -58,6 +59,7 @@ final class FirebaseSongService {
       _albumField: song.album,
       _lyricsField: song.lyrics,
       _coverIdsField: <String>[],
+      _scrollSpeedField: song.scrollSpeed,
       _createdAtField: FieldValue.serverTimestamp(),
     };
 
@@ -83,6 +85,20 @@ final class FirebaseSongService {
     };
 
     await docRef.update(songData);
+  }
+
+  /// Saves the auto-scroll [speed] of a song without touching its other fields.
+  ///
+  /// Throws the Firestore exception when the operation fails.
+  Future<void> updateSongScrollSpeed({
+    required String userId,
+    required String songId,
+    required double speed,
+  }) async {
+    await _songsCollection(userId).doc(songId).update(<String, dynamic>{
+      _scrollSpeedField: speed,
+      _updatedAtField: FieldValue.serverTimestamp(),
+    });
   }
 
   /// Deletes a song document from Firestore and all its covers.
@@ -120,6 +136,7 @@ final class FirebaseSongService {
               album: data[_albumField] as String?,
               lyrics: data[_lyricsField] as String,
               coverIds: List<String>.from(data[_coverIdsField] as List<dynamic>),
+              scrollSpeed: (data[_scrollSpeedField] as num?)?.toDouble(),
             );
           }).toList();
         });

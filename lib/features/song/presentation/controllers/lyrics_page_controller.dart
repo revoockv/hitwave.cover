@@ -2,6 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../../../core/domain/entities/result.dart';
+import '../../../../core/domain/entities/result_state.dart';
+
 /// Controller for lyrics page reactive state.
 ///
 /// Exposes [speed], [isScrolling], and [controlsVisible] as [ValueNotifier]
@@ -21,8 +24,23 @@ final class LyricsPageController {
   /// Scroll increment multiplier.
   static const double _scrollIncrementMultiplier = 0.3125;
 
+  /// Lowest scroll speed.
+  static const double minSpeed = 0.0;
+
+  /// Highest scroll speed.
+  static const double maxSpeed = 1.0;
+
   /// Current scroll speed (0.0 to 1.0).
-  final ValueNotifier<double> speed = ValueNotifier(_defaultSpeed);
+  final ValueNotifier<double> speed;
+
+  /// State of the last speed save; a failure is shown by the page.
+  final ValueNotifier<ResultState<void>> speedSave = ValueNotifier<ResultState<void>>(ResultState.idle);
+
+  final Future<Result<void>> Function(double speed) _saveSpeed;
+
+  double _savedSpeed;
+
+  bool _isDisposed = false;
 
   /// Whether auto-scroll is currently active.
   final ValueNotifier<bool> isScrolling = ValueNotifier(false);
@@ -43,7 +61,33 @@ final class LyricsPageController {
   final FocusNode focusNode = FocusNode();
 
   /// Creates the controller with the [lyrics] to show.
-  LyricsPageController({required String lyrics}) : textController = TextEditingController(text: lyrics);
+  ///
+  /// Starts at [initialSpeed] (the speed saved with the song) or the default;
+  /// [saveSpeed] stores a new speed with the song.
+  LyricsPageController({
+    required String lyrics,
+    required Future<Result<void>> Function(double speed) saveSpeed,
+    double? initialSpeed,
+  }) : this._(lyrics, saveSpeed, (initialSpeed ?? _defaultSpeed).clamp(minSpeed, maxSpeed));
+
+  LyricsPageController._(String lyrics, this._saveSpeed, double startSpeed)
+    : textController = TextEditingController(text: lyrics),
+      speed = ValueNotifier<double>(startSpeed),
+      _savedSpeed = startSpeed;
+
+  /// Saves the current speed with the song when it changed; called when the slider is released.
+  Future<void> saveSpeed(double value) async {
+    if (value == _savedSpeed || speedSave.value.isLoading) return;
+    speedSave.value = ResultState.loading;
+
+    final Result<void> result = await _saveSpeed(value);
+    if (_isDisposed) return;
+
+    if (result.isSuccess) {
+      _savedSpeed = value;
+    }
+    speedSave.value = ResultState.of(result);
+  }
 
   /// Hides the keyboard of the lyrics field.
   void hideKeyboard() {
@@ -74,7 +118,9 @@ final class LyricsPageController {
   void dispose() {
     scrollTimer?.cancel();
     hideControlsTimer?.cancel();
+    _isDisposed = true;
     speed.dispose();
+    speedSave.dispose();
     isScrolling.dispose();
     controlsVisible.dispose();
     textController.dispose();
