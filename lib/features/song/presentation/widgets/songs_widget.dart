@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../../core/presentation/theme.dart';
 import '../../domain/entities/song.dart';
 import '../controllers/song_view_controller.dart';
-import 'artist_chip_bar_widget.dart';
 import 'artist_picker_widget.dart';
 import 'song_tile_widget.dart';
 
@@ -102,8 +101,7 @@ final class SongListModeWidget extends StatelessWidget {
 /// Artist mode: a compact artist list, or the songs of the selected artist.
 ///
 /// With no artist selected it shows [ArtistPickerWidget]; with one selected
-/// it shows a one-line [ArtistChipBarWidget] to switch artists and the
-/// artist's songs below it.
+/// it shows only that artist's songs (the app bar title switches artists).
 final class ArtistModeWidget extends StatelessWidget {
   /// Bottom padding so the last tile is not hidden by the floating button.
   static const double _fabClearance = 96;
@@ -116,9 +114,6 @@ final class ArtistModeWidget extends StatelessWidget {
 
   /// Callback when an artist is selected.
   final void Function(String artist) onArtistSelected;
-
-  /// Called to go back to the full artist list.
-  final VoidCallback onArtistCleared;
 
   /// Called when a song tile is tapped.
   final void Function(Song song) onSongTap;
@@ -134,7 +129,6 @@ final class ArtistModeWidget extends StatelessWidget {
     required this.songs,
     required this.selectedArtist,
     required this.onArtistSelected,
-    required this.onArtistCleared,
     required this.onSongTap,
     required this.onSongEdit,
     required this.onSongDelete,
@@ -143,41 +137,20 @@ final class ArtistModeWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Map<String, int> songCounts = <String, int>{};
-    for (final Song song in songs) {
-      songCounts[song.author] = (songCounts[song.author] ?? 0) + 1;
-    }
-    final List<String> artists = songCounts.keys.toList()..sort(_compareArtists);
-
-    if (!songCounts.containsKey(selectedArtist)) {
-      return ArtistPickerWidget(artists: artists, songCounts: songCounts, onArtistSelected: onArtistSelected);
-    }
-
     final List<Song> artistSongs = songs.where((Song song) => song.author == selectedArtist).toList()
       ..sort(SongListModeWidget._compareByName);
 
-    return Column(
-      children: <Widget>[
-        ArtistChipBarWidget(
-          artists: artists,
-          selectedArtist: selectedArtist,
-          onArtistSelected: onArtistSelected,
-          onShowAllArtists: onArtistCleared,
-        ),
-        const Divider(height: 1),
-        Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.only(top: AppTheme.spacingSmall, bottom: _fabClearance),
-            itemCount: artistSongs.length,
-            itemBuilder: (BuildContext context, int index) =>
-                SongTileWidget(song: artistSongs[index], onTap: onSongTap, onEdit: onSongEdit, onDelete: onSongDelete),
-          ),
-        ),
-      ],
+    if (artistSongs.isEmpty) {
+      return ArtistPickerWidget(songs: songs, onArtistSelected: onArtistSelected);
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.only(top: AppTheme.spacingSmall, bottom: _fabClearance),
+      itemCount: artistSongs.length,
+      itemBuilder: (BuildContext context, int index) =>
+          SongTileWidget(song: artistSongs[index], onTap: onSongTap, onEdit: onSongEdit, onDelete: onSongDelete),
     );
   }
-
-  static int _compareArtists(String a, String b) => a.toLowerCase().compareTo(b.toLowerCase());
 }
 
 /// Displays songs as a list or grouped by artist, or an empty state.
@@ -192,7 +165,6 @@ final class SongsWidget extends StatelessWidget {
     required this.onSongEdit,
     required this.onSongDelete,
     required this.onAddPressed,
-    required this.onArtistCleared,
     this.selectedArtist = '',
   });
 
@@ -217,9 +189,6 @@ final class SongsWidget extends StatelessWidget {
   /// Called when "delete" is chosen for a song.
   final void Function(Song song) onSongDelete;
 
-  /// Called to go back to the full artist list.
-  final VoidCallback onArtistCleared;
-
   /// Called from the empty state to add the first song.
   final VoidCallback onAddPressed;
 
@@ -237,7 +206,6 @@ final class SongsWidget extends StatelessWidget {
       songs: songs,
       selectedArtist: selectedArtist,
       onArtistSelected: onArtistSelected,
-      onArtistCleared: onArtistCleared,
       onSongTap: onSongTap,
       onSongEdit: onSongEdit,
       onSongDelete: onSongDelete,

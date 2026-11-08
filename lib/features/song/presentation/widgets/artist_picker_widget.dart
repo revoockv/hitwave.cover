@@ -1,36 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:watch_it/watch_it.dart';
 
 import '../../../../core/presentation/theme.dart';
+import '../../domain/entities/song.dart';
 import 'artist_tile_widget.dart';
 
-/// Compact list of artists with song counts and a search field.
+/// Compact list of the artists of [songs] with song counts and a search field.
 ///
 /// One line per artist, so many artists fit on a phone screen. The search
 /// field appears when there are more than [_searchThreshold] artists.
-/// Tapping an artist calls [onArtistSelected].
-final class ArtistPickerWidget extends StatefulWidget {
-  /// Artists, already sorted.
-  final List<String> artists;
-
-  /// Number of songs of each artist.
-  final Map<String, int> songCounts;
-
-  /// Called when an artist is tapped.
-  final void Function(String artist) onArtistSelected;
-
-  /// Creates a new [ArtistPickerWidget].
-  const ArtistPickerWidget({
-    required this.artists,
-    required this.songCounts,
-    required this.onArtistSelected,
-    super.key,
-  });
-
-  @override
-  State<ArtistPickerWidget> createState() => _ArtistPickerWidgetState();
-}
-
-class _ArtistPickerWidgetState extends State<ArtistPickerWidget> {
+/// Tapping an artist calls [onArtistSelected]; [selectedArtist] is highlighted.
+final class ArtistPickerWidget extends WatchingWidget {
   /// The search field appears above this many artists.
   static const int _searchThreshold = 6;
 
@@ -46,87 +26,71 @@ class _ArtistPickerWidgetState extends State<ArtistPickerWidget> {
   /// Shown when no artist matches the search.
   static const String _nothingFound = 'Нічого не знайдено';
 
-  late final TextEditingController _searchController;
+  /// Songs whose artists are listed.
+  final List<Song> songs;
 
-  @override
-  void initState() {
-    super.initState();
-    _searchController = TextEditingController();
-  }
+  /// Artist to highlight, or empty when none.
+  final String selectedArtist;
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
+  /// Called when an artist is tapped.
+  final void Function(String artist) onArtistSelected;
+
+  /// Creates a new [ArtistPickerWidget].
+  const ArtistPickerWidget({required this.songs, required this.onArtistSelected, this.selectedArtist = '', super.key});
 
   @override
   Widget build(BuildContext context) {
-    final bool showSearch = widget.artists.length > _searchThreshold;
+    final TextEditingController search = createOnce(_createSearch, dispose: _disposeSearch);
+    final String query = watch(search).value.text.trim().toLowerCase();
+
+    final Map<String, int> songCounts = <String, int>{};
+    for (final Song song in songs) {
+      songCounts[song.author] = (songCounts[song.author] ?? 0) + 1;
+    }
+    final List<String> allArtists = songCounts.keys.toList()..sort(_compareArtists);
+    final List<String> artists = query.isEmpty
+        ? allArtists
+        : allArtists.where((String artist) => artist.toLowerCase().contains(query)).toList();
 
     return Column(
       children: <Widget>[
-        if (showSearch)
+        if (allArtists.length > _searchThreshold)
           Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppTheme.spacingMedium,
-              AppTheme.spacingSmall,
-              AppTheme.spacingMedium,
-              AppTheme.spacingSmall,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingMedium, vertical: AppTheme.spacingSmall),
             child: TextField(
-              controller: _searchController,
+              controller: search,
               textInputAction: TextInputAction.search,
               decoration: InputDecoration(
                 hintText: _searchHint,
                 prefixIcon: const Icon(Icons.search),
-                suffixIcon: ValueListenableBuilder<TextEditingValue>(
-                  valueListenable: _searchController,
-                  builder: (BuildContext context, TextEditingValue value, Widget? child) {
-                    if (value.text.isEmpty) {
-                      return const SizedBox.shrink();
-                    }
-                    return IconButton(
-                      tooltip: _clearTooltip,
-                      icon: const Icon(Icons.close),
-                      onPressed: _onClearPressed,
-                    );
-                  },
-                ),
+                suffixIcon: query.isEmpty
+                    ? null
+                    : IconButton(tooltip: _clearTooltip, icon: const Icon(Icons.close), onPressed: search.clear),
               ),
             ),
           ),
         Expanded(
-          child: ValueListenableBuilder<TextEditingValue>(
-            valueListenable: _searchController,
-            builder: (BuildContext context, TextEditingValue value, Widget? child) {
-              final String query = value.text.trim().toLowerCase();
-              final List<String> artists = query.isEmpty
-                  ? widget.artists
-                  : widget.artists.where((String artist) => artist.toLowerCase().contains(query)).toList();
-
-              if (artists.isEmpty) {
-                return const Center(child: Text(_nothingFound));
-              }
-
-              return ListView.builder(
-                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-                padding: const EdgeInsets.only(bottom: _fabClearance),
-                itemCount: artists.length,
-                itemBuilder: (BuildContext context, int index) => ArtistTileWidget(
-                  artist: artists[index],
-                  songCount: widget.songCounts[artists[index]] ?? 0,
-                  onTap: widget.onArtistSelected,
+          child: artists.isEmpty
+              ? const Center(child: Text(_nothingFound))
+              : ListView.builder(
+                  keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                  padding: const EdgeInsets.only(bottom: _fabClearance),
+                  itemCount: artists.length,
+                  itemBuilder: (BuildContext context, int index) => ArtistTileWidget(
+                    artist: artists[index],
+                    songCount: songCounts[artists[index]] ?? 0,
+                    selected: artists[index] == selectedArtist,
+                    onTap: onArtistSelected,
+                  ),
                 ),
-              );
-            },
-          ),
         ),
       ],
     );
   }
 
-  void _onClearPressed() {
-    _searchController.clear();
-  }
+  static TextEditingController _createSearch() => TextEditingController();
+
+  static void _disposeSearch(TextEditingController search) => search.dispose();
+
+  static int _compareArtists(String a, String b) => a.toLowerCase().compareTo(b.toLowerCase());
 }

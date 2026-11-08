@@ -43,11 +43,20 @@ final class ArtistTileWidget extends StatelessWidget {
   /// Number of the artist's songs.
   final int songCount;
 
+  /// Whether this is the artist being shown.
+  final bool selected;
+
   /// Called with [artist] when the tile is tapped.
   final void Function(String artist) onTap;
 
   /// Creates a new [ArtistTileWidget].
-  const ArtistTileWidget({required this.artist, required this.songCount, required this.onTap, super.key});
+  const ArtistTileWidget({
+    required this.artist,
+    required this.songCount,
+    required this.onTap,
+    this.selected = false,
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -55,6 +64,7 @@ final class ArtistTileWidget extends StatelessWidget {
     final String trimmed = artist.trim();
 
     return ListTile(
+      selected: selected,
       leading: CircleAvatar(
         backgroundColor: colorScheme.secondaryContainer,
         foregroundColor: colorScheme.onSecondaryContainer,

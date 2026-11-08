@@ -7,6 +7,7 @@ import '../../../backup/presentation/di/backup_getters.dart';
 import '../../domain/entities/song.dart';
 import '../controllers/song_view_controller.dart';
 import '../di/song_getters.dart';
+import '../widgets/artist_switcher_title_widget.dart';
 import '../widgets/delete_song_dialog_widget.dart';
 import '../widgets/songs_widget.dart';
 import 'add_song_page.dart';
@@ -97,6 +98,20 @@ final class HomePage extends WatchingWidget {
 
     final bool hasSelectedArtist = isArtistMode && songs.any((Song song) => song.author == selectedArtist);
 
+    final Widget titleText = Text.rich(
+      TextSpan(
+        text: title,
+        children: <InlineSpan>[
+          TextSpan(
+            text: '$_countSeparator${_getDisplayedSongCount(songs, viewMode, selectedArtist)}',
+            style: TextStyle(color: colorScheme.onSurfaceVariant),
+          ),
+        ],
+      ),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+    );
+
     return PopScope(
       canPop: !hasSelectedArtist,
       onPopInvokedWithResult: (bool didPop, Object? result) => _onBackInvoked(controller, didPop),
@@ -109,19 +124,14 @@ final class HomePage extends WatchingWidget {
                   onPressed: controller.clearArtist,
                 )
               : null,
-          title: Text.rich(
-            TextSpan(
-              text: title,
-              children: <InlineSpan>[
-                TextSpan(
-                  text: '$_countSeparator${_getDisplayedSongCount(songs, viewMode, selectedArtist)}',
-                  style: TextStyle(color: colorScheme.onSurfaceVariant),
-                ),
-              ],
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
+          title: hasSelectedArtist
+              ? ArtistSwitcherTitleWidget(
+                  title: titleText,
+                  songs: songs,
+                  selectedArtist: selectedArtist,
+                  onArtistSelected: controller.selectArtist,
+                )
+              : titleText,
           actions: <Widget>[
             IconButton(
               icon: Icon(isArtistMode ? Icons.view_list_outlined : Icons.people_outline),
@@ -151,7 +161,6 @@ final class HomePage extends WatchingWidget {
           onSongEdit: (Song song) => _showEditSongPage(context, song),
           onSongDelete: (Song song) => _onSongDeletePressed(context, song),
           onAddPressed: () => _showAddSongPage(context),
-          onArtistCleared: controller.clearArtist,
         ),
         floatingActionButton: songs.isEmpty
             ? null
