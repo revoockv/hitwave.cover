@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:watch_it/watch_it.dart';
 
+import 'core/presentation/theme.dart';
 import 'di.dart';
 import 'features/auth/domain/entities/user.dart';
 import 'features/auth/presentation/di/auth_getters.dart';
@@ -22,6 +23,9 @@ Future<void> main() async {
 /// Renders the auth page when not authenticated, or the home page when
 /// authenticated.
 final class HitwaveCoverAppWidget extends WatchingWidget {
+  /// Title of the app in the task switcher.
+  static const String _appTitle = 'Hitwave Cover';
+
   /// Creates the app.
   const HitwaveCoverAppWidget({super.key});
 
@@ -31,6 +35,9 @@ final class HitwaveCoverAppWidget extends WatchingWidget {
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      title: _appTitle,
+      theme: AppTheme.light(),
+      darkTheme: AppTheme.dark(),
       home: user != null ? const HomePage() : const AuthPage(),
     );
   }

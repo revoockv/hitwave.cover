@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:hitwave.cover/features/song/domain/entities/song.dart';
 import 'package:hitwave.cover/features/song/presentation/controllers/lyrics_page_controller.dart';
@@ -25,16 +24,24 @@ class _LyricsPageState extends State<LyricsPage> {
   static const String _speedLabel = 'Швидкість';
 
   /// Stop button label text.
-  static const String _stopLabel = 'Зупинити';
+  static const String _stopLabel = 'Пауза';
 
   /// Start button label text.
   static const String _startLabel = 'Старт';
 
-  /// Font family for lyrics text.
-  static const String _robotoFontFamily = 'Roboto';
-
   /// Font size for lyrics text.
-  static const double _lyricsFontSize = 18;
+  static const double _lyricsFontSize = 20;
+
+  /// Bottom space so the last line can scroll above the control panel.
+  static const double _controlsClearance = 120;
+
+  /// Padding around the lyrics text.
+  static const EdgeInsets _lyricsPadding = EdgeInsets.fromLTRB(
+    AppTheme.spacingLarge,
+    AppTheme.spacingLarge,
+    AppTheme.spacingLarge,
+    _controlsClearance,
+  );
 
   late final LyricsPageController _controller;
 
@@ -79,77 +86,98 @@ class _LyricsPageState extends State<LyricsPage> {
     }
   }
 
+  void _onLyricsTapped() {
+    _resetHideTimer();
+    if (_controller.isScrolling.value) {
+      FocusScope.of(context).unfocus();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final TextStyle? lyricsStyle = theme.textTheme.bodyLarge?.copyWith(
+      fontSize: _lyricsFontSize,
+      height: AppTheme.readingLineHeight,
+    );
+
     return Scaffold(
       appBar: AppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(widget.song.name),
+          children: <Widget>[
+            Text(widget.song.name, maxLines: 1, overflow: TextOverflow.ellipsis),
             Text(
               widget.song.author,
-              style: Theme.of(context).textTheme.bodySmall,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
             ),
           ],
         ),
       ),
-      body: Column(
-        children: [
-          Expanded(
+      body: Stack(
+        children: <Widget>[
+          Positioned.fill(
             child: GestureDetector(
-              onTap: () {
-                if (_controller.isScrolling.value) {
-                  _resetHideTimer();
-                  FocusScope.of(context).unfocus();
-                } else {
-                  _resetHideTimer();
-                }
-              },
-              child: ValueListenableBuilder<bool>(
-                valueListenable: _controller.isScrolling,
-                builder: (context, isScrollingValue, child) {
-                  return isScrollingValue
-                      ? SingleChildScrollView(
-                          controller: _controller.scrollController,
-                          child: Padding(
-                            padding: const EdgeInsets.all(AppTheme.spacingLarge),
-                            child: Align(
-                              alignment: Alignment.topLeft,
-                              child: Text(
-                                _controller.textController.text,
-                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                      fontSize: _lyricsFontSize,
-                                    ),
+              behavior: HitTestBehavior.translucent,
+              onTap: _onLyricsTapped,
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: AppTheme.maxContentWidth),
+                  child: ValueListenableBuilder<bool>(
+                    valueListenable: _controller.isScrolling,
+                    builder: (BuildContext context, bool isScrolling, Widget? child) {
+                      return isScrolling
+                          ? SingleChildScrollView(
+                              controller: _controller.scrollController,
+                              padding: _lyricsPadding,
+                              child: SizedBox(
+                                width: double.infinity,
+                                child: Text(_controller.textController.text, style: lyricsStyle),
                               ),
-                            ),
-                          ),
-                        )
-                      : TextField(
-                          controller: _controller.textController,
-                          focusNode: _controller.focusNode,
-                          scrollController: _controller.editScrollController,
-                          textInputAction: TextInputAction.done,
-                          onEditingComplete: _hideKeyboard,
-                          maxLines: null,
-                          minLines: 1,
-                          decoration: const InputDecoration(
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.all(AppTheme.spacingLarge),
-                          ),
-                          style: const TextStyle(fontSize: _lyricsFontSize, fontFamily: _robotoFontFamily),
-                        );
-                },
+                            )
+                          : TextField(
+                              controller: _controller.textController,
+                              focusNode: _controller.focusNode,
+                              scrollController: _controller.editScrollController,
+                              textInputAction: TextInputAction.done,
+                              onEditingComplete: _hideKeyboard,
+                              maxLines: null,
+                              expands: true,
+                              textAlignVertical: TextAlignVertical.top,
+                              decoration: const InputDecoration(
+                                filled: false,
+                                border: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                contentPadding: _lyricsPadding,
+                              ),
+                              style: lyricsStyle,
+                            );
+                    },
+                  ),
+                ),
               ),
             ),
           ),
-          LyricsControlsWidget(
-            controller: _controller,
-            speedLabel: _speedLabel,
-            stopLabel: _stopLabel,
-            startLabel: _startLabel,
-            toggleScroll: _toggleScroll,
-            resetHideTimer: _resetHideTimer,
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: AppTheme.maxContentWidth),
+                child: LyricsControlsWidget(
+                  controller: _controller,
+                  speedLabel: _speedLabel,
+                  stopLabel: _stopLabel,
+                  startLabel: _startLabel,
+                  toggleScroll: _toggleScroll,
+                  resetHideTimer: _resetHideTimer,
+                ),
+              ),
+            ),
           ),
         ],
       ),

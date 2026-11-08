@@ -1,51 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:hitwave.cover/features/song/presentation/controllers/lyrics_page_controller.dart';
+
 import '../../../../core/presentation/theme.dart';
+import '../controllers/lyrics_page_controller.dart';
 
-/// Controls bar widget for the lyrics page.
+/// Floating control panel of the lyrics page.
 ///
-/// Displays the speed slider and play/stop button with a frosted-glass
-/// aesthetic. Auto-hides after inactivity when scrolling is active.
-/// Extracted from [LyricsPage] to satisfy the [no_build_return] rule.
+/// Shows the play/stop button and the speed slider. Fades out (and stops
+/// taking touches) when the controller hides the controls during scrolling.
 class LyricsControlsWidget extends StatelessWidget {
-  /// Panel corner radius.
-  static const double _panelRadius = 20;
+  /// Elevation of the panel.
+  static const double _panelElevation = 6;
 
-  /// Panel surface alpha.
-  static const double _panelSurfaceAlpha = 0.85;
-
-  /// Shadow blur radius.
-  static const double _shadowBlurRadius = 16;
-
-  /// Shadow alpha.
-  static const double _shadowAlpha = 0.3;
-
-  /// Shadow offset Y.
-  static const double _shadowOffsetY = 2;
-
-  /// Circle avatar radius.
-  static const double _avatarRadius = 20;
-
-  /// Icon size inside play/stop button.
-  static const double _iconSize = 20;
-
-  /// Slider track height.
-  static const double _trackHeight = 4;
-
-  /// Slider thumb radius.
-  static const double _thumbRadius = 8;
-
-  /// Slider overlay radius.
-  static const double _overlayRadius = 12;
-
-  /// Inactive track alpha.
-  static const double _inactiveTrackAlpha = 0.5;
-
-  /// Slider overlay alpha.
-  static const double _overlayAlpha = 0.2;
-
-  /// Shadow color (black).
-  static const Color _shadowColor = Colors.black;
+  /// Fade duration of the panel.
+  static const Duration _fadeDuration = Duration(milliseconds: 250);
 
   /// Lowest scroll speed of the slider.
   static const double _minSpeed = 0.0;
@@ -54,7 +21,10 @@ class LyricsControlsWidget extends StatelessWidget {
   static const double _maxSpeed = 1.0;
 
   /// Number of slider steps.
-  static const int _sliderDivisions = 100;
+  static const int _sliderDivisions = 20;
+
+  /// Digits after the point in the speed value.
+  static const int _speedDigits = 1;
 
   /// The lyrics page controller.
   final LyricsPageController controller;
@@ -90,114 +60,85 @@ class LyricsControlsWidget extends StatelessWidget {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final TextTheme textTheme = Theme.of(context).textTheme;
 
-    return AnimatedOpacity(
-      opacity: controller.controlsVisible.value ? 1.0 : 0.0,
-      duration: const Duration(milliseconds: 300),
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: colorScheme.surface.withValues(alpha: LyricsControlsWidget._panelSurfaceAlpha),
-          borderRadius: BorderRadius.circular(LyricsControlsWidget._panelRadius),
-          boxShadow: [
-            BoxShadow(
-              color: LyricsControlsWidget._shadowColor.withValues(alpha: LyricsControlsWidget._shadowAlpha),
-              blurRadius: LyricsControlsWidget._shadowBlurRadius,
-              offset: const Offset(0, -LyricsControlsWidget._shadowOffsetY),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            ValueListenableBuilder<bool>(
-              valueListenable: controller.isScrolling,
-              builder: (context, isScrollingValue, child) {
-                return Padding(
-                  padding: const EdgeInsets.only(right: 12),
-                  child: CircleAvatar(
-                    radius: LyricsControlsWidget._avatarRadius,
-                    backgroundColor: isScrollingValue
-                        ? colorScheme.primary
-                        : colorScheme.primaryContainer,
-                    child: IconButton(
-                      onPressed: () {
-                        toggleScroll();
-                        if (isScrollingValue) {
-                          resetHideTimer();
-                        }
-                      },
-                      icon: Icon(
-                        isScrollingValue ? Icons.stop : Icons.play_arrow,
-                        color: isScrollingValue
-                            ? colorScheme.onPrimary
-                            : colorScheme.onPrimaryContainer,
-                        size: LyricsControlsWidget._iconSize,
-                      ),
-                    ),
+    return ValueListenableBuilder<bool>(
+      valueListenable: controller.controlsVisible,
+      builder: (BuildContext context, bool visible, Widget? child) {
+        return IgnorePointer(
+          ignoring: !visible,
+          child: AnimatedOpacity(opacity: visible ? 1.0 : 0.0, duration: _fadeDuration, child: child),
+        );
+      },
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(AppTheme.spacingMedium, 0, AppTheme.spacingMedium, AppTheme.spacingMedium),
+          child: Material(
+            color: colorScheme.surfaceContainerHigh,
+            elevation: _panelElevation,
+            borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingMedium, vertical: AppTheme.spacingSmall),
+              child: Row(
+                children: <Widget>[
+                  ValueListenableBuilder<bool>(
+                    valueListenable: controller.isScrolling,
+                    builder: (BuildContext context, bool isScrolling, Widget? child) {
+                      return IconButton.filled(
+                        iconSize: AppTheme.spacingLarge,
+                        tooltip: isScrolling ? stopLabel : startLabel,
+                        onPressed: () => _onTogglePressed(isScrolling),
+                        icon: Icon(isScrolling ? Icons.pause : Icons.play_arrow),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
-            Expanded(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: AppTheme.spacingTiny),
-                    child: Text(
-                      speedLabel,
-                      style: textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                  ValueListenableBuilder<double>(
-                    valueListenable: controller.speed,
-                    builder: (context, speedValue, child) {
-                      return Row(
-                        children: [
-                          Expanded(
-                            child: SliderTheme(
-                              data: SliderThemeData(
-                                trackHeight: LyricsControlsWidget._trackHeight,
-                                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: LyricsControlsWidget._thumbRadius),
-                                overlayShape: const RoundSliderOverlayShape(overlayRadius: LyricsControlsWidget._overlayRadius),
-                                activeTrackColor: colorScheme.primary,
-                                inactiveTrackColor: colorScheme.surfaceContainerHighest.withValues(alpha: LyricsControlsWidget._inactiveTrackAlpha),
-                                thumbColor: colorScheme.primary,
-                                overlayColor: colorScheme.primary.withValues(alpha: LyricsControlsWidget._overlayAlpha),
-                              ),
+                  const SizedBox(width: AppTheme.spacingSmall),
+                  Text(speedLabel, style: textTheme.labelLarge?.copyWith(color: colorScheme.onSurfaceVariant)),
+                  Expanded(
+                    child: ValueListenableBuilder<double>(
+                      valueListenable: controller.speed,
+                      builder: (BuildContext context, double speed, Widget? child) {
+                        return Row(
+                          children: <Widget>[
+                            Expanded(
                               child: Slider(
-                                value: speedValue,
+                                value: speed,
                                 min: _minSpeed,
                                 max: _maxSpeed,
                                 divisions: _sliderDivisions,
-                                label: speedValue.toStringAsFixed(1),
-                                onChanged: (value) {
-                                  controller.speed.value = value;
-                                },
+                                label: speed.toStringAsFixed(_speedDigits),
+                                onChanged: _onSpeedChanged,
                               ),
                             ),
-                          ),
-                          const SizedBox(width: AppTheme.spacingSmall),
-                          Text(
-                            speedValue.toStringAsFixed(1),
-                            style: textTheme.bodyMedium?.copyWith(
-                              color: colorScheme.primary,
-                              fontWeight: FontWeight.w600,
+                            Text(
+                              speed.toStringAsFixed(_speedDigits),
+                              style: textTheme.labelLarge?.copyWith(
+                                color: colorScheme.primary,
+                                fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
+                              ),
                             ),
-                          ),
-                        ],
-                      );
-                    },
+                          ],
+                        );
+                      },
+                    ),
                   ),
                 ],
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
+  }
+
+  void _onTogglePressed(bool wasScrolling) {
+    toggleScroll();
+    if (wasScrolling) {
+      resetHideTimer();
+    }
+  }
+
+  void _onSpeedChanged(double value) {
+    controller.speed.value = value;
+    resetHideTimer();
   }
 }

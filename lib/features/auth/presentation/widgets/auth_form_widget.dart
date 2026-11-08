@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/presentation/theme.dart';
-
-import '../di/auth_getters.dart';
 import '../controllers/auth_form_controller.dart';
+import '../di/auth_getters.dart';
 
 /// Main authentication form displayed for unauthenticated users.
 ///
 /// Supports toggling between login and registration modes. Manages all
 /// form state through [AuthFormController] with ValueNotifiers — no setState.
+/// After a successful sign-in the app swaps to the home page by itself,
+/// because the root widget watches the session.
 class AuthFormWidget extends StatefulWidget {
   /// Creates a new [AuthFormWidget].
   const AuthFormWidget({super.key});
@@ -18,8 +19,6 @@ class AuthFormWidget extends StatefulWidget {
 }
 
 class _AuthFormState extends State<AuthFormWidget> {
-  static const double _topSpacing = 48.0;
-  static const double _sectionSpacing = 32.0;
   static const String _validationError = 'Будь ласка, заповніть всі поля.';
 
   late final AuthFormController _controller = AuthFormController();
@@ -33,44 +32,35 @@ class _AuthFormState extends State<AuthFormWidget> {
 
   /// Submits the authentication form.
   ///
-  /// Validates that both email and password fields are filled.
-  /// Calls [signInUseCase] or [signUpUseCase] depending on the current mode,
-  /// then pops the navigator on success or displays an error on failure.
+  /// Validates that both email and password fields are filled, then calls
+  /// [signInUseCase] or [signUpUseCase] depending on the current mode.
   Future<void> _submit() async {
-    final email = _controller.emailController.text.trim();
-    final password = _controller.passwordController.text;
+    final String email = _controller.emailController.text.trim();
+    final String password = _controller.passwordController.text;
 
     if (email.isEmpty || password.isEmpty) {
       _controller.errorMessage.value = _validationError;
       return;
     }
 
+    FocusScope.of(context).unfocus();
     _controller.isLoading.value = true;
     _controller.errorMessage.value = null;
 
     final result = _controller.isSignUp.value
-        ? await signUpUseCase(
-            email: email,
-            password: password,
-          )
-        : await signInUseCase(
-            email: email,
-            password: password,
-          );
+        ? await signUpUseCase(email: email, password: password)
+        : await signInUseCase(email: email, password: password);
 
     if (!mounted) return;
 
     _controller.isLoading.value = false;
-
     result.when(success: _onSubmitSucceeded, failure: _onSubmitFailed);
   }
 
-  /// Closes the form after a successful sign-in or sign-up.
-  void _onSubmitSucceeded(void _) {
-    Navigator.of(context).pop();
-  }
+  /// Nothing to do: the session change replaces this page with the home page.
+  void _onSubmitSucceeded(void _) {}
 
-  /// Shows the error of a failed sign-in or sign-up under the form.
+  /// Shows the error of a failed sign-in or sign-up above the fields.
   void _onSubmitFailed(String error) {
     _controller.errorMessage.value = error;
   }
@@ -80,28 +70,31 @@ class _AuthFormState extends State<AuthFormWidget> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppTheme.spacingLarge),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: _topSpacing),
-               _FormTitleWidget(controller: _controller),
-              const SizedBox(height: _sectionSpacing),
-              _ErrorMessageWidget(controller: _controller),
-              _EmailFieldWidget(controller: _controller),
-              _PasswordFieldWidget(
-                controller: _controller,
-                onSubmitted: _submit,
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(AppTheme.spacingLarge),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: AppTheme.maxContentWidth),
+              child: AutofillGroup(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    const _BrandHeaderWidget(),
+                    const SizedBox(height: AppTheme.spacingExtraLarge),
+                    _FormTitleWidget(controller: _controller),
+                    const SizedBox(height: AppTheme.spacingLarge),
+                    _ErrorMessageWidget(controller: _controller),
+                    _EmailFieldWidget(controller: _controller),
+                    const SizedBox(height: AppTheme.spacingMedium),
+                    _PasswordFieldWidget(controller: _controller, onSubmitted: _submit),
+                    const SizedBox(height: AppTheme.spacingLarge),
+                    _SubmitButtonWidget(controller: _controller, onPressed: _submit),
+                    const SizedBox(height: AppTheme.spacingSmall),
+                    _ToggleButtonWidget(controller: _controller),
+                  ],
+                ),
               ),
-              const SizedBox(height: AppTheme.spacingLarge),
-              _SubmitButtonWidget(
-                controller: _controller,
-                onPressed: _submit,
-              ),
-              const SizedBox(height: AppTheme.spacingMedium),
-               _ToggleButtonWidget(controller: _controller),
-            ],
+            ),
           ),
         ),
       ),
@@ -111,13 +104,63 @@ class _AuthFormState extends State<AuthFormWidget> {
 
 // ── Sub-widgets ────────────────────────────────────────────────────
 
+/// App logo and name at the top of the form.
+class _BrandHeaderWidget extends StatelessWidget {
+  /// Size of the logo tile.
+  static const double _logoSize = 72;
+
+  /// Size of the logo icon.
+  static const double _logoIconSize = 40;
+
+  /// Name of the app.
+  static const String _appName = 'Hitwave Cover';
+
+  /// Short description under the name.
+  static const String _tagline = 'Тексти пісень і кавери завжди під рукою';
+
+  /// Creates a new [_BrandHeaderWidget].
+  const _BrandHeaderWidget();
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final ColorScheme colorScheme = theme.colorScheme;
+
+    return Column(
+      children: <Widget>[
+        Container(
+          width: _logoSize,
+          height: _logoSize,
+          decoration: BoxDecoration(
+            color: colorScheme.primaryContainer,
+            borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+          ),
+          child: Icon(Icons.graphic_eq, size: _logoIconSize, color: colorScheme.onPrimaryContainer),
+        ),
+        const SizedBox(height: AppTheme.spacingMedium),
+        Text(
+          _appName,
+          style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: AppTheme.spacingTiny),
+        Text(
+          _tagline,
+          style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+}
+
 /// Title text that switches between sign-in and sign-up labels.
 class _FormTitleWidget extends StatelessWidget {
   /// Text shown in sign-up mode.
-  static const String _signUpText = 'Реєстрація';
+  static const String _signUpText = 'Створіть акаунт';
 
   /// Text shown in sign-in mode.
-  static const String _signInText = 'Вхід';
+  static const String _signInText = 'Увійдіть в акаунт';
 
   /// Creates a new [_FormTitleWidget].
   const _FormTitleWidget({required this.controller});
@@ -130,30 +173,15 @@ class _FormTitleWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return ValueListenableBuilder<bool>(
       valueListenable: controller.isSignUp,
-      builder: (context, isSignUp, child) {
-        return Padding(
-          padding: const EdgeInsets.only(bottom: AppTheme.spacingSmall),
-            child: Text(
-              isSignUp ? _signUpText : _signInText,
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-            textAlign: TextAlign.center,
-          ),
-        );
+      builder: (BuildContext context, bool isSignUp, Widget? child) {
+        return Text(isSignUp ? _signUpText : _signInText, style: Theme.of(context).textTheme.titleLarge);
       },
     );
   }
 }
 
-/// Displays the error message when form validation fails.
+/// Displays the error message when sign-in fails or fields are empty.
 class _ErrorMessageWidget extends StatelessWidget {
-  /// Font size for error text.
-  static const double _errorFontSize = 14.0;
-
-  /// Error color extracted as static const.
-  static const Color _errorColor = Colors.red;
-
   /// Creates a new [_ErrorMessageWidget].
   const _ErrorMessageWidget({required this.controller});
 
@@ -163,19 +191,32 @@ class _ErrorMessageWidget extends StatelessWidget {
   /// Builds the error message display.
   @override
   Widget build(BuildContext context) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+
     return ValueListenableBuilder<String?>(
       valueListenable: controller.errorMessage,
-      builder: (context, errorMessage, child) {
+      builder: (BuildContext context, String? errorMessage, Widget? child) {
         if (errorMessage == null) return const SizedBox.shrink();
         return Padding(
           padding: const EdgeInsets.only(bottom: AppTheme.spacingMedium),
-          child: Text(
-            errorMessage,
-            style: const TextStyle(
-              color: _errorColor,
-              fontSize: _errorFontSize,
+          child: Semantics(
+            liveRegion: true,
+            child: Container(
+              padding: const EdgeInsets.all(AppTheme.spacingMedium),
+              decoration: BoxDecoration(
+                color: colorScheme.errorContainer,
+                borderRadius: BorderRadius.circular(AppTheme.radius),
+              ),
+              child: Row(
+                children: <Widget>[
+                  Icon(Icons.error_outline, color: colorScheme.onErrorContainer),
+                  const SizedBox(width: AppTheme.spacingSmall),
+                  Expanded(
+                    child: Text(errorMessage, style: TextStyle(color: colorScheme.onErrorContainer)),
+                  ),
+                ],
+              ),
             ),
-            textAlign: TextAlign.center,
           ),
         );
       },
@@ -197,23 +238,15 @@ class _EmailFieldWidget extends StatelessWidget {
   /// Builds the email text field.
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppTheme.spacingMedium),
-      child: TextField(
-        controller: controller.emailController,
-        focusNode: controller.emailFocus,
-        keyboardType: TextInputType.emailAddress,
-        textInputAction: TextInputAction.next,
-        onEditingComplete: _onEditingComplete,
-        decoration: const InputDecoration(
-          labelText: _emailLabelText,
-          border: OutlineInputBorder(),
-          contentPadding: EdgeInsets.symmetric(
-            horizontal: AppTheme.spacingLarge,
-            vertical: AppTheme.spacingMedium,
-          ),
-        ),
-      ),
+    return TextField(
+      controller: controller.emailController,
+      focusNode: controller.emailFocus,
+      keyboardType: TextInputType.emailAddress,
+      textInputAction: TextInputAction.next,
+      autocorrect: false,
+      autofillHints: const <String>[AutofillHints.email],
+      onEditingComplete: _onEditingComplete,
+      decoration: const InputDecoration(labelText: _emailLabelText, prefixIcon: Icon(Icons.mail_outline)),
     );
   }
 
@@ -223,16 +256,19 @@ class _EmailFieldWidget extends StatelessWidget {
   }
 }
 
-/// Password text field for the authentication form.
+/// Password text field with a show/hide toggle.
 class _PasswordFieldWidget extends StatelessWidget {
   /// Label text for the password field.
   static const String _passwordLabelText = 'Пароль';
 
+  /// Tooltip of the toggle while the password is hidden.
+  static const String _showPasswordTooltip = 'Показати пароль';
+
+  /// Tooltip of the toggle while the password is visible.
+  static const String _hidePasswordTooltip = 'Сховати пароль';
+
   /// Creates a new [_PasswordFieldWidget].
-  const _PasswordFieldWidget({
-    required this.controller,
-    required this.onSubmitted,
-  });
+  const _PasswordFieldWidget({required this.controller, required this.onSubmitted});
 
   /// The [AuthFormController] providing form state.
   final AuthFormController controller;
@@ -243,55 +279,45 @@ class _PasswordFieldWidget extends StatelessWidget {
   /// Builds the password text field.
   @override
   Widget build(BuildContext context) {
-    return TextField(
-      controller: controller.passwordController,
-      focusNode: controller.passwordFocus,
-      obscureText: true,
-      textInputAction: TextInputAction.done,
-      onEditingComplete: onSubmitted,
-      decoration: const InputDecoration(
-        labelText: _passwordLabelText,
-        border: OutlineInputBorder(),
-        contentPadding: EdgeInsets.symmetric(
-          horizontal: AppTheme.spacingLarge,
-          vertical: AppTheme.spacingMedium,
-        ),
-      ),
+    return ValueListenableBuilder<bool>(
+      valueListenable: controller.obscurePassword,
+      builder: (BuildContext context, bool obscure, Widget? child) {
+        return TextField(
+          controller: controller.passwordController,
+          focusNode: controller.passwordFocus,
+          obscureText: obscure,
+          textInputAction: TextInputAction.done,
+          autofillHints: const <String>[AutofillHints.password],
+          onEditingComplete: onSubmitted,
+          decoration: InputDecoration(
+            labelText: _passwordLabelText,
+            prefixIcon: const Icon(Icons.lock_outline),
+            suffixIcon: IconButton(
+              tooltip: obscure ? _showPasswordTooltip : _hidePasswordTooltip,
+              icon: Icon(obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+              onPressed: _onToggleVisibility,
+            ),
+          ),
+        );
+      },
     );
+  }
+
+  void _onToggleVisibility() {
+    controller.obscurePassword.value = !controller.obscurePassword.value;
   }
 }
 
 /// Submit button for the authentication form.
 class _SubmitButtonWidget extends StatelessWidget {
-  /// Height of the submit button.
-  static const double _buttonHeight = 48.0;
-
-  /// Border radius of the submit button.
-  static const double _buttonRadius = 12.0;
-
-  /// Size of the loading indicator.
-  static const double _indicatorSize = 20.0;
-
-  /// Stroke width of the loading indicator.
-  static const double _strokeWidth = 2.0;
-
-  /// Font size for the button text.
-  static const double _buttonFontSize = 16.0;
-
   /// Text shown in sign-up mode.
   static const String _signUpText = 'Зареєструватися';
 
   /// Text shown in sign-in mode.
   static const String _signInText = 'Увійти';
 
-  /// White color extracted as static const for the loading indicator.
-  static const Color _whiteColor = Colors.white;
-
   /// Creates a new [_SubmitButtonWidget].
-  const _SubmitButtonWidget({
-    required this.controller,
-    required this.onPressed,
-  });
+  const _SubmitButtonWidget({required this.controller, required this.onPressed});
 
   /// The [AuthFormController] providing form state.
   final AuthFormController controller;
@@ -304,41 +330,20 @@ class _SubmitButtonWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return ValueListenableBuilder<bool>(
       valueListenable: controller.isLoading,
-      builder: (context, isLoading, child) {
-        return SizedBox(
-          width: double.infinity,
-          height: _buttonHeight,
-          child: ElevatedButton(
-            onPressed: isLoading ? null : onPressed,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              foregroundColor: Theme.of(context).colorScheme.onPrimary,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(_buttonRadius),
-              ),
-            ),
-            child: isLoading
-                ? const SizedBox(
-                    height: _indicatorSize,
-                    width: _indicatorSize,
-                    child: CircularProgressIndicator(
-                      strokeWidth: _strokeWidth,
-                      valueColor: AlwaysStoppedAnimation<Color>(_whiteColor),
-                    ),
-                  )
-                : ValueListenableBuilder<bool>(
-                    valueListenable: controller.isSignUp,
-                    builder: (context, isSignUp, child) {
-                      return Text(
-                        isSignUp ? _signUpText : _signInText,
-                        style: const TextStyle(
-                          fontSize: _buttonFontSize,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      );
-                    },
-                  ),
-          ),
+      builder: (BuildContext context, bool isLoading, Widget? child) {
+        return FilledButton(
+          onPressed: isLoading ? null : onPressed,
+          child: isLoading
+              ? const SizedBox.square(
+                  dimension: AppTheme.loadingIndicatorSize,
+                  child: CircularProgressIndicator(strokeWidth: AppTheme.loadingIndicatorStroke),
+                )
+              : ValueListenableBuilder<bool>(
+                  valueListenable: controller.isSignUp,
+                  builder: (BuildContext context, bool isSignUp, Widget? child) {
+                    return Text(isSignUp ? _signUpText : _signInText);
+                  },
+                ),
         );
       },
     );
@@ -347,10 +352,10 @@ class _SubmitButtonWidget extends StatelessWidget {
 
 /// Toggle button to switch between sign-in and sign-up modes.
 class _ToggleButtonWidget extends StatelessWidget {
-  /// Text shown when user is signed in (toggle to sign-in).
+  /// Shown in sign-up mode (switches to sign-in).
   static const String _signedInText = 'Вже є акаунт? Увійти';
 
-  /// Text shown when user is signed out (toggle to sign-up).
+  /// Shown in sign-in mode (switches to sign-up).
   static const String _signedOutText = 'Немає акаунту? Зареєструватися';
 
   /// Creates a new [_ToggleButtonWidget].
@@ -364,11 +369,8 @@ class _ToggleButtonWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return ValueListenableBuilder<bool>(
       valueListenable: controller.isSignUp,
-      builder: (context, isSignUp, child) {
-        return TextButton(
-          onPressed: _onTogglePressed,
-          child: Text(isSignUp ? _signedInText : _signedOutText),
-        );
+      builder: (BuildContext context, bool isSignUp, Widget? child) {
+        return TextButton(onPressed: _onTogglePressed, child: Text(isSignUp ? _signedInText : _signedOutText));
       },
     );
   }

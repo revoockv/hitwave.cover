@@ -30,12 +30,7 @@ final class SongFormController {
   }
 
   /// Initializes all text controllers with the given song values for edit mode.
-  void initEdit({
-    required String author,
-    required String name,
-    required String? album,
-    required String lyrics,
-  }) {
+  void initEdit({required String author, required String name, required String? album, required String lyrics}) {
     authorController = TextEditingController(text: author);
     nameController = TextEditingController(text: name);
     albumController = TextEditingController(text: album);
@@ -52,19 +47,20 @@ final class SongFormController {
   }
 
   /// Returns the author text.
-  String get author => authorController.text;
+  String get author => authorController.text.trim();
 
   /// Returns the name text.
-  String get name => nameController.text;
+  String get name => nameController.text.trim();
 
   /// Returns the album text, or null if empty.
-  String? get album =>
-      albumController.text.isEmpty ? null : albumController.text;
+  String? get album {
+    final String album = albumController.text.trim();
+    return album.isEmpty ? null : album;
+  }
 
   /// Returns the lyrics text.
-  String get lyrics => lyricsController.text;
+  String get lyrics => lyricsController.text.trim();
 
   /// Validates that required fields are non-empty.
-  bool get isValid =>
-      author.isNotEmpty && name.isNotEmpty && lyrics.isNotEmpty;
+  bool get isValid => author.isNotEmpty && name.isNotEmpty && lyrics.isNotEmpty;
 }

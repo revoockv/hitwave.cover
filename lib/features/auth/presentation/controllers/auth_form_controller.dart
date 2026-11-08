@@ -23,6 +23,9 @@ final class AuthFormController {
   /// Whether the form is currently submitting.
   late final ValueNotifier<bool> isLoading = ValueNotifier(false);
 
+  /// Whether the password is hidden.
+  late final ValueNotifier<bool> obscurePassword = ValueNotifier(true);
+
   /// Error message to display, or null if no error.
   late final ValueNotifier<String?> errorMessage = ValueNotifier(null);
 
@@ -48,6 +51,7 @@ final class AuthFormController {
     passwordFocus.dispose();
     isSignUp.dispose();
     isLoading.dispose();
+    obscurePassword.dispose();
     errorMessage.dispose();
   }
 }
