@@ -1,65 +1,46 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hitwave.cover/core/domain/entities/result.dart';
 import 'package:hitwave.cover/core/domain/entities/result_state.dart';
 import 'package:hitwave.cover/features/auth/presentation/controllers/auth_form_controller.dart';
 
 void main() {
-  late List<String> calls;
-  late Result<void> nextResult;
-  late AuthFormController controller;
+  late AuthFormController authFormController;
 
-  Future<Result<void>> signIn({required String email, required String password}) async {
-    calls.add('in:$email:$password');
-    return nextResult;
-  }
+  setUp(() => authFormController = AuthFormController());
 
-  Future<Result<void>> signUp({required String email, required String password}) async {
-    calls.add('up:$email:$password');
-    return nextResult;
-  }
+  tearDown(() => authFormController.dispose());
 
-  setUp(() {
-    calls = <String>[];
-    nextResult = Result.ok;
-    controller = AuthFormController(signIn: signIn, signUp: signUp);
+  test('empty fields are reported', () {
+    expect(authFormController.hasEmptyFields, isTrue);
+
+    authFormController.emailController.text = 'a@b.c';
+    expect(authFormController.hasEmptyFields, isTrue);
+
+    authFormController.passwordController.text = 'secret';
+    expect(authFormController.hasEmptyFields, isFalse);
   });
 
-  tearDown(() => controller.dispose());
+  test('the email is trimmed, the password is kept as typed', () {
+    authFormController.emailController.text = '  a@b.c ';
+    authFormController.passwordController.text = ' secret ';
 
-  test('empty fields fail without calling an action', () async {
-    await controller.submit();
-
-    expect(calls, isEmpty);
-    expect(controller.value, isA<FailureResultState<void>>());
+    expect(authFormController.email, 'a@b.c');
+    expect(authFormController.password, ' secret ');
   });
 
-  test('signs in with the trimmed email and records success', () async {
-    controller.email.text = '  a@b.c ';
-    controller.password.text = 'secret';
+  test('toggling the mode switches to sign-up and clears the last error', () {
+    authFormController.submittingStateController.value = const ResultState<void>.failure('taken');
 
-    await controller.submit();
+    authFormController.toggleMode();
 
-    expect(calls, <String>['in:a@b.c:secret']);
-    expect(controller.value.isSuccess, isTrue);
+    expect(authFormController.signUpModeController.value, isTrue);
+    expect(authFormController.submittingStateController.value.isIdle, isTrue);
   });
 
-  test('sign-up mode runs sign-up and keeps its failure message', () async {
-    nextResult = const Result.failure('taken');
-    controller.toggleMode();
-    controller.email.text = 'a@b.c';
-    controller.password.text = 'secret';
+  test('the password visibility toggles', () {
+    expect(authFormController.passwordHiddenController.value, isTrue);
 
-    await controller.submit();
+    authFormController.togglePasswordVisibility();
 
-    expect(calls, <String>['up:a@b.c:secret']);
-    expect((controller.value as FailureResultState<void>).message, 'taken');
-  });
-
-  test('toggling the mode clears the last error', () async {
-    await controller.submit();
-    controller.toggleMode();
-
-    expect(controller.value.isIdle, isTrue);
-    expect(controller.isSignUp.value, isTrue);
+    expect(authFormController.passwordHiddenController.value, isFalse);
   });
 }

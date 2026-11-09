@@ -1,93 +1,73 @@
 import 'package:flutter/widgets.dart' show FocusNode, TextEditingController, ValueNotifier;
 
-import '../../../../core/domain/entities/result.dart';
 import '../../../../core/domain/entities/result_state.dart';
 
-/// Signs the user in or up with an email and a password.
-typedef AuthAction = Future<Result<void>> Function({required String email, required String password});
-
-/// UI logic of the authentication form: the fields, the mode and one
-/// [ResultState] of the last sign-in or sign-up.
+/// UI state of the authentication form, like a Flutter controller: the fields,
+/// the mode, the password visibility and the progress of submitting.
 ///
-/// Knows nothing about DI or use cases — the owner passes the actions in.
-/// The mode and the password visibility change on their own, so they are
-/// separate notifiers.
-final class AuthFormController extends ValueNotifier<ResultState<void>> {
-  /// Error shown when a field is empty.
-  static const String _emptyFieldsError = 'Будь ласка, заповніть всі поля.';
+/// Knows nothing about use cases: the form widget signs in or up and records
+/// the outcome in [submittingStateController].
+final class AuthFormController {
+  /// Text of the email field.
+  final TextEditingController emailController = TextEditingController();
 
-  /// Controller of the email field.
-  final TextEditingController email = TextEditingController();
+  /// Text of the password field.
+  final TextEditingController passwordController = TextEditingController();
 
-  /// Controller of the password field.
-  final TextEditingController password = TextEditingController();
+  /// Focus of the email field.
+  final FocusNode emailFocusNode = FocusNode();
 
-  /// Focus node of the email field.
-  final FocusNode emailFocus = FocusNode();
-
-  /// Focus node of the password field.
-  final FocusNode passwordFocus = FocusNode();
+  /// Focus of the password field.
+  final FocusNode passwordFocusNode = FocusNode();
 
   /// Whether the form creates a new account instead of signing in.
-  final ValueNotifier<bool> isSignUp = ValueNotifier<bool>(false);
+  final ValueNotifier<bool> signUpModeController = ValueNotifier<bool>(false);
 
   /// Whether the password is hidden.
-  final ValueNotifier<bool> obscurePassword = ValueNotifier<bool>(true);
+  final ValueNotifier<bool> passwordHiddenController = ValueNotifier<bool>(true);
 
-  final AuthAction _signIn;
-
-  final AuthAction _signUp;
+  /// Progress of the last sign-in or sign-up; its failure is shown above the fields.
+  final ValueNotifier<ResultState<void>> submittingStateController = ValueNotifier<ResultState<void>>(ResultState.idle);
 
   bool _isDisposed = false;
 
-  /// Creates the controller with the actions it runs.
-  AuthFormController({required this._signIn, required this._signUp}) : super(ResultState.idle);
+  /// Whether [dispose] was called; the owner checks it after every `await`.
+  bool get isDisposed => _isDisposed;
 
-  /// Signs in or up with the entered values; ignored while an attempt runs.
-  Future<void> submit() async {
-    if (value.isLoading) return;
+  /// Entered email without surrounding spaces.
+  String get email => emailController.text.trim();
 
-    final String emailText = email.text.trim();
-    final String passwordText = password.text;
-    if (emailText.isEmpty || passwordText.isEmpty) {
-      value = const ResultState<void>.failure(_emptyFieldsError);
-      return;
-    }
+  /// Entered password as typed.
+  String get password => passwordController.text;
 
-    value = ResultState.loading;
-    final AuthAction action = isSignUp.value ? _signUp : _signIn;
-    final Result<void> result = await action(email: emailText, password: passwordText);
-    if (_isDisposed) return;
-
-    value = ResultState.of(result);
-  }
+  /// Whether the email or the password is empty.
+  bool get hasEmptyFields => email.isEmpty || password.isEmpty;
 
   /// Switches between sign-in and sign-up and clears the last error.
   void toggleMode() {
-    isSignUp.value = !isSignUp.value;
-    value = ResultState.idle;
+    signUpModeController.value = !signUpModeController.value;
+    submittingStateController.value = ResultState.idle;
   }
 
   /// Shows or hides the password.
   void togglePasswordVisibility() {
-    obscurePassword.value = !obscurePassword.value;
+    passwordHiddenController.value = !passwordHiddenController.value;
   }
 
   /// Moves focus from the email to the password field.
   void focusPassword() {
-    passwordFocus.requestFocus();
+    passwordFocusNode.requestFocus();
   }
 
   /// Releases the fields and notifiers. Called by the owner (`createOnce(..., dispose: ...)`).
-  @override
   void dispose() {
     _isDisposed = true;
-    email.dispose();
-    password.dispose();
-    emailFocus.dispose();
-    passwordFocus.dispose();
-    isSignUp.dispose();
-    obscurePassword.dispose();
-    super.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    emailFocusNode.dispose();
+    passwordFocusNode.dispose();
+    signUpModeController.dispose();
+    passwordHiddenController.dispose();
+    submittingStateController.dispose();
   }
 }

@@ -2,27 +2,27 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hitwave.cover/features/song/presentation/controllers/song_view_controller.dart';
 
 void main() {
-  late SongViewController controller;
+  late SongViewController songViewController;
 
   setUp(() {
-    controller = SongViewController();
+    songViewController = SongViewController();
   });
 
   tearDown(() {
-    controller.dispose();
+    songViewController.dispose();
   });
 
   test('starts in artist mode with no artist selected', () {
-    expect(controller.viewMode.value, SongViewMode.artist);
-    expect(controller.selectedArtist.value, isEmpty);
+    expect(songViewController.viewModeController.value, SongViewMode.artist);
+    expect(songViewController.selectedArtistController.value, isEmpty);
   });
 
   test('toggling the view mode clears the selected artist', () {
-    controller.selectArtist('Thorinshield');
+    songViewController.selectArtist('Thorinshield');
 
-    controller.toggleViewMode();
+    songViewController.toggleViewMode();
 
-    expect(controller.viewMode.value, SongViewMode.list);
-    expect(controller.selectedArtist.value, isEmpty);
+    expect(songViewController.viewModeController.value, SongViewMode.list);
+    expect(songViewController.selectedArtistController.value, isEmpty);
   });
 }

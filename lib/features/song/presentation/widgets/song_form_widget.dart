@@ -10,7 +10,7 @@ import '../controllers/song_form_controller.dart';
 ///
 /// Shows the author, name, album and lyrics fields with inline validation and
 /// a submit button pinned to the bottom. Knows nothing about use cases: the
-/// button calls [SongFormController.save], which validates the form first.
+/// button calls [onSubmit], and the page saves the song.
 final class SongFormWidget extends StatelessWidget {
   /// Visible lines of the lyrics field before it scrolls.
   static const int _lyricsMinLines = 8;
@@ -33,14 +33,22 @@ final class SongFormWidget extends StatelessWidget {
   /// Error shown under an empty required field.
   static const String _requiredError = 'Заповніть це поле';
 
-  /// Controller holding the field values.
-  final SongFormController controller;
+  /// Controller holding the fields and the saving progress.
+  final SongFormController songFormController;
 
   /// Label of the submit button.
   final String submitLabel;
 
+  /// Called when the submit button is pressed.
+  final VoidCallback onSubmit;
+
   /// Creates a new [SongFormWidget].
-  const SongFormWidget({required this.controller, required this.submitLabel, super.key});
+  const SongFormWidget({
+    super.key,
+    required this.songFormController,
+    required this.submitLabel,
+    required this.onSubmit,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -48,12 +56,12 @@ final class SongFormWidget extends StatelessWidget {
       children: <Widget>[
         Expanded(
           child: Form(
-            key: controller.formKey,
+            key: songFormController.formKey,
             child: ListView(
               padding: const EdgeInsets.all(AppTheme.spacingMedium),
               children: <Widget>[
                 TextFormField(
-                  controller: controller.author,
+                  controller: songFormController.authorController,
                   textCapitalization: TextCapitalization.words,
                   textInputAction: TextInputAction.next,
                   decoration: const InputDecoration(labelText: _authorLabel, prefixIcon: Icon(Icons.person_outline)),
@@ -61,7 +69,7 @@ final class SongFormWidget extends StatelessWidget {
                 ),
                 const SizedBox(height: AppTheme.spacingMedium),
                 TextFormField(
-                  controller: controller.name,
+                  controller: songFormController.nameController,
                   textCapitalization: TextCapitalization.sentences,
                   textInputAction: TextInputAction.next,
                   decoration: const InputDecoration(labelText: _nameLabel, prefixIcon: Icon(Icons.music_note_outlined)),
@@ -69,7 +77,7 @@ final class SongFormWidget extends StatelessWidget {
                 ),
                 const SizedBox(height: AppTheme.spacingMedium),
                 TextFormField(
-                  controller: controller.album,
+                  controller: songFormController.albumController,
                   textCapitalization: TextCapitalization.sentences,
                   textInputAction: TextInputAction.next,
                   decoration: const InputDecoration(
@@ -80,7 +88,7 @@ final class SongFormWidget extends StatelessWidget {
                 ),
                 const SizedBox(height: AppTheme.spacingMedium),
                 TextFormField(
-                  controller: controller.lyrics,
+                  controller: songFormController.lyricsController,
                   textCapitalization: TextCapitalization.sentences,
                   keyboardType: TextInputType.multiline,
                   minLines: _lyricsMinLines,
@@ -97,7 +105,11 @@ final class SongFormWidget extends StatelessWidget {
           top: false,
           child: Padding(
             padding: const EdgeInsets.all(AppTheme.spacingMedium),
-            child: _SaveButtonWidget(state: controller, label: submitLabel, onPressed: controller.save),
+            child: _SaveButtonWidget(
+              savingState: songFormController.savingStateController,
+              label: submitLabel,
+              onPressed: onSubmit,
+            ),
           ),
         ),
       ],
@@ -114,8 +126,8 @@ final class SongFormWidget extends StatelessWidget {
 
 /// Save button that shows progress while the save runs.
 final class _SaveButtonWidget extends WatchingWidget {
-  /// State of the save.
-  final ValueListenable<ResultState<void>> state;
+  /// Progress of saving.
+  final ValueListenable<ResultState<void>> savingState;
 
   /// Label of the button.
   final String label;
@@ -124,11 +136,11 @@ final class _SaveButtonWidget extends WatchingWidget {
   final VoidCallback onPressed;
 
   /// Creates a new [_SaveButtonWidget].
-  const _SaveButtonWidget({required this.state, required this.label, required this.onPressed});
+  const _SaveButtonWidget({required this.savingState, required this.label, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
-    final bool isLoading = watch(state).value.isLoading;
+    final bool isLoading = watch(savingState).value.isLoading;
 
     return SizedBox(
       width: double.infinity,

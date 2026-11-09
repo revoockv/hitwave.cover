@@ -1,60 +1,62 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hitwave.cover/core/domain/entities/result.dart';
 import 'package:hitwave.cover/features/song/domain/entities/cover.dart';
 import 'package:hitwave.cover/features/song/domain/entities/song.dart';
 import 'package:hitwave.cover/features/song/presentation/controllers/song_form_controller.dart';
 import 'package:hitwave.cover/features/song/presentation/widgets/song_form_widget.dart';
 
 void main() {
-  late List<String> saved;
-
-  Future<Result<void>> save({required String author, required String name, String? album, required String lyrics}) async {
-    saved.add('$author|$name|$album|$lyrics');
-    return Result.ok;
-  }
+  late int submits;
 
   Future<SongFormController> pumpForm(WidgetTester tester, {Song? song}) async {
-    final SongFormController controller = SongFormController(save: save, song: song);
-    addTearDown(controller.dispose);
+    final SongFormController songFormController = SongFormController(song: song);
+    addTearDown(songFormController.dispose);
     await tester.pumpWidget(
       MaterialApp(
-        home: Scaffold(body: SongFormWidget(controller: controller, submitLabel: 'Save')),
+        home: Scaffold(
+          body: SongFormWidget(songFormController: songFormController, submitLabel: 'Save', onSubmit: () => submits++),
+        ),
       ),
     );
-    return controller;
+    return songFormController;
   }
 
-  setUp(() => saved = <String>[]);
+  setUp(() => submits = 0);
 
-  testWidgets('an empty form shows errors and does not save', (WidgetTester tester) async {
-    final SongFormController controller = await pumpForm(tester);
+  testWidgets('an empty form shows errors and may not be saved', (WidgetTester tester) async {
+    final SongFormController songFormController = await pumpForm(tester);
 
-    await controller.save();
+    expect(songFormController.canSave(), isFalse);
     await tester.pump();
 
-    expect(saved, isEmpty);
     expect(find.text('Заповніть це поле'), findsNWidgets(3));
   });
 
-  testWidgets('a filled form saves trimmed values and an empty album as null', (WidgetTester tester) async {
-    final SongFormController controller = await pumpForm(tester);
-    controller.author.text = ' Artist ';
-    controller.name.text = 'Song';
-    controller.album.text = '  ';
-    controller.lyrics.text = 'la la';
+  testWidgets('a filled form may be saved with trimmed values and an empty album as null', (WidgetTester tester) async {
+    final SongFormController songFormController = await pumpForm(tester);
+    songFormController.authorController.text = ' Artist ';
+    songFormController.nameController.text = 'Song';
+    songFormController.albumController.text = '  ';
+    songFormController.lyricsController.text = 'la la';
 
-    await controller.save();
+    expect(songFormController.canSave(), isTrue);
+    expect(songFormController.author, 'Artist');
+    expect(songFormController.album, isNull);
+  });
 
-    expect(saved, <String>['Artist|Song|null|la la']);
-    expect(controller.value.isSuccess, isTrue);
+  testWidgets('the save button calls onSubmit', (WidgetTester tester) async {
+    await pumpForm(tester);
+
+    await tester.tap(find.text('Save'));
+
+    expect(submits, 1);
   });
 
   testWidgets('edit mode starts with the song values', (WidgetTester tester) async {
     const Song song = Song(id: '1', author: 'A', name: 'N', album: 'Al', lyrics: 'L', covers: <Cover>[]);
-    final SongFormController controller = await pumpForm(tester, song: song);
+    final SongFormController songFormController = await pumpForm(tester, song: song);
 
-    expect(controller.author.text, 'A');
-    expect(controller.album.text, 'Al');
+    expect(songFormController.authorController.text, 'A');
+    expect(songFormController.album, 'Al');
   });
 }

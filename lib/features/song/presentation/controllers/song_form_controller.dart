@@ -1,76 +1,69 @@
 import 'package:flutter/widgets.dart' show FormState, GlobalKey, TextEditingController, ValueNotifier;
 
-import '../../../../core/domain/entities/result.dart';
 import '../../../../core/domain/entities/result_state.dart';
 import '../../domain/entities/song.dart';
 
-/// Saves a song with the entered values; the add or the update action.
-typedef SaveSong =
-    Future<Result<void>> Function({
-      required String author,
-      required String name,
-      String? album,
-      required String lyrics,
-    });
-
-/// UI logic of the add and edit song pages: the form fields and one
-/// [ResultState] of the save.
+/// UI state of the add and edit song pages, like a Flutter controller: the form
+/// fields and the progress of saving.
 ///
-/// Knows nothing about DI or use cases — the owner passes the save action in.
-final class SongFormController extends ValueNotifier<ResultState<void>> {
+/// Knows nothing about use cases: the page calls them and records the outcome
+/// in [savingStateController].
+final class SongFormController {
   /// Key of the form, validated before saving.
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
-  /// Controller of the author field.
-  final TextEditingController author;
+  /// Text of the author field.
+  final TextEditingController authorController;
 
-  /// Controller of the name field.
-  final TextEditingController name;
+  /// Text of the name field.
+  final TextEditingController nameController;
 
-  /// Controller of the album field.
-  final TextEditingController album;
+  /// Text of the album field.
+  final TextEditingController albumController;
 
-  /// Controller of the lyrics field.
-  final TextEditingController lyrics;
+  /// Text of the lyrics field.
+  final TextEditingController lyricsController;
 
-  final SaveSong _save;
+  /// Progress of saving the song; the save button is disabled while it runs.
+  final ValueNotifier<ResultState<void>> savingStateController = ValueNotifier<ResultState<void>>(ResultState.idle);
 
   bool _isDisposed = false;
 
   /// Creates the controller; the fields start with the values of [song] when given.
-  SongFormController({required this._save, Song? song})
-    : author = TextEditingController(text: song?.author),
-      name = TextEditingController(text: song?.name),
-      album = TextEditingController(text: song?.album),
-      lyrics = TextEditingController(text: song?.lyrics),
-      super(ResultState.idle);
+  SongFormController({Song? song})
+    : authorController = TextEditingController(text: song?.author),
+      nameController = TextEditingController(text: song?.name),
+      albumController = TextEditingController(text: song?.album),
+      lyricsController = TextEditingController(text: song?.lyrics);
 
-  /// Saves the song when the form is valid; ignored while a save runs.
-  Future<void> save() async {
-    if (value.isLoading) return;
-    if (formKey.currentState?.validate() != true) return;
-    value = ResultState.loading;
+  /// Whether [dispose] was called; the owner checks it after every `await`.
+  bool get isDisposed => _isDisposed;
 
-    final String albumText = album.text.trim();
-    final Result<void> result = await _save(
-      author: author.text.trim(),
-      name: name.text.trim(),
-      album: albumText.isEmpty ? null : albumText,
-      lyrics: lyrics.text.trim(),
-    );
-    if (_isDisposed) return;
+  /// Entered author without surrounding spaces.
+  String get author => authorController.text.trim();
 
-    value = ResultState.of(result);
+  /// Entered name without surrounding spaces.
+  String get name => nameController.text.trim();
+
+  /// Entered album, or `null` when the field is empty.
+  String? get album {
+    final String text = albumController.text.trim();
+    return text.isEmpty ? null : text;
   }
 
+  /// Entered lyrics without surrounding spaces.
+  String get lyrics => lyricsController.text.trim();
+
+  /// Whether a save may start: none is running and every required field is filled.
+  bool canSave() => !savingStateController.value.isLoading && formKey.currentState?.validate() == true;
+
   /// Releases the fields and the notifier. Called by the owner (`createOnce(..., dispose: ...)`).
-  @override
   void dispose() {
     _isDisposed = true;
-    author.dispose();
-    name.dispose();
-    album.dispose();
-    lyrics.dispose();
-    super.dispose();
+    authorController.dispose();
+    nameController.dispose();
+    albumController.dispose();
+    lyricsController.dispose();
+    savingStateController.dispose();
   }
 }

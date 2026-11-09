@@ -40,8 +40,11 @@ final class ArtistPickerWidget extends WatchingWidget {
 
   @override
   Widget build(BuildContext context) {
-    final TextEditingController search = createOnce(_createSearch, dispose: _disposeSearch);
-    final String query = watch(search).value.text.trim().toLowerCase();
+    final TextEditingController searchController = createOnce(
+      _createSearchController,
+      dispose: _disposeSearchController,
+    );
+    final String query = watch(searchController).value.text.trim().toLowerCase();
 
     final Map<String, int> songCounts = <String, int>{};
     for (final Song song in songs) {
@@ -58,14 +61,18 @@ final class ArtistPickerWidget extends WatchingWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingMedium, vertical: AppTheme.spacingSmall),
             child: TextField(
-              controller: search,
+              controller: searchController,
               textInputAction: TextInputAction.search,
               decoration: InputDecoration(
                 hintText: _searchHint,
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: query.isEmpty
                     ? null
-                    : IconButton(tooltip: _clearTooltip, icon: const Icon(Icons.close), onPressed: search.clear),
+                    : IconButton(
+                        tooltip: _clearTooltip,
+                        icon: const Icon(Icons.close),
+                        onPressed: searchController.clear,
+                      ),
               ),
             ),
           ),
@@ -88,9 +95,9 @@ final class ArtistPickerWidget extends WatchingWidget {
     );
   }
 
-  static TextEditingController _createSearch() => TextEditingController();
+  static TextEditingController _createSearchController() => TextEditingController();
 
-  static void _disposeSearch(TextEditingController search) => search.dispose();
+  static void _disposeSearchController(TextEditingController searchController) => searchController.dispose();
 
   static int _compareArtists(String a, String b) => a.toLowerCase().compareTo(b.toLowerCase());
 }

@@ -2,15 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../../../../core/domain/entities/result.dart';
 import '../../../../core/domain/entities/result_state.dart';
 
-/// Controller for lyrics page reactive state.
+/// UI state of the lyrics page, like a Flutter controller: auto-scroll, the
+/// speed, the controls visibility and the text field.
 ///
-/// Exposes [speed], [isScrolling], and [controlsVisible] as [ValueNotifier]
-/// fields so the UI can reactively update via [ValueListenableBuilder].
-/// Also owns the [textController], [scrollController], [editScrollController],
-/// and [focusNode] so the UI layer has no stateful elements.
+/// Knows nothing about use cases: the page saves the chosen speed and records
+/// the outcome in [speedSavingStateController].
 final class LyricsPageController {
   /// Default scroll speed.
   static const double _defaultSpeed = 0.5;
@@ -31,85 +29,78 @@ final class LyricsPageController {
   static const double maxSpeed = 1.0;
 
   /// Current scroll speed (0.0 to 1.0).
-  final ValueNotifier<double> speed;
+  final ValueNotifier<double> speedController;
 
-  /// State of the last speed save; a failure is shown by the page.
-  final ValueNotifier<ResultState<void>> speedSave = ValueNotifier<ResultState<void>>(ResultState.idle);
-
-  final Future<Result<void>> Function(double speed) _saveSpeed;
+  /// Progress of saving the speed with the song; a failure is shown by the page.
+  final ValueNotifier<ResultState<void>> speedSavingStateController = ValueNotifier<ResultState<void>>(
+    ResultState.idle,
+  );
 
   double _savedSpeed;
 
   bool _isDisposed = false;
 
-  /// Whether auto-scroll is currently active.
-  final ValueNotifier<bool> isScrolling = ValueNotifier(false);
+  /// Whether auto-scroll is currently running.
+  final ValueNotifier<bool> scrollingController = ValueNotifier<bool>(false);
 
   /// Whether the controls bar is currently visible.
-  final ValueNotifier<bool> controlsVisible = ValueNotifier(true);
+  final ValueNotifier<bool> controlsVisibilityController = ValueNotifier<bool>(true);
 
-  /// Controller for the lyrics text field.
-  final TextEditingController textController;
+  /// Text of the lyrics field.
+  final TextEditingController lyricsTextController;
 
-  /// Controller for the auto-scrolling lyrics view.
-  final ScrollController scrollController = ScrollController();
+  /// Scroll position of the auto-scrolling lyrics view.
+  final ScrollController lyricsScrollController = ScrollController();
 
-  /// Controller for the edit-mode lyrics view.
+  /// Scroll position of the edit-mode lyrics view.
   final ScrollController editScrollController = ScrollController();
 
-  /// Focus node for the lyrics text field.
-  final FocusNode focusNode = FocusNode();
+  /// Focus of the lyrics text field.
+  final FocusNode lyricsFocusNode = FocusNode();
 
   /// Creates the controller with the [lyrics] to show.
   ///
-  /// Starts at [initialSpeed] (the speed saved with the song) or the default;
-  /// [saveSpeed] stores a new speed with the song.
-  LyricsPageController({
-    required String lyrics,
-    required Future<Result<void>> Function(double speed) saveSpeed,
-    double? initialSpeed,
-  }) : this._(lyrics, saveSpeed, (initialSpeed ?? _defaultSpeed).clamp(minSpeed, maxSpeed));
+  /// Starts at [initialSpeed] (the speed saved with the song) or the default.
+  LyricsPageController({required String lyrics, double? initialSpeed})
+    : this._(lyrics, (initialSpeed ?? _defaultSpeed).clamp(minSpeed, maxSpeed));
 
-  LyricsPageController._(String lyrics, this._saveSpeed, double startSpeed)
-    : textController = TextEditingController(text: lyrics),
-      speed = ValueNotifier<double>(startSpeed),
+  LyricsPageController._(String lyrics, double startSpeed)
+    : lyricsTextController = TextEditingController(text: lyrics),
+      speedController = ValueNotifier<double>(startSpeed),
       _savedSpeed = startSpeed;
 
-  /// Saves the current speed with the song when it changed; called when the slider is released.
-  Future<void> saveSpeed(double value) async {
-    if (value == _savedSpeed || speedSave.value.isLoading) return;
-    speedSave.value = ResultState.loading;
+  /// Whether [dispose] was called; the owner checks it after every `await`.
+  bool get isDisposed => _isDisposed;
 
-    final Result<void> result = await _saveSpeed(value);
-    if (_isDisposed) return;
+  /// Whether a speed save may start: none is running and [speed] differs from the saved one.
+  bool canSaveSpeed(double speed) => !speedSavingStateController.value.isLoading && speed != _savedSpeed;
 
-    if (result.isSuccess) {
-      _savedSpeed = value;
-    }
-    speedSave.value = ResultState.of(result);
+  /// Remembers [speed] as the one saved with the song.
+  void markSpeedSaved(double speed) {
+    _savedSpeed = speed;
   }
 
   /// Hides the keyboard of the lyrics field.
   void hideKeyboard() {
-    if (focusNode.hasFocus) {
-      focusNode.unfocus();
+    if (lyricsFocusNode.hasFocus) {
+      lyricsFocusNode.unfocus();
     }
   }
 
   /// Starts auto-scrolling, or stops it when it runs; nothing to scroll in empty lyrics.
   void toggleScroll() {
-    if (isScrolling.value) {
+    if (scrollingController.value) {
       stopScrolling();
       return;
     }
-    if (textController.text.trim().isEmpty) return;
+    if (lyricsTextController.text.trim().isEmpty) return;
     startScrolling();
   }
 
   /// Shows the controls again after a tap on the lyrics.
   void onLyricsTapped() {
     resetHideTimer();
-    if (isScrolling.value) {
+    if (scrollingController.value) {
       hideKeyboard();
     }
   }
@@ -119,14 +110,14 @@ final class LyricsPageController {
     scrollTimer?.cancel();
     hideControlsTimer?.cancel();
     _isDisposed = true;
-    speed.dispose();
-    speedSave.dispose();
-    isScrolling.dispose();
-    controlsVisible.dispose();
-    textController.dispose();
-    scrollController.dispose();
+    speedController.dispose();
+    speedSavingStateController.dispose();
+    scrollingController.dispose();
+    controlsVisibilityController.dispose();
+    lyricsTextController.dispose();
+    lyricsScrollController.dispose();
     editScrollController.dispose();
-    focusNode.dispose();
+    lyricsFocusNode.dispose();
   }
 
   /// Timer that advances the auto-scroll; `null` while not scrolling.
@@ -141,39 +132,39 @@ final class LyricsPageController {
   /// after [_hideControlsDelayMs] milliseconds of inactivity.
   void resetHideTimer() {
     hideControlsTimer?.cancel();
-    controlsVisible.value = true;
+    controlsVisibilityController.value = true;
     hideControlsTimer = Timer(const Duration(milliseconds: _hideControlsDelayMs), () {
-      if (!isScrolling.value || !controlsVisible.value) return;
-      controlsVisible.value = false;
+      if (!scrollingController.value || !controlsVisibilityController.value) return;
+      controlsVisibilityController.value = false;
     });
   }
 
   /// Starts auto-scrolling the lyrics text.
   ///
-  /// Cancels any existing scroll timer, sets [isScrolling] to true,
+  /// Cancels any existing scroll timer, sets [scrollingController] to true,
   /// and starts a periodic timer that scrolls by [_scrollIncrementMultiplier]
   /// every [_scrollIntervalMs] milliseconds.
   void startScrolling() {
-    if (isScrolling.value) return;
+    if (scrollingController.value) return;
 
-    isScrolling.value = true;
+    scrollingController.value = true;
     hideKeyboard();
     scrollTimer?.cancel();
     scrollTimer = Timer.periodic(const Duration(milliseconds: _scrollIntervalMs), (_) {
-      if (!scrollController.hasClients) return;
+      if (!lyricsScrollController.hasClients) return;
 
-      final maxScroll = scrollController.position.maxScrollExtent;
-      final currentScroll = scrollController.offset;
+      final maxScroll = lyricsScrollController.position.maxScrollExtent;
+      final currentScroll = lyricsScrollController.offset;
 
       if (currentScroll >= maxScroll) {
         stopScrolling();
         return;
       }
 
-      final scrollIncrement = speed.value * _scrollIncrementMultiplier;
+      final scrollIncrement = speedController.value * _scrollIncrementMultiplier;
       final newOffset = (currentScroll + scrollIncrement).clamp(0.0, maxScroll);
 
-      scrollController.jumpTo(newOffset);
+      lyricsScrollController.jumpTo(newOffset);
     });
 
     resetHideTimer();
@@ -184,7 +175,7 @@ final class LyricsPageController {
     scrollTimer?.cancel();
     scrollTimer = null;
 
-    isScrolling.value = false;
+    scrollingController.value = false;
 
     resetHideTimer();
     WidgetsBinding.instance.addPostFrameCallback((_) {

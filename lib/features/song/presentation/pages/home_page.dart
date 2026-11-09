@@ -79,17 +79,20 @@ final class HomePage extends WatchingWidget {
   /// Creates a new [HomePage].
   const HomePage({super.key});
 
-  static SongViewController _createController() => SongViewController();
+  static SongViewController _createSongViewController() => SongViewController();
 
-  static void _disposeController(SongViewController controller) => controller.dispose();
+  static void _disposeSongViewController(SongViewController songViewController) => songViewController.dispose();
 
   @override
   Widget build(BuildContext context) {
-    final SongViewController controller = createOnce(_createController, dispose: _disposeController);
+    final SongViewController songViewController = createOnce(
+      _createSongViewController,
+      dispose: _disposeSongViewController,
+    );
     final List<Song> songs = watch(watchListOfSongsUseCase()).value;
     final String status = watch(watchBackupStatusUseCase()).value;
-    final SongViewMode viewMode = watch(controller.viewMode).value;
-    final String selectedArtist = watch(controller.selectedArtist).value;
+    final SongViewMode viewMode = watch(songViewController.viewModeController).value;
+    final String selectedArtist = watch(songViewController.selectedArtistController).value;
 
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final bool isBackupRunning = status == _backupStatusExporting || status == _backupStatusImporting;
@@ -114,14 +117,14 @@ final class HomePage extends WatchingWidget {
 
     return PopScope(
       canPop: !hasSelectedArtist,
-      onPopInvokedWithResult: (bool didPop, Object? result) => _onBackInvoked(controller, didPop),
+      onPopInvokedWithResult: (bool didPop, Object? result) => _onBackInvoked(songViewController, didPop),
       child: Scaffold(
         appBar: AppBar(
           leading: hasSelectedArtist
               ? IconButton(
                   tooltip: _allArtistsTooltip,
                   icon: const Icon(Icons.arrow_back),
-                  onPressed: controller.clearArtist,
+                  onPressed: songViewController.clearArtist,
                 )
               : null,
           title: hasSelectedArtist
@@ -129,13 +132,13 @@ final class HomePage extends WatchingWidget {
                   title: titleText,
                   songs: songs,
                   selectedArtist: selectedArtist,
-                  onArtistSelected: controller.selectArtist,
+                  onArtistSelected: songViewController.selectArtist,
                 )
               : titleText,
           actions: <Widget>[
             IconButton(
               icon: Icon(isArtistMode ? Icons.view_list_outlined : Icons.people_outline),
-              onPressed: controller.toggleViewMode,
+              onPressed: songViewController.toggleViewMode,
               tooltip: isArtistMode ? _listModeTooltip : _artistModeTooltip,
             ),
             PopupMenuButton<_HomeMenuAction>(
@@ -156,7 +159,7 @@ final class HomePage extends WatchingWidget {
           songs: songs,
           viewMode: viewMode,
           selectedArtist: selectedArtist,
-          onArtistSelected: controller.selectArtist,
+          onArtistSelected: songViewController.selectArtist,
           onSongTap: (Song song) => _navigateToLyrics(context, song),
           onSongEdit: (Song song) => _showEditSongPage(context, song),
           onSongDelete: (Song song) => _onSongDeletePressed(context, song),
@@ -198,9 +201,9 @@ final class HomePage extends WatchingWidget {
     return songs.length;
   }
 
-  void _onBackInvoked(SongViewController controller, bool didPop) {
+  void _onBackInvoked(SongViewController songViewController, bool didPop) {
     if (!didPop) {
-      controller.clearArtist();
+      songViewController.clearArtist();
     }
   }
 

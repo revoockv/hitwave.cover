@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:watch_it/watch_it.dart';
 
+import '../../../../core/domain/entities/result.dart';
 import '../../../../core/domain/entities/result_state.dart';
 import '../../../../core/presentation/theme.dart';
 import '../controllers/auth_form_controller.dart';
@@ -9,17 +10,24 @@ import '../di/auth_getters.dart';
 
 /// Main authentication form displayed for unauthenticated users.
 ///
-/// Supports toggling between login and registration modes. All form state
-/// lives in [AuthFormController]; each part of the form watches only what it
-/// shows. After a successful sign-in the app swaps to the home page by
-/// itself, because the root widget watches the session.
+/// Supports toggling between login and registration modes. The form state
+/// lives in [AuthFormController]; this widget signs in or up itself, and each
+/// part of the form watches only what it shows. After a successful sign-in
+/// the app swaps to the home page by itself, because the root widget watches
+/// the session.
 final class AuthFormWidget extends WatchingWidget {
+  /// Error shown when a field is empty.
+  static const String _emptyFieldsError = 'Будь ласка, заповніть всі поля.';
+
   /// Creates a new [AuthFormWidget].
   const AuthFormWidget({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final AuthFormController controller = createOnce(_createController, dispose: _disposeController);
+    final AuthFormController authFormController = createOnce(
+      _createAuthFormController,
+      dispose: _disposeAuthFormController,
+    );
 
     return Scaffold(
       body: SafeArea(
@@ -34,16 +42,26 @@ final class AuthFormWidget extends WatchingWidget {
                   children: <Widget>[
                     const _BrandHeaderWidget(),
                     const SizedBox(height: AppTheme.spacingExtraLarge),
-                    _FormTitleWidget(isSignUp: controller.isSignUp),
+                    _FormTitleWidget(signUpMode: authFormController.signUpModeController),
                     const SizedBox(height: AppTheme.spacingLarge),
-                    _ErrorMessageWidget(state: controller),
-                    _EmailFieldWidget(controller: controller),
+                    _ErrorMessageWidget(submittingState: authFormController.submittingStateController),
+                    _EmailFieldWidget(authFormController: authFormController),
                     const SizedBox(height: AppTheme.spacingMedium),
-                    _PasswordFieldWidget(controller: controller),
+                    _PasswordFieldWidget(
+                      authFormController: authFormController,
+                      onSubmit: () => _onSubmitPressed(authFormController),
+                    ),
                     const SizedBox(height: AppTheme.spacingLarge),
-                    _SubmitButtonWidget(state: controller, isSignUp: controller.isSignUp, onPressed: controller.submit),
+                    _SubmitButtonWidget(
+                      submittingState: authFormController.submittingStateController,
+                      signUpMode: authFormController.signUpModeController,
+                      onPressed: () => _onSubmitPressed(authFormController),
+                    ),
                     const SizedBox(height: AppTheme.spacingSmall),
-                    _ToggleButtonWidget(isSignUp: controller.isSignUp, onPressed: controller.toggleMode),
+                    _ToggleButtonWidget(
+                      signUpMode: authFormController.signUpModeController,
+                      onPressed: authFormController.toggleMode,
+                    ),
                   ],
                 ),
               ),
@@ -54,10 +72,29 @@ final class AuthFormWidget extends WatchingWidget {
     );
   }
 
-  static AuthFormController _createController() =>
-      AuthFormController(signIn: signInUseCase.call, signUp: signUpUseCase.call);
+  static AuthFormController _createAuthFormController() => AuthFormController();
 
-  static void _disposeController(AuthFormController controller) => controller.dispose();
+  static void _disposeAuthFormController(AuthFormController authFormController) => authFormController.dispose();
+
+  /// Signs in or up with the entered values; ignored while an attempt runs.
+  Future<void> _onSubmitPressed(AuthFormController authFormController) async {
+    final ValueNotifier<ResultState<void>> submittingStateController = authFormController.submittingStateController;
+    if (submittingStateController.value.isLoading) return;
+    if (authFormController.hasEmptyFields) {
+      submittingStateController.value = const ResultState<void>.failure(_emptyFieldsError);
+      return;
+    }
+    submittingStateController.value = ResultState.loading;
+
+    final String email = authFormController.email;
+    final String password = authFormController.password;
+    final Result<void> result = authFormController.signUpModeController.value
+        ? await signUpUseCase(email: email, password: password)
+        : await signInUseCase(email: email, password: password);
+    if (authFormController.isDisposed) return;
+
+    submittingStateController.value = ResultState.of(result);
+  }
 }
 
 // ── Sub-widgets ────────────────────────────────────────────────────
@@ -121,29 +158,29 @@ final class _FormTitleWidget extends WatchingWidget {
   static const String _signInText = 'Увійдіть в акаунт';
 
   /// Whether the form is in sign-up mode.
-  final ValueListenable<bool> isSignUp;
+  final ValueListenable<bool> signUpMode;
 
   /// Creates a new [_FormTitleWidget].
-  const _FormTitleWidget({required this.isSignUp});
+  const _FormTitleWidget({required this.signUpMode});
 
   @override
   Widget build(BuildContext context) {
-    final bool signUp = watch(isSignUp).value;
+    final bool signUp = watch(signUpMode).value;
     return Text(signUp ? _signUpText : _signInText, style: Theme.of(context).textTheme.titleLarge);
   }
 }
 
 /// Shows the error of the last attempt, or nothing.
 final class _ErrorMessageWidget extends WatchingWidget {
-  /// State of the last sign-in or sign-up.
-  final ValueListenable<ResultState<void>> state;
+  /// Progress of the last sign-in or sign-up.
+  final ValueListenable<ResultState<void>> submittingState;
 
   /// Creates a new [_ErrorMessageWidget].
-  const _ErrorMessageWidget({required this.state});
+  const _ErrorMessageWidget({required this.submittingState});
 
   @override
   Widget build(BuildContext context) {
-    final ResultState<void> current = watch(state).value;
+    final ResultState<void> current = watch(submittingState).value;
     if (current is! FailureResultState<void>) {
       return const SizedBox.shrink();
     }
@@ -180,21 +217,21 @@ final class _EmailFieldWidget extends StatelessWidget {
   static const String _emailLabelText = 'Email';
 
   /// The [AuthFormController] owning the field.
-  final AuthFormController controller;
+  final AuthFormController authFormController;
 
   /// Creates a new [_EmailFieldWidget].
-  const _EmailFieldWidget({required this.controller});
+  const _EmailFieldWidget({required this.authFormController});
 
   @override
   Widget build(BuildContext context) {
     return TextField(
-      controller: controller.email,
-      focusNode: controller.emailFocus,
+      controller: authFormController.emailController,
+      focusNode: authFormController.emailFocusNode,
       keyboardType: TextInputType.emailAddress,
       textInputAction: TextInputAction.next,
       autocorrect: false,
       autofillHints: const <String>[AutofillHints.email],
-      onEditingComplete: controller.focusPassword,
+      onEditingComplete: authFormController.focusPassword,
       decoration: const InputDecoration(labelText: _emailLabelText, prefixIcon: Icon(Icons.mail_outline)),
     );
   }
@@ -212,29 +249,32 @@ final class _PasswordFieldWidget extends WatchingWidget {
   static const String _hidePasswordTooltip = 'Сховати пароль';
 
   /// The [AuthFormController] owning the field.
-  final AuthFormController controller;
+  final AuthFormController authFormController;
+
+  /// Called when the user finishes typing the password.
+  final VoidCallback onSubmit;
 
   /// Creates a new [_PasswordFieldWidget].
-  const _PasswordFieldWidget({required this.controller});
+  const _PasswordFieldWidget({required this.authFormController, required this.onSubmit});
 
   @override
   Widget build(BuildContext context) {
-    final bool obscure = watch(controller.obscurePassword).value;
+    final bool obscure = watch(authFormController.passwordHiddenController).value;
 
     return TextField(
-      controller: controller.password,
-      focusNode: controller.passwordFocus,
+      controller: authFormController.passwordController,
+      focusNode: authFormController.passwordFocusNode,
       obscureText: obscure,
       textInputAction: TextInputAction.done,
       autofillHints: const <String>[AutofillHints.password],
-      onEditingComplete: controller.submit,
+      onEditingComplete: onSubmit,
       decoration: InputDecoration(
         labelText: _passwordLabelText,
         prefixIcon: const Icon(Icons.lock_outline),
         suffixIcon: IconButton(
           tooltip: obscure ? _showPasswordTooltip : _hidePasswordTooltip,
           icon: Icon(obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined),
-          onPressed: controller.togglePasswordVisibility,
+          onPressed: authFormController.togglePasswordVisibility,
         ),
       ),
     );
@@ -249,22 +289,22 @@ final class _SubmitButtonWidget extends WatchingWidget {
   /// Text shown in sign-in mode.
   static const String _signInText = 'Увійти';
 
-  /// State of the last sign-in or sign-up.
-  final ValueListenable<ResultState<void>> state;
+  /// Progress of the last sign-in or sign-up.
+  final ValueListenable<ResultState<void>> submittingState;
 
   /// Whether the form is in sign-up mode.
-  final ValueListenable<bool> isSignUp;
+  final ValueListenable<bool> signUpMode;
 
   /// Called when the button is pressed.
   final VoidCallback onPressed;
 
   /// Creates a new [_SubmitButtonWidget].
-  const _SubmitButtonWidget({required this.state, required this.isSignUp, required this.onPressed});
+  const _SubmitButtonWidget({required this.submittingState, required this.signUpMode, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
-    final bool isLoading = watch(state).value.isLoading;
-    final bool signUp = watch(isSignUp).value;
+    final bool isLoading = watch(submittingState).value.isLoading;
+    final bool signUp = watch(signUpMode).value;
 
     return FilledButton(
       onPressed: isLoading ? null : onPressed,
@@ -287,17 +327,17 @@ final class _ToggleButtonWidget extends WatchingWidget {
   static const String _signedOutText = 'Немає акаунту? Зареєструватися';
 
   /// Whether the form is in sign-up mode.
-  final ValueListenable<bool> isSignUp;
+  final ValueListenable<bool> signUpMode;
 
   /// Called when the button is pressed.
   final VoidCallback onPressed;
 
   /// Creates a new [_ToggleButtonWidget].
-  const _ToggleButtonWidget({required this.isSignUp, required this.onPressed});
+  const _ToggleButtonWidget({required this.signUpMode, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
-    final bool signUp = watch(isSignUp).value;
+    final bool signUp = watch(signUpMode).value;
     return TextButton(onPressed: onPressed, child: Text(signUp ? _signedInText : _signedOutText));
   }
 }

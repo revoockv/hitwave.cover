@@ -49,9 +49,12 @@ final class LyricsPage extends WatchingWidget {
 
   @override
   Widget build(BuildContext context) {
-    final LyricsPageController controller = createOnce(_createController, dispose: _disposeController);
-    final bool isScrolling = watch(controller.isScrolling).value;
-    registerHandler(target: controller.speedSave, handler: _onSpeedSaveChanged);
+    final LyricsPageController lyricsPageController = createOnce(
+      _createLyricsPageController,
+      dispose: _disposeLyricsPageController,
+    );
+    final bool isScrolling = watch(lyricsPageController.scrollingController).value;
+    registerHandler(target: lyricsPageController.speedSavingStateController, handler: _onSpeedSavingChanged);
     final double leadIn = MediaQuery.sizeOf(context).height * _leadInFactor;
 
     final ThemeData theme = Theme.of(context);
@@ -80,25 +83,25 @@ final class LyricsPage extends WatchingWidget {
           Positioned.fill(
             child: GestureDetector(
               behavior: HitTestBehavior.translucent,
-              onTap: controller.onLyricsTapped,
+              onTap: lyricsPageController.onLyricsTapped,
               child: Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: AppTheme.maxContentWidth),
                   child: isScrolling
                       ? SingleChildScrollView(
-                          controller: controller.scrollController,
+                          controller: lyricsPageController.lyricsScrollController,
                           padding: _lyricsPadding.copyWith(top: leadIn),
                           child: SizedBox(
                             width: double.infinity,
-                            child: Text(controller.textController.text, style: lyricsStyle),
+                            child: Text(lyricsPageController.lyricsTextController.text, style: lyricsStyle),
                           ),
                         )
                       : TextField(
-                          controller: controller.textController,
-                          focusNode: controller.focusNode,
-                          scrollController: controller.editScrollController,
+                          controller: lyricsPageController.lyricsTextController,
+                          focusNode: lyricsPageController.lyricsFocusNode,
+                          scrollController: lyricsPageController.editScrollController,
                           textInputAction: TextInputAction.done,
-                          onEditingComplete: controller.hideKeyboard,
+                          onEditingComplete: lyricsPageController.hideKeyboard,
                           maxLines: null,
                           expands: true,
                           textAlignVertical: TextAlignVertical.top,
@@ -123,7 +126,8 @@ final class LyricsPage extends WatchingWidget {
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: AppTheme.maxContentWidth),
                 child: LyricsControlsWidget(
-                  controller: controller,
+                  lyricsPageController: lyricsPageController,
+                  onSpeedChosen: (double speed) => _onSpeedChosen(lyricsPageController, speed),
                   speedLabel: _speedLabel,
                   stopLabel: _stopLabel,
                   startLabel: _startLabel,
@@ -136,17 +140,27 @@ final class LyricsPage extends WatchingWidget {
     );
   }
 
-  LyricsPageController _createController() =>
-      LyricsPageController(lyrics: song.lyrics, initialSpeed: song.scrollSpeed, saveSpeed: _saveSpeed);
+  LyricsPageController _createLyricsPageController() =>
+      LyricsPageController(lyrics: song.lyrics, initialSpeed: song.scrollSpeed);
 
-  /// Saves [speed] with this song.
-  Future<Result<void>> _saveSpeed(double speed) => updateSongScrollSpeedUseCase(songId: song.id, speed: speed);
+  static void _disposeLyricsPageController(LyricsPageController lyricsPageController) => lyricsPageController.dispose();
 
   /// Shows an error when the speed could not be saved.
-  void _onSpeedSaveChanged(BuildContext context, ResultState<void> state, void Function() cancel) {
+  void _onSpeedSavingChanged(BuildContext context, ResultState<void> state, void Function() cancel) {
     if (state is! FailureResultState<void>) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.message)));
   }
 
-  static void _disposeController(LyricsPageController controller) => controller.dispose();
+  /// Saves [speed] with this song when it changed; ignored while a save runs.
+  Future<void> _onSpeedChosen(LyricsPageController lyricsPageController, double speed) async {
+    if (!lyricsPageController.canSaveSpeed(speed)) return;
+    final ValueNotifier<ResultState<void>> speedSavingStateController = lyricsPageController.speedSavingStateController;
+    speedSavingStateController.value = ResultState.loading;
+
+    final Result<void> result = await updateSongScrollSpeedUseCase(songId: song.id, speed: speed);
+    if (lyricsPageController.isDisposed) return;
+
+    if (result.isSuccess) lyricsPageController.markSpeedSaved(speed);
+    speedSavingStateController.value = ResultState.of(result);
+  }
 }

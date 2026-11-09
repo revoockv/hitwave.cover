@@ -8,6 +8,7 @@ import '../controllers/lyrics_page_controller.dart';
 ///
 /// Shows the play/stop button and the speed slider. Fades out (and stops
 /// taking touches) when the controller hides the controls during scrolling.
+/// Knows nothing about use cases: a released slider calls [onSpeedChosen].
 final class LyricsControlsWidget extends WatchingWidget {
   /// Elevation of the panel.
   static const double _panelElevation = 6;
@@ -21,8 +22,11 @@ final class LyricsControlsWidget extends WatchingWidget {
   /// Digits after the point in the speed value.
   static const int _speedDigits = 1;
 
-  /// The lyrics page controller.
-  final LyricsPageController controller;
+  /// UI state of the lyrics page.
+  final LyricsPageController lyricsPageController;
+
+  /// Called with the speed when the user releases the slider.
+  final ValueChanged<double> onSpeedChosen;
 
   /// Speed label text.
   final String speedLabel;
@@ -36,7 +40,8 @@ final class LyricsControlsWidget extends WatchingWidget {
   /// Creates a new [LyricsControlsWidget].
   const LyricsControlsWidget({
     super.key,
-    required this.controller,
+    required this.lyricsPageController,
+    required this.onSpeedChosen,
     required this.speedLabel,
     required this.stopLabel,
     required this.startLabel,
@@ -44,9 +49,9 @@ final class LyricsControlsWidget extends WatchingWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool visible = watch(controller.controlsVisible).value;
-    final bool isScrolling = watch(controller.isScrolling).value;
-    final double speed = watch(controller.speed).value;
+    final bool visible = watch(lyricsPageController.controlsVisibilityController).value;
+    final bool isScrolling = watch(lyricsPageController.scrollingController).value;
+    final double speed = watch(lyricsPageController.speedController).value;
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final TextTheme textTheme = Theme.of(context).textTheme;
 
@@ -78,7 +83,7 @@ final class LyricsControlsWidget extends WatchingWidget {
                     IconButton.filled(
                       iconSize: AppTheme.spacingLarge,
                       tooltip: isScrolling ? stopLabel : startLabel,
-                      onPressed: controller.toggleScroll,
+                      onPressed: lyricsPageController.toggleScroll,
                       icon: Icon(isScrolling ? Icons.pause : Icons.play_arrow),
                     ),
                     const SizedBox(width: AppTheme.spacingSmall),
@@ -94,7 +99,7 @@ final class LyricsControlsWidget extends WatchingWidget {
                               divisions: _sliderDivisions,
                               label: speed.toStringAsFixed(_speedDigits),
                               onChanged: _onSpeedChanged,
-                              onChangeEnd: controller.saveSpeed,
+                              onChangeEnd: onSpeedChosen,
                             ),
                           ),
                           Text(
@@ -118,7 +123,7 @@ final class LyricsControlsWidget extends WatchingWidget {
   }
 
   void _onSpeedChanged(double value) {
-    controller.speed.value = value;
-    controller.resetHideTimer();
+    lyricsPageController.speedController.value = value;
+    lyricsPageController.resetHideTimer();
   }
 }
