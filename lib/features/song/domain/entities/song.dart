@@ -25,6 +25,10 @@ final class Song {
   /// Saved auto-scroll speed of the lyrics (0.0–1.0), or `null` when never set.
   final double? scrollSpeed;
 
+  /// Saved space above the lyrics before they scroll, as a part of the screen
+  /// height (0.0–0.8), or `null` when never set.
+  final double? leadIn;
+
   /// Creates a new [Song] instance.
   const Song({
     required this.id,
@@ -34,5 +38,6 @@ final class Song {
     required this.lyrics,
     required this.covers,
     this.scrollSpeed,
+    this.leadIn,
   });
 }

@@ -23,6 +23,8 @@ final class SongRepositoryImpl implements SongRepository, DisposableResource {
   static const String _updateSongFailedMessage = 'Помилка при оновленні пісні.';
   static const String _deleteSongFailedMessage = 'Помилка при видаленні пісні.';
   static const String _updateSpeedFailedMessage = 'Не вдалося зберегти швидкість.';
+  static const String _updateLeadInFailedMessage = 'Не вдалося зберегти відступ.';
+  static const String _updateLyricsFailedMessage = 'Не вдалося зберегти текст.';
   static const String _addCoverFailedMessage = 'Помилка при додаванні обкладинки.';
   static const String _updateCoverFailedMessage = 'Помилка при оновленні обкладинки.';
   static const String _deleteCoverFailedMessage = 'Помилка при видаленні обкладинки.';
@@ -39,6 +41,9 @@ final class SongRepositoryImpl implements SongRepository, DisposableResource {
   static const String _deleteSongLog = 'DeleteSong';
   static const String _updateSpeedLog = 'UpdateSongScrollSpeed';
   static const String _speedLog = '", speed=';
+  static const String _updateLeadInLog = 'UpdateSongLeadIn';
+  static const String _leadInLog = '", leadIn=';
+  static const String _updateLyricsLog = 'UpdateSongLyrics';
   static const String _addCoverLog = 'AddCover';
   static const String _updateCoverLog = 'UpdateCover';
   static const String _deleteCoverLog = 'DeleteCover';
@@ -63,11 +68,7 @@ final class SongRepositoryImpl implements SongRepository, DisposableResource {
   String? _currentUserId;
 
   /// Creates a new [SongRepositoryImpl].
-  SongRepositoryImpl({
-    required this._songService,
-    required this._auth,
-    required this._logger,
-  });
+  SongRepositoryImpl({required this._songService, required this._auth, required this._logger});
 
   /// Subscribes to the songs of the signed-in user; returns this for `registerSingletonAsync`.
   Future<SongRepositoryImpl> init() async {
@@ -110,9 +111,7 @@ final class SongRepositoryImpl implements SongRepository, DisposableResource {
       return;
     }
 
-    final List<Song> songs = await Future.wait(
-      models.map((SongModel model) => _toSong(userId, model)),
-    );
+    final List<Song> songs = await Future.wait(models.map((SongModel model) => _toSong(userId, model)));
 
     _songs.value = songs;
   }
@@ -200,10 +199,7 @@ final class SongRepositoryImpl implements SongRepository, DisposableResource {
   }
 
   @override
-  Future<Result<void>> updateSongScrollSpeed({
-    required String songId,
-    required double speed,
-  }) async {
+  Future<Result<void>> updateSongScrollSpeed({required String songId, required double speed}) async {
     _logger.i('$_updateSpeedLog$_startingLog$songId$_speedLog$speed');
 
     final String? userId = _currentUserId;
@@ -224,9 +220,49 @@ final class SongRepositoryImpl implements SongRepository, DisposableResource {
   }
 
   @override
-  Future<Result<void>> deleteSong({
-    required String songId,
-  }) async {
+  Future<Result<void>> updateSongLeadIn({required String songId, required double leadIn}) async {
+    _logger.i('$_updateLeadInLog$_startingLog$songId$_leadInLog$leadIn');
+
+    final String? userId = _currentUserId;
+    if (userId == null) {
+      _logger.w('$_updateLeadInLog$_notAuthenticatedLog');
+      return const Result.failure(_userNotAuthenticated);
+    }
+
+    try {
+      await _songService.updateSongLeadIn(userId: userId, songId: songId, leadIn: leadIn);
+
+      _logger.i('$_updateLeadInLog$_successLog$songId$_closingQuoteLog');
+      return Result.ok;
+    } on Exception catch (e) {
+      _logger.e('$_updateLeadInLog$_failureLog$e');
+      return const Result.failure(_updateLeadInFailedMessage);
+    }
+  }
+
+  @override
+  Future<Result<void>> updateSongLyrics({required String songId, required String lyrics}) async {
+    _logger.i('$_updateLyricsLog$_startingLog$songId$_closingQuoteLog');
+
+    final String? userId = _currentUserId;
+    if (userId == null) {
+      _logger.w('$_updateLyricsLog$_notAuthenticatedLog');
+      return const Result.failure(_userNotAuthenticated);
+    }
+
+    try {
+      await _songService.updateSongLyrics(userId: userId, songId: songId, lyrics: lyrics);
+
+      _logger.i('$_updateLyricsLog$_successLog$songId$_closingQuoteLog');
+      return Result.ok;
+    } on Exception catch (e) {
+      _logger.e('$_updateLyricsLog$_failureLog$e');
+      return const Result.failure(_updateLyricsFailedMessage);
+    }
+  }
+
+  @override
+  Future<Result<void>> deleteSong({required String songId}) async {
     _logger.i('$_deleteSongLog$_startingLog$songId$_closingQuoteLog');
 
     final String? userId = _currentUserId;
@@ -247,11 +283,7 @@ final class SongRepositoryImpl implements SongRepository, DisposableResource {
   }
 
   @override
-  Future<Result<void>> addCover({
-    required String songId,
-    required List<int> audioBytes,
-    String? notes,
-  }) async {
+  Future<Result<void>> addCover({required String songId, required List<int> audioBytes, String? notes}) async {
     _logger.i('$_addCoverLog$_startingLog$songId$_closingQuoteLog');
 
     final String? userId = _currentUserId;
@@ -312,10 +344,7 @@ final class SongRepositoryImpl implements SongRepository, DisposableResource {
   }
 
   @override
-  Future<Result<void>> deleteCover({
-    required String songId,
-    required String coverId,
-  }) async {
+  Future<Result<void>> deleteCover({required String songId, required String coverId}) async {
     _logger.i('$_deleteCoverLog$_startingLog$songId$_coverIdLog$coverId$_closingQuoteLog');
 
     final String? userId = _currentUserId;

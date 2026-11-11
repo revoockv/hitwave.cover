@@ -40,6 +40,7 @@ final class BackupRepositoryImpl implements BackupRepository, DisposableResource
   static const String _lyricsField = 'lyrics';
   static const String _coverIdsField = 'coverIds';
   static const String _scrollSpeedField = 'scrollSpeed';
+  static const String _leadInField = 'leadIn';
 
   static const String _exportStartLog = 'ExportSongs: starting';
   static const String _exportNotAuthenticatedLog = 'ExportSongs: failed — user is not authenticated';
@@ -98,10 +99,7 @@ final class BackupRepositoryImpl implements BackupRepository, DisposableResource
 
       final List<Song> songs = _songRepository.watchSongs().value;
 
-      final BackupDataModel model = BackupDataModel(
-        exportedAt: DateTime.now(),
-        songs: songs.map(_encodeSong).toList(),
-      );
+      final BackupDataModel model = BackupDataModel(exportedAt: DateTime.now(), songs: songs.map(_encodeSong).toList());
 
       if (_dataSource.supportsDirectorySelection) {
         final String? filePath = await _dataSource.pickExportDirectory();
@@ -162,6 +160,7 @@ final class BackupRepositoryImpl implements BackupRepository, DisposableResource
           lyrics: songJson[_lyricsField] as String,
           coverIds: List<String>.from(songJson[_coverIdsField] as List<dynamic>),
           scrollSpeed: (songJson[_scrollSpeedField] as num?)?.toDouble(),
+          leadIn: (songJson[_leadInField] as num?)?.toDouble(),
         );
 
         await _songService.addSong(userId: userId, song: songModel);
@@ -187,6 +186,7 @@ final class BackupRepositoryImpl implements BackupRepository, DisposableResource
       _lyricsField: song.lyrics,
       _coverIdsField: song.covers.map(_coverId).toList(),
       _scrollSpeedField: song.scrollSpeed,
+      _leadInField: song.leadIn,
     };
   }
 

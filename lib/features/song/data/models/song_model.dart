@@ -26,6 +26,9 @@ final class SongModel {
   /// Saved auto-scroll speed of the lyrics, or `null` when never set.
   final double? scrollSpeed;
 
+  /// Saved space above the lyrics before they scroll, or `null` when never set.
+  final double? leadIn;
+
   /// Creates a new [SongModel] instance.
   const SongModel({
     required this.id,
@@ -35,6 +38,7 @@ final class SongModel {
     required this.lyrics,
     required this.coverIds,
     this.scrollSpeed,
+    this.leadIn,
   });
 
   /// Converts this model to a domain [Song] entity.
@@ -47,6 +51,7 @@ final class SongModel {
       lyrics: lyrics,
       covers: covers,
       scrollSpeed: scrollSpeed,
+      leadIn: leadIn,
     );
   }
 
@@ -58,8 +63,9 @@ final class SongModel {
       name: entity.name,
       album: entity.album,
       lyrics: entity.lyrics,
-      coverIds:(entity.covers.isNotEmpty)?entity.covers.map((cover) => cover.id).toList():[],
+      coverIds: (entity.covers.isNotEmpty) ? entity.covers.map((cover) => cover.id).toList() : [],
       scrollSpeed: entity.scrollSpeed,
+      leadIn: entity.leadIn,
     );
   }
 }

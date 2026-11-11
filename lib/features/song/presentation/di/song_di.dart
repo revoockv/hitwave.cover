@@ -13,6 +13,8 @@ import '../../domain/use_cases/add_song_use_case.dart';
 import '../../domain/use_cases/delete_cover_use_case.dart';
 import '../../domain/use_cases/delete_song_use_case.dart';
 import '../../domain/use_cases/update_cover_use_case.dart';
+import '../../domain/use_cases/update_song_lead_in_use_case.dart';
+import '../../domain/use_cases/update_song_lyrics_use_case.dart';
 import '../../domain/use_cases/update_song_scroll_speed_use_case.dart';
 import '../../domain/use_cases/update_song_use_case.dart';
 import '../../domain/use_cases/watch_list_of_songs_use_case.dart';
@@ -23,9 +25,7 @@ import '../../domain/use_cases/watch_list_of_songs_use_case.dart';
 /// then subscribes to the songs of the signed-in user.
 void registerAndInitSong() {
   // 1. data sources
-  di.registerLazySingleton<FirebaseSongService>(
-    () => FirebaseSongService(firestore: FirebaseFirestore.instance),
-  );
+  di.registerLazySingleton<FirebaseSongService>(() => FirebaseSongService(firestore: FirebaseFirestore.instance));
 
   // 2. repositories — async init: subscribes to Firestore
   di.registerSingletonAsync<SongRepository>(
@@ -43,6 +43,8 @@ void registerAndInitSong() {
   di.registerLazySingleton<AddSongUseCase>(() => AddSongUseCase(di<SongRepository>()));
   di.registerLazySingleton<UpdateSongUseCase>(() => UpdateSongUseCase(di<SongRepository>()));
   di.registerLazySingleton<UpdateSongScrollSpeedUseCase>(() => UpdateSongScrollSpeedUseCase(di<SongRepository>()));
+  di.registerLazySingleton<UpdateSongLeadInUseCase>(() => UpdateSongLeadInUseCase(di<SongRepository>()));
+  di.registerLazySingleton<UpdateSongLyricsUseCase>(() => UpdateSongLyricsUseCase(di<SongRepository>()));
   di.registerLazySingleton<DeleteSongUseCase>(() => DeleteSongUseCase(di<SongRepository>()));
   di.registerLazySingleton<AddCoverUseCase>(() => AddCoverUseCase(di<SongRepository>()));
   di.registerLazySingleton<UpdateCoverUseCase>(() => UpdateCoverUseCase(di<SongRepository>()));

@@ -5,10 +5,10 @@ import 'package:flutter/material.dart';
 import '../../../../core/domain/entities/result_state.dart';
 
 /// UI state of the lyrics page, like a Flutter controller: auto-scroll, the
-/// speed, the controls visibility and the text field.
+/// speed, the space above the lyrics, the controls visibility and the text field.
 ///
-/// Knows nothing about use cases: the page saves the chosen speed and records
-/// the outcome in [speedSavingStateController].
+/// Knows nothing about use cases: the page saves the speed, the space and the
+/// edited lyrics and records the outcomes in the `*SavingStateController` fields.
 final class LyricsPageController {
   /// Default scroll speed.
   static const double _defaultSpeed = 0.5;
@@ -28,6 +28,15 @@ final class LyricsPageController {
   /// Highest scroll speed.
   static const double maxSpeed = 1.0;
 
+  /// Default space above the lyrics, as a part of the screen height.
+  static const double _defaultLeadIn = 0.4;
+
+  /// No space above the lyrics.
+  static const double minLeadIn = 0.0;
+
+  /// Largest space above the lyrics, as a part of the screen height.
+  static const double maxLeadIn = 0.8;
+
   /// Current scroll speed (0.0 to 1.0).
   final ValueNotifier<double> speedController;
 
@@ -36,7 +45,24 @@ final class LyricsPageController {
     ResultState.idle,
   );
 
+  /// Space above the lyrics before they scroll, as a part of the screen height.
+  final ValueNotifier<double> leadInController;
+
+  /// Progress of saving the space above the lyrics; a failure is shown by the page.
+  final ValueNotifier<ResultState<void>> leadInSavingStateController = ValueNotifier<ResultState<void>>(
+    ResultState.idle,
+  );
+
+  /// Progress of saving the edited lyrics; a failure is shown by the page.
+  final ValueNotifier<ResultState<void>> lyricsSavingStateController = ValueNotifier<ResultState<void>>(
+    ResultState.idle,
+  );
+
   double _savedSpeed;
+
+  double _savedLeadIn;
+
+  String _savedLyrics;
 
   bool _isDisposed = false;
 
@@ -60,14 +86,21 @@ final class LyricsPageController {
 
   /// Creates the controller with the [lyrics] to show.
   ///
-  /// Starts at [initialSpeed] (the speed saved with the song) or the default.
-  LyricsPageController({required String lyrics, double? initialSpeed})
-    : this._(lyrics, (initialSpeed ?? _defaultSpeed).clamp(minSpeed, maxSpeed));
+  /// Starts at [initialSpeed] and [initialLeadIn] (saved with the song) or the defaults.
+  LyricsPageController({required String lyrics, double? initialSpeed, double? initialLeadIn})
+    : this._(
+        lyrics,
+        (initialSpeed ?? _defaultSpeed).clamp(minSpeed, maxSpeed),
+        (initialLeadIn ?? _defaultLeadIn).clamp(minLeadIn, maxLeadIn),
+      );
 
-  LyricsPageController._(String lyrics, double startSpeed)
+  LyricsPageController._(String lyrics, double startSpeed, double startLeadIn)
     : lyricsTextController = TextEditingController(text: lyrics),
       speedController = ValueNotifier<double>(startSpeed),
-      _savedSpeed = startSpeed;
+      leadInController = ValueNotifier<double>(startLeadIn),
+      _savedSpeed = startSpeed,
+      _savedLeadIn = startLeadIn,
+      _savedLyrics = lyrics;
 
   /// Whether [dispose] was called; the owner checks it after every `await`.
   bool get isDisposed => _isDisposed;
@@ -78,6 +111,28 @@ final class LyricsPageController {
   /// Remembers [speed] as the one saved with the song.
   void markSpeedSaved(double speed) {
     _savedSpeed = speed;
+  }
+
+  /// Whether a save of the space may start: none is running and [leadIn] differs from the saved one.
+  bool canSaveLeadIn(double leadIn) => !leadInSavingStateController.value.isLoading && leadIn != _savedLeadIn;
+
+  /// Remembers [leadIn] as the one saved with the song.
+  void markLeadInSaved(double leadIn) {
+    _savedLeadIn = leadIn;
+  }
+
+  /// Lyrics as typed in the field.
+  String get lyrics => lyricsTextController.text;
+
+  /// Whether the field holds lyrics that are not saved yet.
+  bool get hasUnsavedLyrics => lyrics != _savedLyrics;
+
+  /// Whether a save of the lyrics may start: none is running and the text changed.
+  bool canSaveLyrics() => !lyricsSavingStateController.value.isLoading && hasUnsavedLyrics;
+
+  /// Remembers [savedLyrics] as the lyrics saved with the song.
+  void markLyricsSaved(String savedLyrics) {
+    _savedLyrics = savedLyrics;
   }
 
   /// Hides the keyboard of the lyrics field.
@@ -112,6 +167,9 @@ final class LyricsPageController {
     _isDisposed = true;
     speedController.dispose();
     speedSavingStateController.dispose();
+    leadInController.dispose();
+    leadInSavingStateController.dispose();
+    lyricsSavingStateController.dispose();
     scrollingController.dispose();
     controlsVisibilityController.dispose();
     lyricsTextController.dispose();

@@ -5,6 +5,8 @@ import '../../domain/use_cases/add_song_use_case.dart';
 import '../../domain/use_cases/delete_cover_use_case.dart';
 import '../../domain/use_cases/delete_song_use_case.dart';
 import '../../domain/use_cases/update_cover_use_case.dart';
+import '../../domain/use_cases/update_song_lead_in_use_case.dart';
+import '../../domain/use_cases/update_song_lyrics_use_case.dart';
 import '../../domain/use_cases/update_song_scroll_speed_use_case.dart';
 import '../../domain/use_cases/update_song_use_case.dart';
 import '../../domain/use_cases/watch_list_of_songs_use_case.dart';
@@ -20,6 +22,12 @@ UpdateSongUseCase get updateSongUseCase => di<UpdateSongUseCase>();
 
 /// The use case that saves the auto-scroll speed of a song.
 UpdateSongScrollSpeedUseCase get updateSongScrollSpeedUseCase => di<UpdateSongScrollSpeedUseCase>();
+
+/// The use case that saves the space above the lyrics of a song.
+UpdateSongLeadInUseCase get updateSongLeadInUseCase => di<UpdateSongLeadInUseCase>();
+
+/// The use case that saves the lyrics of a song edited on the lyrics page.
+UpdateSongLyricsUseCase get updateSongLyricsUseCase => di<UpdateSongLyricsUseCase>();
 
 /// The use case that deletes a song.
 DeleteSongUseCase get deleteSongUseCase => di<DeleteSongUseCase>();
