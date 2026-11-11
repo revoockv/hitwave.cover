@@ -75,11 +75,8 @@ final class LyricsPageController {
   /// Text of the lyrics field.
   final TextEditingController lyricsTextController;
 
-  /// Scroll position of the auto-scrolling lyrics view.
+  /// Scroll position of the lyrics; kept on pause, moved by the user or by auto-scroll.
   final ScrollController lyricsScrollController = ScrollController();
-
-  /// Scroll position of the edit-mode lyrics view.
-  final ScrollController editScrollController = ScrollController();
 
   /// Focus of the lyrics text field.
   final FocusNode lyricsFocusNode = FocusNode();
@@ -174,7 +171,6 @@ final class LyricsPageController {
     controlsVisibilityController.dispose();
     lyricsTextController.dispose();
     lyricsScrollController.dispose();
-    editScrollController.dispose();
     lyricsFocusNode.dispose();
   }
 
@@ -197,14 +193,18 @@ final class LyricsPageController {
     });
   }
 
-  /// Starts auto-scrolling the lyrics text.
+  /// Starts auto-scrolling the lyrics text from where the view is now.
   ///
-  /// Cancels any existing scroll timer, sets [scrollingController] to true,
-  /// and starts a periodic timer that scrolls by [_scrollIncrementMultiplier]
-  /// every [_scrollIntervalMs] milliseconds.
+  /// Continues after a pause or from the place the user scrolled to; starts
+  /// from the top again when the end was already reached. Scrolls by
+  /// [_scrollIncrementMultiplier] times the speed every [_scrollIntervalMs] ms.
   void startScrolling() {
     if (scrollingController.value) return;
 
+    if (lyricsScrollController.hasClients) {
+      final ScrollPosition position = lyricsScrollController.position;
+      if (position.pixels >= position.maxScrollExtent) lyricsScrollController.jumpTo(0);
+    }
     scrollingController.value = true;
     hideKeyboard();
     scrollTimer?.cancel();
@@ -228,7 +228,7 @@ final class LyricsPageController {
     resetHideTimer();
   }
 
-  /// Stops auto-scrolling and scrolls to the bottom of the lyrics.
+  /// Pauses auto-scrolling; the lyrics stay where they are.
   void stopScrolling() {
     scrollTimer?.cancel();
     scrollTimer = null;
@@ -236,13 +236,5 @@ final class LyricsPageController {
     scrollingController.value = false;
 
     resetHideTimer();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (editScrollController.hasClients) {
-        final maxScroll = editScrollController.position.maxScrollExtent;
-        if (maxScroll > 0) {
-          editScrollController.jumpTo(maxScroll);
-        }
-      }
-    });
   }
 }

@@ -37,7 +37,7 @@ final class LyricsPage extends WatchingWidget {
   /// Bottom space so the last line can scroll above the control panel.
   static const double _controlsClearance = 120;
 
-  /// Padding around the lyrics text while editing.
+  /// Padding around the lyrics; the top is replaced by the space chosen for the song.
   static const EdgeInsets _lyricsPadding = EdgeInsets.fromLTRB(
     AppTheme.spacingLarge,
     AppTheme.spacingLarge,
@@ -96,36 +96,32 @@ final class LyricsPage extends WatchingWidget {
                 child: Center(
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: AppTheme.maxContentWidth),
-                    child: isScrolling
-                        ? SingleChildScrollView(
-                            controller: lyricsPageController.lyricsScrollController,
-                            padding: _lyricsPadding.copyWith(top: leadIn),
-                            child: SizedBox(
-                              width: double.infinity,
-                              child: Text(lyricsPageController.lyricsTextController.text, style: lyricsStyle),
+                    child: SingleChildScrollView(
+                      controller: lyricsPageController.lyricsScrollController,
+                      padding: _lyricsPadding.copyWith(top: leadIn),
+                      child: IgnorePointer(
+                        ignoring: isScrolling,
+                        child: Focus(
+                          onFocusChange: (bool hasFocus) => _onLyricsFocusChanged(lyricsPageController, hasFocus),
+                          child: TextField(
+                            controller: lyricsPageController.lyricsTextController,
+                            focusNode: lyricsPageController.lyricsFocusNode,
+                            readOnly: isScrolling,
+                            textInputAction: TextInputAction.done,
+                            onEditingComplete: lyricsPageController.hideKeyboard,
+                            maxLines: null,
+                            decoration: const InputDecoration(
+                              filled: false,
+                              border: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                              isCollapsed: true,
                             ),
-                          )
-                        : Focus(
-                            onFocusChange: (bool hasFocus) => _onLyricsFocusChanged(lyricsPageController, hasFocus),
-                            child: TextField(
-                              controller: lyricsPageController.lyricsTextController,
-                              focusNode: lyricsPageController.lyricsFocusNode,
-                              scrollController: lyricsPageController.editScrollController,
-                              textInputAction: TextInputAction.done,
-                              onEditingComplete: lyricsPageController.hideKeyboard,
-                              maxLines: null,
-                              expands: true,
-                              textAlignVertical: TextAlignVertical.top,
-                              decoration: const InputDecoration(
-                                filled: false,
-                                border: InputBorder.none,
-                                enabledBorder: InputBorder.none,
-                                focusedBorder: InputBorder.none,
-                                contentPadding: _lyricsPadding,
-                              ),
-                              style: lyricsStyle,
-                            ),
+                            style: lyricsStyle,
                           ),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),
