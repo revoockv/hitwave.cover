@@ -4,7 +4,7 @@ import 'package:watch_it/watch_it.dart';
 import '../../../../core/presentation/theme.dart';
 
 import '../di/auth_getters.dart';
-import '../../domain/entities/user.dart';
+import '../../domain/entities/auth_session.dart';
 
 /// Displays a welcome screen for authenticated users with a sign-out option.
 ///
@@ -40,11 +40,12 @@ final class SignedInWidget extends WatchingWidget {
   /// Builds the signed-in welcome screen.
   @override
   Widget build(BuildContext context) {
-    final User? user = watch(watchCurrentSessionUseCase()).value;
+    final AuthSession session = watch(watchCurrentSessionUseCase()).value;
 
-    if (user == null) {
+    if (session is! SignedInAuthSession) {
       return const SizedBox.shrink();
     }
+    final String email = session.user.email;
 
     return Scaffold(
       body: SafeArea(
@@ -58,7 +59,7 @@ final class SignedInWidget extends WatchingWidget {
               const SizedBox(height: AppTheme.spacingMedium),
               const _SignedTitleWidget(),
               const SizedBox(height: AppTheme.spacingMedium),
-              _SignedEmailWidget(email: user.email),
+              _SignedEmailWidget(email: email),
               const SizedBox(height: AppTheme.spacingExtraLarge),
               _SignedOutButtonWidget(onPressed: () => _handleSignOut(context)),
               const Spacer(),

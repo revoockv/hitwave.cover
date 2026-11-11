@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:watch_it/watch_it.dart';
 
 import '../../../../core/domain/entities/result.dart';
+import '../../../auth/domain/entities/auth_session.dart';
 import '../../../auth/presentation/di/auth_getters.dart';
 import '../../../backup/presentation/di/backup_getters.dart';
 import '../../domain/entities/song.dart';
@@ -10,6 +11,7 @@ import '../di/song_getters.dart';
 import '../widgets/artist_switcher_title_widget.dart';
 import '../widgets/delete_song_dialog_widget.dart';
 import '../widgets/songs_widget.dart';
+import '../widgets/transfer_local_songs_dialog_widget.dart';
 import 'add_song_page.dart';
 import 'edit_song_page.dart';
 import 'lyrics_page.dart';
@@ -19,8 +21,9 @@ enum _HomeMenuAction { importSongs, exportSongs, signOut }
 
 /// Main home page with the song list, backup and account actions.
 ///
-/// Watches the song list, the backup status and the view mode of its
-/// [SongViewController].
+/// Watches the song list, the backup status, the session and the view mode of
+/// its [SongViewController]. After a sign-in it asks whether to move the songs
+/// left on the device into the account.
 final class HomePage extends WatchingWidget {
   /// Page title text.
   static const String _homePageTitle = 'Мої пісні';
@@ -48,6 +51,12 @@ final class HomePage extends WatchingWidget {
 
   /// Label of the sign-out menu item.
   static const String _signOutLabel = 'Вийти';
+
+  /// Label of the menu item that leaves the guest mode for the sign-in screen.
+  static const String _signInLabel = 'Увійти в акаунт';
+
+  /// Message shown after the songs on the device moved into the account.
+  static const String _transferredMessage = 'Пісні перенесено в акаунт';
 
   /// Label of the add button.
   static const String _addLabel = 'Додати';
@@ -93,6 +102,12 @@ final class HomePage extends WatchingWidget {
     final String status = watch(watchBackupStatusUseCase()).value;
     final SongViewMode viewMode = watch(songViewController.viewModeController).value;
     final String selectedArtist = watch(songViewController.selectedArtistController).value;
+    final bool isGuest = watch(watchCurrentSessionUseCase()).value is GuestAuthSession;
+    registerHandler(
+      target: watchLocalSongsToTransferUseCase(),
+      handler: _onLocalSongsToTransferChanged,
+      executeImmediately: true,
+    );
 
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final bool isBackupRunning = status == _backupStatusExporting || status == _backupStatusImporting;
@@ -145,7 +160,7 @@ final class HomePage extends WatchingWidget {
               tooltip: _menuTooltip,
               enabled: !isBackupRunning,
               onSelected: (_HomeMenuAction action) => _onMenuSelected(context, action),
-              itemBuilder: _buildMenuItems,
+              itemBuilder: (BuildContext context) => _buildMenuItems(context, isGuest),
             ),
           ],
           bottom: isBackupRunning
@@ -176,20 +191,23 @@ final class HomePage extends WatchingWidget {
     );
   }
 
-  List<PopupMenuEntry<_HomeMenuAction>> _buildMenuItems(BuildContext context) {
-    return const <PopupMenuEntry<_HomeMenuAction>>[
-      PopupMenuItem<_HomeMenuAction>(
+  List<PopupMenuEntry<_HomeMenuAction>> _buildMenuItems(BuildContext context, bool isGuest) {
+    return <PopupMenuEntry<_HomeMenuAction>>[
+      const PopupMenuItem<_HomeMenuAction>(
         value: _HomeMenuAction.importSongs,
         child: ListTile(leading: Icon(Icons.file_upload_outlined), title: Text(_importLabel)),
       ),
-      PopupMenuItem<_HomeMenuAction>(
+      const PopupMenuItem<_HomeMenuAction>(
         value: _HomeMenuAction.exportSongs,
         child: ListTile(leading: Icon(Icons.file_download_outlined), title: Text(_exportLabel)),
       ),
-      PopupMenuDivider(),
+      const PopupMenuDivider(),
       PopupMenuItem<_HomeMenuAction>(
         value: _HomeMenuAction.signOut,
-        child: ListTile(leading: Icon(Icons.logout), title: Text(_signOutLabel)),
+        child: ListTile(
+          leading: Icon(isGuest ? Icons.login : Icons.logout),
+          title: Text(isGuest ? _signInLabel : _signOutLabel),
+        ),
       ),
     ];
   }
@@ -205,6 +223,12 @@ final class HomePage extends WatchingWidget {
     if (!didPop) {
       songViewController.clearArtist();
     }
+  }
+
+  /// Asks about the songs on the device once there are some to move into the account.
+  void _onLocalSongsToTransferChanged(BuildContext context, int songCount, void Function() cancel) {
+    if (songCount == 0) return;
+    _askToTransfer(context, songCount);
   }
 
   void _onSongDeletePressed(BuildContext context, Song song) {
@@ -235,6 +259,23 @@ final class HomePage extends WatchingWidget {
 
   Future<void> _handleSignOut(ScaffoldMessengerState messenger) async {
     final Result<void> result = await signOutUseCase();
+    result.when(success: _ignore, failure: (String error) => _showMessage(messenger, error));
+  }
+
+  /// Shows the question after the current frame (the handler may run during a build).
+  Future<void> _askToTransfer(BuildContext context, int songCount) async {
+    await WidgetsBinding.instance.endOfFrame;
+    if (!context.mounted) return;
+    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+
+    final bool? transfer = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) => TransferLocalSongsDialogWidget(songCount: songCount),
+    );
+
+    final Result<void> result = transfer == true ? await transferLocalSongsUseCase() : await keepLocalSongsUseCase();
+    if (transfer == true && result.isSuccess) _showMessage(messenger, _transferredMessage);
     result.when(success: _ignore, failure: (String error) => _showMessage(messenger, error));
   }
 

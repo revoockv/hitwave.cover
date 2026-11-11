@@ -42,6 +42,20 @@ final class FakeSongRepository implements SongRepository {
   Future<Result<void>> updateSongScrollSpeed({required String songId, required double speed}) async => nextResult;
 
   @override
+  Future<Result<void>> addSongs(List<Song> songs) async => nextResult;
+
+  @override
+  ValueListenable<int> watchLocalSongsToTransfer() => _localSongsToTransfer;
+
+  final ValueNotifier<int> _localSongsToTransfer = ValueNotifier<int>(0);
+
+  @override
+  Future<Result<void>> transferLocalSongs() async => nextResult;
+
+  @override
+  Future<Result<void>> keepLocalSongs() async => nextResult;
+
+  @override
   Future<Result<void>> updateSongLeadIn({required String songId, required double leadIn}) async => nextResult;
 
   @override

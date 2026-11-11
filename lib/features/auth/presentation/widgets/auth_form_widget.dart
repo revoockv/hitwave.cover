@@ -62,6 +62,11 @@ final class AuthFormWidget extends WatchingWidget {
                       signUpMode: authFormController.signUpModeController,
                       onPressed: authFormController.toggleMode,
                     ),
+                    const SizedBox(height: AppTheme.spacingLarge),
+                    _WithoutAccountButtonWidget(
+                      submittingState: authFormController.submittingStateController,
+                      onPressed: () => _onWithoutAccountPressed(authFormController),
+                    ),
                   ],
                 ),
               ),
@@ -94,6 +99,16 @@ final class AuthFormWidget extends WatchingWidget {
     if (authFormController.isDisposed) return;
 
     submittingStateController.value = ResultState.of(result);
+  }
+
+  /// Starts using the app without an account; shows the error when that fails.
+  Future<void> _onWithoutAccountPressed(AuthFormController authFormController) async {
+    if (authFormController.submittingStateController.value.isLoading) return;
+
+    final Result<void> result = await continueWithoutAccountUseCase();
+    if (authFormController.isDisposed || result.isSuccess) return;
+
+    authFormController.submittingStateController.value = ResultState.of(result);
   }
 }
 
@@ -339,5 +354,46 @@ final class _ToggleButtonWidget extends WatchingWidget {
   Widget build(BuildContext context) {
     final bool signUp = watch(signUpMode).value;
     return TextButton(onPressed: onPressed, child: Text(signUp ? _signedInText : _signedOutText));
+  }
+}
+
+/// Button that starts using the app without an account, with a note where the songs are kept.
+final class _WithoutAccountButtonWidget extends WatchingWidget {
+  /// Label of the button.
+  static const String _label = 'Продовжити без акаунта';
+
+  /// Note under the button.
+  static const String _note = 'Пісні зберігатимуться лише на цьому пристрої. Увійти можна будь-коли пізніше.';
+
+  /// Progress of the last sign-in or sign-up; the button waits while it runs.
+  final ValueListenable<ResultState<void>> submittingState;
+
+  /// Called when the button is pressed.
+  final VoidCallback onPressed;
+
+  /// Creates a new [_WithoutAccountButtonWidget].
+  const _WithoutAccountButtonWidget({required this.submittingState, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isLoading = watch(submittingState).value.isLoading;
+    final ThemeData theme = Theme.of(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        OutlinedButton.icon(
+          onPressed: isLoading ? null : onPressed,
+          icon: const Icon(Icons.phone_android),
+          label: const Text(_label),
+        ),
+        const SizedBox(height: AppTheme.spacingSmall),
+        Text(
+          _note,
+          textAlign: TextAlign.center,
+          style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+        ),
+      ],
+    );
   }
 }

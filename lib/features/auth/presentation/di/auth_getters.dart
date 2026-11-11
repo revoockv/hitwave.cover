@@ -1,5 +1,6 @@
 import 'package:watch_it/watch_it.dart';
 
+import '../../domain/use_cases/continue_without_account_use_case.dart';
 import '../../domain/use_cases/sign_in_use_case.dart';
 import '../../domain/use_cases/sign_out_use_case.dart';
 import '../../domain/use_cases/sign_up_use_case.dart';
@@ -13,6 +14,9 @@ SignUpUseCase get signUpUseCase => di<SignUpUseCase>();
 
 /// The use case that signs the current user out.
 SignOutUseCase get signOutUseCase => di<SignOutUseCase>();
+
+/// The use case that starts using the app without an account.
+ContinueWithoutAccountUseCase get continueWithoutAccountUseCase => di<ContinueWithoutAccountUseCase>();
 
 /// The use case that watches the session; call it to get the [ValueListenable].
 WatchCurrentSessionUseCase get watchCurrentSessionUseCase => di<WatchCurrentSessionUseCase>();

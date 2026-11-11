@@ -1,10 +1,8 @@
-import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:logger/logger.dart';
 import 'package:watch_it/watch_it.dart';
 
 import '../../../../core/presentation/di/core_di.dart';
-import '../../../song/data/data_sources/firebase_song_service.dart';
 import '../../../song/domain/repositories/song_repository.dart';
 import '../../data/data_sources/backup_data_source.dart';
 import '../../data/data_sources/backup_data_source_mobile.dart';
@@ -23,10 +21,8 @@ void registerAndInitBackup() {
   // 2. repositories
   di.registerSingletonWithDependencies<BackupRepository>(
     () => BackupRepositoryImpl(
-      songService: di<FirebaseSongService>(),
       songRepository: di<SongRepository>(),
       dataSource: di<BackupDataSource>(),
-      auth: firebase_auth.FirebaseAuth.instance,
       logger: di<Logger>(),
     ),
     dependsOn: <Type>[SongRepository],

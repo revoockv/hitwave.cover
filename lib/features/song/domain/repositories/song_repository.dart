@@ -19,6 +19,27 @@ abstract interface class SongRepository {
   /// when the operation fails (network error, permission denied, etc.).
   Future<Result<void>> addSong({required String author, required String name, String? album, required String lyrics});
 
+  /// Adds every song of [songs] with its speed and space, but without covers
+  /// (used by the import from a backup file).
+  ///
+  /// Returns [Result.ok] on success, or a failure with an error message.
+  Future<Result<void>> addSongs(List<Song> songs);
+
+  /// Number of songs left on the device that may be moved into the account
+  /// just signed in; `0` when there are none or the user chose to keep them.
+  ValueListenable<int> watchLocalSongsToTransfer();
+
+  /// Moves the songs on the device into the signed-in account and deletes
+  /// them from the device; songs that failed stay on the device.
+  ///
+  /// Returns [Result.ok] on success, or a failure with an error message.
+  Future<Result<void>> transferLocalSongs();
+
+  /// Keeps the songs on the device and stops offering them until they change.
+  ///
+  /// Returns [Result.ok] on success, or a failure with an error message.
+  Future<Result<void>> keepLocalSongs();
+
   /// Updates an existing song identified by [songId] with the given [author],
   /// [name], optional [album], and [lyrics].
   ///
