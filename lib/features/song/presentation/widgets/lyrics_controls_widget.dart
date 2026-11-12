@@ -189,7 +189,8 @@ final class LyricsControlsWidget extends WatchingWidget {
                             onChanged: _onLeadInChanged,
                             onChangeEnd: onLeadInChosen,
                           ),
-                          Row(
+                          Wrap(
+                            crossAxisAlignment: WrapCrossAlignment.center,
                             children: <Widget>[
                               _CheckboxWidget(
                                 label: recordLabel,
@@ -206,26 +207,29 @@ final class LyricsControlsWidget extends WatchingWidget {
                                 onPressed: canChangeOptions ? onMicrophonePressed : null,
                                 icon: const Icon(Icons.settings_voice_outlined),
                               ),
-                              const Spacer(),
-                              if (elapsed != null) ...<Widget>[
-                                Container(
-                                  width: _recordingDotSize,
-                                  height: _recordingDotSize,
-                                  decoration: BoxDecoration(color: colorScheme.error, shape: BoxShape.circle),
+                              if (elapsed != null)
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: <Widget>[
+                                    Container(
+                                      width: _recordingDotSize,
+                                      height: _recordingDotSize,
+                                      decoration: BoxDecoration(color: colorScheme.error, shape: BoxShape.circle),
+                                    ),
+                                    const SizedBox(width: AppTheme.spacingSmall),
+                                    Text(
+                                      _formatTime(elapsed),
+                                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                                        fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
+                                      ),
+                                    ),
+                                    const SizedBox(width: AppTheme.spacingSmall),
+                                    SizedBox(
+                                      width: _levelBarWidth,
+                                      child: LinearProgressIndicator(value: recordingLevel, color: colorScheme.error),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(width: AppTheme.spacingSmall),
-                                Text(
-                                  _formatTime(elapsed),
-                                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                                    fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
-                                  ),
-                                ),
-                                const SizedBox(width: AppTheme.spacingSmall),
-                                SizedBox(
-                                  width: _levelBarWidth,
-                                  child: LinearProgressIndicator(value: recordingLevel, color: colorScheme.error),
-                                ),
-                              ],
                             ],
                           ),
                         ],
@@ -294,7 +298,7 @@ final class _CheckboxWidget extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           Checkbox(value: value, onChanged: changed, visualDensity: VisualDensity.compact),
-          Text(label, style: Theme.of(context).textTheme.labelLarge),
+          Flexible(child: Text(label, style: Theme.of(context).textTheme.labelLarge)),
           const SizedBox(width: AppTheme.spacingSmall),
         ],
       ),
