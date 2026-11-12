@@ -9,13 +9,25 @@ enum SongViewMode {
   artist,
 }
 
-/// Manages the song view mode and selected artist state.
+/// Tabs of the home page under the practice overview.
+enum HomeTab {
+  /// The songs.
+  songs,
+
+  /// Every recorded cover.
+  covers,
+}
+
+/// Manages the home tab, the song view mode and selected artist state.
 ///
-/// A Flutter-style controller: [viewModeController] and [selectedArtistController]
-/// hold the UI state, the page watches them.
+/// A Flutter-style controller: [homeTabController], [viewModeController] and
+/// [selectedArtistController] hold the UI state, the page watches them.
 final class SongViewController {
   /// Selected artist when none is chosen.
   static const String _noArtist = '';
+
+  /// The tab shown under the practice overview.
+  final ValueNotifier<HomeTab> homeTabController;
 
   /// The current view mode for displaying songs.
   final ValueNotifier<SongViewMode> viewModeController;
@@ -25,8 +37,14 @@ final class SongViewController {
 
   /// Creates a new [SongViewController] with default values.
   SongViewController()
-    : viewModeController = ValueNotifier<SongViewMode>(SongViewMode.artist),
+    : homeTabController = ValueNotifier<HomeTab>(HomeTab.songs),
+      viewModeController = ValueNotifier<SongViewMode>(SongViewMode.artist),
       selectedArtistController = ValueNotifier<String>(_noArtist);
+
+  /// Shows [tab].
+  void selectTab(HomeTab tab) {
+    homeTabController.value = tab;
+  }
 
   /// Switches the view mode and clears the selected artist.
   void toggleViewMode() {
@@ -46,6 +64,7 @@ final class SongViewController {
 
   /// Disposes the underlying [ValueNotifier] instances.
   void dispose() {
+    homeTabController.dispose();
     viewModeController.dispose();
     selectedArtistController.dispose();
   }

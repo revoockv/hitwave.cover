@@ -6,19 +6,16 @@ import '../../../song/domain/entities/song.dart';
 import '../../../song/presentation/di/song_getters.dart';
 import '../../domain/entities/recording.dart';
 import '../di/recordings_getters.dart';
-import '../widgets/recordings_list_widget.dart';
+import 'recordings_list_widget.dart';
 
 /// Every cover recorded on this device, grouped by song (songs by name, the newest take first).
-///
-/// Playback stops when the page closes.
-final class CoversPage extends WatchingWidget {
-  static const String _title = 'Мої кавери';
+final class CoversListWidget extends WatchingWidget {
   static const String _empty = 'Ще немає каверів. Відкрийте пісню, позначте «Запис» і натисніть «Старт».';
   static const String _unknownSong = 'Пісню видалено';
   static const String _titleSeparator = ' — ';
 
-  /// Creates a new [CoversPage].
-  const CoversPage({super.key});
+  /// Creates a new [CoversListWidget].
+  const CoversListWidget({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -29,20 +26,14 @@ final class CoversPage extends WatchingWidget {
     };
     final List<Recording> grouped = recordings.toList()..sort((Recording a, Recording b) => _compare(a, b, titles));
 
-    return PopScope(
-      onPopInvokedWithResult: _onPopped,
-      child: Scaffold(
-        appBar: AppBar(title: const Text(_title)),
-        body: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: AppTheme.maxContentWidth),
-            child: RecordingsListWidget(
-              recordings: grouped,
-              emptyText: _empty,
-              headerOf: (Recording recording) => titles[recording.songId] ?? _unknownSong,
-              padding: const EdgeInsets.all(AppTheme.spacingMedium),
-            ),
-          ),
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: AppTheme.maxContentWidth),
+        child: RecordingsListWidget(
+          recordings: grouped,
+          emptyText: _empty,
+          headerOf: (Recording recording) => titles[recording.songId] ?? _unknownSong,
+          padding: const EdgeInsets.all(AppTheme.spacingMedium),
         ),
       ),
     );
@@ -54,9 +45,5 @@ final class CoversPage extends WatchingWidget {
       (titles[b.songId] ?? _unknownSong).toLowerCase(),
     );
     return bySong != 0 ? bySong : b.recordedAt.compareTo(a.recordedAt);
-  }
-
-  static void _onPopped(bool didPop, Object? result) {
-    stopPlaybackUseCase();
   }
 }

@@ -25,4 +25,12 @@ void main() {
     expect(songViewController.viewModeController.value, SongViewMode.list);
     expect(songViewController.selectedArtistController.value, isEmpty);
   });
+
+  test('the home page starts on the songs tab and switches to the covers', () {
+    expect(songViewController.homeTabController.value, HomeTab.songs);
+
+    songViewController.selectTab(HomeTab.covers);
+
+    expect(songViewController.homeTabController.value, HomeTab.covers);
+  });
 }

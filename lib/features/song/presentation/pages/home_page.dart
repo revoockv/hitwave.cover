@@ -3,12 +3,19 @@ import 'package:flutter/material.dart';
 import 'package:watch_it/watch_it.dart';
 
 import '../../../../core/domain/entities/result.dart';
+import '../../../../core/presentation/theme.dart';
 import '../../../auth/domain/entities/auth_session.dart';
 import '../../../auth/presentation/di/auth_getters.dart';
 import '../../../backup/presentation/di/backup_getters.dart';
 import '../../../backup/presentation/widgets/backup_options_dialog_widget.dart';
+import '../../../practice/domain/entities/practice_session.dart';
+import '../../../practice/domain/entities/practice_stats.dart';
+import '../../../practice/presentation/di/practice_getters.dart';
 import '../../../practice/presentation/pages/practice_page.dart';
-import '../../../recordings/presentation/pages/covers_page.dart';
+import '../../../practice/presentation/widgets/practice_overview_widget.dart';
+import '../../../recordings/domain/entities/recording.dart';
+import '../../../recordings/presentation/di/recordings_getters.dart';
+import '../../../recordings/presentation/widgets/covers_list_widget.dart';
 import '../../domain/entities/song.dart';
 import '../controllers/song_view_controller.dart';
 import '../di/song_getters.dart';
@@ -44,11 +51,11 @@ final class HomePage extends WatchingWidget {
   /// Tooltip of the back button to the artist list.
   static const String _allArtistsTooltip = 'Усі виконавці';
 
-  /// Tooltip of the covers button.
-  static const String _coversTooltip = 'Мої кавери';
+  /// Label of the songs tab.
+  static const String _songsTab = 'Пісні';
 
-  /// Tooltip of the practice button.
-  static const String _practiceTooltip = 'Тренування';
+  /// Label of the covers tab.
+  static const String _coversTab = 'Кавери';
 
   /// Tooltip of the overflow menu.
   static const String _menuTooltip = 'Ще';
@@ -119,6 +126,9 @@ final class HomePage extends WatchingWidget {
     final SongViewMode viewMode = watch(songViewController.viewModeController).value;
     final String selectedArtist = watch(songViewController.selectedArtistController).value;
     final bool isGuest = watch(watchCurrentSessionUseCase()).value is GuestAuthSession;
+    final HomeTab tab = watch(songViewController.homeTabController).value;
+    final List<PracticeSession> sessions = watch(watchPracticeSessionsUseCase()).value;
+    final List<Recording> recordings = watch(watchRecordingsUseCase()).value;
     registerHandler(
       target: watchLocalSongsToTransferUseCase(),
       handler: _onLocalSongsToTransferChanged,
@@ -127,10 +137,14 @@ final class HomePage extends WatchingWidget {
 
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final bool isBackupRunning = status == _backupStatusExporting || status == _backupStatusImporting;
+    final bool isSongsTab = tab == HomeTab.songs;
     final bool isArtistMode = viewMode == SongViewMode.artist;
     final String title = isArtistMode && selectedArtist.isNotEmpty ? selectedArtist : _homePageTitle;
 
-    final bool hasSelectedArtist = isArtistMode && songs.any((Song song) => song.author == selectedArtist);
+    final bool hasSelectedArtist =
+        isSongsTab && isArtistMode && songs.any((Song song) => song.author == selectedArtist);
+    final DateTime now = DateTime.now();
+    final PracticeStats stats = calculatePracticeStatsUseCase(sessions: sessions, recordings: recordings, now: now);
     final String? newSongAuthor = hasSelectedArtist ? selectedArtist : null;
 
     final Widget titleText = Text.rich(
@@ -168,21 +182,12 @@ final class HomePage extends WatchingWidget {
                 )
               : titleText,
           actions: <Widget>[
-            IconButton(
-              icon: const Icon(Icons.library_music_outlined),
-              onPressed: () => _openCovers(context),
-              tooltip: _coversTooltip,
-            ),
-            IconButton(
-              icon: const Icon(Icons.calendar_month_outlined),
-              onPressed: () => _openPractice(context),
-              tooltip: _practiceTooltip,
-            ),
-            IconButton(
-              icon: Icon(isArtistMode ? Icons.view_list_outlined : Icons.people_outline),
-              onPressed: songViewController.toggleViewMode,
-              tooltip: isArtistMode ? _listModeTooltip : _artistModeTooltip,
-            ),
+            if (isSongsTab)
+              IconButton(
+                icon: Icon(isArtistMode ? Icons.view_list_outlined : Icons.people_outline),
+                onPressed: songViewController.toggleViewMode,
+                tooltip: isArtistMode ? _listModeTooltip : _artistModeTooltip,
+              ),
             PopupMenuButton<_HomeMenuAction>(
               tooltip: _menuTooltip,
               enabled: !isBackupRunning,
@@ -197,17 +202,68 @@ final class HomePage extends WatchingWidget {
                 )
               : null,
         ),
-        body: SongsWidget(
-          songs: songs,
-          viewMode: viewMode,
-          selectedArtist: selectedArtist,
-          onArtistSelected: songViewController.selectArtist,
-          onSongTap: (Song song) => _navigateToLyrics(context, song),
-          onSongEdit: (Song song) => _showEditSongPage(context, song),
-          onSongDelete: (Song song) => _onSongDeletePressed(context, song),
-          onAddPressed: () => _showAddSongPage(context, newSongAuthor),
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            if (!hasSelectedArtist)
+              Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: AppTheme.maxContentWidth),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppTheme.spacingMedium,
+                      AppTheme.spacingSmall,
+                      AppTheme.spacingMedium,
+                      AppTheme.spacingSmall,
+                    ),
+                    child: PracticeOverviewWidget(
+                      stats: stats,
+                      today: PracticeStats.dayOf(now),
+                      onOpenPressed: () => _openPractice(context),
+                    ),
+                  ),
+                ),
+              ),
+            if (!hasSelectedArtist)
+              Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: AppTheme.maxContentWidth),
+                  child: SegmentedButton<HomeTab>(
+                    segments: const <ButtonSegment<HomeTab>>[
+                      ButtonSegment<HomeTab>(
+                        value: HomeTab.songs,
+                        icon: Icon(Icons.queue_music_outlined),
+                        label: Text(_songsTab),
+                      ),
+                      ButtonSegment<HomeTab>(
+                        value: HomeTab.covers,
+                        icon: Icon(Icons.mic_none_outlined),
+                        label: Text(_coversTab),
+                      ),
+                    ],
+                    selected: <HomeTab>{tab},
+                    showSelectedIcon: false,
+                    onSelectionChanged: (Set<HomeTab> selected) => _onTabSelected(songViewController, selected),
+                  ),
+                ),
+              ),
+            Expanded(
+              child: isSongsTab
+                  ? SongsWidget(
+                      songs: songs,
+                      viewMode: viewMode,
+                      selectedArtist: selectedArtist,
+                      onArtistSelected: songViewController.selectArtist,
+                      onSongTap: (Song song) => _navigateToLyrics(context, song),
+                      onSongEdit: (Song song) => _showEditSongPage(context, song),
+                      onSongDelete: (Song song) => _onSongDeletePressed(context, song),
+                      onAddPressed: () => _showAddSongPage(context, newSongAuthor),
+                    )
+                  : const CoversListWidget(),
+            ),
+          ],
         ),
-        floatingActionButton: songs.isEmpty
+        floatingActionButton: songs.isEmpty || !isSongsTab
             ? null
             : FloatingActionButton.extended(
                 onPressed: () => _showAddSongPage(context, newSongAuthor),
@@ -356,8 +412,11 @@ final class HomePage extends WatchingWidget {
     Navigator.of(context).push(MaterialPageRoute<void>(builder: (BuildContext context) => LyricsPage(song: song)));
   }
 
-  void _openCovers(BuildContext context) {
-    Navigator.of(context).push(MaterialPageRoute<void>(builder: (BuildContext context) => const CoversPage()));
+  /// Shows the chosen tab; leaving the covers stops their playback.
+  void _onTabSelected(SongViewController songViewController, Set<HomeTab> selected) {
+    final HomeTab tab = selected.first;
+    if (tab != HomeTab.covers) stopPlaybackUseCase();
+    songViewController.selectTab(tab);
   }
 
   void _openPractice(BuildContext context) {
