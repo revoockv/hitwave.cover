@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:watch_it/watch_it.dart';
 
@@ -5,6 +6,9 @@ import '../../../../core/domain/entities/result.dart';
 import '../../../auth/domain/entities/auth_session.dart';
 import '../../../auth/presentation/di/auth_getters.dart';
 import '../../../backup/presentation/di/backup_getters.dart';
+import '../../../backup/presentation/widgets/backup_options_dialog_widget.dart';
+import '../../../practice/presentation/pages/practice_page.dart';
+import '../../../recordings/presentation/pages/covers_page.dart';
 import '../../domain/entities/song.dart';
 import '../controllers/song_view_controller.dart';
 import '../di/song_getters.dart';
@@ -40,6 +44,12 @@ final class HomePage extends WatchingWidget {
   /// Tooltip of the back button to the artist list.
   static const String _allArtistsTooltip = 'Усі виконавці';
 
+  /// Tooltip of the covers button.
+  static const String _coversTooltip = 'Мої кавери';
+
+  /// Tooltip of the practice button.
+  static const String _practiceTooltip = 'Тренування';
+
   /// Tooltip of the overflow menu.
   static const String _menuTooltip = 'Ще';
 
@@ -48,6 +58,12 @@ final class HomePage extends WatchingWidget {
 
   /// Label of the export menu item.
   static const String _exportLabel = 'Експортувати';
+
+  /// Text of the export question.
+  static const String _exportQuestion = 'Пісні буде збережено у файл у вибраній папці.';
+
+  /// Text of the import question.
+  static const String _importQuestion = 'Пісні з файлу буде додано до ваших. Записи беруться лише з ZIP-архіву.';
 
   /// Label of the sign-out menu item.
   static const String _signOutLabel = 'Вийти';
@@ -115,6 +131,7 @@ final class HomePage extends WatchingWidget {
     final String title = isArtistMode && selectedArtist.isNotEmpty ? selectedArtist : _homePageTitle;
 
     final bool hasSelectedArtist = isArtistMode && songs.any((Song song) => song.author == selectedArtist);
+    final String? newSongAuthor = hasSelectedArtist ? selectedArtist : null;
 
     final Widget titleText = Text.rich(
       TextSpan(
@@ -152,6 +169,16 @@ final class HomePage extends WatchingWidget {
               : titleText,
           actions: <Widget>[
             IconButton(
+              icon: const Icon(Icons.library_music_outlined),
+              onPressed: () => _openCovers(context),
+              tooltip: _coversTooltip,
+            ),
+            IconButton(
+              icon: const Icon(Icons.calendar_month_outlined),
+              onPressed: () => _openPractice(context),
+              tooltip: _practiceTooltip,
+            ),
+            IconButton(
               icon: Icon(isArtistMode ? Icons.view_list_outlined : Icons.people_outline),
               onPressed: songViewController.toggleViewMode,
               tooltip: isArtistMode ? _listModeTooltip : _artistModeTooltip,
@@ -178,12 +205,12 @@ final class HomePage extends WatchingWidget {
           onSongTap: (Song song) => _navigateToLyrics(context, song),
           onSongEdit: (Song song) => _showEditSongPage(context, song),
           onSongDelete: (Song song) => _onSongDeletePressed(context, song),
-          onAddPressed: () => _showAddSongPage(context),
+          onAddPressed: () => _showAddSongPage(context, newSongAuthor),
         ),
         floatingActionButton: songs.isEmpty
             ? null
             : FloatingActionButton.extended(
-                onPressed: () => _showAddSongPage(context),
+                onPressed: () => _showAddSongPage(context, newSongAuthor),
                 icon: const Icon(Icons.add),
                 label: const Text(_addLabel),
               ),
@@ -239,22 +266,35 @@ final class HomePage extends WatchingWidget {
     final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
     switch (action) {
       case _HomeMenuAction.importSongs:
-        _handleImport(messenger);
+        _handleImport(context, messenger);
       case _HomeMenuAction.exportSongs:
-        _handleExport(messenger);
+        _handleExport(context, messenger);
       case _HomeMenuAction.signOut:
         _handleSignOut(messenger);
     }
   }
 
-  Future<void> _handleExport(ScaffoldMessengerState messenger) async {
-    final Result<void> result = await exportSongsUseCase();
+  Future<void> _handleExport(BuildContext context, ScaffoldMessengerState messenger) async {
+    final bool? includeRecordings = await _askIncludeRecordings(context, _exportLabel, _exportQuestion);
+    if (includeRecordings == null) return;
+    final Result<void> result = await exportSongsUseCase(includeRecordings: includeRecordings);
     _showMessage(messenger, result.when(success: _exportCompleted, failure: _exportFailed));
   }
 
-  Future<void> _handleImport(ScaffoldMessengerState messenger) async {
-    final Result<void> result = await importSongsUseCase();
+  Future<void> _handleImport(BuildContext context, ScaffoldMessengerState messenger) async {
+    final bool? includeRecordings = await _askIncludeRecordings(context, _importLabel, _importQuestion);
+    if (includeRecordings == null) return;
+    final Result<void> result = await importSongsUseCase(includeRecordings: includeRecordings);
     _showMessage(messenger, result.when(success: _importCompleted, failure: _importFailed));
+  }
+
+  /// Asks whether the recordings go too; `null` when cancelled. The web keeps no recordings.
+  Future<bool?> _askIncludeRecordings(BuildContext context, String title, String message) async {
+    if (kIsWeb) return false;
+    return showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) => BackupOptionsDialogWidget(title: title, message: message, confirmLabel: title),
+    );
   }
 
   Future<void> _handleSignOut(ScaffoldMessengerState messenger) async {
@@ -316,8 +356,17 @@ final class HomePage extends WatchingWidget {
     Navigator.of(context).push(MaterialPageRoute<void>(builder: (BuildContext context) => LyricsPage(song: song)));
   }
 
-  void _showAddSongPage(BuildContext context) {
-    Navigator.of(context).push(MaterialPageRoute<void>(builder: (BuildContext context) => const AddSongPage()));
+  void _openCovers(BuildContext context) {
+    Navigator.of(context).push(MaterialPageRoute<void>(builder: (BuildContext context) => const CoversPage()));
+  }
+
+  void _openPractice(BuildContext context) {
+    Navigator.of(context).push(MaterialPageRoute<void>(builder: (BuildContext context) => const PracticePage()));
+  }
+
+  /// Opens the form of a new song; on an artist's page its author is filled in.
+  void _showAddSongPage(BuildContext context, String? author) {
+    Navigator.of(context).push(MaterialPageRoute<void>(builder: (BuildContext context) => AddSongPage(author: author)));
   }
 
   void _showEditSongPage(BuildContext context, Song song) {
