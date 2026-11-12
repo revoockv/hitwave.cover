@@ -14,6 +14,7 @@ final class CoversListWidget extends WatchingWidget {
   static const String _empty = 'Ще немає каверів. Відкрийте пісню, позначте «Запис» і натисніть «Старт».';
   static const String _unknownSong = 'Пісню видалено';
   static const String _titleSeparator = ' — ';
+  static const String _shareSeparator = '-';
   static const String _nothingFound = 'Нічого не знайдено.';
 
   /// Search text; empty shows every cover.
@@ -29,6 +30,9 @@ final class CoversListWidget extends WatchingWidget {
     final Map<String, String> titles = <String, String>{
       for (final Song song in songs) song.id: '${song.name}$_titleSeparator${song.author}',
     };
+    final Map<String, String> shareNames = <String, String>{
+      for (final Song song in songs) song.id: '${song.author}$_shareSeparator${song.name}',
+    };
     final String needle = query.trim().toLowerCase();
     final List<Recording> grouped =
         recordings
@@ -43,6 +47,7 @@ final class CoversListWidget extends WatchingWidget {
           recordings: grouped,
           emptyText: needle.isEmpty ? _empty : _nothingFound,
           headerOf: (Recording recording) => titles[recording.songId] ?? _unknownSong,
+          shareNameOf: (Recording recording) => shareNames[recording.songId],
           padding: const EdgeInsets.all(AppTheme.spacingMedium),
         ),
       ),

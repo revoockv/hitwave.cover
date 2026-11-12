@@ -25,8 +25,8 @@ final class RecordingsListWidget extends WatchingWidget {
   /// Header of a recording, or `null` for none.
   final String? Function(Recording recording)? headerOf;
 
-  /// Song title sent with a shared recording when [headerOf] gives none.
-  final String? shareTitle;
+  /// Name a shared recording is sent under (`Artist-Song`), or `null` for none.
+  final String? Function(Recording recording)? shareNameOf;
 
   /// Shown when there are no recordings.
   final String emptyText;
@@ -43,7 +43,7 @@ final class RecordingsListWidget extends WatchingWidget {
     required this.recordings,
     required this.emptyText,
     this.headerOf,
-    this.shareTitle,
+    this.shareNameOf,
     this.padding = EdgeInsets.zero,
     this.shrinkWrap = false,
   });
@@ -150,7 +150,7 @@ final class RecordingsListWidget extends WatchingWidget {
     final Result<void> result = await shareRecordingUseCase(
       recording: recording,
       version: version,
-      title: headerOf?.call(recording) ?? shareTitle,
+      title: shareNameOf?.call(recording),
     );
     if (!context.mounted) return;
     _showFailure(context, result);

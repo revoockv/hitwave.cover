@@ -23,11 +23,6 @@ final class UpdateCoverUseCase {
     required List<int> audioBytes,
     String? notes,
   }) async {
-    return _repository.updateCover(
-      songId: songId,
-      coverId: coverId,
-      audioBytes: audioBytes,
-      notes: notes,
-    );
+    return _repository.updateCover(songId: songId, coverId: coverId, audioBytes: audioBytes, notes: notes);
   }
 }

@@ -34,6 +34,9 @@ final class HomeDashboardWidget extends StatelessWidget {
   /// Title of the song of a cover.
   final String? Function(Recording recording) coverTitleOf;
 
+  /// `Artist-Song` of a cover, the name it is shared under.
+  final String? Function(Recording recording) coverShareNameOf;
+
   /// Opens the statistics tab.
   final VoidCallback onStatsPressed;
 
@@ -61,6 +64,7 @@ final class HomeDashboardWidget extends StatelessWidget {
     required this.recentCovers,
     required this.coverCounts,
     required this.coverTitleOf,
+    required this.coverShareNameOf,
     required this.onStatsPressed,
     required this.onAllSongsPressed,
     required this.onAllCoversPressed,
@@ -103,6 +107,7 @@ final class HomeDashboardWidget extends StatelessWidget {
                 recordings: recentCovers,
                 emptyText: _noCovers,
                 headerOf: coverTitleOf,
+                shareNameOf: coverShareNameOf,
                 shrinkWrap: true,
               ),
           ],

@@ -15,11 +15,13 @@ final class RecordingsSheetWidget extends WatchingWidget {
   /// The song whose recordings are shown.
   final String songId;
 
-  /// Title of the song, sent with a shared recording.
-  final String songTitle;
+  /// `Artist-Song`: the name a shared recording is sent under.
+  final String shareName;
 
   /// Creates a new [RecordingsSheetWidget].
-  const RecordingsSheetWidget({super.key, required this.songId, required this.songTitle});
+  const RecordingsSheetWidget({super.key, required this.songId, required this.shareName});
+
+  String _shareName(Recording recording) => shareName;
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +40,7 @@ final class RecordingsSheetWidget extends WatchingWidget {
               Text(_title, style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: AppTheme.spacingMedium),
               Expanded(
-                child: RecordingsListWidget(recordings: recordings, emptyText: _empty, shareTitle: songTitle),
+                child: RecordingsListWidget(recordings: recordings, emptyText: _empty, shareNameOf: _shareName),
               ),
             ],
           ),

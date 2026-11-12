@@ -52,8 +52,8 @@ final class LyricsPage extends WatchingWidget {
   /// Label of the trim-silence checkbox.
   static const String _trimSilenceLabel = 'Обрізати тишу';
 
-  /// Separator between the song and its artist in a shared recording.
-  static const String _titleSeparator = ' — ';
+  /// Separator between the artist and the song in the name of a shared recording.
+  static const String _shareSeparator = '-';
 
   /// Tooltip of the recordings button.
   static const String _recordingsLabel = 'Записи';
@@ -401,7 +401,7 @@ final class LyricsPage extends WatchingWidget {
       isScrollControlled: true,
       showDragHandle: true,
       builder: (BuildContext context) =>
-          RecordingsSheetWidget(songId: song.id, songTitle: '${song.name}$_titleSeparator${song.author}'),
+          RecordingsSheetWidget(songId: song.id, shareName: '${song.author}$_shareSeparator${song.name}'),
     );
     await stopPlaybackUseCase();
   }

@@ -69,6 +69,9 @@ final class HomePage extends WatchingWidget {
   /// Separator between a song and its artist.
   static const String _titleSeparator = ' — ';
 
+  /// Separator between the artist and the song in the name of a shared cover.
+  static const String _shareSeparator = '-';
+
   /// How many songs and covers the home tab shows.
   static const int _recentCount = 5;
 
@@ -238,6 +241,7 @@ final class HomePage extends WatchingWidget {
             recentCovers: _recentCovers(recordings, history),
             coverCounts: coverCounts,
             coverTitleOf: (Recording recording) => _songTitle(songsById[recording.songId]),
+            coverShareNameOf: (Recording recording) => _shareName(songsById[recording.songId]),
             onStatsPressed: () => _selectTab(songViewController, HomeTab.stats),
             onAllSongsPressed: () => _selectTab(songViewController, HomeTab.songs),
             onAllCoversPressed: () => _selectTab(songViewController, HomeTab.covers),
@@ -325,6 +329,8 @@ final class HomePage extends WatchingWidget {
   };
 
   static int _countOf(List<Song> songs, String artist) => songs.where((Song song) => song.author == artist).length;
+
+  static String? _shareName(Song? song) => song == null ? null : '${song.author}$_shareSeparator${song.name}';
 
   static String _songTitle(Song? song) => song == null ? _unknownSong : '${song.name}$_titleSeparator${song.author}';
 

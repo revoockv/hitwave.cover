@@ -16,9 +16,7 @@ final class DeleteSongUseCase {
   ///
   /// Returns [SuccessResult] when the song is deleted, or [FailureResult]
   /// with an error message when the operation fails.
-  Future<Result<void>> call({
-    required String songId,
-  }) async {
+  Future<Result<void>> call({required String songId}) async {
     return _repository.deleteSong(songId: songId);
   }
 }

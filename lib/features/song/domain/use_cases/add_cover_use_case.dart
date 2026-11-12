@@ -17,15 +17,7 @@ final class AddCoverUseCase {
   ///
   /// Returns [SuccessResult] when the cover is created, or [FailureResult]
   /// with an error message when the operation fails.
-  Future<Result<void>> call({
-    required String songId,
-    required List<int> audioBytes,
-    String? notes,
-  }) async {
-    return _repository.addCover(
-      songId: songId,
-      audioBytes: audioBytes,
-      notes: notes,
-    );
+  Future<Result<void>> call({required String songId, required List<int> audioBytes, String? notes}) async {
+    return _repository.addCover(songId: songId, audioBytes: audioBytes, notes: notes);
   }
 }
