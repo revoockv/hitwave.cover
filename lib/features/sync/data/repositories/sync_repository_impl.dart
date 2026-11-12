@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -16,47 +17,77 @@ import '../../../recordings/domain/entities/recording.dart';
 import '../../../recordings/domain/repositories/recordings_repository.dart';
 import '../../../song/domain/entities/cover.dart';
 import '../../../song/domain/entities/song.dart';
+import '../../../song/domain/entities/song_id_change.dart';
 import '../../../song/domain/repositories/song_repository.dart';
+import '../../domain/entities/sync_conflict.dart';
 import '../../domain/entities/sync_state.dart';
 import '../../domain/entities/sync_summary.dart';
 import '../../domain/repositories/sync_repository.dart';
+import '../data_sources/hive_sync_tombstone_service.dart';
 import '../data_sources/sync_client_data_source.dart';
 import '../data_sources/sync_server_data_source.dart';
 import '../models/sync_counts_model.dart';
 import '../models/sync_offer_model.dart';
+import '../models/sync_plan_model.dart';
 import '../models/sync_snapshot_model.dart';
+import '../models/sync_song_key_model.dart';
 
 /// [SyncRepository] over HTTP on the local network.
 ///
-/// The device that scans the code drives the exchange: it takes the snapshot of the host,
-/// downloads the covers it misses and merges, then uploads the covers the host misses and sends
-/// its own snapshot, which the host merges. Merging never deletes: songs are matched by artist
-/// and name, covers and practice sessions by their ids, the later history time wins.
+/// The device that scans the code drives the exchange: it takes the snapshot of the host and
+/// finds the conflicts (deleted on one side and still on the other, songs that differ). When
+/// there are any, it waits for the user's choices. Then it applies its own side of them,
+/// downloads the covers it misses and merges, uploads the covers the host misses and sends its
+/// snapshot with a plan of what the host must delete, update and bring back; the host applies the
+/// plan and merges. Songs are matched by artist and name, covers and practice sessions by ids.
+/// Deletions made on this device are remembered (tombstones) from [init] on.
 final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, DisposableResource {
   static const String _noNetworkError = 'Немає підключення до мережі. Під’єднайтеся до Wi‑Fi.';
   static const String _hostError = 'Не вдалося почати синхронізацію';
   static const String _syncError = 'Синхронізація перервалася';
   static const String _busyError = 'Синхронізація вже йде';
+  static const String _nothingWaitsError = 'Немає синхронізації, що чекає рішень';
   static const String _connectingStep = 'Підключаюся…';
   static const String _readingStep = 'Отримую список пісень і каверів…';
+  static const String _applyingStep = 'Застосовую рішення…';
   static const String _downloadingStep = 'Завантажую кавери';
   static const String _uploadingStep = 'Надсилаю кавери';
   static const String _mergingStep = 'Об’єдную дані…';
   static const String _peerStep = 'Пристрій підключився, обмінюємося даними…';
   static const String _stepSeparator = ' ';
+  static const String _of = ' з ';
   static const String _portSeparator = ':';
   static const String _countSeparator = '/';
-  static const String _of = ' з ';
   static const String _tempPrefix = 'hitwave_sync_';
   static const String _separator = '/';
-  static const String _keySeparator = '\u0000';
   static const String _rawSuffix = '_raw.wav';
   static const String _enhancedSuffix = '_enhanced.wav';
   static const String _newSongId = '';
+  static const String _snapshotField = 'snapshot';
+  static const String _planField = 'plan';
+  static const String _songConflictPrefix = 'song:';
+  static const String _changedConflictPrefix = 'changed:';
+  static const String _coverConflictPrefix = 'cover:';
+  static const String _titleSeparator = ' — ';
+  static const String _coverTitlePrefix = 'Кавер «';
+  static const String _coverTitleSuffix = '» від ';
+  static const String _unknownSong = 'пісні, якої вже немає';
+  static const String _lyricsDiffers = 'текст';
+  static const String _albumDiffers = 'альбом';
+  static const String _speedDiffers = 'швидкість';
+  static const String _leadInDiffers = 'відступ';
+  static const String _differsPrefix = 'Відрізняється: ';
+  static const String _listSeparator = ', ';
+  static const String _dateSeparator = '.';
+  static const String _zero = '0';
+  static const int _twoDigits = 2;
+  static const double _sameNumber = 1e-6;
   static const String _hostLog = 'SyncHost: ';
   static const String _clientLog = 'SyncWith: ';
+  static const String _tombstoneLog = 'SyncTombstone: ';
   static const String _successLog = 'success — ';
   static const String _failureLog = 'failure — ';
+  static const String _conflictsLog = ' conflicts';
   static const Duration _closeDelay = Duration(seconds: 1);
 
   static const Uuid _uuid = Uuid();
@@ -65,6 +96,7 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
   final RecordingsRepository _recordings;
   final PracticeRepository _practice;
   final HistoryRepository _history;
+  final HiveSyncTombstoneService _tombstones;
   final SyncServerDataSource _server;
   final SyncClientDataSource _client;
   final Logger _logger;
@@ -72,8 +104,14 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
 
   final ValueNotifier<SyncState> _state = ValueNotifier<SyncState>(SyncState.idle);
 
+  StreamSubscription<SongIdChange>? _songIdChanges;
+  StreamSubscription<String>? _coverDeletions;
+
   /// Folder of the files the other device uploaded to this host.
   Directory? _received;
+
+  /// The exchange that waits for the user's choices.
+  _PendingSync? _pending;
 
   /// Creates a [SyncRepositoryImpl]; [deviceName] is shown on the other device.
   SyncRepositoryImpl({
@@ -81,15 +119,25 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
     required this._recordings,
     required this._practice,
     required this._history,
+    required this._tombstones,
     required this._server,
     required this._client,
     required this._logger,
     required this._deviceName,
   });
 
-  /// Stops the server and releases the state.
+  /// Starts remembering the deletions of songs and covers; returns this for the DI.
+  SyncRepositoryImpl init() {
+    _songIdChanges = _songs.watchSongIdChanges().listen(_onSongIdChanged);
+    _coverDeletions = _recordings.watchRecordingDeletions().listen(_onCoverDeleted);
+    return this;
+  }
+
+  /// Stops the server and the subscriptions and releases the state.
   @override
   Future<void> dispose() async {
+    await _songIdChanges?.cancel();
+    await _coverDeletions?.cancel();
     await _server.stop();
     await _deleteReceived();
     _state.dispose();
@@ -103,7 +151,7 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
 
   @override
   Future<Result<void>> startHosting() async {
-    if (_state.value is SyncingSyncState) return const Result.failure(_busyError);
+    if (_isBusy) return const Result.failure(_busyError);
     try {
       final List<String> addresses = await _server.localAddresses();
       if (addresses.isEmpty) return _fail(_noNetworkError);
@@ -126,6 +174,7 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
 
   @override
   Future<Result<void>> stopSync() async {
+    _pending = null;
     await _server.stop();
     await _deleteReceived();
     _state.value = SyncState.idle;
@@ -134,7 +183,7 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
 
   @override
   Future<Result<void>> syncWith(String code) async {
-    if (_state.value is SyncingSyncState) return const Result.failure(_busyError);
+    if (_isBusy) return const Result.failure(_busyError);
     final SyncOfferModel offer;
     try {
       offer = SyncOfferModel.decode(code);
@@ -142,75 +191,34 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
       return _fail(e.message);
     }
     await _server.stop();
-    Directory? folder;
     try {
       _step(_connectingStep, null);
       final Uri base = await _client.connect(addresses: offer.addresses, port: offer.port, token: offer.token);
-
       _step(_readingStep, null);
       final SyncSnapshotModel remote = SyncSnapshotModel.fromJsonText(await _client.snapshot(base, offer.token));
-      final Set<String> localIds = _recordings.watchRecordings().value.map(_recordingId).toSet();
-      final List<SyncRecordingModel> missing = remote.recordings
-          .where((SyncRecordingModel recording) => !localIds.contains(recording.id))
-          .toList();
-
-      folder = await Directory.systemTemp.createTemp(_tempPrefix);
-      for (int index = 0; index < missing.length; index++) {
-        _step(_counted(_downloadingStep, index, missing.length), index / missing.length);
-        final SyncRecordingModel recording = missing[index];
-        await _client.download(
-          base: base,
-          token: offer.token,
-          name: recording.rawFile,
-          to: _fileIn(folder, recording.rawFile),
-        );
-        if (recording.hasEnhanced) {
-          await _client.download(
-            base: base,
-            token: offer.token,
-            name: recording.enhancedFile,
-            to: _fileIn(folder, recording.enhancedFile),
-          );
-        }
-      }
-
-      _step(_mergingStep, null);
-      final SyncCountsModel received = await _merge(remote, folder);
-
-      final Set<String> remoteIds = remote.recordings.map(_syncRecordingId).toSet();
-      final List<Recording> toSend = _recordings
-          .watchRecordings()
-          .value
-          .where((Recording recording) => !remoteIds.contains(recording.id))
-          .toList();
-      for (int index = 0; index < toSend.length; index++) {
-        _step(_counted(_uploadingStep, index, toSend.length), index / toSend.length);
-        final SyncRecordingModel model = SyncRecordingModel.fromEntity(toSend[index]);
-        await _client.upload(base: base, token: offer.token, name: model.rawFile, from: File(toSend[index].rawPath));
-        final String? enhanced = toSend[index].enhancedPath;
-        if (model.hasEnhanced && enhanced != null) {
-          await _client.upload(base: base, token: offer.token, name: model.enhancedFile, from: File(enhanced));
-        }
-      }
-
-      _step(_mergingStep, null);
-      final SyncCountsModel sent = SyncCountsModel.fromJsonText(
-        await _client.sendSnapshot(
-          base: base,
-          token: offer.token,
-          json: _snapshot().toJsonText(),
-          receivedJson: received.toJsonText(),
-        ),
+      final _PendingSync pending = _PendingSync(
+        base: base,
+        offer: offer,
+        remote: remote,
+        conflicts: _findConflicts(_snapshot(), remote),
       );
-      _state.value = DoneSyncState(_summary(received: received, sent: sent));
-      _logger.i('$_clientLog$_successLog${offer.deviceName}');
+      if (pending.conflicts.isEmpty) return await _finish(pending, const <String, SyncChoice>{});
+      _pending = pending;
+      _state.value = ConflictsSyncState(<SyncConflict>[for (final _Conflict c in pending.conflicts) c.conflict]);
+      _logger.i('$_clientLog${pending.conflicts.length}$_conflictsLog');
       return Result.ok;
     } on Exception catch (e) {
       _logger.e('$_clientLog$_failureLog$e');
       return _fail(e is SocketException ? e.message : _syncError);
-    } finally {
-      if (folder != null) await _deleteFolder(folder);
     }
+  }
+
+  @override
+  Future<Result<void>> resolveConflicts(Map<String, SyncChoice> choices) async {
+    final _PendingSync? pending = _pending;
+    _pending = null;
+    if (pending == null) return const Result.failure(_nothingWaitsError);
+    return _finish(pending, choices);
   }
 
   @override
@@ -244,11 +252,19 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
   @override
   Future<String> receiveSnapshot({required String json, required String receivedJson}) async {
     try {
-      final SyncCountsModel received = await _merge(SyncSnapshotModel.fromJsonText(json), _received);
+      final Map<String, dynamic> envelope = jsonDecode(json) as Map<String, dynamic>;
+      final SyncPlanModel plan = SyncPlanModel.fromJson(envelope[_planField] as Map<String, dynamic>);
+      final _Applied applied = await _applyPlan(plan);
+      final SyncCountsModel merged = await _merge(
+        SyncSnapshotModel.fromJson(envelope[_snapshotField] as Map<String, dynamic>),
+        _received,
+      );
+      final SyncCountsModel received = merged.plus(deleted: applied.deleted, updated: applied.updated);
       final SyncCountsModel sent = SyncCountsModel.fromJsonText(receivedJson);
-      _state.value = DoneSyncState(_summary(received: received, sent: sent));
+      _state.value = DoneSyncState(_summary(here: received, there: sent));
       _logger.i(
-        '$_hostLog$_successLog${received.songs}$_countSeparator${received.covers}$_countSeparator${received.sessions}',
+        '$_hostLog$_successLog${received.songs}$_countSeparator${received.covers}$_countSeparator'
+        '${received.sessions}$_countSeparator${received.deleted}$_countSeparator${received.updated}',
       );
       return received.toJsonText();
     } on Exception catch (e) {
@@ -261,25 +277,342 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
     }
   }
 
-  /// Everything of this device to send.
-  SyncSnapshotModel _snapshot() => SyncSnapshotModel(
-    songs: _songs.watchSongs().value,
-    recordings: _recordings.watchRecordings().value.map(SyncRecordingModel.fromEntity).toList(),
-    sessions: _practice.watchSessions().value,
-    history: _history.watchHistory().value,
-  );
+  bool get _isBusy => _state.value is SyncingSyncState || _pending != null;
 
-  /// Adds what [remote] has and this device misses; the files of its covers are in [folder].
-  Future<SyncCountsModel> _merge(SyncSnapshotModel remote, Directory? folder) async {
+  /// Applies the choices on this device, exchanges the covers and sends the snapshot and the
+  /// plan for the other device.
+  Future<Result<void>> _finish(_PendingSync pending, Map<String, SyncChoice> choices) async {
+    Directory? folder;
+    try {
+      _step(_applyingStep, null);
+      final _Decisions decisions = await _decide(pending, choices);
+      final String token = pending.offer.token;
+      final Uri base = pending.base;
+      final SyncSnapshotModel remote = pending.remote;
+
+      final Set<String> localIds = _recordings.watchRecordings().value.map(_recordingId).toSet();
+      final Map<String, String> remoteSongKeys = <String, String>{
+        for (final Song song in remote.songs) song.id: _keyOf(song),
+      };
+      final List<SyncRecordingModel> missing = remote.recordings
+          .where(
+            (SyncRecordingModel recording) =>
+                !localIds.contains(recording.id) &&
+                !decisions.skipCovers.contains(recording.id) &&
+                !decisions.skipSongs.contains(remoteSongKeys[recording.songId]),
+          )
+          .toList();
+      folder = await Directory.systemTemp.createTemp(_tempPrefix);
+      for (int index = 0; index < missing.length; index++) {
+        _step(_counted(_downloadingStep, index, missing.length), index / missing.length);
+        final SyncRecordingModel recording = missing[index];
+        await _client.download(
+          base: base,
+          token: token,
+          name: recording.rawFile,
+          to: _fileIn(folder, recording.rawFile),
+        );
+        if (recording.hasEnhanced) {
+          await _client.download(
+            base: base,
+            token: token,
+            name: recording.enhancedFile,
+            to: _fileIn(folder, recording.enhancedFile),
+          );
+        }
+      }
+
+      _step(_mergingStep, null);
+      final SyncCountsModel received = (await _merge(
+        remote,
+        folder,
+        skipSongs: decisions.skipSongs,
+        skipCovers: decisions.skipCovers,
+      )).plus(deleted: decisions.deletedHere, updated: decisions.updatedHere);
+
+      final SyncSnapshotModel local = _snapshot();
+      final Set<String> remoteIds = remote.recordings.map(_syncRecordingId).toSet();
+      final List<Recording> toSend = _recordings
+          .watchRecordings()
+          .value
+          .where(
+            (Recording recording) =>
+                !remoteIds.contains(recording.id) &&
+                local.recordings.any((SyncRecordingModel r) => r.id == recording.id),
+          )
+          .toList();
+      for (int index = 0; index < toSend.length; index++) {
+        _step(_counted(_uploadingStep, index, toSend.length), index / toSend.length);
+        final SyncRecordingModel model = SyncRecordingModel.fromEntity(toSend[index]);
+        await _client.upload(base: base, token: token, name: model.rawFile, from: File(toSend[index].rawPath));
+        final String? enhanced = toSend[index].enhancedPath;
+        if (model.hasEnhanced && enhanced != null) {
+          await _client.upload(base: base, token: token, name: model.enhancedFile, from: File(enhanced));
+        }
+      }
+
+      _step(_mergingStep, null);
+      final SyncCountsModel sent = SyncCountsModel.fromJsonText(
+        await _client.sendSnapshot(
+          base: base,
+          token: token,
+          json: jsonEncode(<String, dynamic>{_snapshotField: local.toJson(), _planField: decisions.plan.toJson()}),
+          receivedJson: received.toJsonText(),
+        ),
+      );
+      _state.value = DoneSyncState(_summary(here: received, there: sent));
+      _logger.i('$_clientLog$_successLog${pending.offer.deviceName}');
+      return Result.ok;
+    } on Exception catch (e) {
+      _logger.e('$_clientLog$_failureLog$e');
+      return _fail(e is SocketException ? e.message : _syncError);
+    } finally {
+      if (folder != null) await _deleteFolder(folder);
+    }
+  }
+
+  /// The conflicts between [local] and [remote]; covers of a song in a deletion conflict follow
+  /// the song and are no conflicts of their own.
+  List<_Conflict> _findConflicts(SyncSnapshotModel local, SyncSnapshotModel remote) {
+    final Map<String, Song> localSongs = <String, Song>{for (final Song song in local.songs) _keyOf(song): song};
+    final Map<String, Song> remoteSongs = <String, Song>{for (final Song song in remote.songs) _keyOf(song): song};
+    final Set<String> localDeleted = local.deletedSongs.map(_tombstoneKey).toSet();
+    final Set<String> remoteDeleted = remote.deletedSongs.map(_tombstoneKey).toSet();
+    final List<_Conflict> conflicts = <_Conflict>[];
+    final Set<String> songsInConflict = <String>{};
+
+    for (final MapEntry<String, Song> entry in remoteSongs.entries) {
+      final Song? here = localSongs[entry.key];
+      if (here == null && localDeleted.contains(entry.key)) {
+        songsInConflict.add(entry.key);
+        conflicts.add(
+          _Conflict(
+            conflict: SyncConflict(
+              id: '$_songConflictPrefix${entry.key}',
+              kind: SyncConflictKind.songDeletedHere,
+              title: _songTitle(entry.value),
+              detail: null,
+            ),
+            song: entry.value,
+          ),
+        );
+      } else if (here != null) {
+        final String? differences = _differences(here, entry.value);
+        if (differences != null) {
+          conflicts.add(
+            _Conflict(
+              conflict: SyncConflict(
+                id: '$_changedConflictPrefix${entry.key}',
+                kind: SyncConflictKind.songChanged,
+                title: _songTitle(here),
+                detail: differences,
+              ),
+              song: here,
+              otherSong: entry.value,
+            ),
+          );
+        }
+      }
+    }
+    for (final MapEntry<String, Song> entry in localSongs.entries) {
+      if (!remoteSongs.containsKey(entry.key) && remoteDeleted.contains(entry.key)) {
+        songsInConflict.add(entry.key);
+        conflicts.add(
+          _Conflict(
+            conflict: SyncConflict(
+              id: '$_songConflictPrefix${entry.key}',
+              kind: SyncConflictKind.songDeletedThere,
+              title: _songTitle(entry.value),
+              detail: null,
+            ),
+            song: entry.value,
+          ),
+        );
+      }
+    }
+
+    final Map<String, Song> localById = <String, Song>{for (final Song song in local.songs) song.id: song};
+    final Map<String, Song> remoteById = <String, Song>{for (final Song song in remote.songs) song.id: song};
+    final Set<String> localCovers = local.recordings.map(_syncRecordingId).toSet();
+    final Set<String> remoteCovers = remote.recordings.map(_syncRecordingId).toSet();
+    for (final SyncRecordingModel cover in remote.recordings) {
+      final Song? song = remoteById[cover.songId];
+      if (localCovers.contains(cover.id) || !local.deletedCovers.contains(cover.id)) continue;
+      if (song != null && songsInConflict.contains(_keyOf(song))) continue;
+      conflicts.add(_coverConflict(cover, song, SyncConflictKind.coverDeletedHere));
+    }
+    for (final SyncRecordingModel cover in local.recordings) {
+      final Song? song = localById[cover.songId];
+      if (remoteCovers.contains(cover.id) || !remote.deletedCovers.contains(cover.id)) continue;
+      if (song != null && songsInConflict.contains(_keyOf(song))) continue;
+      conflicts.add(_coverConflict(cover, song, SyncConflictKind.coverDeletedThere));
+    }
+    return conflicts;
+  }
+
+  /// Does on this device what the choices say and writes down what the other device must do.
+  Future<_Decisions> _decide(_PendingSync pending, Map<String, SyncChoice> choices) async {
+    final List<SyncSongKeyModel> deleteThere = <SyncSongKeyModel>[];
+    final List<SyncSongKeyModel> forgetThere = <SyncSongKeyModel>[];
+    final List<Song> updateThere = <Song>[];
+    final List<String> deleteCoversThere = <String>[];
+    final List<String> forgetCoversThere = <String>[];
+    final Set<String> skipSongs = <String>{};
+    final Set<String> skipCovers = <String>{};
+    int deletedHere = 0;
+    int updatedHere = 0;
+
+    for (final _Conflict item in pending.conflicts) {
+      final SyncConflict conflict = item.conflict;
+      final SyncChoice choice = choices[conflict.id] ?? conflict.choices.first;
+      final Song? song = item.song;
+      final String? coverId = item.coverId;
+      switch (conflict.kind) {
+        case SyncConflictKind.songDeletedHere:
+          final SyncSongKeyModel key = _songKey(song!);
+          if (choice == SyncChoice.delete) {
+            deleteThere.add(key);
+            skipSongs.add(key.key);
+          } else {
+            await _tombstones.forgetSong(key);
+          }
+        case SyncConflictKind.songDeletedThere:
+          if (choice == SyncChoice.delete) {
+            _throwOnFailure(await _songs.deleteSong(songId: song!.id));
+            deletedHere++;
+          } else {
+            forgetThere.add(_songKey(song!));
+          }
+        case SyncConflictKind.songChanged:
+          if (choice == SyncChoice.takeOther) {
+            await _updateSong(song!.id, item.otherSong!);
+            updatedHere++;
+          } else {
+            updateThere.add(song!);
+          }
+        case SyncConflictKind.coverDeletedHere:
+          if (choice == SyncChoice.delete) {
+            deleteCoversThere.add(coverId!);
+            skipCovers.add(coverId);
+          } else {
+            await _tombstones.forgetCover(coverId!);
+          }
+        case SyncConflictKind.coverDeletedThere:
+          if (choice == SyncChoice.delete) {
+            _throwOnFailure(await _recordings.deleteRecording(coverId!));
+            deletedHere++;
+          } else {
+            forgetCoversThere.add(coverId!);
+          }
+      }
+    }
+    return _Decisions(
+      plan: SyncPlanModel(
+        deleteSongs: deleteThere,
+        forgetSongs: forgetThere,
+        updateSongs: updateThere,
+        deleteCovers: deleteCoversThere,
+        forgetCovers: forgetCoversThere,
+      ),
+      skipSongs: skipSongs,
+      skipCovers: skipCovers,
+      deletedHere: deletedHere,
+      updatedHere: updatedHere,
+    );
+  }
+
+  /// Does on this (hosting) device what the other device's user decided.
+  Future<_Applied> _applyPlan(SyncPlanModel plan) async {
+    int deleted = 0;
+    int updated = 0;
+    final Map<String, Song> songs = <String, Song>{
+      for (final Song song in _songs.watchSongs().value) _keyOf(song): song,
+    };
+    for (final SyncSongKeyModel key in plan.deleteSongs) {
+      final Song? song = songs[key.key];
+      if (song == null) continue;
+      _throwOnFailure(await _songs.deleteSong(songId: song.id));
+      deleted++;
+    }
+    final Set<String> covers = _recordings.watchRecordings().value.map(_recordingId).toSet();
+    for (final String id in plan.deleteCovers) {
+      if (!covers.contains(id)) continue;
+      _throwOnFailure(await _recordings.deleteRecording(id));
+      deleted++;
+    }
+    for (final Song incoming in plan.updateSongs) {
+      final Song? song = songs[_keyOf(incoming)];
+      if (song == null) continue;
+      await _updateSong(song.id, incoming);
+      updated++;
+    }
+    for (final SyncSongKeyModel key in plan.forgetSongs) {
+      await _tombstones.forgetSong(key);
+    }
+    for (final String id in plan.forgetCovers) {
+      await _tombstones.forgetCover(id);
+    }
+    return _Applied(deleted: deleted, updated: updated);
+  }
+
+  /// Gives the song [songId] the lyrics, album, speed and space above the lyrics of [source].
+  Future<void> _updateSong(String songId, Song source) async {
+    _throwOnFailure(
+      await _songs.updateSong(
+        songId: songId,
+        author: source.author,
+        name: source.name,
+        album: source.album,
+        lyrics: source.lyrics,
+      ),
+    );
+    final double? speed = source.scrollSpeed;
+    if (speed != null) _throwOnFailure(await _songs.updateSongScrollSpeed(songId: songId, speed: speed));
+    final double? leadIn = source.leadIn;
+    if (leadIn != null) _throwOnFailure(await _songs.updateSongLeadIn(songId: songId, leadIn: leadIn));
+  }
+
+  /// Everything of this device to send; covers and sessions of songs that are gone are left out.
+  SyncSnapshotModel _snapshot() {
+    final List<Song> songs = _songs.watchSongs().value;
+    final Set<String> songIds = songs.map(_songId).toSet();
+    return SyncSnapshotModel(
+      songs: songs,
+      recordings: _recordings
+          .watchRecordings()
+          .value
+          .where((Recording recording) => songIds.contains(recording.songId))
+          .map(SyncRecordingModel.fromEntity)
+          .toList(),
+      sessions: _practice
+          .watchSessions()
+          .value
+          .where((PracticeSession session) => songIds.contains(session.songId))
+          .toList(),
+      history: _history.watchHistory().value,
+      deletedSongs: _tombstones.deletedSongs(),
+      deletedCovers: _tombstones.deletedCovers(),
+    );
+  }
+
+  /// Adds what [remote] has and this device misses, except [skipSongs] (by key) and [skipCovers]
+  /// (by id); the files of its covers are in [folder]. Whatever comes back stops being deleted.
+  Future<SyncCountsModel> _merge(
+    SyncSnapshotModel remote,
+    Directory? folder, {
+    Set<String> skipSongs = const <String>{},
+    Set<String> skipCovers = const <String>{},
+  }) async {
     final Map<String, String> localByKey = <String, String>{
-      for (final Song song in _songs.watchSongs().value) _key(song): song.id,
+      for (final Song song in _songs.watchSongs().value) _keyOf(song): song.id,
     };
     final Map<String, String> songIds = <String, String>{};
     final Map<String, int> newByKey = <String, int>{};
     final List<Song> newSongs = <Song>[];
     final Map<String, int> newIndexOfRemote = <String, int>{};
     for (final Song song in remote.songs) {
-      final String key = _key(song);
+      final String key = _keyOf(song);
+      if (skipSongs.contains(key)) continue;
       final String? local = localByKey[key];
       if (local != null) {
         songIds[song.id] = local;
@@ -311,6 +644,9 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
       for (final MapEntry<String, int> entry in newIndexOfRemote.entries) {
         if (entry.value < ids.length) songIds[entry.key] = ids[entry.value];
       }
+      for (final Song song in newSongs) {
+        await _tombstones.forgetSong(_songKey(song));
+      }
     }
 
     final Set<String> localRecordings = _recordings.watchRecordings().value.map(_recordingId).toSet();
@@ -318,6 +654,7 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
     for (final SyncRecordingModel recording in remote.recordings) {
       final String? songId = songIds[recording.songId];
       if (folder == null || songId == null || localRecordings.contains(recording.id)) continue;
+      if (skipCovers.contains(recording.id)) continue;
       final File raw = _fileIn(folder, recording.rawFile);
       if (!await raw.exists()) continue;
       final File enhanced = _fileIn(folder, recording.enhancedFile);
@@ -334,7 +671,12 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
         ),
       );
     }
-    if (covers.isNotEmpty) _throwOnFailure(await _recordings.importRecordings(covers));
+    if (covers.isNotEmpty) {
+      _throwOnFailure(await _recordings.importRecordings(covers));
+      for (final ImportedRecording cover in covers) {
+        await _tombstones.forgetCover(cover.id!);
+      }
+    }
 
     final Set<String> localSessions = _practice.watchSessions().value.map(_sessionId).toSet();
     final List<PracticeSession> sessions = <PracticeSession>[
@@ -364,6 +706,25 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
     return SyncCountsModel(songs: newSongs.length, covers: covers.length, sessions: sessions.length);
   }
 
+  Future<void> _onSongIdChanged(SongIdChange change) async {
+    if (change case SongDeletedIdChange(:final String? author, :final String? name)) {
+      if (author == null || name == null) return;
+      try {
+        await _tombstones.putSong(SyncSongKeyModel(author: author, name: name));
+      } on Exception catch (e) {
+        _logger.e('$_tombstoneLog$_failureLog$e');
+      }
+    }
+  }
+
+  Future<void> _onCoverDeleted(String id) async {
+    try {
+      await _tombstones.putCover(id);
+    } on Exception catch (e) {
+      _logger.e('$_tombstoneLog$_failureLog$e');
+    }
+  }
+
   void _step(String step, double? fraction) {
     _state.value = SyncingSyncState(step: step, fraction: fraction);
   }
@@ -391,24 +752,117 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
     if (result case FailureResult<void>(:final String error)) throw HttpException(error);
   }
 
-  static SyncSummary _summary({required SyncCountsModel received, required SyncCountsModel sent}) => SyncSummary(
-    songsReceived: received.songs,
-    coversReceived: received.covers,
-    sessionsReceived: received.sessions,
-    songsSent: sent.songs,
-    coversSent: sent.covers,
-    sessionsSent: sent.sessions,
+  static _Conflict _coverConflict(SyncRecordingModel cover, Song? song, SyncConflictKind kind) => _Conflict(
+    conflict: SyncConflict(
+      id: '$_coverConflictPrefix${cover.id}',
+      kind: kind,
+      title:
+          '$_coverTitlePrefix${song == null ? _unknownSong : _songTitle(song)}$_coverTitleSuffix${_date(cover.recordedAt)}',
+      detail: null,
+    ),
+    coverId: cover.id,
   );
+
+  /// What differs between [here] and [there], or `null` when they are the same. A speed or a
+  /// space that one device never set is no difference.
+  static String? _differences(Song here, Song there) {
+    final List<String> differences = <String>[
+      if (here.lyrics.trim() != there.lyrics.trim()) _lyricsDiffers,
+      if ((here.album ?? '').trim() != (there.album ?? '').trim()) _albumDiffers,
+      if (_differ(here.scrollSpeed, there.scrollSpeed)) _speedDiffers,
+      if (_differ(here.leadIn, there.leadIn)) _leadInDiffers,
+    ];
+    return differences.isEmpty ? null : '$_differsPrefix${differences.join(_listSeparator)}';
+  }
+
+  static bool _differ(double? a, double? b) => a != null && b != null && (a - b).abs() > _sameNumber;
+
+  static SyncSummary _summary({required SyncCountsModel here, required SyncCountsModel there}) => SyncSummary(
+    songsReceived: here.songs,
+    coversReceived: here.covers,
+    sessionsReceived: here.sessions,
+    songsSent: there.songs,
+    coversSent: there.covers,
+    sessionsSent: there.sessions,
+    deletedHere: here.deleted,
+    deletedThere: there.deleted,
+    updatedHere: here.updated,
+    updatedThere: there.updated,
+  );
+
+  static String _date(DateTime time) => <int>[time.day, time.month]
+      .map((int part) => part.toString().padLeft(_twoDigits, _zero))
+      .followedBy(<String>['${time.year}'])
+      .join(_dateSeparator);
+
+  static String _songTitle(Song song) => '${song.name}$_titleSeparator${song.author}';
 
   static String _counted(String step, int index, int count) => '$step$_stepSeparator${index + 1}$_of$count';
 
   static File _fileIn(Directory folder, String name) => File('${folder.path}$_separator$name');
 
-  static String _key(Song song) => '${song.author.trim().toLowerCase()}$_keySeparator${song.name.trim().toLowerCase()}';
+  static String _keyOf(Song song) => SyncSongKeyModel.keyOf(author: song.author, name: song.name);
+
+  static SyncSongKeyModel _songKey(Song song) => SyncSongKeyModel(author: song.author, name: song.name);
+
+  static String _tombstoneKey(SyncSongKeyModel song) => song.key;
+
+  static String _songId(Song song) => song.id;
 
   static String _recordingId(Recording recording) => recording.id;
 
   static String _syncRecordingId(SyncRecordingModel recording) => recording.id;
 
   static String _sessionId(PracticeSession session) => session.id;
+}
+
+/// A conflict with what is needed to act on it.
+final class _Conflict {
+  final SyncConflict conflict;
+
+  /// The song (of this device, or of the other one when it is missing here).
+  final Song? song;
+
+  /// The other device's version of a changed song.
+  final Song? otherSong;
+
+  /// The cover of a cover conflict.
+  final String? coverId;
+
+  const _Conflict({required this.conflict, this.song, this.otherSong, this.coverId});
+}
+
+/// An exchange that waits for the user's choices.
+final class _PendingSync {
+  final Uri base;
+  final SyncOfferModel offer;
+  final SyncSnapshotModel remote;
+  final List<_Conflict> conflicts;
+
+  const _PendingSync({required this.base, required this.offer, required this.remote, required this.conflicts});
+}
+
+/// What the choices did here and ask of the other device.
+final class _Decisions {
+  final SyncPlanModel plan;
+  final Set<String> skipSongs;
+  final Set<String> skipCovers;
+  final int deletedHere;
+  final int updatedHere;
+
+  const _Decisions({
+    required this.plan,
+    required this.skipSongs,
+    required this.skipCovers,
+    required this.deletedHere,
+    required this.updatedHere,
+  });
+}
+
+/// What the plan of the other device did here.
+final class _Applied {
+  final int deleted;
+  final int updated;
+
+  const _Applied({required this.deleted, required this.updated});
 }

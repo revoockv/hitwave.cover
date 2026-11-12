@@ -21,6 +21,12 @@ final class SongDeletedIdChange extends SongIdChange {
   /// The id of the deleted song.
   final String songId;
 
+  /// Artist of the deleted song, when it was known (the sync remembers deletions by it).
+  final String? author;
+
+  /// Name of the deleted song, when it was known.
+  final String? name;
+
   /// Creates a [SongDeletedIdChange].
-  const SongDeletedIdChange(this.songId);
+  const SongDeletedIdChange(this.songId, {this.author, this.name});
 }

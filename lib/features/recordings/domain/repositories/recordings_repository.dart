@@ -31,6 +31,9 @@ abstract interface class RecordingsRepository {
   /// Enhances the raw take of [recordingId] again (after a failure).
   Future<Result<void>> enhanceAgain({required String recordingId, required bool trimSilence});
 
+  /// Ids of the recordings the user deletes (not those that go with a deleted song).
+  Stream<String> watchRecordingDeletions();
+
   /// Deletes the recording [recordingId] and its files.
   Future<Result<void>> deleteRecording(String recordingId);
 

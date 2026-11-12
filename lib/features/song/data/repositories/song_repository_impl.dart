@@ -300,13 +300,19 @@ final class SongRepositoryImpl implements SongRepository, DisposableResource {
 
   @override
   Future<Result<void>> deleteSong({required String songId}) async {
+    Song? deleted;
+    for (final Song song in _songs.value) {
+      if (song.id == songId) deleted = song;
+    }
     final Result<void> result = await _run(
       _deleteSongLog,
       '$_startingLog$songId$_closingQuoteLog',
       _deleteSongFailedMessage,
       (SongDataSource dataSource) => dataSource.deleteSong(songId),
     );
-    if (result.isSuccess) _songIdChanges.add(SongDeletedIdChange(songId));
+    if (result.isSuccess) {
+      _songIdChanges.add(SongDeletedIdChange(songId, author: deleted?.author, name: deleted?.name));
+    }
     return result;
   }
 

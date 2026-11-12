@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hitwave.cover/core/data/data_sources/local_storage_service.dart';
 import 'package:hitwave.cover/core/domain/entities/result.dart';
 import 'package:hitwave.cover/features/history/domain/entities/usage_history.dart';
 import 'package:hitwave.cover/features/history/domain/repositories/history_repository.dart';
@@ -13,19 +15,24 @@ import 'package:hitwave.cover/features/recordings/domain/entities/recording_stat
 import 'package:hitwave.cover/features/recordings/domain/repositories/recordings_repository.dart';
 import 'package:hitwave.cover/features/song/domain/entities/cover.dart';
 import 'package:hitwave.cover/features/song/domain/entities/song.dart';
+import 'package:hitwave.cover/features/song/domain/entities/song_id_change.dart';
 import 'package:hitwave.cover/features/song/domain/repositories/song_repository.dart';
+import 'package:hitwave.cover/features/sync/data/data_sources/hive_sync_tombstone_service.dart';
 import 'package:hitwave.cover/features/sync/data/data_sources/sync_client_data_source.dart';
 import 'package:hitwave.cover/features/sync/data/data_sources/sync_server_data_source.dart';
 import 'package:hitwave.cover/features/sync/data/repositories/sync_repository_impl.dart';
+import 'package:hitwave.cover/features/sync/domain/entities/sync_conflict.dart';
 import 'package:hitwave.cover/features/sync/domain/entities/sync_state.dart';
+import 'package:hive_ce/hive_ce.dart';
 import 'package:logger/logger.dart';
 
-Song song(String id, String author, String name) =>
-    Song(id: id, author: author, name: name, lyrics: 'la la', covers: const <Cover>[]);
+Song song(String id, String author, String name, {String lyrics = 'la la'}) =>
+    Song(id: id, author: author, name: name, lyrics: lyrics, covers: const <Cover>[]);
 
 /// Songs in memory; added songs get the ids `new-1`, `new-2`…
 final class FakeSongs implements SongRepository {
   final ValueNotifier<List<Song>> songs;
+  final StreamController<SongIdChange> changes = StreamController<SongIdChange>.broadcast();
   int _next = 0;
 
   FakeSongs(List<Song> initial) : songs = ValueNotifier<List<Song>>(initial);
@@ -34,21 +41,45 @@ final class FakeSongs implements SongRepository {
   ValueListenable<List<Song>> watchSongs() => songs;
 
   @override
+  Stream<SongIdChange> watchSongIdChanges() => changes.stream;
+
+  @override
   Future<Result<List<String>>> addSongs(List<Song> added) async {
     final List<String> ids = <String>[for (final Song _ in added) 'new-${++_next}'];
     songs.value = <Song>[
       ...songs.value,
-      for (int i = 0; i < added.length; i++)
-        Song(
-          id: ids[i],
-          author: added[i].author,
-          name: added[i].name,
-          lyrics: added[i].lyrics,
-          covers: const <Cover>[],
-        ),
+      for (int i = 0; i < added.length; i++) song(ids[i], added[i].author, added[i].name, lyrics: added[i].lyrics),
     ];
     return Result.success(ids);
   }
+
+  @override
+  Future<Result<void>> deleteSong({required String songId}) async {
+    final Song deleted = songs.value.singleWhere((Song s) => s.id == songId);
+    songs.value = songs.value.where((Song s) => s.id != songId).toList();
+    changes.add(SongDeletedIdChange(songId, author: deleted.author, name: deleted.name));
+    return Result.ok;
+  }
+
+  @override
+  Future<Result<void>> updateSong({
+    required String songId,
+    required String author,
+    required String name,
+    String? album,
+    required String lyrics,
+  }) async {
+    songs.value = <Song>[
+      for (final Song s in songs.value) s.id == songId ? song(s.id, author, name, lyrics: lyrics) : s,
+    ];
+    return Result.ok;
+  }
+
+  @override
+  Future<Result<void>> updateSongScrollSpeed({required String songId, required double speed}) async => Result.ok;
+
+  @override
+  Future<Result<void>> updateSongLeadIn({required String songId, required double leadIn}) async => Result.ok;
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -58,6 +89,7 @@ final class FakeSongs implements SongRepository {
 final class FakeRecordings implements RecordingsRepository {
   final Directory folder;
   final ValueNotifier<List<Recording>> recordings = ValueNotifier<List<Recording>>(const <Recording>[]);
+  final StreamController<String> deletions = StreamController<String>.broadcast();
 
   FakeRecordings(this.folder);
 
@@ -82,6 +114,16 @@ final class FakeRecordings implements RecordingsRepository {
 
   @override
   ValueListenable<List<Recording>> watchRecordings() => recordings;
+
+  @override
+  Stream<String> watchRecordingDeletions() => deletions.stream;
+
+  @override
+  Future<Result<void>> deleteRecording(String recordingId) async {
+    recordings.value = recordings.value.where((Recording r) => r.id != recordingId).toList();
+    deletions.add(recordingId);
+    return Result.ok;
+  }
 
   @override
   Future<Result<void>> importRecordings(List<ImportedRecording> imported) async {
@@ -162,55 +204,92 @@ final class Device {
   final FakeRecordings recordings;
   final FakePractice practice;
   final FakeHistory history;
-  late final SyncRepositoryImpl sync = SyncRepositoryImpl(
-    songs: songs,
-    recordings: recordings,
-    practice: practice,
-    history: history,
-    server: SyncServerDataSource(includeLoopback: true),
-    client: SyncClientDataSource(),
-    logger: Logger(level: Level.off),
-    deviceName: 'test',
-  );
+  final SyncRepositoryImpl sync;
 
-  Device({required this.songs, required this.recordings, required this.practice, required this.history});
+  Device._(this.songs, this.recordings, this.practice, this.history, this.sync);
+
+  static Future<Device> create({
+    required String name,
+    required List<Song> songs,
+    required Directory root,
+    List<PracticeSession> sessions = const <PracticeSession>[],
+    UsageHistory history = UsageHistory.empty,
+  }) async {
+    final FakeSongs fakeSongs = FakeSongs(songs);
+    final FakeRecordings recordings = FakeRecordings(await Directory('${root.path}/$name').create());
+    final FakePractice practice = FakePractice(sessions);
+    final FakeHistory fakeHistory = FakeHistory(history);
+    final HiveSyncTombstoneService tombstones = await HiveSyncTombstoneService(
+      storage: LocalStorageService(),
+      boxName: 'tombstones_$name',
+    ).init();
+    final SyncRepositoryImpl sync = SyncRepositoryImpl(
+      songs: fakeSongs,
+      recordings: recordings,
+      practice: practice,
+      history: fakeHistory,
+      tombstones: tombstones,
+      server: SyncServerDataSource(includeLoopback: true),
+      client: SyncClientDataSource(),
+      logger: Logger(level: Level.off),
+      deviceName: name,
+    ).init();
+    return Device._(fakeSongs, recordings, practice, fakeHistory, sync);
+  }
+
+  /// Hosts a synchronisation and lets [guest] scan its code.
+  Future<void> hostFor(Device guest) async {
+    await sync.stopSync();
+    await guest.sync.stopSync();
+    expect((await sync.startHosting()).isSuccess, isTrue);
+    expect((await guest.sync.syncWith((sync.watchSyncState().value as HostingSyncState).code)).isSuccess, isTrue);
+  }
+
+  List<String> get songNames => songs.songs.value.map((Song s) => s.name).toList();
+
+  List<String> get coverIds => recordings.recordings.value.map((Recording r) => r.id).toList();
 }
 
 PracticeSession session(String id, String songId) =>
     PracticeSession(id: id, songId: songId, startedAt: DateTime(2026, 11, 12, 9), duration: const Duration(minutes: 5));
 
+/// Lets the deletion listeners write their tombstones.
+Future<void> settle() => Future<void>.delayed(const Duration(milliseconds: 50));
+
 void main() {
   late Directory root;
 
-  setUp(() async => root = await Directory.systemTemp.createTemp('hitwave_sync_test'));
+  setUp(() async {
+    root = await Directory.systemTemp.createTemp('hitwave_sync_test');
+    Hive.init(root.path);
+  });
 
-  tearDown(() async => root.delete(recursive: true));
+  tearDown(() async {
+    await Hive.close();
+    await root.delete(recursive: true);
+  });
 
   test('two devices exchange what each misses and match songs by artist and name', () async {
-    final Device host = Device(
-      songs: FakeSongs(<Song>[song('a1', 'Океан Ельзи', 'Обійми')]),
-      recordings: FakeRecordings(await Directory('${root.path}/host').create()),
-      practice: FakePractice(<PracticeSession>[session('sa', 'a1')]),
-      history: FakeHistory(
-        UsageHistory(
-          songsOpenedAt: <String, DateTime>{'a1': DateTime(2026, 11, 12)},
-          coversPlayedAt: const <String, DateTime>{},
-        ),
+    final Device host = await Device.create(
+      name: 'host',
+      root: root,
+      songs: <Song>[song('a1', 'Океан Ельзи', 'Обійми')],
+      sessions: <PracticeSession>[session('sa', 'a1')],
+      history: UsageHistory(
+        songsOpenedAt: <String, DateTime>{'a1': DateTime(2026, 11, 12)},
+        coversPlayedAt: const <String, DateTime>{},
       ),
     );
     host.recordings.add('ra', 'a1', enhanced: true);
-    final Device guest = Device(
-      songs: FakeSongs(<Song>[song('b1', ' океан ельзи', 'ОБІЙМИ '), song('b2', 'Kalush', 'Stefania')]),
-      recordings: FakeRecordings(await Directory('${root.path}/guest').create()),
-      practice: FakePractice(<PracticeSession>[session('sb', 'b2')]),
-      history: FakeHistory(UsageHistory.empty),
+    final Device guest = await Device.create(
+      name: 'guest',
+      root: root,
+      songs: <Song>[song('b1', ' океан ельзи', 'ОБІЙМИ '), song('b2', 'Kalush', 'Stefania')],
+      sessions: <PracticeSession>[session('sb', 'b2')],
     );
     guest.recordings.add('rb', 'b2', enhanced: false);
 
-    expect((await host.sync.startHosting()).isSuccess, isTrue);
-    final String code = (host.sync.watchSyncState().value as HostingSyncState).code;
-
-    expect((await guest.sync.syncWith(code)).isSuccess, isTrue);
+    await host.hostFor(guest);
 
     // The guest got the cover and the session of the host's song, which it already had.
     expect(guest.songs.songs.value.length, 2);
@@ -222,7 +301,7 @@ void main() {
     expect(guest.history.history.value.songsOpenedAt.keys, <String>['b1']);
 
     // The host got the song it missed, with its cover and session.
-    expect(host.songs.songs.value.map((Song s) => s.name), <String>['Обійми', 'Stefania']);
+    expect(host.songNames, <String>['Обійми', 'Stefania']);
     final Recording sent = host.recordings.recordings.value.singleWhere((Recording r) => r.id == 'rb');
     expect(sent.songId, 'new-1');
     expect(sent.enhancedPath, isNull);
@@ -237,23 +316,100 @@ void main() {
     expect(hostDone.summary.songsReceived, 1);
     expect(hostDone.summary.coversSent, 1);
 
-    // A second run adds nothing new.
-    await host.sync.stopSync();
-    await host.sync.startHosting();
-    await guest.sync.syncWith((host.sync.watchSyncState().value as HostingSyncState).code);
+    // A second run adds nothing new and finds no conflicts.
+    await host.hostFor(guest);
     final DoneSyncState again = guest.sync.watchSyncState().value as DoneSyncState;
     expect(again.summary.coversReceived + again.summary.coversSent + again.summary.songsSent, 0);
-
     await host.sync.stopSync();
   });
 
-  test('a wrong code or a wrong key fails without touching anything', () async {
-    final Device guest = Device(
-      songs: FakeSongs(const <Song>[]),
-      recordings: FakeRecordings(await Directory('${root.path}/guest').create()),
-      practice: FakePractice(const <PracticeSession>[]),
-      history: FakeHistory(UsageHistory.empty),
+  test('deletions are conflicts the user decides; "delete" removes them on the other device too', () async {
+    List<Song> both() => <Song>[song('s', 'A', 'Kept'), song('t', 'B', 'Doomed')];
+    final Device host = await Device.create(name: 'host', root: root, songs: both());
+    final Device guest = await Device.create(name: 'guest', root: root, songs: both());
+    host.recordings.add('c', 's', enhanced: true);
+    guest.recordings.add('c', 's', enhanced: true);
+
+    await host.songs.deleteSong(songId: 't'); // deleted on the host
+    await guest.recordings.deleteRecording('c'); // deleted on the guest
+    await settle();
+
+    await host.hostFor(guest);
+    final ConflictsSyncState waiting = guest.sync.watchSyncState().value as ConflictsSyncState;
+    expect(waiting.conflicts.map((SyncConflict c) => c.kind), <SyncConflictKind>[
+      SyncConflictKind.songDeletedThere,
+      SyncConflictKind.coverDeletedHere,
+    ]);
+    expect(host.sync.watchSyncState().value, isNot(isA<DoneSyncState>()));
+
+    expect(
+      (await guest.sync.resolveConflicts(<String, SyncChoice>{
+        for (final SyncConflict conflict in waiting.conflicts) conflict.id: SyncChoice.delete,
+      })).isSuccess,
+      isTrue,
     );
+
+    expect(guest.songNames, <String>['Kept']);
+    expect(host.coverIds, isEmpty);
+    final DoneSyncState done = guest.sync.watchSyncState().value as DoneSyncState;
+    expect(done.summary.deletedHere, 1);
+    expect(done.summary.deletedThere, 1);
+
+    // Both now remember the deletions: nothing to ask the next time.
+    await settle();
+    await host.hostFor(guest);
+    expect(guest.sync.watchSyncState().value, isA<DoneSyncState>());
+    await host.sync.stopSync();
+  });
+
+  test('"restore" brings a deleted song back and a changed song can take the other version', () async {
+    final Device host = await Device.create(
+      name: 'host',
+      root: root,
+      songs: <Song>[
+        song('u', 'C', 'Lost'),
+        song('v', 'D', 'Edited', lyrics: 'new words'),
+      ],
+    );
+    final Device guest = await Device.create(
+      name: 'guest',
+      root: root,
+      songs: <Song>[
+        song('u2', 'C', 'Lost'),
+        song('v2', 'D', 'Edited', lyrics: 'old words'),
+      ],
+    );
+    guest.recordings.add('cu', 'u2', enhanced: false);
+    await host.songs.deleteSong(songId: 'u');
+    await settle();
+
+    await host.hostFor(guest);
+    final ConflictsSyncState waiting = guest.sync.watchSyncState().value as ConflictsSyncState;
+    final SyncConflict deleted = waiting.conflicts.singleWhere(
+      (SyncConflict c) => c.kind == SyncConflictKind.songDeletedThere,
+    );
+    final SyncConflict changed = waiting.conflicts.singleWhere(
+      (SyncConflict c) => c.kind == SyncConflictKind.songChanged,
+    );
+    expect(changed.detail, contains('текст'));
+
+    await guest.sync.resolveConflicts(<String, SyncChoice>{
+      deleted.id: SyncChoice.restore,
+      changed.id: SyncChoice.takeOther,
+    });
+
+    expect(host.songNames, containsAll(<String>['Lost', 'Edited']));
+    expect(host.coverIds, <String>['cu']);
+    expect(guest.songs.songs.value.singleWhere((Song s) => s.name == 'Edited').lyrics, 'new words');
+
+    // The host forgot the deletion: no conflict any more.
+    await host.hostFor(guest);
+    expect(guest.sync.watchSyncState().value, isA<DoneSyncState>());
+    await host.sync.stopSync();
+  });
+
+  test('a wrong code fails without touching anything', () async {
+    final Device guest = await Device.create(name: 'guest', root: root, songs: const <Song>[]);
 
     expect((await guest.sync.syncWith('not a code')).isFailure, isTrue);
     expect(guest.sync.watchSyncState().value, isA<FailedSyncState>());

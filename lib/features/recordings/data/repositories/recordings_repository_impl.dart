@@ -69,6 +69,7 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
   final Map<String, RecordingModel> _models = <String, RecordingModel>{};
 
   StreamSubscription<SongIdChange>? _songIdChanges;
+  final StreamController<String> _deletions = StreamController<String>.broadcast();
   Timer? _ticker;
   Stopwatch? _stopwatch;
   String? _activeId;
@@ -104,6 +105,7 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
     _ticker?.cancel();
     await _songIdChanges?.cancel();
     await _recorder.dispose();
+    await _deletions.close();
     _recordings.dispose();
     _recorderState.dispose();
   }
@@ -195,11 +197,15 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
   }
 
   @override
+  Stream<String> watchRecordingDeletions() => _deletions.stream;
+
+  @override
   Future<Result<void>> deleteRecording(String recordingId) async {
     try {
       await _store.delete(recordingId);
       _models.remove(recordingId);
       _publish();
+      _deletions.add(recordingId);
       _logger.i('$_deleteLog$_successLog$recordingId');
       return Result.ok;
     } on Exception catch (e) {

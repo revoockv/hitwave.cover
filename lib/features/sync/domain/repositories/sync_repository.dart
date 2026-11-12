@@ -1,13 +1,16 @@
 import 'package:flutter/foundation.dart' show ValueListenable;
 
 import '../../../../core/domain/entities/result.dart';
+import '../entities/sync_conflict.dart';
 import '../entities/sync_state.dart';
 
 /// Synchronises the songs, covers, practice and history with another device on the same network.
 ///
 /// One device hosts (shows a QR code with its address and a one-time key), the other scans it
-/// and both get what they miss. Nothing is deleted; songs are matched by artist and name, covers
-/// and practice sessions by their ids.
+/// and both get what they miss. Songs are matched by artist and name, covers and practice
+/// sessions by their ids. Each device remembers what was deleted on it; a song or cover deleted
+/// on one device and still on the other, or a song that differs, is a conflict the user of the
+/// scanning device decides about before anything changes.
 abstract interface class SyncRepository {
   /// The state of the synchronisation.
   ValueListenable<SyncState> watchSyncState();
@@ -18,8 +21,12 @@ abstract interface class SyncRepository {
   /// Starts waiting for another device; the state gets the code to show.
   Future<Result<void>> startHosting();
 
-  /// Synchronises with the device that shows [code].
+  /// Synchronises with the device that shows [code]. When the devices conflict, the state turns
+  /// to [ConflictsSyncState] and the exchange waits for [resolveConflicts].
   Future<Result<void>> syncWith(String code);
+
+  /// Goes on with the exchange that waits, doing for every conflict (by id) what [choices] says.
+  Future<Result<void>> resolveConflicts(Map<String, SyncChoice> choices);
 
   /// Stops waiting or forgets the result; back to idle.
   Future<Result<void>> stopSync();

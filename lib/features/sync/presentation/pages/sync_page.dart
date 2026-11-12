@@ -8,6 +8,8 @@ import '../../../../core/presentation/theme.dart';
 import '../../domain/entities/sync_state.dart';
 import '../controllers/sync_page_controller.dart';
 import '../di/sync_getters.dart';
+import '../../domain/entities/sync_conflict.dart';
+import '../widgets/sync_conflicts_widget.dart';
 import '../widgets/sync_qr_widget.dart';
 import '../widgets/sync_summary_widget.dart';
 import 'sync_scanner_page.dart';
@@ -37,6 +39,12 @@ final class SyncPage extends WatchingWidget {
       dispose: _disposeSyncPageController,
     );
     final SyncState state = watch(watchSyncStateUseCase()).value;
+    final Map<String, SyncChoice> choices = watch(syncPageController.choicesController).value;
+    registerHandler(
+      target: watchSyncStateUseCase(),
+      handler: (BuildContext context, SyncState state, void Function() cancel) =>
+          _onStateChanged(syncPageController, state),
+    );
     final ThemeData theme = Theme.of(context);
 
     return PopScope(
@@ -61,6 +69,15 @@ final class SyncPage extends WatchingWidget {
                     const SizedBox(height: AppTheme.spacingMedium),
                     Text(step, textAlign: TextAlign.center, style: theme.textTheme.bodyLarge),
                   ],
+                ),
+                ConflictsSyncState(:final List<SyncConflict> conflicts) => SyncConflictsWidget(
+                  conflicts: conflicts,
+                  choices: choices,
+                  onChoiceChanged: syncPageController.choose,
+                  onAllDeletionsChosen: (SyncChoice choice) => syncPageController.chooseForAll(conflicts, choice),
+                  onAllChangesChosen: (SyncChoice choice) => syncPageController.chooseForAll(conflicts, choice),
+                  onContinuePressed: () => _resolve(syncPageController),
+                  onCancelPressed: stopSyncUseCase.call,
                 ),
                 DoneSyncState(:final summary) => SyncSummaryWidget(
                   summary: summary,
@@ -126,6 +143,15 @@ final class SyncPage extends WatchingWidget {
           defaultTargetPlatform == TargetPlatform.macOS);
 
   static SyncPageController _createSyncPageController() => SyncPageController();
+
+  /// New conflicts start with the safe choices.
+  static void _onStateChanged(SyncPageController syncPageController, SyncState state) {
+    if (state case ConflictsSyncState(:final List<SyncConflict> conflicts)) syncPageController.resetChoices(conflicts);
+  }
+
+  static Future<void> _resolve(SyncPageController syncPageController) async {
+    await resolveSyncConflictsUseCase(syncPageController.choicesController.value);
+  }
 
   static void _disposeSyncPageController(SyncPageController syncPageController) => syncPageController.dispose();
 
