@@ -7,7 +7,10 @@ import '../entities/shared_song.dart';
 /// file manager of the desktop.
 abstract interface class RecordingFilesRepository {
   /// Opens the share sheet with the [version] of [recording], named after its [song] (when known).
-  Future<Result<void>> shareRecording({
+  ///
+  /// Succeeds with `true` when the message went onto the clipboard instead (macOS), so the user
+  /// can paste it as the caption.
+  Future<Result<bool>> shareRecording({
     required Recording recording,
     required RecordingVersion version,
     required SharedSong? song,

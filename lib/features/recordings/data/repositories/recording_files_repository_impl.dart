@@ -33,7 +33,7 @@ final class RecordingFilesRepositoryImpl implements RecordingFilesRepository {
   RecordingFilesRepositoryImpl({required this._system, required this._logger});
 
   @override
-  Future<Result<void>> shareRecording({
+  Future<Result<bool>> shareRecording({
     required Recording recording,
     required RecordingVersion version,
     required SharedSong? song,
@@ -42,8 +42,9 @@ final class RecordingFilesRepositoryImpl implements RecordingFilesRepository {
     final String path = version == RecordingVersion.enhanced && enhanced != null ? enhanced : recording.rawPath;
     try {
       if (!await File(path).exists()) return const Result.failure(_missingError);
-      await _system.shareFile(path: path, fileName: fileName(recording, song), text: message(song));
-      return Result.ok;
+      return Result.success(
+        await _system.shareFile(path: path, fileName: fileName(recording, song), text: message(song)),
+      );
     } on Exception catch (e) {
       _logger.e('$_shareLog$e');
       return const Result.failure(_shareError);

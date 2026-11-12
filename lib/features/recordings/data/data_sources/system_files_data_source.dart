@@ -17,22 +17,23 @@ final class SystemFilesDataSource {
   /// The folder of the copy shared last; deleted at the next share.
   Directory? _lastShareFolder;
 
-  /// Opens the share sheet with the file at [path], named [fileName], and [text].
+  /// Opens the share sheet with the file at [path], named [fileName], and [text]; returns
+  /// whether [text] went onto the clipboard instead (macOS).
   ///
   /// The share sheet of some systems (macOS) takes the name of the file on disk, so a copy with
-  /// [fileName] is shared from a temporary folder. On macOS the share_plus plugin drops the text
-  /// when it shares a file, so the app's own channel (MainFlutterWindow.swift) shares both.
-  Future<void> shareFile({required String path, required String fileName, required String? text}) async {
+  /// [fileName] is shared from a temporary folder. On macOS the app's own channel
+  /// (MainFlutterWindow.swift) shares only the file and copies [text] for pasting as the caption.
+  Future<bool> shareFile({required String path, required String fileName, required String? text}) async {
     await _deleteLastCopy();
     final Directory folder = await Directory.systemTemp.createTemp(_shareFolderPrefix);
     _lastShareFolder = folder;
     final File copy = await File(path).copy('${folder.path}$_separator$fileName');
     if (!kIsWeb && Platform.isMacOS) {
-      await _macosShare.invokeMethod<void>(_shareFileMethod, <String, String?>{
-        _pathArgument: copy.path,
-        _textArgument: text,
-      });
-      return;
+      return await _macosShare.invokeMethod<bool>(_shareFileMethod, <String, String?>{
+            _pathArgument: copy.path,
+            _textArgument: text,
+          }) ??
+          false;
     }
     await SharePlus.instance.share(
       ShareParams(
@@ -41,6 +42,7 @@ final class SystemFilesDataSource {
         text: text,
       ),
     );
+    return false;
   }
 
   /// Whether a folder can be opened in the file manager (desktop).

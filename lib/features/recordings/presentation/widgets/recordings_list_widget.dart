@@ -21,6 +21,8 @@ import 'recording_tile_widget.dart';
 ///
 /// With [headerOf], a header (the song) is shown above every run of recordings with the same one.
 final class RecordingsListWidget extends WatchingWidget {
+  static const String _captionCopied = 'Опис скопійовано — вставте його (⌘V) як підпис до файлу.';
+
   /// The recordings, in the order to show.
   final List<Recording> recordings;
 
@@ -172,13 +174,20 @@ final class RecordingsListWidget extends WatchingWidget {
   }
 
   Future<void> _share(BuildContext context, Recording recording, RecordingVersion version) async {
-    final Result<void> result = await shareRecordingUseCase(
+    final Result<bool> result = await shareRecordingUseCase(
       recording: recording,
       version: version,
       song: songOf?.call(recording),
     );
     if (!context.mounted) return;
-    _showFailure(context, result);
+    switch (result) {
+      case SuccessResult<bool>(value: true):
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text(_captionCopied)));
+      case SuccessResult<bool>():
+        break;
+      case FailureResult<bool>(:final String error):
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+    }
   }
 
   Future<void> _showInFolder(BuildContext context, Recording recording) async {

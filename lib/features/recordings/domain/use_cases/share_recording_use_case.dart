@@ -12,7 +12,8 @@ final class ShareRecordingUseCase {
   ShareRecordingUseCase(this._repository);
 
   /// Shares the [version] of [recording], named after its [song].
-  Future<Result<void>> call({required Recording recording, required RecordingVersion version, SharedSong? song}) async {
+  /// `true` when the message went onto the clipboard for pasting.
+  Future<Result<bool>> call({required Recording recording, required RecordingVersion version, SharedSong? song}) async {
     return _repository.shareRecording(recording: recording, version: version, song: song);
   }
 }

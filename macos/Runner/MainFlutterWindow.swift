@@ -2,8 +2,8 @@ import Cocoa
 import FlutterMacOS
 
 class MainFlutterWindow: NSWindow {
-  /// Shares a file together with a text: the share_plus plugin drops the text when it shares
-  /// files on macOS, so the app opens the system share picker itself.
+  /// Shares a file under its own name and puts its text on the clipboard: the share_plus
+  /// plugin drops the text of a shared file on macOS, and apps given both may drop the file.
   private var shareChannel: FlutterMethodChannel?
 
   override func awakeFromNib() {
@@ -27,15 +27,17 @@ class MainFlutterWindow: NSWindow {
         result(FlutterMethodNotImplemented)
         return
       }
-      var items: [Any] = []
+      // Only the file: an app given a file and a text (Telegram) may send just the text. The text
+      // goes onto the clipboard, to paste as the caption.
+      var copied = false
       if let text = args["text"] as? String, !text.isEmpty {
-        items.append(text)
+        NSPasteboard.general.clearContents()
+        copied = NSPasteboard.general.setString(text, forType: .string)
       }
-      items.append(NSURL.fileURL(withPath: path))
-      let picker = NSSharingServicePicker(items: items)
+      let picker = NSSharingServicePicker(items: [NSURL.fileURL(withPath: path)])
       let origin = NSRect(x: view.bounds.midX, y: view.bounds.midY, width: 1, height: 1)
       picker.show(relativeTo: origin, of: view, preferredEdge: .minY)
-      result(nil)
+      result(copied)
     }
     shareChannel = channel
 
