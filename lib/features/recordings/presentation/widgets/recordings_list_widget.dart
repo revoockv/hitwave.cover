@@ -10,6 +10,7 @@ import '../../domain/entities/playback_state.dart';
 import '../../domain/entities/recording.dart';
 import '../../domain/entities/recording_status.dart';
 import '../../domain/entities/recording_version.dart';
+import '../../domain/entities/shared_song.dart';
 import '../di/recordings_getters.dart';
 import 'delete_recording_dialog_widget.dart';
 import 'recording_tile_widget.dart';
@@ -25,8 +26,8 @@ final class RecordingsListWidget extends WatchingWidget {
   /// Header of a recording, or `null` for none.
   final String? Function(Recording recording)? headerOf;
 
-  /// Name a shared recording is sent under (`Artist-Song`), or `null` for none.
-  final String? Function(Recording recording)? shareNameOf;
+  /// The song a shared recording is named after, or `null` when unknown.
+  final SharedSong? Function(Recording recording)? songOf;
 
   /// Shown when there are no recordings.
   final String emptyText;
@@ -43,7 +44,7 @@ final class RecordingsListWidget extends WatchingWidget {
     required this.recordings,
     required this.emptyText,
     this.headerOf,
-    this.shareNameOf,
+    this.songOf,
     this.padding = EdgeInsets.zero,
     this.shrinkWrap = false,
   });
@@ -150,7 +151,7 @@ final class RecordingsListWidget extends WatchingWidget {
     final Result<void> result = await shareRecordingUseCase(
       recording: recording,
       version: version,
-      title: shareNameOf?.call(recording),
+      song: songOf?.call(recording),
     );
     if (!context.mounted) return;
     _showFailure(context, result);

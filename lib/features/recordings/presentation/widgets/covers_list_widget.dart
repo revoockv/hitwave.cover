@@ -5,6 +5,7 @@ import '../../../../core/presentation/theme.dart';
 import '../../../song/domain/entities/song.dart';
 import '../../../song/presentation/di/song_getters.dart';
 import '../../domain/entities/recording.dart';
+import '../../domain/entities/shared_song.dart';
 import '../di/recordings_getters.dart';
 import 'recordings_list_widget.dart';
 
@@ -14,7 +15,6 @@ final class CoversListWidget extends WatchingWidget {
   static const String _empty = 'Ще немає каверів. Відкрийте пісню, позначте «Запис» і натисніть «Старт».';
   static const String _unknownSong = 'Пісню видалено';
   static const String _titleSeparator = ' — ';
-  static const String _shareSeparator = '-';
   static const String _nothingFound = 'Нічого не знайдено.';
 
   /// Search text; empty shows every cover.
@@ -30,8 +30,8 @@ final class CoversListWidget extends WatchingWidget {
     final Map<String, String> titles = <String, String>{
       for (final Song song in songs) song.id: '${song.name}$_titleSeparator${song.author}',
     };
-    final Map<String, String> shareNames = <String, String>{
-      for (final Song song in songs) song.id: '${song.author}$_shareSeparator${song.name}',
+    final Map<String, SharedSong> sharedSongs = <String, SharedSong>{
+      for (final Song song in songs) song.id: SharedSong(author: song.author, name: song.name),
     };
     final String needle = query.trim().toLowerCase();
     final List<Recording> grouped =
@@ -47,7 +47,7 @@ final class CoversListWidget extends WatchingWidget {
           recordings: grouped,
           emptyText: needle.isEmpty ? _empty : _nothingFound,
           headerOf: (Recording recording) => titles[recording.songId] ?? _unknownSong,
-          shareNameOf: (Recording recording) => shareNames[recording.songId],
+          songOf: (Recording recording) => sharedSongs[recording.songId],
           padding: const EdgeInsets.all(AppTheme.spacingMedium),
         ),
       ),

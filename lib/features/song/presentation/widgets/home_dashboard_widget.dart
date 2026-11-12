@@ -4,6 +4,7 @@ import '../../../../core/presentation/theme.dart';
 import '../../../practice/domain/entities/practice_stats.dart';
 import '../../../practice/presentation/widgets/practice_overview_widget.dart';
 import '../../../recordings/domain/entities/recording.dart';
+import '../../../recordings/domain/entities/shared_song.dart';
 import '../../../recordings/presentation/widgets/recordings_list_widget.dart';
 import '../../domain/entities/song.dart';
 import 'song_tile_widget.dart';
@@ -34,8 +35,8 @@ final class HomeDashboardWidget extends StatelessWidget {
   /// Title of the song of a cover.
   final String? Function(Recording recording) coverTitleOf;
 
-  /// `Artist-Song` of a cover, the name it is shared under.
-  final String? Function(Recording recording) coverShareNameOf;
+  /// The song a shared cover is named after.
+  final SharedSong? Function(Recording recording) coverSongOf;
 
   /// Opens the statistics tab.
   final VoidCallback onStatsPressed;
@@ -64,7 +65,7 @@ final class HomeDashboardWidget extends StatelessWidget {
     required this.recentCovers,
     required this.coverCounts,
     required this.coverTitleOf,
-    required this.coverShareNameOf,
+    required this.coverSongOf,
     required this.onStatsPressed,
     required this.onAllSongsPressed,
     required this.onAllCoversPressed,
@@ -107,7 +108,7 @@ final class HomeDashboardWidget extends StatelessWidget {
                 recordings: recentCovers,
                 emptyText: _noCovers,
                 headerOf: coverTitleOf,
-                shareNameOf: coverShareNameOf,
+                songOf: coverSongOf,
                 shrinkWrap: true,
               ),
           ],
