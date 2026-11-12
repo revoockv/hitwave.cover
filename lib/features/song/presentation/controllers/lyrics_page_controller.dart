@@ -72,6 +72,12 @@ final class LyricsPageController {
   /// Whether the controls bar is currently visible.
   final ValueNotifier<bool> controlsVisibilityController = ValueNotifier<bool>(true);
 
+  /// Whether pressing start also records a take (the "record" checkbox).
+  final ValueNotifier<bool> recordController;
+
+  /// Whether the silence before and after the singing is cut from the enhanced take.
+  final ValueNotifier<bool> trimSilenceController;
+
   /// Text of the lyrics field.
   final TextEditingController lyricsTextController;
 
@@ -83,16 +89,26 @@ final class LyricsPageController {
 
   /// Creates the controller with the [lyrics] to show.
   ///
-  /// Starts at [initialSpeed] and [initialLeadIn] (saved with the song) or the defaults.
-  LyricsPageController({required String lyrics, double? initialSpeed, double? initialLeadIn})
-    : this._(
-        lyrics,
-        (initialSpeed ?? _defaultSpeed).clamp(minSpeed, maxSpeed),
-        (initialLeadIn ?? _defaultLeadIn).clamp(minLeadIn, maxLeadIn),
-      );
+  /// Starts at [initialSpeed] and [initialLeadIn] (saved with the song) or the defaults, with the
+  /// checkboxes as they were last chosen ([record], [trimSilence]).
+  LyricsPageController({
+    required String lyrics,
+    double? initialSpeed,
+    double? initialLeadIn,
+    bool record = false,
+    bool trimSilence = true,
+  }) : this._(
+         lyrics,
+         (initialSpeed ?? _defaultSpeed).clamp(minSpeed, maxSpeed),
+         (initialLeadIn ?? _defaultLeadIn).clamp(minLeadIn, maxLeadIn),
+         record,
+         trimSilence,
+       );
 
-  LyricsPageController._(String lyrics, double startSpeed, double startLeadIn)
-    : lyricsTextController = TextEditingController(text: lyrics),
+  LyricsPageController._(String lyrics, double startSpeed, double startLeadIn, bool record, bool trimSilence)
+    : recordController = ValueNotifier<bool>(record),
+      trimSilenceController = ValueNotifier<bool>(trimSilence),
+      lyricsTextController = TextEditingController(text: lyrics),
       speedController = ValueNotifier<double>(startSpeed),
       leadInController = ValueNotifier<double>(startLeadIn),
       _savedSpeed = startSpeed,
@@ -145,9 +161,12 @@ final class LyricsPageController {
       stopScrolling();
       return;
     }
-    if (lyricsTextController.text.trim().isEmpty) return;
+    if (!canStartScrolling) return;
     startScrolling();
   }
+
+  /// Whether there are lyrics to scroll.
+  bool get canStartScrolling => lyricsTextController.text.trim().isNotEmpty;
 
   /// Shows the controls again after a tap on the lyrics.
   void onLyricsTapped() {
@@ -169,6 +188,8 @@ final class LyricsPageController {
     lyricsSavingStateController.dispose();
     scrollingController.dispose();
     controlsVisibilityController.dispose();
+    recordController.dispose();
+    trimSilenceController.dispose();
     lyricsTextController.dispose();
     lyricsScrollController.dispose();
     lyricsFocusNode.dispose();

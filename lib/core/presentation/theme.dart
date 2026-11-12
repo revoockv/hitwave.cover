@@ -41,6 +41,12 @@ final class AppTheme {
   /// Line height of lyrics and other long text.
   static const double readingLineHeight = 1.5;
 
+  /// Seconds in a minute, for the `m:ss` times of recordings.
+  static const int secondsPerMinute = 60;
+
+  /// Digits of a two-digit date or time part ("05").
+  static const int twoDigits = 2;
+
   /// Seed color of the app color scheme (deep indigo).
   static const Color seedColor = Color(0xFF4338CA);
 

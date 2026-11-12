@@ -6,6 +6,12 @@ import 'package:watch_it/watch_it.dart';
 import '../../../../core/domain/entities/result.dart';
 import '../../../../core/domain/entities/result_state.dart';
 import '../../../../core/presentation/theme.dart';
+import '../../../practice/presentation/di/practice_getters.dart';
+import '../../../recordings/domain/entities/recorder_state.dart';
+import '../../../recordings/domain/entities/recording.dart';
+import '../../../recordings/domain/entities/recording_preferences.dart';
+import '../../../recordings/presentation/di/recordings_getters.dart';
+import '../../../recordings/presentation/widgets/recordings_sheet_widget.dart';
 import '../../domain/entities/song.dart';
 import '../controllers/lyrics_page_controller.dart';
 import '../di/song_getters.dart';
@@ -18,6 +24,12 @@ import '../widgets/lyrics_controls_widget.dart';
 /// edited in place: they are saved when the field loses focus (done, start of
 /// scrolling) and when the page closes. The speed and the space above the
 /// lyrics are saved with the song.
+///
+/// With "record" checked, start also records a take; the take goes on after
+/// the lyrics end and stops only with the stop button or when the page closes,
+/// then it is kept on the device and enhanced. The checkboxes are remembered.
+/// The time between start and the end of both the scrolling and the take is
+/// counted as practice. The recordings button opens the takes of this song.
 final class LyricsPage extends WatchingWidget {
   /// Speed label text.
   static const String _speedLabel = 'Швидкість';
@@ -31,19 +43,30 @@ final class LyricsPage extends WatchingWidget {
   /// Start button label text.
   static const String _startLabel = 'Старт';
 
+  /// Label of the record checkbox.
+  static const String _recordLabel = 'Запис';
+
+  /// Label of the trim-silence checkbox.
+  static const String _trimSilenceLabel = 'Обрізати тишу';
+
+  /// Tooltip of the recordings button.
+  static const String _recordingsLabel = 'Записи';
+
+  /// Shown when a take was saved and its enhancement started.
+  static const String _savedMessage = 'Запис збережено, покращую звук…';
+
   /// Font size for lyrics text.
   static const double _lyricsFontSize = 20;
 
-  /// Bottom space so the last line can scroll above the control panel.
-  static const double _controlsClearance = 120;
+  /// Tooltip of the button while a take is being recorded.
+  static const String _stopRecordingLabel = 'Зупинити запис';
 
-  /// Padding around the lyrics; the top is replaced by the space chosen for the song.
-  static const EdgeInsets _lyricsPadding = EdgeInsets.fromLTRB(
-    AppTheme.spacingLarge,
-    AppTheme.spacingLarge,
-    AppTheme.spacingLarge,
-    _controlsClearance,
-  );
+  /// Space under the lyrics as a share of the screen height, so the last lines scroll up to the
+  /// middle of the screen, well above the control panel.
+  static const double _bottomSpaceFactor = 0.5;
+
+  /// Padding around the lyrics; the top and the bottom are replaced by the page.
+  static const EdgeInsets _lyricsPadding = EdgeInsets.symmetric(horizontal: AppTheme.spacingLarge);
 
   /// The song whose lyrics to display.
   final Song song;
@@ -62,7 +85,29 @@ final class LyricsPage extends WatchingWidget {
     registerHandler(target: lyricsPageController.speedSavingStateController, handler: _onSavingChanged);
     registerHandler(target: lyricsPageController.leadInSavingStateController, handler: _onSavingChanged);
     registerHandler(target: lyricsPageController.lyricsSavingStateController, handler: _onSavingChanged);
-    final double leadIn = MediaQuery.sizeOf(context).height * leadInFactor;
+    registerHandler(
+      target: lyricsPageController.recordController,
+      handler: (BuildContext context, bool record, void Function() cancel) =>
+          _onRecordingOptionsChanged(lyricsPageController),
+    );
+    registerHandler(
+      target: lyricsPageController.trimSilenceController,
+      handler: (BuildContext context, bool trimSilence, void Function() cancel) =>
+          _onRecordingOptionsChanged(lyricsPageController),
+    );
+    registerHandler(
+      target: lyricsPageController.scrollingController,
+      handler: (BuildContext context, bool isScrolling, void Function() cancel) => _onScrollingChanged(isScrolling),
+    );
+    final RecorderState recorder = watch(watchRecorderUseCase()).value;
+    final int recordingCount = watch(
+      watchRecordingsUseCase(),
+    ).value.where((Recording recording) => recording.songId == song.id).length;
+    final RecordingRecorderState? recording = recorder is RecordingRecorderState && recorder.songId == song.id
+        ? recorder
+        : null;
+    final double screenHeight = MediaQuery.sizeOf(context).height;
+    final double leadIn = screenHeight * leadInFactor;
 
     final ThemeData theme = Theme.of(context);
     final TextStyle? lyricsStyle = theme.textTheme.bodyLarge?.copyWith(
@@ -74,6 +119,17 @@ final class LyricsPage extends WatchingWidget {
       onPopInvokedWithResult: (bool didPop, Object? result) => _onPagePopped(lyricsPageController),
       child: Scaffold(
         appBar: AppBar(
+          actions: <Widget>[
+            IconButton(
+              tooltip: _recordingsLabel,
+              onPressed: () => _openRecordings(context),
+              icon: Badge(
+                isLabelVisible: recordingCount > 0,
+                label: Text('$recordingCount'),
+                child: const Icon(Icons.library_music_outlined),
+              ),
+            ),
+          ],
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
@@ -98,7 +154,7 @@ final class LyricsPage extends WatchingWidget {
                     constraints: const BoxConstraints(maxWidth: AppTheme.maxContentWidth),
                     child: SingleChildScrollView(
                       controller: lyricsPageController.lyricsScrollController,
-                      padding: _lyricsPadding.copyWith(top: leadIn),
+                      padding: _lyricsPadding.copyWith(top: leadIn, bottom: screenHeight * _bottomSpaceFactor),
                       child: IgnorePointer(
                         ignoring: isScrolling,
                         child: Focus(
@@ -141,6 +197,12 @@ final class LyricsPage extends WatchingWidget {
                     leadInLabel: _leadInLabel,
                     stopLabel: _stopLabel,
                     startLabel: _startLabel,
+                    stopRecordingLabel: _stopRecordingLabel,
+                    recordLabel: _recordLabel,
+                    trimSilenceLabel: _trimSilenceLabel,
+                    onPlayPressed: () => _onPlayPressed(ScaffoldMessenger.of(context), lyricsPageController),
+                    recordingElapsed: recording?.elapsed,
+                    recordingLevel: recording?.level ?? 0,
                   ),
                 ),
               ),
@@ -151,8 +213,16 @@ final class LyricsPage extends WatchingWidget {
     );
   }
 
-  LyricsPageController _createLyricsPageController() =>
-      LyricsPageController(lyrics: song.lyrics, initialSpeed: song.scrollSpeed, initialLeadIn: song.leadIn);
+  LyricsPageController _createLyricsPageController() {
+    final RecordingPreferences preferences = watchRecordingPreferencesUseCase().value;
+    return LyricsPageController(
+      lyrics: song.lyrics,
+      initialSpeed: song.scrollSpeed,
+      initialLeadIn: song.leadIn,
+      record: preferences.record,
+      trimSilence: preferences.trimSilence,
+    );
+  }
 
   static void _disposeLyricsPageController(LyricsPageController lyricsPageController) => lyricsPageController.dispose();
 
@@ -204,10 +274,87 @@ final class LyricsPage extends WatchingWidget {
     lyricsSavingStateController.value = ResultState.of(result);
   }
 
-  /// Saves the lyrics that are still unsaved when the page closes; the page is
-  /// gone by then, so nothing is recorded.
+  /// Saves the lyrics that are still unsaved when the page closes and stops a
+  /// take that is being recorded; the page is gone by then, so nothing is shown.
   void _onPagePopped(LyricsPageController lyricsPageController) {
+    if (watchRecorderUseCase().value is RecordingRecorderState) {
+      unawaited(stopRecordingUseCase(trimSilence: lyricsPageController.trimSilenceController.value));
+    }
+    unawaited(stopPracticeUseCase());
     if (!lyricsPageController.hasUnsavedLyrics) return;
     unawaited(updateSongLyricsUseCase(songId: song.id, lyrics: lyricsPageController.lyrics));
   }
+
+  /// Stops the take being recorded (and the scrolling), pauses, or starts scrolling — first
+  /// starting a take when "record" is checked. The take goes on after the lyrics end: only this
+  /// button or leaving the page stops it.
+  Future<void> _onPlayPressed(ScaffoldMessengerState messenger, LyricsPageController lyricsPageController) async {
+    final RecorderState recorder = watchRecorderUseCase().value;
+    if (recorder is RecordingRecorderState && recorder.songId == song.id) {
+      lyricsPageController.stopScrolling();
+      await _stopTake(messenger, lyricsPageController);
+      return;
+    }
+    if (lyricsPageController.scrollingController.value) {
+      lyricsPageController.stopScrolling();
+      return;
+    }
+    if (!lyricsPageController.canStartScrolling) return;
+    if (lyricsPageController.recordController.value) {
+      final Result<void> result = await startRecordingUseCase(song.id);
+      if (lyricsPageController.isDisposed) return;
+      if (result case FailureResult<void>(:final String error)) {
+        messenger.showSnackBar(SnackBar(content: Text(error)));
+        return;
+      }
+    }
+    unawaited(startPracticeUseCase(song.id));
+    lyricsPageController.startScrolling();
+  }
+
+  /// Remembers the checkboxes for the next visit.
+  void _onRecordingOptionsChanged(LyricsPageController lyricsPageController) {
+    unawaited(
+      updateRecordingPreferencesUseCase(
+        RecordingPreferences(
+          record: lyricsPageController.recordController.value,
+          trimSilence: lyricsPageController.trimSilenceController.value,
+        ),
+      ),
+    );
+  }
+
+  /// Ends the practice session when the scrolling stops and no take is being recorded.
+  void _onScrollingChanged(bool isScrolling) {
+    if (isScrolling || watchRecorderUseCase().value is RecordingRecorderState) return;
+    unawaited(stopPracticeUseCase());
+  }
+
+  /// Stops the take and tells whether it was saved.
+  Future<void> _stopTake(ScaffoldMessengerState messenger, LyricsPageController lyricsPageController) async {
+    final Result<Recording> result = await stopRecordingUseCase(
+      trimSilence: lyricsPageController.trimSilenceController.value,
+    );
+    if (!lyricsPageController.scrollingController.value) unawaited(stopPracticeUseCase());
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(result.when(success: _saved, failure: _identity)),
+      ),
+    );
+  }
+
+  /// Opens the recordings of this song; playback stops when the sheet closes.
+  Future<void> _openRecordings(BuildContext context) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (BuildContext context) => RecordingsSheetWidget(songId: song.id),
+    );
+    await stopPlaybackUseCase();
+  }
+
+  static String _saved(Recording recording) => _savedMessage;
+
+  static String _identity(String error) => error;
 }

@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart' show ValueListenable, ValueNotifier;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hitwave.cover/core/domain/entities/result.dart';
 import 'package:hitwave.cover/features/song/domain/entities/song.dart';
+import 'package:hitwave.cover/features/song/domain/entities/song_id_change.dart';
 import 'package:hitwave.cover/features/song/domain/repositories/song_repository.dart';
 import 'package:hitwave.cover/features/song/domain/use_cases/add_song_use_case.dart';
 import 'package:hitwave.cover/features/song/domain/use_cases/delete_song_use_case.dart';
@@ -42,7 +43,13 @@ final class FakeSongRepository implements SongRepository {
   Future<Result<void>> updateSongScrollSpeed({required String songId, required double speed}) async => nextResult;
 
   @override
-  Future<Result<void>> addSongs(List<Song> songs) async => nextResult;
+  Future<Result<List<String>>> addSongs(List<Song> songs) async => nextResult.when(
+    success: (_) => const Result<List<String>>.success(<String>[]),
+    failure: Result<List<String>>.failure,
+  );
+
+  @override
+  Stream<SongIdChange> watchSongIdChanges() => const Stream<SongIdChange>.empty();
 
   @override
   ValueListenable<int> watchLocalSongsToTransfer() => _localSongsToTransfer;
