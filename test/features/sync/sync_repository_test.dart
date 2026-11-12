@@ -26,8 +26,8 @@ import 'package:hitwave.cover/features/sync/domain/entities/sync_state.dart';
 import 'package:hive_ce/hive_ce.dart';
 import 'package:logger/logger.dart';
 
-Song song(String id, String author, String name, {String lyrics = 'la la'}) =>
-    Song(id: id, author: author, name: name, lyrics: lyrics, covers: const <Cover>[]);
+Song song(String id, String author, String name, {String lyrics = 'la la', double? speed}) =>
+    Song(id: id, author: author, name: name, lyrics: lyrics, covers: const <Cover>[], scrollSpeed: speed);
 
 /// Songs in memory; added songs get the ids `new-1`, `new-2`…
 final class FakeSongs implements SongRepository {
@@ -230,7 +230,7 @@ final class Device {
       history: fakeHistory,
       tombstones: tombstones,
       server: SyncServerDataSource(includeLoopback: true),
-      client: SyncClientDataSource(),
+      client: SyncClientDataSource(deviceName: name),
       logger: Logger(level: Level.off),
       deviceName: name,
     ).init();
@@ -404,6 +404,43 @@ void main() {
 
     // The host forgot the deletion: no conflict any more.
     await host.hostFor(guest);
+    expect(guest.sync.watchSyncState().value, isA<DoneSyncState>());
+    await host.sync.stopSync();
+  });
+
+  test('the host shows who connected and what it does; a cancel there is a failure here', () async {
+    final Device host = await Device.create(name: 'mac', root: root, songs: <Song>[song('s', 'A', 'Gone')]);
+    final Device guest = await Device.create(name: 'pixel', root: root, songs: <Song>[song('s2', 'A', 'Gone')]);
+    await host.songs.deleteSong(songId: 's');
+    await settle();
+
+    await host.hostFor(guest);
+    expect(guest.sync.watchSyncState().value, isA<ConflictsSyncState>());
+    await settle();
+    final SyncingSyncState waiting = host.sync.watchSyncState().value as SyncingSyncState;
+    expect(waiting.step, contains('«pixel»'));
+    expect(waiting.step, contains('розбіжност'));
+
+    await guest.sync.stopSync();
+    final FailedSyncState failed = host.sync.watchSyncState().value as FailedSyncState;
+    expect(failed.message, contains('Скасовано'));
+    expect(guest.songNames, <String>['Gone']);
+  });
+
+  test('a song differing only in speed or line endings is no conflict', () async {
+    final Device host = await Device.create(
+      name: 'host',
+      root: root,
+      songs: <Song>[song('s', 'A', 'Same', lyrics: 'one\r\ntwo  \n', speed: 2)],
+    );
+    final Device guest = await Device.create(
+      name: 'guest',
+      root: root,
+      songs: <Song>[song('s2', 'A', 'Same', lyrics: 'one\ntwo', speed: 5)],
+    );
+
+    await host.hostFor(guest);
+
     expect(guest.sync.watchSyncState().value, isA<DoneSyncState>());
     await host.sync.stopSync();
   });

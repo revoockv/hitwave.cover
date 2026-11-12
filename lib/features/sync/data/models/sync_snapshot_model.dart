@@ -132,8 +132,8 @@ final class SyncSnapshotModel {
   /// The songs deleted on the device.
   final List<SyncSongKeyModel> deletedSongs;
 
-  /// Ids of the covers deleted on the device.
-  final Set<String> deletedCovers;
+  /// The covers deleted on the device by id, with the time when it is known.
+  final Map<String, DateTime?> deletedCovers;
 
   /// Creates a [SyncSnapshotModel].
   const SyncSnapshotModel({
@@ -169,7 +169,11 @@ final class SyncSnapshotModel {
       for (final dynamic song in json[_deletedSongsField] as List<dynamic>? ?? const <dynamic>[])
         SyncSongKeyModel.fromJson(song as Map<String, dynamic>),
     ],
-    deletedCovers: <String>{...(json[_deletedCoversField] as List<dynamic>? ?? const <dynamic>[]).cast<String>()},
+    deletedCovers: <String, DateTime?>{
+      for (final MapEntry<String, dynamic> entry
+          in (json[_deletedCoversField] as Map<String, dynamic>? ?? const <String, dynamic>{}).entries)
+        entry.key: DateTime.tryParse(entry.value as String? ?? '')?.toLocal(),
+    },
   );
 
   /// The JSON text to send.
@@ -191,7 +195,10 @@ final class SyncSnapshotModel {
     _songsOpenedField: _encodeTimes(history.songsOpenedAt),
     _coversPlayedField: _encodeTimes(history.coversPlayedAt),
     _deletedSongsField: <Map<String, dynamic>>[for (final SyncSongKeyModel song in deletedSongs) song.toJson()],
-    _deletedCoversField: deletedCovers.toList(),
+    _deletedCoversField: <String, String?>{
+      for (final MapEntry<String, DateTime?> entry in deletedCovers.entries)
+        entry.key: entry.value?.toUtc().toIso8601String(),
+    },
   };
 
   /// The JSON of [song].

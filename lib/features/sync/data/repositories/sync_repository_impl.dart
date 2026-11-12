@@ -53,7 +53,19 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
   static const String _downloadingStep = 'Завантажую кавери';
   static const String _uploadingStep = 'Надсилаю кавери';
   static const String _mergingStep = 'Об’єдную дані…';
-  static const String _peerStep = 'Пристрій підключився, обмінюємося даними…';
+  static const String _peerJoined = ' підключився, обмінюємося даними…';
+  static const String _anotherDevice = 'Інший пристрій';
+  static const String _peerSeparator = ': ';
+  static const String _peerStopped = ' зупинив синхронізацію: ';
+  static const String _choosingStep = 'вибирає, що робити з розбіжностями…';
+  static const String _cancelledMessage = 'Скасовано';
+  static const String _deletedHereOn = 'Видалено тут ';
+  static const String _deletedThereOn = 'Видалено на іншому пристрої ';
+  static const String _timeSeparator = ':';
+  static const String _atTime = ' о ';
+  static const String _quoteOpen = '«';
+  static const String _quoteClose = '»';
+  static const int _downloadAttempts = 2;
   static const String _stepSeparator = ' ';
   static const String _of = ' з ';
   static const String _portSeparator = ':';
@@ -74,14 +86,13 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
   static const String _unknownSong = 'пісні, якої вже немає';
   static const String _lyricsDiffers = 'текст';
   static const String _albumDiffers = 'альбом';
-  static const String _speedDiffers = 'швидкість';
-  static const String _leadInDiffers = 'відступ';
+  static final RegExp _lineEnd = RegExp(r'\r\n?');
+  static const String _newLine = '\n';
   static const String _differsPrefix = 'Відрізняється: ';
   static const String _listSeparator = ', ';
   static const String _dateSeparator = '.';
   static const String _zero = '0';
   static const int _twoDigits = 2;
-  static const double _sameNumber = 1e-6;
   static const String _hostLog = 'SyncHost: ';
   static const String _clientLog = 'SyncWith: ';
   static const String _tombstoneLog = 'SyncTombstone: ';
@@ -112,6 +123,9 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
 
   /// The exchange that waits for the user's choices.
   _PendingSync? _pending;
+
+  /// Name of the device that connected to this host.
+  String _peerName = _anotherDevice;
 
   /// Creates a [SyncRepositoryImpl]; [deviceName] is shown on the other device.
   SyncRepositoryImpl({
@@ -174,7 +188,9 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
 
   @override
   Future<Result<void>> stopSync() async {
+    final _PendingSync? pending = _pending;
     _pending = null;
+    if (pending != null) await _client.abort(pending.base, pending.offer.token, _cancelledMessage);
     await _server.stop();
     await _deleteReceived();
     _state.value = SyncState.idle;
@@ -191,10 +207,12 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
       return _fail(e.message);
     }
     await _server.stop();
+    Uri? connected;
     try {
       _step(_connectingStep, null);
       final Uri base = await _client.connect(addresses: offer.addresses, port: offer.port, token: offer.token);
-      _step(_readingStep, null);
+      connected = base;
+      _report(base, offer.token, _readingStep, null);
       final SyncSnapshotModel remote = SyncSnapshotModel.fromJsonText(await _client.snapshot(base, offer.token));
       final _PendingSync pending = _PendingSync(
         base: base,
@@ -205,11 +223,14 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
       if (pending.conflicts.isEmpty) return await _finish(pending, const <String, SyncChoice>{});
       _pending = pending;
       _state.value = ConflictsSyncState(<SyncConflict>[for (final _Conflict c in pending.conflicts) c.conflict]);
+      unawaited(_client.progress(base, offer.token, _choosingStep));
       _logger.i('$_clientLog${pending.conflicts.length}$_conflictsLog');
       return Result.ok;
     } on Exception catch (e) {
       _logger.e('$_clientLog$_failureLog$e');
-      return _fail(e is SocketException ? e.message : _syncError);
+      final String message = e is SocketException ? e.message : _syncError;
+      if (connected != null) await _client.abort(connected, offer.token, message);
+      return _fail(message);
     }
   }
 
@@ -222,8 +243,22 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
   }
 
   @override
-  void onConnected() {
-    _step(_peerStep, null);
+  void onConnected(String deviceName) {
+    _peerName = deviceName.isEmpty ? _anotherDevice : '$_quoteOpen$deviceName$_quoteClose';
+    _step('$_peerName$_peerJoined', null);
+  }
+
+  @override
+  void onPeerProgress(String step) {
+    if (_state.value is DoneSyncState) return;
+    _step('$_peerName$_peerSeparator$step', null);
+  }
+
+  @override
+  void onPeerFailed(String message) {
+    _state.value = FailedSyncState('$_peerName$_peerStopped$message');
+    unawaited(_deleteReceived());
+    unawaited(Future<void>.delayed(_closeDelay, _server.stop));
   }
 
   @override
@@ -284,10 +319,10 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
   Future<Result<void>> _finish(_PendingSync pending, Map<String, SyncChoice> choices) async {
     Directory? folder;
     try {
-      _step(_applyingStep, null);
-      final _Decisions decisions = await _decide(pending, choices);
       final String token = pending.offer.token;
       final Uri base = pending.base;
+      _report(base, token, _applyingStep, null);
+      final _Decisions decisions = await _decide(pending, choices);
       final SyncSnapshotModel remote = pending.remote;
 
       final Set<String> localIds = _recordings.watchRecordings().value.map(_recordingId).toSet();
@@ -304,25 +339,13 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
           .toList();
       folder = await Directory.systemTemp.createTemp(_tempPrefix);
       for (int index = 0; index < missing.length; index++) {
-        _step(_counted(_downloadingStep, index, missing.length), index / missing.length);
+        _report(base, token, _counted(_downloadingStep, index, missing.length), index / missing.length);
         final SyncRecordingModel recording = missing[index];
-        await _client.download(
-          base: base,
-          token: token,
-          name: recording.rawFile,
-          to: _fileIn(folder, recording.rawFile),
-        );
-        if (recording.hasEnhanced) {
-          await _client.download(
-            base: base,
-            token: token,
-            name: recording.enhancedFile,
-            to: _fileIn(folder, recording.enhancedFile),
-          );
-        }
+        await _download(base, token, recording.rawFile, folder);
+        if (recording.hasEnhanced) await _download(base, token, recording.enhancedFile, folder);
       }
 
-      _step(_mergingStep, null);
+      _report(base, token, _mergingStep, null);
       final SyncCountsModel received = (await _merge(
         remote,
         folder,
@@ -342,7 +365,7 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
           )
           .toList();
       for (int index = 0; index < toSend.length; index++) {
-        _step(_counted(_uploadingStep, index, toSend.length), index / toSend.length);
+        _report(base, token, _counted(_uploadingStep, index, toSend.length), index / toSend.length);
         final SyncRecordingModel model = SyncRecordingModel.fromEntity(toSend[index]);
         await _client.upload(base: base, token: token, name: model.rawFile, from: File(toSend[index].rawPath));
         final String? enhanced = toSend[index].enhancedPath;
@@ -351,7 +374,7 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
         }
       }
 
-      _step(_mergingStep, null);
+      _report(base, token, _mergingStep, null);
       final SyncCountsModel sent = SyncCountsModel.fromJsonText(
         await _client.sendSnapshot(
           base: base,
@@ -365,7 +388,9 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
       return Result.ok;
     } on Exception catch (e) {
       _logger.e('$_clientLog$_failureLog$e');
-      return _fail(e is SocketException ? e.message : _syncError);
+      final String message = e is SocketException ? e.message : _syncError;
+      await _client.abort(pending.base, pending.offer.token, message);
+      return _fail(message);
     } finally {
       if (folder != null) await _deleteFolder(folder);
     }
@@ -376,14 +401,18 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
   List<_Conflict> _findConflicts(SyncSnapshotModel local, SyncSnapshotModel remote) {
     final Map<String, Song> localSongs = <String, Song>{for (final Song song in local.songs) _keyOf(song): song};
     final Map<String, Song> remoteSongs = <String, Song>{for (final Song song in remote.songs) _keyOf(song): song};
-    final Set<String> localDeleted = local.deletedSongs.map(_tombstoneKey).toSet();
-    final Set<String> remoteDeleted = remote.deletedSongs.map(_tombstoneKey).toSet();
+    final Map<String, DateTime?> localDeleted = <String, DateTime?>{
+      for (final SyncSongKeyModel song in local.deletedSongs) song.key: song.deletedAt,
+    };
+    final Map<String, DateTime?> remoteDeleted = <String, DateTime?>{
+      for (final SyncSongKeyModel song in remote.deletedSongs) song.key: song.deletedAt,
+    };
     final List<_Conflict> conflicts = <_Conflict>[];
     final Set<String> songsInConflict = <String>{};
 
     for (final MapEntry<String, Song> entry in remoteSongs.entries) {
       final Song? here = localSongs[entry.key];
-      if (here == null && localDeleted.contains(entry.key)) {
+      if (here == null && localDeleted.containsKey(entry.key)) {
         songsInConflict.add(entry.key);
         conflicts.add(
           _Conflict(
@@ -391,7 +420,7 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
               id: '$_songConflictPrefix${entry.key}',
               kind: SyncConflictKind.songDeletedHere,
               title: _songTitle(entry.value),
-              detail: null,
+              detail: _deletedOn(_deletedHereOn, localDeleted[entry.key]),
             ),
             song: entry.value,
           ),
@@ -415,7 +444,7 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
       }
     }
     for (final MapEntry<String, Song> entry in localSongs.entries) {
-      if (!remoteSongs.containsKey(entry.key) && remoteDeleted.contains(entry.key)) {
+      if (!remoteSongs.containsKey(entry.key) && remoteDeleted.containsKey(entry.key)) {
         songsInConflict.add(entry.key);
         conflicts.add(
           _Conflict(
@@ -423,7 +452,7 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
               id: '$_songConflictPrefix${entry.key}',
               kind: SyncConflictKind.songDeletedThere,
               title: _songTitle(entry.value),
-              detail: null,
+              detail: _deletedOn(_deletedThereOn, remoteDeleted[entry.key]),
             ),
             song: entry.value,
           ),
@@ -437,15 +466,29 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
     final Set<String> remoteCovers = remote.recordings.map(_syncRecordingId).toSet();
     for (final SyncRecordingModel cover in remote.recordings) {
       final Song? song = remoteById[cover.songId];
-      if (localCovers.contains(cover.id) || !local.deletedCovers.contains(cover.id)) continue;
+      if (localCovers.contains(cover.id) || !local.deletedCovers.containsKey(cover.id)) continue;
       if (song != null && songsInConflict.contains(_keyOf(song))) continue;
-      conflicts.add(_coverConflict(cover, song, SyncConflictKind.coverDeletedHere));
+      conflicts.add(
+        _coverConflict(
+          cover,
+          song,
+          SyncConflictKind.coverDeletedHere,
+          _deletedOn(_deletedHereOn, local.deletedCovers[cover.id]),
+        ),
+      );
     }
     for (final SyncRecordingModel cover in local.recordings) {
       final Song? song = localById[cover.songId];
-      if (remoteCovers.contains(cover.id) || !remote.deletedCovers.contains(cover.id)) continue;
+      if (remoteCovers.contains(cover.id) || !remote.deletedCovers.containsKey(cover.id)) continue;
       if (song != null && songsInConflict.contains(_keyOf(song))) continue;
-      conflicts.add(_coverConflict(cover, song, SyncConflictKind.coverDeletedThere));
+      conflicts.add(
+        _coverConflict(
+          cover,
+          song,
+          SyncConflictKind.coverDeletedThere,
+          _deletedOn(_deletedThereOn, remote.deletedCovers[cover.id]),
+        ),
+      );
     }
     return conflicts;
   }
@@ -725,6 +768,24 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
     }
   }
 
+  /// Shows [step] here and tells the hosting device.
+  void _report(Uri base, String token, String step, double? fraction) {
+    _step(step, fraction);
+    unawaited(_client.progress(base, token, step));
+  }
+
+  /// Downloads [name] into [folder], once more when the first transfer is cut.
+  Future<void> _download(Uri base, String token, String name, Directory folder) async {
+    for (int attempt = 1; ; attempt++) {
+      try {
+        await _client.download(base: base, token: token, name: name, to: _fileIn(folder, name));
+        return;
+      } on Exception {
+        if (attempt >= _downloadAttempts) rethrow;
+      }
+    }
+  }
+
   void _step(String step, double? fraction) {
     _state.value = SyncingSyncState(step: step, fraction: fraction);
   }
@@ -752,30 +813,48 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
     if (result case FailureResult<void>(:final String error)) throw HttpException(error);
   }
 
-  static _Conflict _coverConflict(SyncRecordingModel cover, Song? song, SyncConflictKind kind) => _Conflict(
+  static _Conflict _coverConflict(
+    SyncRecordingModel cover,
+    Song? song,
+    SyncConflictKind kind,
+    String? detail,
+  ) => _Conflict(
     conflict: SyncConflict(
       id: '$_coverConflictPrefix${cover.id}',
       kind: kind,
       title:
           '$_coverTitlePrefix${song == null ? _unknownSong : _songTitle(song)}$_coverTitleSuffix${_date(cover.recordedAt)}',
-      detail: null,
+      detail: detail,
     ),
     coverId: cover.id,
   );
 
-  /// What differs between [here] and [there], or `null` when they are the same. A speed or a
-  /// space that one device never set is no difference.
+  /// What differs between [here] and [there] (lyrics, album), or `null` when they are the same.
+  /// The speed and the space above the lyrics are settings of each device, not of the song.
   static String? _differences(Song here, Song there) {
     final List<String> differences = <String>[
-      if (here.lyrics.trim() != there.lyrics.trim()) _lyricsDiffers,
+      if (_lyrics(here.lyrics) != _lyrics(there.lyrics)) _lyricsDiffers,
       if ((here.album ?? '').trim() != (there.album ?? '').trim()) _albumDiffers,
-      if (_differ(here.scrollSpeed, there.scrollSpeed)) _speedDiffers,
-      if (_differ(here.leadIn, there.leadIn)) _leadInDiffers,
     ];
     return differences.isEmpty ? null : '$_differsPrefix${differences.join(_listSeparator)}';
   }
 
-  static bool _differ(double? a, double? b) => a != null && b != null && (a - b).abs() > _sameNumber;
+  /// Lyrics without differences that do not show: line endings and spaces at the ends of lines.
+  static String _lyrics(String lyrics) => lyrics
+      .replaceAll(_lineEnd, _newLine)
+      .split(_newLine)
+      .map((String line) => line.trimRight())
+      .join(_newLine)
+      .trim();
+
+  /// "Deleted here 12.11.2026 at 19:03", or `null` when the time is unknown.
+  static String? _deletedOn(String prefix, DateTime? at) {
+    if (at == null) return null;
+    final String time = '${_two(at.hour)}$_timeSeparator${_two(at.minute)}';
+    return '$prefix${_date(at)}$_atTime$time';
+  }
+
+  static String _two(int part) => part.toString().padLeft(_twoDigits, _zero);
 
   static SyncSummary _summary({required SyncCountsModel here, required SyncCountsModel there}) => SyncSummary(
     songsReceived: here.songs,
@@ -804,8 +883,6 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
   static String _keyOf(Song song) => SyncSongKeyModel.keyOf(author: song.author, name: song.name);
 
   static SyncSongKeyModel _songKey(Song song) => SyncSongKeyModel(author: song.author, name: song.name);
-
-  static String _tombstoneKey(SyncSongKeyModel song) => song.key;
 
   static String _songId(Song song) => song.id;
 

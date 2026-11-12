@@ -31,7 +31,9 @@ void registerAndInitSync() {
     dependsOn: <Type>[LocalStorageService],
   );
   di.registerLazySingleton<SyncServerDataSource>(SyncServerDataSource.new);
-  di.registerLazySingleton<SyncClientDataSource>(SyncClientDataSource.new);
+  di.registerLazySingleton<SyncClientDataSource>(
+    () => SyncClientDataSource(deviceName: kIsWeb ? '' : Platform.localHostname),
+  );
 
   // 2. repositories
   di.registerSingletonWithDependencies<SyncRepository>(

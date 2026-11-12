@@ -7,6 +7,7 @@ import '../../../../core/presentation/theme.dart';
 final class SyncQrWidget extends StatelessWidget {
   static const String _hint =
       'На іншому пристрої відкрийте «Синхронізація» → «Сканувати QR-код». Обидва пристрої мають бути в одній мережі Wi‑Fi.';
+  static const String _waiting = 'Чекаю, поки інший пристрій відсканує код…';
   static const String _copyLabel = 'Скопіювати код';
   static const String _cancelLabel = 'Скасувати';
   static const double _qrSize = 240;
@@ -41,6 +42,8 @@ final class SyncQrWidget extends StatelessWidget {
         ),
         const SizedBox(height: AppTheme.spacingMedium),
         Text(_hint, textAlign: TextAlign.center, style: theme.textTheme.bodyMedium),
+        const SizedBox(height: AppTheme.spacingMedium),
+        Text(_waiting, textAlign: TextAlign.center, style: theme.textTheme.titleSmall),
         const SizedBox(height: AppTheme.spacingSmall),
         const LinearProgressIndicator(),
         const SizedBox(height: AppTheme.spacingMedium),
