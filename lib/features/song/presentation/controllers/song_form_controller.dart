@@ -29,9 +29,10 @@ final class SongFormController {
 
   bool _isDisposed = false;
 
-  /// Creates the controller; the fields start with the values of [song] when given.
-  SongFormController({Song? song})
-    : authorController = TextEditingController(text: song?.author),
+  /// Creates the controller; the fields start with the values of [song] when given, the author
+  /// field of a new song with [author] (the artist whose page is open).
+  SongFormController({Song? song, String? author})
+    : authorController = TextEditingController(text: song?.author ?? author),
       nameController = TextEditingController(text: song?.name),
       albumController = TextEditingController(text: song?.album),
       lyricsController = TextEditingController(text: song?.lyrics);

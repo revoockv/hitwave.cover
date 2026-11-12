@@ -10,6 +10,8 @@ import '../widgets/song_form_widget.dart';
 
 /// A full page for adding a new song.
 ///
+/// Opened from an artist's page, the author field starts with that artist ([author]).
+///
 /// Saves the song itself; closes after a successful save, on failure stays
 /// open and shows the error.
 final class AddSongPage extends WatchingWidget {
@@ -19,8 +21,11 @@ final class AddSongPage extends WatchingWidget {
   /// Label of the save button.
   static const String _saveButtonText = 'Додати пісню';
 
+  /// The author the form starts with, or `null` for an empty field.
+  final String? author;
+
   /// Creates a new [AddSongPage].
-  const AddSongPage({super.key});
+  const AddSongPage({super.key, this.author});
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +50,7 @@ final class AddSongPage extends WatchingWidget {
     );
   }
 
-  static SongFormController _createSongFormController() => SongFormController();
+  SongFormController _createSongFormController() => SongFormController(author: author);
 
   static void _disposeSongFormController(SongFormController songFormController) => songFormController.dispose();
 
