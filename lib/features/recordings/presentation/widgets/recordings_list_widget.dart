@@ -25,6 +25,9 @@ final class RecordingsListWidget extends WatchingWidget {
   /// Header of a recording, or `null` for none.
   final String? Function(Recording recording)? headerOf;
 
+  /// Song title sent with a shared recording when [headerOf] gives none.
+  final String? shareTitle;
+
   /// Shown when there are no recordings.
   final String emptyText;
 
@@ -40,6 +43,7 @@ final class RecordingsListWidget extends WatchingWidget {
     required this.recordings,
     required this.emptyText,
     this.headerOf,
+    this.shareTitle,
     this.padding = EdgeInsets.zero,
     this.shrinkWrap = false,
   });
@@ -51,6 +55,7 @@ final class RecordingsListWidget extends WatchingWidget {
     final bool trimSilence = watch(watchRecordingPreferencesUseCase()).value.trimSilence;
     final RecordingVersion chosen = playback.recordingId == null ? RecordingVersion.enhanced : playback.version;
     final String? firstEnhancing = _firstEnhancing(recordings);
+    final bool canShowInFolder = canShowRecordingInFolderUseCase();
     final ThemeData theme = Theme.of(context);
 
     if (recordings.isEmpty) {
@@ -86,6 +91,8 @@ final class RecordingsListWidget extends WatchingWidget {
           onVersionChanged: (RecordingVersion version) => _play(context, recording, version),
           onPlayPressed: () => _onPlayPressed(context, recording, playback, chosen),
           onDeletePressed: () => _confirmDelete(context, recording, playback),
+          onSharePressed: () => _share(context, recording, isLoaded ? playback.version : chosen),
+          onShowInFolderPressed: canShowInFolder ? () => _showInFolder(context, recording) : null,
           onRetryPressed: () => _retry(context, recording, trimSilence),
         );
         if (!showHeader) return tile;
@@ -135,6 +142,22 @@ final class RecordingsListWidget extends WatchingWidget {
   Future<void> _play(BuildContext context, Recording recording, RecordingVersion version) async {
     final Result<void> result = await playRecordingUseCase(recording: recording, version: version);
     if (result.isSuccess) await markCoverPlayedUseCase(recording.id);
+    if (!context.mounted) return;
+    _showFailure(context, result);
+  }
+
+  Future<void> _share(BuildContext context, Recording recording, RecordingVersion version) async {
+    final Result<void> result = await shareRecordingUseCase(
+      recording: recording,
+      version: version,
+      title: headerOf?.call(recording) ?? shareTitle,
+    );
+    if (!context.mounted) return;
+    _showFailure(context, result);
+  }
+
+  Future<void> _showInFolder(BuildContext context, Recording recording) async {
+    final Result<void> result = await showRecordingInFolderUseCase(recording);
     if (!context.mounted) return;
     _showFailure(context, result);
   }

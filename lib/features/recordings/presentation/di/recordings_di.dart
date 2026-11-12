@@ -10,16 +10,22 @@ import '../../data/data_sources/hive_recording_preferences_service.dart';
 import '../../data/data_sources/hive_recording_service.dart';
 import '../../data/data_sources/just_audio_player_data_source.dart';
 import '../../data/data_sources/record_recorder_data_source.dart';
+import '../../data/data_sources/system_files_data_source.dart';
 import '../../data/data_sources/recorder_data_source.dart';
 import '../../data/repositories/playback_repository_impl.dart';
+import '../../data/repositories/recording_files_repository_impl.dart';
 import '../../data/repositories/recording_preferences_repository_impl.dart';
 import '../../data/repositories/recordings_repository_impl.dart';
 import '../../domain/repositories/playback_repository.dart';
+import '../../domain/repositories/recording_files_repository.dart';
 import '../../domain/repositories/recording_preferences_repository.dart';
 import '../../domain/repositories/recordings_repository.dart';
+import '../../domain/use_cases/can_show_recording_in_folder_use_case.dart';
 import '../../domain/use_cases/delete_recording_use_case.dart';
 import '../../domain/use_cases/enhance_recording_again_use_case.dart';
 import '../../domain/use_cases/play_recording_use_case.dart';
+import '../../domain/use_cases/share_recording_use_case.dart';
+import '../../domain/use_cases/show_recording_in_folder_use_case.dart';
 import '../../domain/use_cases/start_recording_use_case.dart';
 import '../../domain/use_cases/stop_playback_use_case.dart';
 import '../../domain/use_cases/stop_recording_use_case.dart';
@@ -43,6 +49,7 @@ void registerAndInitRecordings() {
   );
   di.registerLazySingleton<RecorderDataSource>(RecordRecorderDataSource.new);
   di.registerLazySingleton<AudioPlayerDataSource>(JustAudioPlayerDataSource.new);
+  di.registerLazySingleton<SystemFilesDataSource>(SystemFilesDataSource.new);
 
   // 2. repositories
   di.registerSingletonAsync<RecordingsRepository>(
@@ -66,6 +73,10 @@ void registerAndInitRecordings() {
     dispose: disposeResource,
   );
 
+  di.registerLazySingleton<RecordingFilesRepository>(
+    () => RecordingFilesRepositoryImpl(system: di<SystemFilesDataSource>(), logger: di<Logger>()),
+  );
+
   // 3. use cases
   di.registerLazySingleton<StartRecordingUseCase>(() => StartRecordingUseCase(di<RecordingsRepository>()));
   di.registerLazySingleton<StopRecordingUseCase>(() => StopRecordingUseCase(di<RecordingsRepository>()));
@@ -84,5 +95,12 @@ void registerAndInitRecordings() {
   );
   di.registerLazySingleton<UpdateRecordingPreferencesUseCase>(
     () => UpdateRecordingPreferencesUseCase(di<RecordingPreferencesRepository>()),
+  );
+  di.registerLazySingleton<ShareRecordingUseCase>(() => ShareRecordingUseCase(di<RecordingFilesRepository>()));
+  di.registerLazySingleton<ShowRecordingInFolderUseCase>(
+    () => ShowRecordingInFolderUseCase(di<RecordingFilesRepository>()),
+  );
+  di.registerLazySingleton<CanShowRecordingInFolderUseCase>(
+    () => CanShowRecordingInFolderUseCase(di<RecordingFilesRepository>()),
   );
 }

@@ -1,8 +1,11 @@
 import 'package:watch_it/watch_it.dart';
 
+import '../../domain/use_cases/can_show_recording_in_folder_use_case.dart';
 import '../../domain/use_cases/delete_recording_use_case.dart';
 import '../../domain/use_cases/enhance_recording_again_use_case.dart';
 import '../../domain/use_cases/play_recording_use_case.dart';
+import '../../domain/use_cases/share_recording_use_case.dart';
+import '../../domain/use_cases/show_recording_in_folder_use_case.dart';
 import '../../domain/use_cases/start_recording_use_case.dart';
 import '../../domain/use_cases/stop_playback_use_case.dart';
 import '../../domain/use_cases/stop_recording_use_case.dart';
@@ -48,3 +51,12 @@ WatchRecordingPreferencesUseCase get watchRecordingPreferencesUseCase => di<Watc
 
 /// The use case that remembers the recording options.
 UpdateRecordingPreferencesUseCase get updateRecordingPreferencesUseCase => di<UpdateRecordingPreferencesUseCase>();
+
+/// The use case that sends a recording through the share sheet.
+ShareRecordingUseCase get shareRecordingUseCase => di<ShareRecordingUseCase>();
+
+/// The use case that opens the folder of a recording.
+ShowRecordingInFolderUseCase get showRecordingInFolderUseCase => di<ShowRecordingInFolderUseCase>();
+
+/// The use case that tells whether the folder of a recording can be opened here.
+CanShowRecordingInFolderUseCase get canShowRecordingInFolderUseCase => di<CanShowRecordingInFolderUseCase>();
