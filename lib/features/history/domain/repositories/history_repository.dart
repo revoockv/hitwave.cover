@@ -15,4 +15,7 @@ abstract interface class HistoryRepository {
 
   /// Remembers that the cover [recordingId] was played now.
   Future<Result<void>> markCoverPlayed(String recordingId);
+
+  /// Adds the history of another device; the later time of every song and cover wins.
+  Future<Result<void>> importHistory(UsageHistory history);
 }

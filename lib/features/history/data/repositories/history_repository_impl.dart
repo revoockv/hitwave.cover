@@ -60,6 +60,29 @@ final class HistoryRepositoryImpl implements HistoryRepository, DisposableResour
   Future<Result<void>> markCoverPlayed(String recordingId) =>
       _save(() => _store.putCoverPlayed(recordingId, _coversPlayedAt[recordingId] = _now()));
 
+  @override
+  Future<Result<void>> importHistory(UsageHistory history) async {
+    try {
+      for (final MapEntry<String, DateTime> entry in history.songsOpenedAt.entries) {
+        final DateTime? current = _songsOpenedAt[entry.key];
+        if (current != null && !entry.value.isAfter(current)) continue;
+        _songsOpenedAt[entry.key] = entry.value;
+        await _store.putSongOpened(entry.key, entry.value);
+      }
+      for (final MapEntry<String, DateTime> entry in history.coversPlayedAt.entries) {
+        final DateTime? current = _coversPlayedAt[entry.key];
+        if (current != null && !entry.value.isAfter(current)) continue;
+        _coversPlayedAt[entry.key] = entry.value;
+        await _store.putCoverPlayed(entry.key, entry.value);
+      }
+      _publish();
+      return Result.ok;
+    } on Exception catch (e) {
+      _logger.e('$_saveLog$e');
+      return const Result.failure(_saveError);
+    }
+  }
+
   Future<Result<void>> _save(Future<void> Function() write) async {
     try {
       final Future<void> written = write();

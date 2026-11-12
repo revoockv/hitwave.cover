@@ -17,6 +17,8 @@ import '../../../practice/presentation/widgets/practice_stats_widget.dart';
 import '../../../recordings/domain/entities/recording.dart';
 import '../../../recordings/presentation/di/recordings_getters.dart';
 import '../../../recordings/presentation/widgets/covers_list_widget.dart';
+import '../../../sync/presentation/di/sync_getters.dart';
+import '../../../sync/presentation/pages/sync_page.dart';
 import '../../domain/entities/song.dart';
 import '../controllers/song_view_controller.dart';
 import '../di/song_getters.dart';
@@ -31,7 +33,7 @@ import 'edit_song_page.dart';
 import 'lyrics_page.dart';
 
 /// Actions of the overflow menu on the home page.
-enum _HomeMenuAction { importSongs, exportSongs, signOut }
+enum _HomeMenuAction { importSongs, exportSongs, sync, signOut }
 
 /// Main page with the bottom navigation: home (mini statistics, recent songs and covers),
 /// songs (search and orders), covers (search) and statistics; plus backup and account actions.
@@ -90,6 +92,9 @@ final class HomePage extends WatchingWidget {
 
   /// Text of the import question.
   static const String _importQuestion = 'Пісні з файлу буде додано до ваших. Записи беруться лише з ZIP-архіву.';
+
+  /// Label of the sync menu item.
+  static const String _syncLabel = 'Синхронізація';
 
   /// Label of the sign-out menu item.
   static const String _signOutLabel = 'Вийти';
@@ -392,6 +397,11 @@ final class HomePage extends WatchingWidget {
         value: _HomeMenuAction.exportSongs,
         child: ListTile(leading: Icon(Icons.file_download_outlined), title: Text(_exportLabel)),
       ),
+      if (isSyncSupportedUseCase())
+        const PopupMenuItem<_HomeMenuAction>(
+          value: _HomeMenuAction.sync,
+          child: ListTile(leading: Icon(Icons.sync), title: Text(_syncLabel)),
+        ),
       const PopupMenuDivider(),
       PopupMenuItem<_HomeMenuAction>(
         value: _HomeMenuAction.signOut,
@@ -426,6 +436,8 @@ final class HomePage extends WatchingWidget {
         _handleImport(context, messenger);
       case _HomeMenuAction.exportSongs:
         _handleExport(context, messenger);
+      case _HomeMenuAction.sync:
+        _openSync(context);
       case _HomeMenuAction.signOut:
         _handleSignOut(messenger);
     }
@@ -508,6 +520,10 @@ final class HomePage extends WatchingWidget {
   static String _importCompleted(void _) => _importCompletedMessage;
 
   static String _importFailed(String error) => '$_importErrorPrefix$error';
+
+  void _openSync(BuildContext context) {
+    Navigator.of(context).push(MaterialPageRoute<void>(builder: (BuildContext context) => const SyncPage()));
+  }
 
   void _navigateToLyrics(BuildContext context, Song song) {
     Navigator.of(context).push(MaterialPageRoute<void>(builder: (BuildContext context) => LyricsPage(song: song)));

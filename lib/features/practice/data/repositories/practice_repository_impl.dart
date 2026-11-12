@@ -20,6 +20,8 @@ final class PracticeRepositoryImpl implements PracticeRepository, DisposableReso
   static const Duration _minimumLength = Duration(seconds: 10);
 
   static const String _saveError = 'Не вдалося зберегти тренування';
+  static const String _importError = 'Не вдалося додати тренування';
+  static const String _importLog = 'ImportPracticeSessions: ';
   static const String _stopLog = 'StopPractice: ';
   static const String _songIdLog = 'PracticeSongIdChange: ';
   static const String _successLog = 'success — ';
@@ -102,6 +104,23 @@ final class PracticeRepositoryImpl implements PracticeRepository, DisposableReso
     } on Exception catch (e) {
       _logger.e('$_stopLog$_failureLog$e');
       return const Result.failure(_saveError);
+    }
+  }
+
+  @override
+  Future<Result<void>> importSessions(List<PracticeSession> sessions) async {
+    try {
+      for (final PracticeSession session in sessions) {
+        if (_models.containsKey(session.id)) continue;
+        final PracticeSessionModel model = PracticeSessionModel.fromEntity(session);
+        await _store.put(model);
+        _models[model.id] = model;
+      }
+      _publish();
+      return Result.ok;
+    } on Exception catch (e) {
+      _logger.e('$_importLog$_failureLog$e');
+      return const Result.failure(_importError);
     }
   }
 
