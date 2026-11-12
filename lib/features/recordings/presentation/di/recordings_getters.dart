@@ -3,6 +3,7 @@ import 'package:watch_it/watch_it.dart';
 import '../../domain/use_cases/can_show_recording_in_folder_use_case.dart';
 import '../../domain/use_cases/delete_recording_use_case.dart';
 import '../../domain/use_cases/enhance_recording_again_use_case.dart';
+import '../../domain/use_cases/list_microphones_use_case.dart';
 import '../../domain/use_cases/play_recording_use_case.dart';
 import '../../domain/use_cases/share_recording_use_case.dart';
 import '../../domain/use_cases/show_recording_in_folder_use_case.dart';
@@ -60,3 +61,6 @@ ShowRecordingInFolderUseCase get showRecordingInFolderUseCase => di<ShowRecordin
 
 /// The use case that tells whether the folder of a recording can be opened here.
 CanShowRecordingInFolderUseCase get canShowRecordingInFolderUseCase => di<CanShowRecordingInFolderUseCase>();
+
+/// The use case that lists the sound inputs of the device.
+ListMicrophonesUseCase get listMicrophonesUseCase => di<ListMicrophonesUseCase>();

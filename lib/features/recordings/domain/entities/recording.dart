@@ -34,6 +34,9 @@ final class Recording {
   /// Why the enhancement failed, when [status] is [RecordingStatus.enhanceFailed].
   final String? enhanceError;
 
+  /// Whether the microphone gave no sound during the whole take (a wrong input chosen).
+  final bool isSilent;
+
   /// Creates a [Recording].
   const Recording({
     required this.id,
@@ -46,5 +49,6 @@ final class Recording {
     required this.keptToSeconds,
     required this.status,
     required this.enhanceError,
+    this.isSilent = false,
   });
 }

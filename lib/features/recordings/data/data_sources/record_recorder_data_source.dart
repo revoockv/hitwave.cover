@@ -1,5 +1,6 @@
 import 'package:record/record.dart';
 
+import '../../domain/entities/microphone.dart';
 import 'recorder_data_source.dart';
 
 /// [RecorderDataSource] on the `record` package.
@@ -35,7 +36,20 @@ final class RecordRecorderDataSource implements RecorderDataSource {
   Future<bool> hasPermission() => _recorder.hasPermission();
 
   @override
-  Future<void> start(String path) => _recorder.start(_config, path: path);
+  Future<List<Microphone>> microphones() async => <Microphone>[
+    for (final InputDevice device in await _recorder.listInputDevices()) Microphone(id: device.id, label: device.label),
+  ];
+
+  @override
+  Future<void> start(String path, {String? microphoneId}) async {
+    InputDevice? device;
+    if (microphoneId != null) {
+      for (final InputDevice input in await _recorder.listInputDevices()) {
+        if (input.id == microphoneId) device = input;
+      }
+    }
+    await _recorder.start(_config.copyWith(device: (value: device)), path: path);
+  }
 
   @override
   Future<String?> stop() => _recorder.stop();

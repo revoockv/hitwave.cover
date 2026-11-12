@@ -12,6 +12,7 @@ import '../../../vocal_enhance/domain/entities/enhance_preset.dart';
 import '../../../vocal_enhance/domain/entities/enhance_report.dart';
 import '../../../vocal_enhance/domain/repositories/vocal_enhance_repository.dart';
 import '../../domain/entities/imported_recording.dart';
+import '../../domain/entities/microphone.dart';
 import '../../domain/entities/recorder_state.dart';
 import '../../domain/entities/recording.dart';
 import '../../domain/entities/recording_status.dart';
@@ -32,6 +33,10 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
   static const String _notRecordingError = 'Запис не йде';
   static const String _permissionError = 'Немає доступу до мікрофона. Дозвольте його в налаштуваннях.';
   static const String _startError = 'Не вдалося почати запис';
+  static const String _microphonesError = 'Не вдалося отримати список мікрофонів';
+
+  /// Highest input level that still counts as no sound at all.
+  static const double _silentLevel = 0.01;
   static const String _stopError = 'Не вдалося зберегти запис';
   static const String _notFoundError = 'Запис не знайдено';
   static const String _deleteError = 'Не вдалося видалити запис';
@@ -68,6 +73,7 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
   Stopwatch? _stopwatch;
   String? _activeId;
   DateTime? _activeStartedAt;
+  double _peakLevel = 0;
   Future<void> _enhanceQueue = Future<void>.value();
 
   /// Creates a [RecordingsRepositoryImpl].
@@ -109,7 +115,17 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
   ValueListenable<RecorderState> watchRecorder() => _recorderState;
 
   @override
-  Future<Result<void>> startRecording(String songId) async {
+  Future<Result<List<Microphone>>> listMicrophones() async {
+    try {
+      return Result.success(await _recorder.microphones());
+    } on Exception catch (e) {
+      _logger.e('$_startLog$_failureLog$e');
+      return const Result.failure(_microphonesError);
+    }
+  }
+
+  @override
+  Future<Result<void>> startRecording(String songId, {String? microphoneId}) async {
     if (_activeId != null) return const Result.failure(_busyError);
     try {
       if (!await _recorder.hasPermission()) {
@@ -117,7 +133,8 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
         return const Result.failure(_permissionError);
       }
       final String id = _uuid.v4();
-      await _recorder.start(_store.rawPathOf(id));
+      await _recorder.start(_store.rawPathOf(id), microphoneId: microphoneId);
+      _peakLevel = 0;
       _activeId = id;
       _activeStartedAt = DateTime.now();
       _stopwatch = Stopwatch()..start();
@@ -156,6 +173,7 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
         status: RecordingStatus.enhancing,
         enhanceError: null,
         trimSilence: trimSilence,
+        isSilent: _peakLevel <= _silentLevel,
       );
       await _save(model);
       _enqueueEnhancement(id);
@@ -194,7 +212,8 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
   Future<Result<void>> importRecordings(List<ImportedRecording> recordings) async {
     try {
       for (final ImportedRecording imported in recordings) {
-        final String id = _uuid.v4();
+        if (_models.containsKey(imported.id)) continue;
+        final String id = imported.id ?? _uuid.v4();
         await _store.moveFile(from: imported.rawFilePath, to: _store.rawPathOf(id));
         final String? enhancedFile = imported.enhancedFilePath;
         if (enhancedFile != null) {
@@ -232,6 +251,7 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
       level = 0;
     }
     if (_activeId == null) return;
+    if (level > _peakLevel) _peakLevel = level;
     _recorderState.value = RecordingRecorderState(
       songId: songId,
       elapsed: _stopwatch?.elapsed ?? Duration.zero,

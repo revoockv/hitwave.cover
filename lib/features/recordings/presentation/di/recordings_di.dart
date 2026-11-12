@@ -23,6 +23,7 @@ import '../../domain/repositories/recordings_repository.dart';
 import '../../domain/use_cases/can_show_recording_in_folder_use_case.dart';
 import '../../domain/use_cases/delete_recording_use_case.dart';
 import '../../domain/use_cases/enhance_recording_again_use_case.dart';
+import '../../domain/use_cases/list_microphones_use_case.dart';
 import '../../domain/use_cases/play_recording_use_case.dart';
 import '../../domain/use_cases/share_recording_use_case.dart';
 import '../../domain/use_cases/show_recording_in_folder_use_case.dart';
@@ -79,6 +80,7 @@ void registerAndInitRecordings() {
 
   // 3. use cases
   di.registerLazySingleton<StartRecordingUseCase>(() => StartRecordingUseCase(di<RecordingsRepository>()));
+  di.registerLazySingleton<ListMicrophonesUseCase>(() => ListMicrophonesUseCase(di<RecordingsRepository>()));
   di.registerLazySingleton<StopRecordingUseCase>(() => StopRecordingUseCase(di<RecordingsRepository>()));
   di.registerLazySingleton<EnhanceRecordingAgainUseCase>(
     () => EnhanceRecordingAgainUseCase(di<RecordingsRepository>()),

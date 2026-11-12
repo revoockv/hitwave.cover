@@ -14,6 +14,7 @@ final class RecordingTileWidget extends StatelessWidget {
   static const String _enhancedLabel = 'Покращений';
   static const String _enhancingLabel = 'Покращую…';
   static const String _failedLabel = 'Не покращено';
+  static const String _silentLabel = 'Без звуку — перевірте мікрофон';
   static const String _retryLabel = 'Покращити ще раз';
   static const String _playLabel = 'Слухати';
   static const String _pauseLabel = 'Пауза';
@@ -101,7 +102,7 @@ final class RecordingTileWidget extends StatelessWidget {
                       Text(
                         '${_formatLength(recording)}$_dateTimeSeparator${_statusText(recording)}',
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: recording.status == RecordingStatus.enhanceFailed
+                          color: recording.status == RecordingStatus.enhanceFailed || recording.isSilent
                               ? theme.colorScheme.error
                               : theme.colorScheme.onSurfaceVariant,
                         ),
@@ -162,11 +163,13 @@ final class RecordingTileWidget extends StatelessWidget {
 
   void _onSelectionChanged(Set<RecordingVersion> selection) => onVersionChanged(selection.first);
 
-  static String _statusText(Recording recording) => switch (recording.status) {
-    RecordingStatus.enhancing => _enhancingLabel,
-    RecordingStatus.enhanced => _enhancedLabel,
-    RecordingStatus.enhanceFailed => recording.enhanceError ?? _failedLabel,
-  };
+  static String _statusText(Recording recording) => recording.isSilent
+      ? _silentLabel
+      : switch (recording.status) {
+          RecordingStatus.enhancing => _enhancingLabel,
+          RecordingStatus.enhanced => _enhancedLabel,
+          RecordingStatus.enhanceFailed => recording.enhanceError ?? _failedLabel,
+        };
 
   /// `dd.mm.yyyy · hh:mm`.
   static String _formatDate(DateTime date) {

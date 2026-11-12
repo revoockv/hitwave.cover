@@ -17,6 +17,7 @@ final class RecordingModel {
   static const String _statusField = 'status';
   static const String _errorField = 'enhanceError';
   static const String _trimSilenceField = 'trimSilence';
+  static const String _silentField = 'silent';
   static const String _separator = '/';
 
   /// Unique id.
@@ -52,6 +53,9 @@ final class RecordingModel {
   /// Whether the silence around the singing is cut from the enhanced file.
   final bool trimSilence;
 
+  /// Whether the microphone gave no sound during the whole take.
+  final bool isSilent;
+
   /// Creates a [RecordingModel].
   const RecordingModel({
     required this.id,
@@ -65,6 +69,7 @@ final class RecordingModel {
     required this.status,
     required this.enhanceError,
     required this.trimSilence,
+    this.isSilent = false,
   });
 
   /// Reads a stored map.
@@ -81,6 +86,7 @@ final class RecordingModel {
       status: RecordingStatus.values.byName(map[_statusField] as String),
       enhanceError: map[_errorField] as String?,
       trimSilence: map[_trimSilenceField] as bool? ?? false,
+      isSilent: map[_silentField] as bool? ?? false,
     );
   }
 
@@ -98,6 +104,7 @@ final class RecordingModel {
       status: entity.status,
       enhanceError: entity.enhanceError,
       trimSilence: trimSilence,
+      isSilent: entity.isSilent,
     );
   }
 
@@ -115,6 +122,7 @@ final class RecordingModel {
       _statusField: status.name,
       _errorField: enhanceError,
       _trimSilenceField: trimSilence,
+      _silentField: isSilent,
     };
   }
 
@@ -131,6 +139,7 @@ final class RecordingModel {
       keptToSeconds: keptToSeconds,
       status: status,
       enhanceError: enhanceError,
+      isSilent: isSilent,
     );
   }
 
@@ -158,6 +167,7 @@ final class RecordingModel {
       status: status ?? this.status,
       enhanceError: clearEnhanceError ? null : enhanceError ?? this.enhanceError,
       trimSilence: trimSilence ?? this.trimSilence,
+      isSilent: isSilent,
     );
   }
 
