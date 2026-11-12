@@ -8,11 +8,12 @@ import '../../../auth/domain/entities/auth_session.dart';
 import '../../../auth/presentation/di/auth_getters.dart';
 import '../../../backup/presentation/di/backup_getters.dart';
 import '../../../backup/presentation/widgets/backup_options_dialog_widget.dart';
+import '../../../history/domain/entities/usage_history.dart';
+import '../../../history/presentation/di/history_getters.dart';
 import '../../../practice/domain/entities/practice_session.dart';
 import '../../../practice/domain/entities/practice_stats.dart';
 import '../../../practice/presentation/di/practice_getters.dart';
-import '../../../practice/presentation/pages/practice_page.dart';
-import '../../../practice/presentation/widgets/practice_overview_widget.dart';
+import '../../../practice/presentation/widgets/practice_stats_widget.dart';
 import '../../../recordings/domain/entities/recording.dart';
 import '../../../recordings/presentation/di/recordings_getters.dart';
 import '../../../recordings/presentation/widgets/covers_list_widget.dart';
@@ -21,7 +22,9 @@ import '../controllers/song_view_controller.dart';
 import '../di/song_getters.dart';
 import '../widgets/artist_switcher_title_widget.dart';
 import '../widgets/delete_song_dialog_widget.dart';
-import '../widgets/songs_widget.dart';
+import '../widgets/home_dashboard_widget.dart';
+import '../widgets/search_field_widget.dart';
+import '../widgets/songs_tab_widget.dart';
 import '../widgets/transfer_local_songs_dialog_widget.dart';
 import 'add_song_page.dart';
 import 'edit_song_page.dart';
@@ -30,32 +33,48 @@ import 'lyrics_page.dart';
 /// Actions of the overflow menu on the home page.
 enum _HomeMenuAction { importSongs, exportSongs, signOut }
 
-/// Main home page with the song list, backup and account actions.
+/// Main page with the bottom navigation: home (mini statistics, recent songs and covers),
+/// songs (search and orders), covers (search) and statistics; plus backup and account actions.
 ///
-/// Watches the song list, the backup status, the session and the view mode of
-/// its [SongViewController]. After a sign-in it asks whether to move the songs
-/// left on the device into the account.
+/// Watches the songs, the covers, the practice, the history, the backup status, the session and
+/// its [SongViewController]. After a sign-in it asks whether to move the songs left on the device
+/// into the account.
 final class HomePage extends WatchingWidget {
-  /// Page title text.
-  static const String _homePageTitle = 'Мої пісні';
+  /// Title of the home tab.
+  static const String _homeTitle = 'hitwave.cover';
+
+  /// Title of the songs tab.
+  static const String _songsTitle = 'Мої пісні';
+
+  /// Title of the covers tab.
+  static const String _coversTitle = 'Мої кавери';
+
+  /// Title of the statistics tab.
+  static const String _statsTitle = 'Статистика';
+
+  /// Labels of the bottom navigation.
+  static const String _homeTab = 'Дім';
+  static const String _songsTab = 'Пісні';
+  static const String _coversTab = 'Кавери';
+  static const String _statsTab = 'Статистика';
+
+  /// Hint of the covers search.
+  static const String _coverSearchHint = 'Пошук кавера за піснею';
+
+  /// Title of a cover whose song is gone.
+  static const String _unknownSong = 'Пісню видалено';
+
+  /// Separator between a song and its artist.
+  static const String _titleSeparator = ' — ';
+
+  /// How many songs and covers the home tab shows.
+  static const int _recentCount = 5;
 
   /// Separator between the title and the song count.
   static const String _countSeparator = '  ';
 
-  /// Tooltip of the switch to the plain list.
-  static const String _listModeTooltip = 'Показати списком';
-
-  /// Tooltip of the switch to the artist view.
-  static const String _artistModeTooltip = 'Групувати за виконавцями';
-
   /// Tooltip of the back button to the artist list.
   static const String _allArtistsTooltip = 'Усі виконавці';
-
-  /// Label of the songs tab.
-  static const String _songsTab = 'Пісні';
-
-  /// Label of the covers tab.
-  static const String _coversTab = 'Кавери';
 
   /// Tooltip of the overflow menu.
   static const String _menuTooltip = 'Ще';
@@ -123,12 +142,15 @@ final class HomePage extends WatchingWidget {
     );
     final List<Song> songs = watch(watchListOfSongsUseCase()).value;
     final String status = watch(watchBackupStatusUseCase()).value;
-    final SongViewMode viewMode = watch(songViewController.viewModeController).value;
-    final String selectedArtist = watch(songViewController.selectedArtistController).value;
     final bool isGuest = watch(watchCurrentSessionUseCase()).value is GuestAuthSession;
     final HomeTab tab = watch(songViewController.homeTabController).value;
+    final SongSort sort = watch(songViewController.songSortController).value;
+    final String selectedArtist = watch(songViewController.selectedArtistController).value;
+    final String songQuery = watch(songViewController.songSearchController).value.text;
+    final String coverQuery = watch(songViewController.coverSearchController).value.text;
     final List<PracticeSession> sessions = watch(watchPracticeSessionsUseCase()).value;
     final List<Recording> recordings = watch(watchRecordingsUseCase()).value;
+    final UsageHistory history = watch(watchUsageHistoryUseCase()).value;
     registerHandler(
       target: watchLocalSongsToTransferUseCase(),
       handler: _onLocalSongsToTransferChanged,
@@ -137,24 +159,31 @@ final class HomePage extends WatchingWidget {
 
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final bool isBackupRunning = status == _backupStatusExporting || status == _backupStatusImporting;
+    final Map<String, int> coverCounts = <String, int>{};
+    for (final Recording recording in recordings) {
+      coverCounts[recording.songId] = (coverCounts[recording.songId] ?? 0) + 1;
+    }
+    final Map<String, Song> songsById = <String, Song>{for (final Song song in songs) song.id: song};
+    final List<Song> foundSongs = _orderSongs(_findSongs(songs, songQuery), sort, history, coverCounts);
     final bool isSongsTab = tab == HomeTab.songs;
-    final bool isArtistMode = viewMode == SongViewMode.artist;
-    final String title = isArtistMode && selectedArtist.isNotEmpty ? selectedArtist : _homePageTitle;
-
     final bool hasSelectedArtist =
-        isSongsTab && isArtistMode && songs.any((Song song) => song.author == selectedArtist);
+        isSongsTab &&
+        sort == SongSort.artists &&
+        songQuery.trim().isEmpty &&
+        songs.any((Song song) => song.author == selectedArtist);
+    final String? newSongAuthor = hasSelectedArtist ? selectedArtist : null;
     final DateTime now = DateTime.now();
     final PracticeStats stats = calculatePracticeStatsUseCase(sessions: sessions, recordings: recordings, now: now);
-    final String? newSongAuthor = hasSelectedArtist ? selectedArtist : null;
 
     final Widget titleText = Text.rich(
       TextSpan(
-        text: title,
+        text: hasSelectedArtist ? selectedArtist : _titleOf(tab),
         children: <InlineSpan>[
-          TextSpan(
-            text: '$_countSeparator${_getDisplayedSongCount(songs, viewMode, selectedArtist)}',
-            style: TextStyle(color: colorScheme.onSurfaceVariant),
-          ),
+          if (isSongsTab)
+            TextSpan(
+              text: '$_countSeparator${hasSelectedArtist ? _countOf(songs, selectedArtist) : foundSongs.length}',
+              style: TextStyle(color: colorScheme.onSurfaceVariant),
+            ),
         ],
       ),
       maxLines: 1,
@@ -182,12 +211,6 @@ final class HomePage extends WatchingWidget {
                 )
               : titleText,
           actions: <Widget>[
-            if (isSongsTab)
-              IconButton(
-                icon: Icon(isArtistMode ? Icons.view_list_outlined : Icons.people_outline),
-                onPressed: songViewController.toggleViewMode,
-                tooltip: isArtistMode ? _listModeTooltip : _artistModeTooltip,
-              ),
             PopupMenuButton<_HomeMenuAction>(
               tooltip: _menuTooltip,
               enabled: !isBackupRunning,
@@ -202,10 +225,38 @@ final class HomePage extends WatchingWidget {
                 )
               : null,
         ),
-        body: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            if (!hasSelectedArtist)
+        body: switch (tab) {
+          HomeTab.home => HomeDashboardWidget(
+            stats: stats,
+            today: PracticeStats.dayOf(now),
+            recentSongs: _recentSongs(songsById, history),
+            recentCovers: _recentCovers(recordings, history),
+            coverCounts: coverCounts,
+            coverTitleOf: (Recording recording) => _songTitle(songsById[recording.songId]),
+            onStatsPressed: () => _selectTab(songViewController, HomeTab.stats),
+            onAllSongsPressed: () => _selectTab(songViewController, HomeTab.songs),
+            onAllCoversPressed: () => _selectTab(songViewController, HomeTab.covers),
+            onSongTap: (Song song) => _navigateToLyrics(context, song),
+            onSongEdit: (Song song) => _showEditSongPage(context, song),
+            onSongDelete: (Song song) => _onSongDeletePressed(context, song),
+          ),
+          HomeTab.songs => SongsTabWidget(
+            isLibraryEmpty: songs.isEmpty,
+            songs: foundSongs,
+            coverCounts: coverCounts,
+            searchController: songViewController.songSearchController,
+            sort: sort,
+            selectedArtist: selectedArtist,
+            onSortSelected: songViewController.selectSort,
+            onArtistSelected: songViewController.selectArtist,
+            onSongTap: (Song song) => _navigateToLyrics(context, song),
+            onSongEdit: (Song song) => _showEditSongPage(context, song),
+            onSongDelete: (Song song) => _onSongDeletePressed(context, song),
+            onAddPressed: () => _showAddSongPage(context, newSongAuthor),
+          ),
+          HomeTab.covers => Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
               Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: AppTheme.maxContentWidth),
@@ -214,52 +265,39 @@ final class HomePage extends WatchingWidget {
                       AppTheme.spacingMedium,
                       AppTheme.spacingSmall,
                       AppTheme.spacingMedium,
-                      AppTheme.spacingSmall,
+                      0,
                     ),
-                    child: PracticeOverviewWidget(
-                      stats: stats,
-                      today: PracticeStats.dayOf(now),
-                      onOpenPressed: () => _openPractice(context),
+                    child: SearchFieldWidget(
+                      searchController: songViewController.coverSearchController,
+                      hint: _coverSearchHint,
                     ),
                   ),
                 ),
               ),
-            if (!hasSelectedArtist)
-              Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: AppTheme.maxContentWidth),
-                  child: SegmentedButton<HomeTab>(
-                    segments: const <ButtonSegment<HomeTab>>[
-                      ButtonSegment<HomeTab>(
-                        value: HomeTab.songs,
-                        icon: Icon(Icons.queue_music_outlined),
-                        label: Text(_songsTab),
-                      ),
-                      ButtonSegment<HomeTab>(
-                        value: HomeTab.covers,
-                        icon: Icon(Icons.mic_none_outlined),
-                        label: Text(_coversTab),
-                      ),
-                    ],
-                    selected: <HomeTab>{tab},
-                    showSelectedIcon: false,
-                    onSelectionChanged: (Set<HomeTab> selected) => _onTabSelected(songViewController, selected),
-                  ),
-                ),
-              ),
-            Expanded(
-              child: isSongsTab
-                  ? SongsWidget(
-                      songs: songs,
-                      viewMode: viewMode,
-                      selectedArtist: selectedArtist,
-                      onArtistSelected: songViewController.selectArtist,
-                      onSongTap: (Song song) => _navigateToLyrics(context, song),
-                      onSongEdit: (Song song) => _showEditSongPage(context, song),
-                      onSongDelete: (Song song) => _onSongDeletePressed(context, song),
-                      onAddPressed: () => _showAddSongPage(context, newSongAuthor),
-                    )
-                  : const CoversListWidget(),
+              Expanded(child: CoversListWidget(query: coverQuery)),
+            ],
+          ),
+          HomeTab.stats => const PracticeStatsWidget(),
+        },
+        bottomNavigationBar: NavigationBar(
+          selectedIndex: tab.index,
+          onDestinationSelected: (int index) => _selectTab(songViewController, HomeTab.values[index]),
+          destinations: const <NavigationDestination>[
+            NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: _homeTab),
+            NavigationDestination(
+              icon: Icon(Icons.queue_music_outlined),
+              selectedIcon: Icon(Icons.queue_music),
+              label: _songsTab,
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.mic_none_outlined),
+              selectedIcon: Icon(Icons.mic),
+              label: _coversTab,
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.insights_outlined),
+              selectedIcon: Icon(Icons.insights),
+              label: _statsTab,
             ),
           ],
         ),
@@ -272,6 +310,76 @@ final class HomePage extends WatchingWidget {
               ),
       ),
     );
+  }
+
+  static String _titleOf(HomeTab tab) => switch (tab) {
+    HomeTab.home => _homeTitle,
+    HomeTab.songs => _songsTitle,
+    HomeTab.covers => _coversTitle,
+    HomeTab.stats => _statsTitle,
+  };
+
+  static int _countOf(List<Song> songs, String artist) => songs.where((Song song) => song.author == artist).length;
+
+  static String _songTitle(Song? song) => song == null ? _unknownSong : '${song.name}$_titleSeparator${song.author}';
+
+  /// The songs whose name, artist or album contain [query].
+  static List<Song> _findSongs(List<Song> songs, String query) {
+    final String needle = query.trim().toLowerCase();
+    if (needle.isEmpty) return songs;
+    return songs
+        .where(
+          (Song song) =>
+              song.name.toLowerCase().contains(needle) ||
+              song.author.toLowerCase().contains(needle) ||
+              (song.album ?? '').toLowerCase().contains(needle),
+        )
+        .toList();
+  }
+
+  /// [songs] in the chosen order; ties and the artist order go by name.
+  static List<Song> _orderSongs(List<Song> songs, SongSort sort, UsageHistory history, Map<String, int> coverCounts) {
+    int byName(Song a, Song b) => a.name.toLowerCase().compareTo(b.name.toLowerCase());
+    final DateTime never = DateTime.fromMillisecondsSinceEpoch(0);
+    final List<Song> ordered = songs.toList();
+    switch (sort) {
+      case SongSort.name:
+        ordered.sort(byName);
+      case SongSort.artists:
+        ordered.sort((Song a, Song b) {
+          final int byArtist = a.author.toLowerCase().compareTo(b.author.toLowerCase());
+          return byArtist != 0 ? byArtist : byName(a, b);
+        });
+      case SongSort.recent:
+        ordered.sort((Song a, Song b) {
+          final int byTime = (history.songsOpenedAt[b.id] ?? never).compareTo(history.songsOpenedAt[a.id] ?? never);
+          return byTime != 0 ? byTime : byName(a, b);
+        });
+      case SongSort.covers:
+        ordered.sort((Song a, Song b) {
+          final int byCovers = (coverCounts[b.id] ?? 0).compareTo(coverCounts[a.id] ?? 0);
+          return byCovers != 0 ? byCovers : byName(a, b);
+        });
+    }
+    return ordered;
+  }
+
+  /// The songs opened last that still exist, newest first.
+  static List<Song> _recentSongs(Map<String, Song> songsById, UsageHistory history) {
+    final List<MapEntry<String, DateTime>> opened =
+        history.songsOpenedAt.entries
+            .where((MapEntry<String, DateTime> entry) => songsById.containsKey(entry.key))
+            .toList()
+          ..sort((MapEntry<String, DateTime> a, MapEntry<String, DateTime> b) => b.value.compareTo(a.value));
+    return <Song>[for (final MapEntry<String, DateTime> entry in opened.take(_recentCount)) songsById[entry.key]!];
+  }
+
+  /// The covers played last that still exist, newest first.
+  static List<Recording> _recentCovers(List<Recording> recordings, UsageHistory history) {
+    final List<Recording> played =
+        recordings.where((Recording recording) => history.coversPlayedAt.containsKey(recording.id)).toList()
+          ..sort((Recording a, Recording b) => history.coversPlayedAt[b.id]!.compareTo(history.coversPlayedAt[a.id]!));
+    return played.take(_recentCount).toList();
   }
 
   List<PopupMenuEntry<_HomeMenuAction>> _buildMenuItems(BuildContext context, bool isGuest) {
@@ -293,13 +401,6 @@ final class HomePage extends WatchingWidget {
         ),
       ),
     ];
-  }
-
-  int _getDisplayedSongCount(List<Song> songs, SongViewMode viewMode, String selectedArtist) {
-    if (viewMode == SongViewMode.artist && selectedArtist.isNotEmpty) {
-      return songs.where((Song song) => song.author == selectedArtist).length;
-    }
-    return songs.length;
   }
 
   void _onBackInvoked(SongViewController songViewController, bool didPop) {
@@ -412,15 +513,11 @@ final class HomePage extends WatchingWidget {
     Navigator.of(context).push(MaterialPageRoute<void>(builder: (BuildContext context) => LyricsPage(song: song)));
   }
 
-  /// Shows the chosen tab; leaving the covers stops their playback.
-  void _onTabSelected(SongViewController songViewController, Set<HomeTab> selected) {
-    final HomeTab tab = selected.first;
-    if (tab != HomeTab.covers) stopPlaybackUseCase();
+  /// Shows [tab]; a cover playing on the tab left behind stops.
+  void _selectTab(SongViewController songViewController, HomeTab tab) {
+    if (tab == songViewController.homeTabController.value) return;
+    stopPlaybackUseCase();
     songViewController.selectTab(tab);
-  }
-
-  void _openPractice(BuildContext context) {
-    Navigator.of(context).push(MaterialPageRoute<void>(builder: (BuildContext context) => const PracticePage()));
   }
 
   /// Opens the form of a new song; on an artist's page its author is filled in.

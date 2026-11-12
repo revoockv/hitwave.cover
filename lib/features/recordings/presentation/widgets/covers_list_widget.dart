@@ -8,14 +8,19 @@ import '../../domain/entities/recording.dart';
 import '../di/recordings_getters.dart';
 import 'recordings_list_widget.dart';
 
-/// Every cover recorded on this device, grouped by song (songs by name, the newest take first).
+/// Every cover recorded on this device, grouped by song (songs by name, the newest take first);
+/// with a [query], only the covers of the songs whose name or artist contain it.
 final class CoversListWidget extends WatchingWidget {
   static const String _empty = 'Ще немає каверів. Відкрийте пісню, позначте «Запис» і натисніть «Старт».';
   static const String _unknownSong = 'Пісню видалено';
   static const String _titleSeparator = ' — ';
+  static const String _nothingFound = 'Нічого не знайдено.';
+
+  /// Search text; empty shows every cover.
+  final String query;
 
   /// Creates a new [CoversListWidget].
-  const CoversListWidget({super.key});
+  const CoversListWidget({super.key, this.query = ''});
 
   @override
   Widget build(BuildContext context) {
@@ -24,14 +29,19 @@ final class CoversListWidget extends WatchingWidget {
     final Map<String, String> titles = <String, String>{
       for (final Song song in songs) song.id: '${song.name}$_titleSeparator${song.author}',
     };
-    final List<Recording> grouped = recordings.toList()..sort((Recording a, Recording b) => _compare(a, b, titles));
+    final String needle = query.trim().toLowerCase();
+    final List<Recording> grouped =
+        recordings
+            .where((Recording recording) => (titles[recording.songId] ?? _unknownSong).toLowerCase().contains(needle))
+            .toList()
+          ..sort((Recording a, Recording b) => _compare(a, b, titles));
 
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: AppTheme.maxContentWidth),
         child: RecordingsListWidget(
           recordings: grouped,
-          emptyText: _empty,
+          emptyText: needle.isEmpty ? _empty : _nothingFound,
           headerOf: (Recording recording) => titles[recording.songId] ?? _unknownSong,
           padding: const EdgeInsets.all(AppTheme.spacingMedium),
         ),

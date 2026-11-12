@@ -1,54 +1,75 @@
-import 'package:flutter/foundation.dart' show ValueNotifier;
+import 'package:flutter/widgets.dart' show TextEditingController, ValueNotifier;
 
 /// View mode for the song list display.
 enum SongViewMode {
-  /// Show all songs in a vertical list sorted by name.
+  /// Show all songs in a vertical list.
   list,
 
-  /// Show songs grouped by artist in horizontal lists.
+  /// Show songs grouped by artist.
   artist,
 }
 
-/// Tabs of the home page under the practice overview.
+/// Tabs of the bottom navigation of the home page.
 enum HomeTab {
+  /// Overview: mini statistics, the songs opened and the covers played last.
+  home,
+
   /// The songs.
   songs,
 
   /// Every recorded cover.
   covers,
+
+  /// The practice statistics.
+  stats,
 }
 
-/// Manages the home tab, the song view mode and selected artist state.
+/// Order of the songs tab.
+enum SongSort {
+  /// By name, A to Z.
+  name,
+
+  /// The song opened last first.
+  recent,
+
+  /// The song with the most covers first.
+  covers,
+
+  /// Grouped by artist.
+  artists,
+}
+
+/// UI state of the home page: the tab, the order and the search of the songs, the selected
+/// artist and the search of the covers.
 ///
-/// A Flutter-style controller: [homeTabController], [viewModeController] and
-/// [selectedArtistController] hold the UI state, the page watches them.
+/// A Flutter-style controller: the page watches its notifiers and text controllers.
 final class SongViewController {
   /// Selected artist when none is chosen.
   static const String _noArtist = '';
 
-  /// The tab shown under the practice overview.
-  final ValueNotifier<HomeTab> homeTabController;
+  /// The tab shown.
+  final ValueNotifier<HomeTab> homeTabController = ValueNotifier<HomeTab>(HomeTab.home);
 
-  /// The current view mode for displaying songs.
-  final ValueNotifier<SongViewMode> viewModeController;
+  /// Order of the songs tab.
+  final ValueNotifier<SongSort> songSortController = ValueNotifier<SongSort>(SongSort.artists);
 
   /// The currently selected artist name, or empty string if no artist is selected.
-  final ValueNotifier<String> selectedArtistController;
+  final ValueNotifier<String> selectedArtistController = ValueNotifier<String>(_noArtist);
 
-  /// Creates a new [SongViewController] with default values.
-  SongViewController()
-    : homeTabController = ValueNotifier<HomeTab>(HomeTab.songs),
-      viewModeController = ValueNotifier<SongViewMode>(SongViewMode.artist),
-      selectedArtistController = ValueNotifier<String>(_noArtist);
+  /// Search text of the songs tab.
+  final TextEditingController songSearchController = TextEditingController();
+
+  /// Search text of the covers tab.
+  final TextEditingController coverSearchController = TextEditingController();
 
   /// Shows [tab].
   void selectTab(HomeTab tab) {
     homeTabController.value = tab;
   }
 
-  /// Switches the view mode and clears the selected artist.
-  void toggleViewMode() {
-    viewModeController.value = viewModeController.value == SongViewMode.list ? SongViewMode.artist : SongViewMode.list;
+  /// Orders the songs by [sort] and clears the selected artist.
+  void selectSort(SongSort sort) {
+    songSortController.value = sort;
     selectedArtistController.value = _noArtist;
   }
 
@@ -62,10 +83,12 @@ final class SongViewController {
     selectedArtistController.value = _noArtist;
   }
 
-  /// Disposes the underlying [ValueNotifier] instances.
+  /// Disposes the notifiers and text controllers.
   void dispose() {
     homeTabController.dispose();
-    viewModeController.dispose();
+    songSortController.dispose();
     selectedArtistController.dispose();
+    songSearchController.dispose();
+    coverSearchController.dispose();
   }
 }

@@ -5,7 +5,8 @@ import '../../domain/entities/song.dart';
 /// Actions offered in the menu of a song tile.
 enum _SongTileAction { edit, delete }
 
-/// Displays a single song: an initial avatar, its name, author and album.
+/// Displays a single song: an initial avatar, its name, author and album, and the number of
+/// its covers.
 ///
 /// Knows nothing about use cases: tapping the tile calls [onTap], the menu
 /// calls [onEdit] or [onDelete].
@@ -25,6 +26,12 @@ final class SongTileWidget extends StatelessWidget {
   /// Label of the delete action.
   static const String _deleteLabel = 'Видалити';
 
+  /// Tooltip of the number of covers.
+  static const String _coversTooltip = 'Каверів';
+
+  /// Size of the microphone icon next to the number of covers.
+  static const double _coverIconSize = 16;
+
   /// The [Song] to display.
   final Song song;
 
@@ -37,12 +44,16 @@ final class SongTileWidget extends StatelessWidget {
   /// Called when "delete" is chosen in the menu.
   final void Function(Song song) onDelete;
 
+  /// Number of covers of the song; nothing is shown for none.
+  final int coverCount;
+
   /// Creates a new [SongTileWidget].
   const SongTileWidget({
     required this.song,
     required this.onTap,
     required this.onEdit,
     required this.onDelete,
+    this.coverCount = 0,
     super.key,
   });
 
@@ -62,10 +73,26 @@ final class SongTileWidget extends StatelessWidget {
       ),
       title: Text(song.name, maxLines: 1, overflow: TextOverflow.ellipsis),
       subtitle: Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis),
-      trailing: PopupMenuButton<_SongTileAction>(
-        tooltip: _menuTooltip,
-        onSelected: _onActionSelected,
-        itemBuilder: _buildMenuItems,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          if (coverCount > 0)
+            Tooltip(
+              message: _coversTooltip,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Icon(Icons.mic_none_outlined, size: _coverIconSize, color: colorScheme.onSurfaceVariant),
+                  Text('$coverCount', style: TextStyle(color: colorScheme.onSurfaceVariant)),
+                ],
+              ),
+            ),
+          PopupMenuButton<_SongTileAction>(
+            tooltip: _menuTooltip,
+            onSelected: _onActionSelected,
+            itemBuilder: _buildMenuItems,
+          ),
+        ],
       ),
       onTap: _onTilePressed,
     );

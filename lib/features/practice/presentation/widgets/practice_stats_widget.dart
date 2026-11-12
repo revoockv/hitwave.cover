@@ -12,15 +12,14 @@ import '../../domain/entities/practice_stats.dart';
 import '../../domain/entities/song_practice.dart';
 import '../controllers/practice_page_controller.dart';
 import '../di/practice_getters.dart';
-import '../widgets/practice_calendar_widget.dart';
-import '../widgets/practice_summary_widget.dart';
-import '../widgets/practice_time_text_widget.dart';
-import '../widgets/song_practice_list_widget.dart';
+import 'practice_calendar_widget.dart';
+import 'practice_summary_widget.dart';
+import 'practice_time_text_widget.dart';
+import 'song_practice_list_widget.dart';
 
 /// Practice statistics: totals and streaks, a calendar with the days of practice, the songs of
 /// the chosen day and the most practised songs.
-final class PracticePage extends WatchingWidget {
-  static const String _title = 'Тренування';
+final class PracticeStatsWidget extends WatchingWidget {
   static const String _topSongsTitle = 'Найчастіше';
   static const String _noPractice = 'Цього дня тренувань не було.';
   static const String _noSongs = 'Ще немає тренувань. Відкрийте пісню й натисніть «Старт».';
@@ -30,8 +29,8 @@ final class PracticePage extends WatchingWidget {
   static const String _dateSeparator = '.';
   static const String _zero = '0';
 
-  /// Creates a new [PracticePage].
-  const PracticePage({super.key});
+  /// Creates a new [PracticeStatsWidget].
+  const PracticeStatsWidget({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -53,44 +52,41 @@ final class PracticePage extends WatchingWidget {
     final PracticeDay? day = stats.days[selectedDay];
     final ThemeData theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(title: const Text(_title)),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: AppTheme.maxContentWidth),
-          child: ListView(
-            padding: const EdgeInsets.all(AppTheme.spacingMedium),
-            children: <Widget>[
-              PracticeSummaryWidget(stats: stats),
-              const SizedBox(height: AppTheme.spacingMedium),
-              PracticeCalendarWidget(
-                month: month,
-                selectedDay: selectedDay,
-                today: PracticeStats.dayOf(now),
-                days: stats.days,
-                onDaySelected: practicePageController.selectDay,
-                onPreviousMonth: practicePageController.showPreviousMonth,
-                onNextMonth: practicePageController.showNextMonth,
-              ),
-              const SizedBox(height: AppTheme.spacingMedium),
-              Text(
-                '${_formatDate(selectedDay)}$_dayTitleSeparator${PracticeTimeTextWidget.format(day?.time ?? Duration.zero)}',
-                style: theme.textTheme.titleMedium,
-              ),
-              SongPracticeListWidget(
-                songs: day?.songs ?? const <SongPractice>[],
-                titleOf: (String songId) => titles[songId] ?? _unknownSong,
-                emptyText: _noPractice,
-              ),
-              const SizedBox(height: AppTheme.spacingMedium),
-              Text(_topSongsTitle, style: theme.textTheme.titleMedium),
-              SongPracticeListWidget(
-                songs: stats.topSongs,
-                titleOf: (String songId) => titles[songId] ?? _unknownSong,
-                emptyText: _noSongs,
-              ),
-            ],
-          ),
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: AppTheme.maxContentWidth),
+        child: ListView(
+          padding: const EdgeInsets.all(AppTheme.spacingMedium),
+          children: <Widget>[
+            PracticeSummaryWidget(stats: stats),
+            const SizedBox(height: AppTheme.spacingMedium),
+            PracticeCalendarWidget(
+              month: month,
+              selectedDay: selectedDay,
+              today: PracticeStats.dayOf(now),
+              days: stats.days,
+              onDaySelected: practicePageController.selectDay,
+              onPreviousMonth: practicePageController.showPreviousMonth,
+              onNextMonth: practicePageController.showNextMonth,
+            ),
+            const SizedBox(height: AppTheme.spacingMedium),
+            Text(
+              '${_formatDate(selectedDay)}$_dayTitleSeparator${PracticeTimeTextWidget.format(day?.time ?? Duration.zero)}',
+              style: theme.textTheme.titleMedium,
+            ),
+            SongPracticeListWidget(
+              songs: day?.songs ?? const <SongPractice>[],
+              titleOf: (String songId) => titles[songId] ?? _unknownSong,
+              emptyText: _noPractice,
+            ),
+            const SizedBox(height: AppTheme.spacingMedium),
+            Text(_topSongsTitle, style: theme.textTheme.titleMedium),
+            SongPracticeListWidget(
+              songs: stats.topSongs,
+              titleOf: (String songId) => titles[songId] ?? _unknownSong,
+              emptyText: _noSongs,
+            ),
+          ],
         ),
       ),
     );
