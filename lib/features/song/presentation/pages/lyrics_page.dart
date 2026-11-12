@@ -6,6 +6,7 @@ import 'package:watch_it/watch_it.dart';
 import '../../../../core/domain/entities/result.dart';
 import '../../../../core/domain/entities/result_state.dart';
 import '../../../../core/presentation/theme.dart';
+import '../../../history/presentation/di/history_getters.dart';
 import '../../../practice/presentation/di/practice_getters.dart';
 import '../../../recordings/domain/entities/recorder_state.dart';
 import '../../../recordings/domain/entities/recording.dart';
@@ -80,6 +81,7 @@ final class LyricsPage extends WatchingWidget {
       _createLyricsPageController,
       dispose: _disposeLyricsPageController,
     );
+    callOnce(_onOpened);
     final bool isScrolling = watch(lyricsPageController.scrollingController).value;
     final double leadInFactor = watch(lyricsPageController.leadInController).value;
     registerHandler(target: lyricsPageController.speedSavingStateController, handler: _onSavingChanged);
@@ -222,6 +224,11 @@ final class LyricsPage extends WatchingWidget {
       record: preferences.record,
       trimSilence: preferences.trimSilence,
     );
+  }
+
+  /// Remembers the opening for the recent songs of the home page.
+  void _onOpened(BuildContext context) {
+    unawaited(markSongOpenedUseCase(song.id));
   }
 
   static void _disposeLyricsPageController(LyricsPageController lyricsPageController) => lyricsPageController.dispose();

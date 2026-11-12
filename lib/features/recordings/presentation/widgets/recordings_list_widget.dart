@@ -3,6 +3,7 @@ import 'package:watch_it/watch_it.dart';
 
 import '../../../../core/domain/entities/result.dart';
 import '../../../../core/presentation/theme.dart';
+import '../../../history/presentation/di/history_getters.dart';
 import '../../../vocal_enhance/domain/entities/enhance_progress.dart';
 import '../../../vocal_enhance/presentation/di/vocal_enhance_getters.dart';
 import '../../domain/entities/playback_state.dart';
@@ -30,6 +31,9 @@ final class RecordingsListWidget extends WatchingWidget {
   /// Padding of the list.
   final EdgeInsets padding;
 
+  /// Whether the list takes only the height of its tiles (inside another scrolling list).
+  final bool shrinkWrap;
+
   /// Creates a new [RecordingsListWidget].
   const RecordingsListWidget({
     super.key,
@@ -37,6 +41,7 @@ final class RecordingsListWidget extends WatchingWidget {
     required this.emptyText,
     this.headerOf,
     this.padding = EdgeInsets.zero,
+    this.shrinkWrap = false,
   });
 
   @override
@@ -61,6 +66,8 @@ final class RecordingsListWidget extends WatchingWidget {
       );
     }
     return ListView.builder(
+      shrinkWrap: shrinkWrap,
+      physics: shrinkWrap ? const NeverScrollableScrollPhysics() : null,
       padding: padding,
       itemCount: recordings.length,
       itemBuilder: (BuildContext context, int index) {
@@ -127,6 +134,7 @@ final class RecordingsListWidget extends WatchingWidget {
 
   Future<void> _play(BuildContext context, Recording recording, RecordingVersion version) async {
     final Result<void> result = await playRecordingUseCase(recording: recording, version: version);
+    if (result.isSuccess) await markCoverPlayedUseCase(recording.id);
     if (!context.mounted) return;
     _showFailure(context, result);
   }
