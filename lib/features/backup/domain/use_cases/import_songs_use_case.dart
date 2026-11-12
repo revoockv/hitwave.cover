@@ -19,7 +19,9 @@ final class ImportSongsUseCase {
   /// reads the backup data, and adds all songs to Firebase.
   /// Returns [SuccessResult] on success, or [FailureResult] with an error
   /// message when the import fails.
-  Future<Result<void>> call() async {
-    return _repository.importSongs();
+  ///
+  /// [includeRecordings] also adds the recordings of a ZIP backup.
+  Future<Result<void>> call({required bool includeRecordings}) async {
+    return _repository.importSongs(includeRecordings: includeRecordings);
   }
 }

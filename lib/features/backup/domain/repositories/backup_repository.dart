@@ -21,7 +21,10 @@ abstract interface class BackupRepository {
   /// then writes all songs to a `backup.json` file within that directory.
   /// Returns [SuccessResult] on success, or [FailureResult] with an error
   /// message when the export fails.
-  Future<Result<void>> exportSongs();
+  ///
+  /// With [includeRecordings], the recordings of the songs are added and the file becomes a
+  /// `backup.zip` with their WAV files (only where the device has a file system).
+  Future<Result<void>> exportSongs({required bool includeRecordings});
 
   /// Imports songs from a user-selected JSON file.
   ///
@@ -29,5 +32,7 @@ abstract interface class BackupRepository {
   /// the backup data, and adds all songs to Firebase. Returns
   /// [SuccessResult] on success, or [FailureResult] with an error
   /// message when the import fails.
-  Future<Result<void>> importSongs();
+  ///
+  /// A `backup.zip` may hold recordings; they are added only with [includeRecordings].
+  Future<Result<void>> importSongs({required bool includeRecordings});
 }

@@ -1,3 +1,20 @@
+import 'dart:typed_data';
+
+/// A backup file the user picked: its [name], and its [path] (desktop, mobile) or its [bytes] (web).
+final class PickedBackupFile {
+  /// File name with the extension.
+  final String name;
+
+  /// Full path on the device, when the platform gives one.
+  final String? path;
+
+  /// The content, when the platform gives no path (web).
+  final Uint8List? bytes;
+
+  /// Creates a [PickedBackupFile].
+  const PickedBackupFile({required this.name, required this.path, required this.bytes});
+}
+
 /// Defines the contract for file picker operations used in backup workflows.
 ///
 /// Implementations handle picking files for import and picking directories
@@ -10,12 +27,12 @@ abstract interface class BackupDataSource {
   /// will skip directory selection and trigger a browser download directly.
   bool get supportsDirectorySelection;
 
-  /// Picks a JSON file from the file system and returns its content as a string.
+  /// Picks a backup file (`.json`, or `.zip` with recordings).
   ///
   /// Returns `null` if the user cancels the picker or no file is selected.
-  Future<String?> pickBackupFile();
+  Future<PickedBackupFile?> pickBackupFile();
 
-  /// Picks a directory from the file system and returns its path.
+  /// Picks a directory for the export and returns its path.
   ///
   /// Returns `null` if the user cancels the picker or no directory is selected.
   Future<String?> pickExportDirectory();
