@@ -9,6 +9,9 @@ import 'di.dart';
 import 'features/auth/domain/entities/auth_session.dart';
 import 'features/auth/presentation/di/auth_getters.dart';
 import 'features/auth/presentation/pages/auth_page.dart';
+import 'features/settings/domain/entities/app_settings.dart';
+import 'features/settings/presentation/di/settings_getters.dart';
+import 'features/settings/presentation/l10n/settings_texts.dart';
 import 'features/song/presentation/pages/home_page.dart';
 
 Future<void> main() async {
@@ -23,7 +26,7 @@ Future<void> main() async {
 /// The root application widget.
 ///
 /// Renders the auth page while nobody is signed in, or the home page for a
-/// signed-in user and for a guest without an account, in the language of the device.
+/// signed-in user and for a guest without an account, in the language of the settings.
 final class HitwaveCoverAppWidget extends WatchingWidget {
   /// Texts of the app first, then Flutter's own; the fallbacks give Interslavic English system texts.
   static const List<LocalizationsDelegate<Object>> _localizationsDelegates = <LocalizationsDelegate<Object>>[
@@ -44,10 +47,12 @@ final class HitwaveCoverAppWidget extends WatchingWidget {
   @override
   Widget build(BuildContext context) {
     final AuthSession session = watch(watchCurrentSessionUseCase()).value;
+    final AppSettings settings = watch(watchSettingsUseCase()).value;
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       onGenerateTitle: _title,
+      locale: settings.language.appLocale.flutterLocale,
       supportedLocales: AppLocaleUtils.supportedLocales,
       localizationsDelegates: _localizationsDelegates,
       theme: AppTheme.light(),

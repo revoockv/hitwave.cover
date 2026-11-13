@@ -45,6 +45,7 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final Translations$history$en history = Translations$history$en.internal(_root);
 	late final Translations$practice$en practice = Translations$practice$en.internal(_root);
 	late final Translations$recordings$en recordings = Translations$recordings$en.internal(_root);
+	late final Translations$settings$en settings = Translations$settings$en.internal(_root);
 	late final Translations$song$en song = Translations$song$en.internal(_root);
 	late final Translations$sync$en sync = Translations$sync$en.internal(_root);
 	late final Translations$vocalEnhance$en vocalEnhance = Translations$vocalEnhance$en.internal(_root);
@@ -361,6 +362,27 @@ class Translations$recordings$en {
 
 	/// en: 'Takes'
 	String get title => 'Takes';
+}
+
+// Path: settings
+class Translations$settings$en {
+	Translations$settings$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Language'
+	String get language => 'Language';
+
+	/// en: 'Settings'
+	String get open => 'Settings';
+
+	/// en: 'Could not save the settings'
+	String get saveFailed => 'Could not save the settings';
+
+	/// en: 'Settings'
+	String get title => 'Settings';
 }
 
 // Path: song
@@ -1195,6 +1217,10 @@ extension on Translations {
 			'recordings.silent' => 'No sound — check the microphone',
 			'recordings.systemMicrophone' => 'System default',
 			'recordings.title' => 'Takes',
+			'settings.language' => 'Language',
+			'settings.open' => 'Settings',
+			'settings.saveFailed' => 'Could not save the settings',
+			'settings.title' => 'Settings',
 			'song.actions' => 'Actions',
 			'song.add' => 'Add',
 			'song.addSong' => 'Add song',
