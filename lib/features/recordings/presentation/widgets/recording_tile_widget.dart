@@ -20,6 +20,7 @@ final class RecordingTileWidget extends StatelessWidget {
   static const String _pauseLabel = 'Пауза';
   static const String _deleteLabel = 'Видалити';
   static const String _shareLabel = 'Надіслати';
+  static const String _preparingLabel = 'Готую MP3…';
   static const String _folderLabel = 'Показати в папці';
   static const String _dateSeparator = '.';
   static const String _timeSeparator = ':';
@@ -57,6 +58,9 @@ final class RecordingTileWidget extends StatelessWidget {
   /// Called by the share button.
   final VoidCallback onSharePressed;
 
+  /// Whether the MP3 for sharing is being made (the share button waits).
+  final bool isSharing;
+
   /// Called by the folder button; `null` hides it (no file manager on this platform).
   final VoidCallback? onShowInFolderPressed;
 
@@ -76,6 +80,7 @@ final class RecordingTileWidget extends StatelessWidget {
     required this.onPlayPressed,
     required this.onDeletePressed,
     required this.onSharePressed,
+    this.isSharing = false,
     required this.onShowInFolderPressed,
     required this.onRetryPressed,
   });
@@ -115,7 +120,16 @@ final class RecordingTileWidget extends StatelessWidget {
                   onPressed: onPlayPressed,
                   icon: Icon(isLoaded && isPlaying ? Icons.pause_circle : Icons.play_circle),
                 ),
-                IconButton(tooltip: _shareLabel, onPressed: onSharePressed, icon: const Icon(Icons.share_outlined)),
+                IconButton(
+                  tooltip: isSharing ? _preparingLabel : _shareLabel,
+                  onPressed: isSharing ? null : onSharePressed,
+                  icon: isSharing
+                      ? const SizedBox.square(
+                          dimension: AppTheme.loadingIndicatorSize,
+                          child: CircularProgressIndicator(strokeWidth: AppTheme.loadingIndicatorStroke),
+                        )
+                      : const Icon(Icons.share_outlined),
+                ),
                 if (onShowInFolderPressed != null)
                   IconButton(
                     tooltip: _folderLabel,

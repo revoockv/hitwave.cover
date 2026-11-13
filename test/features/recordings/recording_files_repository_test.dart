@@ -5,7 +5,7 @@ import 'package:hitwave.cover/features/recordings/domain/entities/recording_stat
 import 'package:hitwave.cover/features/recordings/domain/entities/shared_song.dart';
 
 void main() {
-  test('a shared cover is named "yyyy-MM-dd-HH-mm Artist-Song.wav" and sent with "Artist - Song"', () {
+  test('a shared cover is named "yyyy-MM-dd-HH-mm Artist-Song.mp3" and sent with "Artist - Song"', () {
     final Recording recording = Recording(
       id: 'r',
       songId: 's',
@@ -20,10 +20,10 @@ void main() {
     );
     const SharedSong song = SharedSong(author: 'Океан Ельзи', name: 'Обійми');
 
-    expect(RecordingFilesRepositoryImpl.fileName(recording, song), '2026-03-07-19-05 Океан Ельзи-Обійми.wav');
+    expect(RecordingFilesRepositoryImpl.fileName(recording, song), '2026-03-07-19-05 Океан Ельзи-Обійми.mp3');
     expect(
       RecordingFilesRepositoryImpl.fileName(recording, const SharedSong(author: 'AC/DC', name: 'T.N.T.')),
-      '2026-03-07-19-05 AC DC-T.N.T..wav',
+      '2026-03-07-19-05 AC DC-T.N.T..mp3',
     );
     expect(RecordingFilesRepositoryImpl.message(song), 'Океан Ельзи - Обійми');
     expect(RecordingFilesRepositoryImpl.message(null), isNull);
