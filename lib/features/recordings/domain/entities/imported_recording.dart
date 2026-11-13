@@ -1,5 +1,10 @@
-/// A recording read from a backup archive, to be added to the library of this device.
+/// A recording read from a backup archive or received from another device, to be added to the
+/// library of this device.
 final class ImportedRecording {
+  /// Id to keep (a recording synced from another device), or `null` for a new one. A recording
+  /// whose id is already in the library is skipped.
+  final String? id;
+
   /// The song it belongs to (its id on this device).
   final String songId;
 
@@ -23,6 +28,7 @@ final class ImportedRecording {
 
   /// Creates an [ImportedRecording].
   const ImportedRecording({
+    this.id,
     required this.songId,
     required this.recordedAt,
     required this.durationSeconds,

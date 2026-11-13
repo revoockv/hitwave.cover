@@ -85,6 +85,12 @@ final class LyricsControlsWidget extends WatchingWidget {
   /// Called when the play/pause button is pressed.
   final VoidCallback onPlayPressed;
 
+  /// Tooltip of the microphone button (the chosen input).
+  final String microphoneLabel;
+
+  /// Called by the microphone button.
+  final VoidCallback onMicrophonePressed;
+
   /// Time of the take being recorded, or `null` when nothing is recorded.
   final Duration? recordingElapsed;
 
@@ -105,6 +111,8 @@ final class LyricsControlsWidget extends WatchingWidget {
     required this.recordLabel,
     required this.trimSilenceLabel,
     required this.onPlayPressed,
+    required this.microphoneLabel,
+    required this.onMicrophonePressed,
     required this.recordingElapsed,
     required this.recordingLevel,
   });
@@ -192,6 +200,11 @@ final class LyricsControlsWidget extends WatchingWidget {
                                 label: trimSilenceLabel,
                                 value: trimSilence,
                                 onChanged: canChangeOptions ? _onTrimSilenceChanged : null,
+                              ),
+                              IconButton(
+                                tooltip: microphoneLabel,
+                                onPressed: canChangeOptions ? onMicrophonePressed : null,
+                                icon: const Icon(Icons.settings_voice_outlined),
                               ),
                               const Spacer(),
                               if (elapsed != null) ...<Widget>[

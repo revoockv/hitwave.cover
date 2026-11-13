@@ -12,6 +12,8 @@ import '../../../recordings/domain/entities/recorder_state.dart';
 import '../../../recordings/domain/entities/recording.dart';
 import '../../../recordings/domain/entities/recording_preferences.dart';
 import '../../../recordings/presentation/di/recordings_getters.dart';
+import '../../../recordings/domain/entities/microphone.dart';
+import '../../../recordings/presentation/widgets/microphone_picker_dialog_widget.dart';
 import '../../../recordings/presentation/widgets/recordings_sheet_widget.dart';
 import '../../domain/entities/song.dart';
 import '../controllers/lyrics_page_controller.dart';
@@ -50,11 +52,20 @@ final class LyricsPage extends WatchingWidget {
   /// Label of the trim-silence checkbox.
   static const String _trimSilenceLabel = 'Обрізати тишу';
 
+  /// Separator between the song and its artist in a shared recording.
+  static const String _titleSeparator = ' — ';
+
   /// Tooltip of the recordings button.
   static const String _recordingsLabel = 'Записи';
 
   /// Shown when a take was saved and its enhancement started.
   static const String _savedMessage = 'Запис збережено, покращую звук…';
+
+  /// Shown when the microphone gave no sound during the take.
+  static const String _silentMessage = 'Запис без звуку. Перевірте мікрофон (кнопка з мікрофоном на панелі).';
+
+  /// Tooltip prefix of the microphone button.
+  static const String _microphonePrefix = 'Мікрофон: ';
 
   /// Font size for lyrics text.
   static const double _lyricsFontSize = 20;
@@ -102,6 +113,7 @@ final class LyricsPage extends WatchingWidget {
       handler: (BuildContext context, bool isScrolling, void Function() cancel) => _onScrollingChanged(isScrolling),
     );
     final RecorderState recorder = watch(watchRecorderUseCase()).value;
+    final String? microphoneLabel = watch(watchRecordingPreferencesUseCase()).value.microphoneLabel;
     final int recordingCount = watch(
       watchRecordingsUseCase(),
     ).value.where((Recording recording) => recording.songId == song.id).length;
@@ -203,6 +215,9 @@ final class LyricsPage extends WatchingWidget {
                     recordLabel: _recordLabel,
                     trimSilenceLabel: _trimSilenceLabel,
                     onPlayPressed: () => _onPlayPressed(ScaffoldMessenger.of(context), lyricsPageController),
+                    microphoneLabel:
+                        '$_microphonePrefix${microphoneLabel ?? MicrophonePickerDialogWidget.systemMicrophone.label}',
+                    onMicrophonePressed: () => _chooseMicrophone(context, ScaffoldMessenger.of(context)),
                     recordingElapsed: recording?.elapsed,
                     recordingLevel: recording?.level ?? 0,
                   ),
@@ -308,7 +323,10 @@ final class LyricsPage extends WatchingWidget {
     }
     if (!lyricsPageController.canStartScrolling) return;
     if (lyricsPageController.recordController.value) {
-      final Result<void> result = await startRecordingUseCase(song.id);
+      final Result<void> result = await startRecordingUseCase(
+        song.id,
+        microphoneId: watchRecordingPreferencesUseCase().value.microphoneId,
+      );
       if (lyricsPageController.isDisposed) return;
       if (result case FailureResult<void>(:final String error)) {
         messenger.showSnackBar(SnackBar(content: Text(error)));
@@ -319,11 +337,37 @@ final class LyricsPage extends WatchingWidget {
     lyricsPageController.startScrolling();
   }
 
+  /// Lets the user choose the sound input of the takes and remembers it.
+  Future<void> _chooseMicrophone(BuildContext context, ScaffoldMessengerState messenger) async {
+    final Result<List<Microphone>> listed = await listMicrophonesUseCase();
+    if (!context.mounted) return;
+    switch (listed) {
+      case FailureResult<List<Microphone>>(:final String error):
+        messenger.showSnackBar(SnackBar(content: Text(error)));
+      case SuccessResult<List<Microphone>>(:final List<Microphone> value):
+        final Microphone? chosen = await showDialog<Microphone>(
+          context: context,
+          builder: (BuildContext context) => MicrophonePickerDialogWidget(
+            microphones: value,
+            selectedId: watchRecordingPreferencesUseCase().value.microphoneId,
+          ),
+        );
+        if (chosen == null) return;
+        final bool isSystem = chosen.id == MicrophonePickerDialogWidget.systemMicrophone.id;
+        await updateRecordingPreferencesUseCase(
+          watchRecordingPreferencesUseCase().value.withMicrophone(
+            id: isSystem ? null : chosen.id,
+            label: isSystem ? null : chosen.label,
+          ),
+        );
+    }
+  }
+
   /// Remembers the checkboxes for the next visit.
   void _onRecordingOptionsChanged(LyricsPageController lyricsPageController) {
     unawaited(
       updateRecordingPreferencesUseCase(
-        RecordingPreferences(
+        watchRecordingPreferencesUseCase().value.copyWith(
           record: lyricsPageController.recordController.value,
           trimSilence: lyricsPageController.trimSilenceController.value,
         ),
@@ -356,12 +400,13 @@ final class LyricsPage extends WatchingWidget {
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-      builder: (BuildContext context) => RecordingsSheetWidget(songId: song.id),
+      builder: (BuildContext context) =>
+          RecordingsSheetWidget(songId: song.id, songTitle: '${song.name}$_titleSeparator${song.author}'),
     );
     await stopPlaybackUseCase();
   }
 
-  static String _saved(Recording recording) => _savedMessage;
+  static String _saved(Recording recording) => recording.isSilent ? _silentMessage : _savedMessage;
 
   static String _identity(String error) => error;
 }

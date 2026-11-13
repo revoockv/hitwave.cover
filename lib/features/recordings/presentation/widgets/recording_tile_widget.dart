@@ -5,7 +5,8 @@ import '../../domain/entities/recording.dart';
 import '../../domain/entities/recording_status.dart';
 import '../../domain/entities/recording_version.dart';
 
-/// One recording in the list: date, length, state, the original/enhanced switch, play and delete.
+/// One recording in the list: date, length, state, the original/enhanced switch, play, share,
+/// show in folder (desktop) and delete.
 ///
 /// Knows nothing about use cases; every action is a callback.
 final class RecordingTileWidget extends StatelessWidget {
@@ -13,10 +14,13 @@ final class RecordingTileWidget extends StatelessWidget {
   static const String _enhancedLabel = 'Покращений';
   static const String _enhancingLabel = 'Покращую…';
   static const String _failedLabel = 'Не покращено';
+  static const String _silentLabel = 'Без звуку — перевірте мікрофон';
   static const String _retryLabel = 'Покращити ще раз';
   static const String _playLabel = 'Слухати';
   static const String _pauseLabel = 'Пауза';
   static const String _deleteLabel = 'Видалити';
+  static const String _shareLabel = 'Надіслати';
+  static const String _folderLabel = 'Показати в папці';
   static const String _dateSeparator = '.';
   static const String _timeSeparator = ':';
   static const String _dateTimeSeparator = ' · ';
@@ -50,6 +54,12 @@ final class RecordingTileWidget extends StatelessWidget {
   /// Called by the delete button.
   final VoidCallback onDeletePressed;
 
+  /// Called by the share button.
+  final VoidCallback onSharePressed;
+
+  /// Called by the folder button; `null` hides it (no file manager on this platform).
+  final VoidCallback? onShowInFolderPressed;
+
   /// Called by the "enhance again" button of a failed enhancement.
   final VoidCallback onRetryPressed;
 
@@ -65,6 +75,8 @@ final class RecordingTileWidget extends StatelessWidget {
     required this.onVersionChanged,
     required this.onPlayPressed,
     required this.onDeletePressed,
+    required this.onSharePressed,
+    required this.onShowInFolderPressed,
     required this.onRetryPressed,
   });
 
@@ -90,7 +102,7 @@ final class RecordingTileWidget extends StatelessWidget {
                       Text(
                         '${_formatLength(recording)}$_dateTimeSeparator${_statusText(recording)}',
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: recording.status == RecordingStatus.enhanceFailed
+                          color: recording.status == RecordingStatus.enhanceFailed || recording.isSilent
                               ? theme.colorScheme.error
                               : theme.colorScheme.onSurfaceVariant,
                         ),
@@ -103,6 +115,13 @@ final class RecordingTileWidget extends StatelessWidget {
                   onPressed: onPlayPressed,
                   icon: Icon(isLoaded && isPlaying ? Icons.pause_circle : Icons.play_circle),
                 ),
+                IconButton(tooltip: _shareLabel, onPressed: onSharePressed, icon: const Icon(Icons.share_outlined)),
+                if (onShowInFolderPressed != null)
+                  IconButton(
+                    tooltip: _folderLabel,
+                    onPressed: onShowInFolderPressed,
+                    icon: const Icon(Icons.folder_open_outlined),
+                  ),
                 IconButton(tooltip: _deleteLabel, onPressed: onDeletePressed, icon: const Icon(Icons.delete_outline)),
               ],
             ),
@@ -144,11 +163,13 @@ final class RecordingTileWidget extends StatelessWidget {
 
   void _onSelectionChanged(Set<RecordingVersion> selection) => onVersionChanged(selection.first);
 
-  static String _statusText(Recording recording) => switch (recording.status) {
-    RecordingStatus.enhancing => _enhancingLabel,
-    RecordingStatus.enhanced => _enhancedLabel,
-    RecordingStatus.enhanceFailed => recording.enhanceError ?? _failedLabel,
-  };
+  static String _statusText(Recording recording) => recording.isSilent
+      ? _silentLabel
+      : switch (recording.status) {
+          RecordingStatus.enhancing => _enhancingLabel,
+          RecordingStatus.enhanced => _enhancedLabel,
+          RecordingStatus.enhanceFailed => recording.enhanceError ?? _failedLabel,
+        };
 
   /// `dd.mm.yyyy · hh:mm`.
   static String _formatDate(DateTime date) {

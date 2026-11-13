@@ -11,6 +11,7 @@ import 'package:hitwave.cover/features/recordings/data/data_sources/recorder_dat
 import 'package:hitwave.cover/features/recordings/data/models/recording_model.dart';
 import 'package:hitwave.cover/features/recordings/data/repositories/recordings_repository_impl.dart';
 import 'package:hitwave.cover/features/recordings/domain/entities/imported_recording.dart';
+import 'package:hitwave.cover/features/recordings/domain/entities/microphone.dart';
 import 'package:hitwave.cover/features/recordings/domain/entities/recorder_state.dart';
 import 'package:hitwave.cover/features/recordings/domain/entities/recording.dart';
 import 'package:hitwave.cover/features/recordings/domain/entities/recording_status.dart';
@@ -28,12 +29,20 @@ import 'package:logger/logger.dart';
 final class FakeRecorder implements RecorderDataSource {
   bool allowed = true;
   String? path;
+  String? microphoneId;
+  double inputLevel = 0.5;
+
+  @override
+  Future<List<Microphone>> microphones() async => const <Microphone>[Microphone(id: 'usb', label: 'USB mic')];
 
   @override
   Future<bool> hasPermission() async => allowed;
 
   @override
-  Future<void> start(String path) async => this.path = path;
+  Future<void> start(String path, {String? microphoneId}) async {
+    this.path = path;
+    this.microphoneId = microphoneId;
+  }
 
   @override
   Future<String?> stop() async {
@@ -43,7 +52,7 @@ final class FakeRecorder implements RecorderDataSource {
   }
 
   @override
-  Future<double> level() async => 0.5;
+  Future<double> level() async => inputLevel;
 
   @override
   Future<void> dispose() async {}
@@ -172,6 +181,24 @@ void main() {
     expect(File(recording.rawPath).existsSync(), isTrue);
     expect(File(recording.enhancedPath!).existsSync(), isTrue);
     expect(engine.trims, <bool>[true]);
+  });
+
+  test('a take is recorded from the chosen microphone; one without any sound is marked', () async {
+    expect((await repository.listMicrophones() as SuccessResult<List<Microphone>>).value.single.label, 'USB mic');
+
+    expect((await repository.startRecording('song-1', microphoneId: 'usb')).isSuccess, isTrue);
+    expect(recorder.microphoneId, 'usb');
+    await Future<void>.delayed(const Duration(milliseconds: 450));
+    final Recording heard = (await repository.stopRecording(trimSilence: true) as SuccessResult<Recording>).value;
+    expect(heard.isSilent, isFalse);
+
+    recorder.inputLevel = 0;
+    await repository.startRecording('song-1');
+    await Future<void>.delayed(const Duration(milliseconds: 450));
+    final Recording silent = (await repository.stopRecording(trimSilence: true) as SuccessResult<Recording>).value;
+    expect(silent.isSilent, isTrue);
+    await settle();
+    expect(repository.watchRecordings().value.firstWhere((Recording r) => r.id == silent.id).isSilent, isTrue);
   });
 
   test('a failed enhancement can be run again', () async {

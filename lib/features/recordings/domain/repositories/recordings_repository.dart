@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart' show ValueListenable;
 
 import '../../../../core/domain/entities/result.dart';
 import '../entities/imported_recording.dart';
+import '../entities/microphone.dart';
 import '../entities/recorder_state.dart';
 import '../entities/recording.dart';
 
@@ -16,8 +17,12 @@ abstract interface class RecordingsRepository {
   /// The recorder: idle, or recording a song with the elapsed time and the input level.
   ValueListenable<RecorderState> watchRecorder();
 
-  /// Starts recording a take of [songId]; asks for the microphone permission when needed.
-  Future<Result<void>> startRecording(String songId);
+  /// The sound inputs of the device.
+  Future<Result<List<Microphone>>> listMicrophones();
+
+  /// Starts recording a take of [songId] from [microphoneId] (the system input when `null` or
+  /// gone); asks for the microphone permission when needed.
+  Future<Result<void>> startRecording(String songId, {String? microphoneId});
 
   /// Stops the take, adds it to the library and starts enhancing it in the background;
   /// [trimSilence] cuts the silence before and after the singing in the enhanced file.
@@ -29,6 +34,7 @@ abstract interface class RecordingsRepository {
   /// Deletes the recording [recordingId] and its files.
   Future<Result<void>> deleteRecording(String recordingId);
 
-  /// Adds [recordings] from a backup to the library, moving their files into it.
+  /// Adds [recordings] from a backup or another device to the library, moving their files into
+  /// it; a recording whose id is already there is skipped.
   Future<Result<void>> importRecordings(List<ImportedRecording> recordings);
 }

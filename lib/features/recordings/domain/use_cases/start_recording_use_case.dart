@@ -8,8 +8,8 @@ final class StartRecordingUseCase {
   /// Creates a [StartRecordingUseCase].
   StartRecordingUseCase(this._repository);
 
-  /// Starts recording a take of [songId].
-  Future<Result<void>> call(String songId) async {
-    return _repository.startRecording(songId);
+  /// Starts recording a take of [songId] from [microphoneId] (the system input when `null`).
+  Future<Result<void>> call(String songId, {String? microphoneId}) async {
+    return _repository.startRecording(songId, microphoneId: microphoneId);
   }
 }

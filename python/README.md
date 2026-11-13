@@ -16,17 +16,22 @@ The app processes recorded vocals with Python running on the device (serious_pyt
 
 ## Build and run
 
-The Python app and its packages are staged before the Flutter build, and the same environment
-variables must be set for both steps, so use the wrapper:
+The Python app and its packages are packaged by `tool/package_python.sh <platform>` into
+`build/python/<platform>/` (on iOS/macOS also into the `serious_python_darwin` Swift package).
+It skips the work when nothing under `python/` changed since the last run, so the builds call it
+every time:
+
+- **Android:** `android/settings.gradle.kts` runs it and sets the `SERIOUS_PYTHON_*` variables the
+  plugin's Gradle script reads;
+- **iOS / macOS:** a pre-action of the `Runner` scheme runs it (log: `build/python/package_<platform>.log`).
+
+So a plain `flutter run` (or the IDE) ships Python. `tool/flutter_python.sh` still works and is
+the way for Windows and Linux:
 
 ```bash
 tool/flutter_python.sh android run            # or: ios | macos | windows | linux
-tool/flutter_python.sh ios build ipa
-tool/flutter_python.sh android build appbundle
+tool/package_python.sh macos --force          # repackage even when nothing changed
 ```
 
-It runs `dart run serious_python:main package python/app -p <Platform> …` into
-`build/python/<platform>/` and then `flutter <args>` with `SERIOUS_PYTHON_*` exported.
-A plain `flutter run` without the wrapper builds an app without Python: enhancing then fails
-with "the audio engine did not start". Web has no embedded Python; the feature reports that it
+Web has no embedded Python; the feature reports that it
 is unavailable there.
