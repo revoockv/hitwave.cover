@@ -1,3 +1,4 @@
+import '../../../../core/presentation/widgets/surface_widget.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/presentation/l10n/app_translations.dart';
@@ -81,7 +82,7 @@ final class _SummaryTileWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final String? detail = data.detail;
-    return Card(
+    return SurfaceWidget(
       margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(AppTheme.spacingMedium),

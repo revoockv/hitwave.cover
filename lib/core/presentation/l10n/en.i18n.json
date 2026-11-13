@@ -162,9 +162,27 @@
     "title": "Takes"
   },
   "settings": {
+    "accentColor": "Accent color",
+    "colors": {
+      "blue": "Blue",
+      "green": "Green",
+      "indigo": "Indigo",
+      "orange": "Orange",
+      "pink": "Pink",
+      "red": "Red",
+      "teal": "Teal",
+      "violet": "Violet"
+    },
     "language": "Language",
     "open": "Settings",
     "saveFailed": "Could not save the settings",
+    "theme": "Theme",
+    "themes": {
+      "glassDark": "Dark glass",
+      "glassLight": "Light glass",
+      "neumorphicDark": "Dark neumorphism",
+      "neumorphicLight": "Light neumorphism"
+    },
     "title": "Settings"
   },
   "song": {

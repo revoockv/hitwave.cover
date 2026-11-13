@@ -234,9 +234,13 @@ class _Translations$settings$isv extends Translations$settings$en {
 	final TranslationsIsv _root; // ignore: unused_field
 
 	// Translations
+	@override String get accentColor => 'Акцентна барва';
+	@override late final _Translations$settings$colors$isv colors = _Translations$settings$colors$isv._(_root);
 	@override String get language => 'Језык';
 	@override String get open => 'Наставјења';
 	@override String get saveFailed => 'Не удало се сохранити наставјења';
+	@override String get theme => 'Тема';
+	@override late final _Translations$settings$themes$isv themes = _Translations$settings$themes$isv._(_root);
 	@override String get title => 'Наставјења';
 }
 
@@ -450,6 +454,36 @@ class _Translations$recordings$failure$isv extends Translations$recordings$failu
 	@override String get share => 'Не удало се послати запис';
 	@override String get showInFolder => 'Не удало се отворити папку';
 	@override String get start => 'Не удало се начети запис';
+}
+
+// Path: settings.colors
+class _Translations$settings$colors$isv extends Translations$settings$colors$en {
+	_Translations$settings$colors$isv._(TranslationsIsv root) : this._root = root, super.internal(root);
+
+	final TranslationsIsv _root; // ignore: unused_field
+
+	// Translations
+	@override String get blue => 'Сиња';
+	@override String get green => 'Зелена';
+	@override String get indigo => 'Индиго';
+	@override String get orange => 'Оранжева';
+	@override String get pink => 'Ружова';
+	@override String get red => 'Чрвена';
+	@override String get teal => 'Морска';
+	@override String get violet => 'Фиолетова';
+}
+
+// Path: settings.themes
+class _Translations$settings$themes$isv extends Translations$settings$themes$en {
+	_Translations$settings$themes$isv._(TranslationsIsv root) : this._root = root, super.internal(root);
+
+	final TranslationsIsv _root; // ignore: unused_field
+
+	// Translations
+	@override String get glassDark => 'Темно стекло';
+	@override String get glassLight => 'Свєтло стекло';
+	@override String get neumorphicDark => 'Темны неуморфизм';
+	@override String get neumorphicLight => 'Свєтлы неуморфизм';
 }
 
 // Path: song.failure
@@ -709,9 +743,23 @@ extension on TranslationsIsv {
 			'recordings.silent' => 'Без звука — провєрите микрофон',
 			'recordings.systemMicrophone' => 'Како в системє',
 			'recordings.title' => 'Записы',
+			'settings.accentColor' => 'Акцентна барва',
+			'settings.colors.blue' => 'Сиња',
+			'settings.colors.green' => 'Зелена',
+			'settings.colors.indigo' => 'Индиго',
+			'settings.colors.orange' => 'Оранжева',
+			'settings.colors.pink' => 'Ружова',
+			'settings.colors.red' => 'Чрвена',
+			'settings.colors.teal' => 'Морска',
+			'settings.colors.violet' => 'Фиолетова',
 			'settings.language' => 'Језык',
 			'settings.open' => 'Наставјења',
 			'settings.saveFailed' => 'Не удало се сохранити наставјења',
+			'settings.theme' => 'Тема',
+			'settings.themes.glassDark' => 'Темно стекло',
+			'settings.themes.glassLight' => 'Свєтло стекло',
+			'settings.themes.neumorphicDark' => 'Темны неуморфизм',
+			'settings.themes.neumorphicLight' => 'Свєтлы неуморфизм',
 			'settings.title' => 'Наставјења',
 			'song.actions' => 'Дєјствија',
 			'song.add' => 'Додати',

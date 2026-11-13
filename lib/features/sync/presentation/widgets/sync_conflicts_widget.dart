@@ -1,3 +1,4 @@
+import '../../../../core/presentation/widgets/surface_widget.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/presentation/l10n/app_translations.dart';
@@ -71,7 +72,7 @@ final class SyncConflictsWidget extends StatelessWidget {
           ),
         const SizedBox(height: AppTheme.spacingSmall),
         for (final SyncConflict conflict in conflicts)
-          Card(
+          SurfaceWidget(
             margin: const EdgeInsets.only(bottom: AppTheme.spacingSmall),
             child: Padding(
               padding: const EdgeInsets.all(AppTheme.spacingMedium),
