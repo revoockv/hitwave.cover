@@ -93,6 +93,7 @@ final class SettingsPage extends WatchingWidget {
           ListTile(
             leading: const Icon(Icons.file_upload_outlined),
             title: Text(t.song.importSongs),
+            subtitle: kIsWeb ? null : Text(t.backup.importHint),
             enabled: !isBackupRunning,
             onTap: () => _onImportPressed(context),
           ),
@@ -102,6 +103,14 @@ final class SettingsPage extends WatchingWidget {
             enabled: !isBackupRunning,
             onTap: () => _onExportPressed(context),
           ),
+          if (!kIsWeb)
+            ListTile(
+              leading: const Icon(Icons.ios_share),
+              title: Text(t.backup.share),
+              subtitle: Text(t.backup.shareHint),
+              enabled: !isBackupRunning,
+              onTap: () => _onSharePressed(context),
+            ),
           if (isSyncSupportedUseCase())
             ListTile(leading: const Icon(Icons.sync), title: Text(t.song.sync), onTap: () => _onSyncPressed(context)),
           ListTile(
@@ -149,6 +158,17 @@ final class SettingsPage extends WatchingWidget {
       ScaffoldMessenger.of(context),
       result.when(success: (void _) => t.song.importDone, failure: (BackupFailure failure) => failure.text(t)),
     );
+  }
+
+  Future<void> _onSharePressed(BuildContext context) async {
+    final Translations t = context.t;
+    final bool? includeRecordings = await _askIncludeRecordings(context, t.backup.share, t.backup.shareQuestion);
+    if (includeRecordings == null) return;
+    final Result<void, BackupFailure> result = await shareBackupUseCase(includeRecordings: includeRecordings);
+    if (!context.mounted) return;
+    if (result case FailureResult<void, BackupFailure>(:final BackupFailure failure)) {
+      _showMessage(ScaffoldMessenger.of(context), failure.text(t));
+    }
   }
 
   /// Asks whether the recordings go too; `null` when cancelled. The web keeps no recordings.

@@ -5,4 +5,7 @@ enum BackupFailure {
 
   /// The songs could not be imported.
   importSongs,
+
+  /// The backup could not be shared.
+  shareBackup,
 }

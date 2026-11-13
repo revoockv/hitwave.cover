@@ -8,7 +8,7 @@ import '../../domain/entities/recording_version.dart';
 import '../../domain/entities/shared_song.dart';
 import '../../domain/repositories/recording_files_repository.dart';
 import '../data_sources/mp3_encoder_service.dart';
-import '../data_sources/system_files_data_source.dart';
+import '../../../../core/data/data_sources/system_files_data_source.dart';
 import '../../domain/entities/recordings_failure.dart';
 
 /// [RecordingFilesRepository] on the system share sheet, the file manager and an MP3 encoder.

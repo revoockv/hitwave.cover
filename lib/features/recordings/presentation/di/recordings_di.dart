@@ -2,6 +2,7 @@ import 'package:logger/logger.dart';
 import 'package:watch_it/watch_it.dart';
 
 import '../../../../core/data/data_sources/local_storage_service.dart';
+import '../../../../core/data/data_sources/system_files_data_source.dart';
 import '../../../../core/presentation/di/core_di.dart';
 import '../../../song/domain/repositories/song_repository.dart';
 import '../../../vocal_enhance/domain/repositories/vocal_enhance_repository.dart';
@@ -11,7 +12,6 @@ import '../../data/data_sources/hive_recording_service.dart';
 import '../../data/data_sources/just_audio_player_data_source.dart';
 import '../../data/data_sources/mp3_encoder_service.dart';
 import '../../data/data_sources/record_recorder_data_source.dart';
-import '../../data/data_sources/system_files_data_source.dart';
 import '../../data/data_sources/recorder_data_source.dart';
 import '../../data/repositories/playback_repository_impl.dart';
 import '../../data/repositories/recording_files_repository_impl.dart';
@@ -52,7 +52,6 @@ void registerAndInitRecordings() {
   );
   di.registerLazySingleton<RecorderDataSource>(RecordRecorderDataSource.new);
   di.registerLazySingleton<AudioPlayerDataSource>(JustAudioPlayerDataSource.new);
-  di.registerLazySingleton<SystemFilesDataSource>(SystemFilesDataSource.new);
   di.registerLazySingleton<Mp3EncoderService>(Mp3EncoderService.new);
 
   // 2. repositories

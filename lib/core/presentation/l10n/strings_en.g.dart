@@ -63,11 +63,23 @@ class Translations$backup$en {
 
 	late final Translations$backup$failure$en failure = Translations$backup$failure$en.internal(_root);
 
+	/// en: 'From a file, also from Google Drive'
+	String get importHint => 'From a file, also from Google Drive';
+
 	/// en: 'Include takes'
 	String get includeRecordings => 'Include takes';
 
 	/// en: 'Takes are kept only on this device; with them the file becomes a ZIP archive.'
 	String get recordingsNote => 'Takes are kept only on this device; with them the file becomes a ZIP archive.';
+
+	/// en: 'Share a backup'
+	String get share => 'Share a backup';
+
+	/// en: 'Save it to Google Drive or send it to another app'
+	String get shareHint => 'Save it to Google Drive or send it to another app';
+
+	/// en: 'The songs will be shared as a file you can save to Google Drive. Takes come only in a ZIP archive.'
+	String get shareQuestion => 'The songs will be shared as a file you can save to Google Drive. Takes come only in a ZIP archive.';
 }
 
 // Path: common
@@ -696,6 +708,9 @@ class Translations$backup$failure$en {
 
 	/// en: 'Could not import the songs'
 	String get importSongs => 'Could not import the songs';
+
+	/// en: 'Could not share the backup'
+	String get shareBackup => 'Could not share the backup';
 }
 
 // Path: history.failure
@@ -1067,8 +1082,13 @@ extension on Translations {
 			'backup.exportDialogTitle' => 'Choose a folder for the export',
 			'backup.failure.exportSongs' => 'Could not export the songs',
 			'backup.failure.importSongs' => 'Could not import the songs',
+			'backup.failure.shareBackup' => 'Could not share the backup',
+			'backup.importHint' => 'From a file, also from Google Drive',
 			'backup.includeRecordings' => 'Include takes',
 			'backup.recordingsNote' => 'Takes are kept only on this device; with them the file becomes a ZIP archive.',
+			'backup.share' => 'Share a backup',
+			'backup.shareHint' => 'Save it to Google Drive or send it to another app',
+			'backup.shareQuestion' => 'The songs will be shared as a file you can save to Google Drive. Takes come only in a ZIP archive.',
 			'common.cancel' => 'Cancel',
 			'common.clear' => 'Clear',
 			'common.delete' => 'Delete',
