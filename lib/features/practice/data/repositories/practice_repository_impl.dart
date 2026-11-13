@@ -21,6 +21,7 @@ final class PracticeRepositoryImpl implements PracticeRepository, DisposableReso
   static const Duration _minimumLength = Duration(seconds: 10);
 
   static const String _importLog = 'ImportPracticeSessions: ';
+  static const String _clearLog = 'ClearPractice: ';
   static const String _stopLog = 'StopPractice: ';
   static const String _songIdLog = 'PracticeSongIdChange: ';
   static const String _successLog = 'success — ';
@@ -120,6 +121,19 @@ final class PracticeRepositoryImpl implements PracticeRepository, DisposableReso
     } on Exception catch (e) {
       _logger.e('$_importLog$_failureLog$e');
       return const Result.failure(PracticeFailure.importSessions);
+    }
+  }
+
+  @override
+  Future<Result<void, PracticeFailure>> clearSessions() async {
+    try {
+      await _store.deleteAll(List<String>.of(_models.keys));
+      _models.clear();
+      _publish();
+      return Result.ok;
+    } on Exception catch (e) {
+      _logger.e('$_clearLog$_failureLog$e');
+      return const Result.failure(PracticeFailure.clear);
     }
   }
 

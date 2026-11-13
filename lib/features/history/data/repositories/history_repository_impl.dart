@@ -83,6 +83,20 @@ final class HistoryRepositoryImpl implements HistoryRepository, DisposableResour
     }
   }
 
+  @override
+  Future<Result<void, HistoryFailure>> clearHistory() async {
+    try {
+      await _store.clear();
+      _songsOpenedAt.clear();
+      _coversPlayedAt.clear();
+      _publish();
+      return Result.ok;
+    } on Exception catch (e) {
+      _logger.e('$_saveLog$e');
+      return const Result.failure(HistoryFailure.clear);
+    }
+  }
+
   Future<Result<void, HistoryFailure>> _save(Future<void> Function() write) async {
     try {
       final Future<void> written = write();

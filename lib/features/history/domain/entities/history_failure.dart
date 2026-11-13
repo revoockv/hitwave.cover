@@ -2,4 +2,7 @@
 enum HistoryFailure {
   /// The history could not be saved.
   save,
+
+  /// The history could not be cleared.
+  clear,
 }

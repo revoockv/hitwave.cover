@@ -153,6 +153,21 @@ void main() {
       expect((await open()).watchSessions().value.single.duration, const Duration(minutes: 3));
     });
 
+    test('clearing forgets every session, also after a restart', () async {
+      final PracticeRepositoryImpl repository = await open();
+      await repository.startPractice('song-1');
+      clock = clock.add(const Duration(minutes: 2));
+      await repository.stopPractice();
+      expect(repository.watchSessions().value, hasLength(1));
+
+      expect((await repository.clearSessions()).isSuccess, isTrue);
+      expect(repository.watchSessions().value, isEmpty);
+
+      await Hive.close();
+      Hive.init(directory.path);
+      expect((await open()).watchSessions().value, isEmpty);
+    });
+
     test('sessions follow a song moved into the account and go with a deleted one', () async {
       final PracticeRepositoryImpl repository = await open();
       for (final String id in <String>['local-1', 'local-2']) {

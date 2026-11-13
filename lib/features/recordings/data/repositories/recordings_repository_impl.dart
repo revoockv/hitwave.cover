@@ -215,6 +215,15 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
   }
 
   @override
+  Future<Result<void, RecordingsFailure>> deleteAllRecordings() async {
+    for (final String id in List<String>.of(_models.keys)) {
+      final Result<void, RecordingsFailure> deleted = await deleteRecording(id);
+      if (deleted.isFailure) return deleted;
+    }
+    return Result.ok;
+  }
+
+  @override
   Future<Result<void, RecordingsFailure>> importRecordings(List<ImportedRecording> recordings) async {
     try {
       for (final ImportedRecording imported in recordings) {

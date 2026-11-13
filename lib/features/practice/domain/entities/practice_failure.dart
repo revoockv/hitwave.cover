@@ -5,4 +5,7 @@ enum PracticeFailure {
 
   /// Practice sessions from a backup or another device could not be added.
   importSessions,
+
+  /// The practice could not be cleared.
+  clear,
 }

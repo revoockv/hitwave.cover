@@ -20,4 +20,7 @@ abstract interface class PracticeRepository {
 
   /// Adds [sessions] from another device; a session whose id is already here is skipped.
   Future<Result<void, PracticeFailure>> importSessions(List<PracticeSession> sessions);
+
+  /// Forgets every practice session.
+  Future<Result<void, PracticeFailure>> clearSessions();
 }

@@ -19,4 +19,7 @@ abstract interface class HistoryRepository {
 
   /// Adds the history of another device; the later time of every song and cover wins.
   Future<Result<void, HistoryFailure>> importHistory(UsageHistory history);
+
+  /// Forgets which songs were opened and which covers played.
+  Future<Result<void, HistoryFailure>> clearHistory();
 }

@@ -32,6 +32,12 @@ final class HiveHistoryService {
   /// Forgets the opening of [songId].
   Future<void> deleteSong(String songId) => _songs!.delete(songId);
 
+  /// Forgets the whole history.
+  Future<void> clear() async {
+    await _songs!.clear();
+    await _covers!.clear();
+  }
+
   /// Stores that [recordingId] was played at [time].
   Future<void> putCoverPlayed(String recordingId, DateTime time) =>
       _covers!.put(recordingId, UsageHistoryModel.encodeTime(time));

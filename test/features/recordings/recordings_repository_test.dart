@@ -259,6 +259,17 @@ void main() {
     expect(engine.trims, <bool>[false, true]);
   });
 
+  test('deleting all takes removes every take and its files', () async {
+    final Recording first = await record('song-1');
+    final Recording second = await record('song-2');
+
+    expect((await repository.deleteAllRecordings()).isSuccess, isTrue);
+
+    expect(repository.watchRecordings().value, isEmpty);
+    expect(File(first.rawPath).existsSync(), isFalse);
+    expect(File(second.rawPath).existsSync(), isFalse);
+  });
+
   test('without the microphone permission nothing is recorded', () async {
     recorder.allowed = false;
 

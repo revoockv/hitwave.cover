@@ -41,6 +41,9 @@ final class FakeSongRepository implements SongRepository {
   }
 
   @override
+  Future<Result<void, SongFailure>> deleteAllSongs() async => nextResult;
+
+  @override
   Future<Result<void, SongFailure>> updateSongScrollSpeed({required String songId, required double speed}) async =>
       nextResult;
 
