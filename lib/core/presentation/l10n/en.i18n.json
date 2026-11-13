@@ -48,11 +48,13 @@
   },
   "history": {
     "failure": {
+      "clear": "Could not clear the history",
       "save": "Could not remember the history"
     }
   },
   "practice": {
     "allStats": "All statistics",
+    "clearFailed": "Could not clear the practice",
     "covers": "Covers",
     "dayStreak": "Day streak",
     "days": {
@@ -163,6 +165,17 @@
   },
   "settings": {
     "accentColor": "Accent color",
+    "account": "Account",
+    "clear": "Clear",
+    "clearAccountNote": "You are signed in: the songs are deleted from your account on all devices.",
+    "clearCovers": "Covers",
+    "clearData": "Clear data",
+    "clearHistory": "Recently opened and played",
+    "clearMessage": "Choose what to delete. This cannot be undone.",
+    "clearPractice": "Practice statistics",
+    "clearSongs": "Songs and their covers",
+    "clearTitle": "Clear data?",
+    "cleared": "Data cleared",
     "colors": {
       "blue": "Blue",
       "green": "Green",
@@ -173,6 +186,7 @@
       "teal": "Teal",
       "violet": "Violet"
     },
+    "data": "Data",
     "language": "Language",
     "open": "Settings",
     "saveFailed": "Could not save the settings",
@@ -225,7 +239,6 @@
     "leadIn": "Lead-in",
     "lyrics": "Lyrics",
     "microphone": "Microphone: {name}",
-    "more": "More",
     "myCovers": "My covers",
     "mySongs": "My songs",
     "newSong": "New song",

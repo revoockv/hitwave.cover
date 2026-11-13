@@ -72,4 +72,20 @@ void main() {
 
     expect(repository.watchHistory().value.songsOpenedAt.keys, <String>['account-1']);
   });
+
+  test('clearing forgets the openings and playbacks, also after a restart', () async {
+    final HistoryRepositoryImpl repository = await open();
+    await repository.markSongOpened('song-1');
+    await repository.markCoverPlayed('cover-1');
+
+    expect((await repository.clearHistory()).isSuccess, isTrue);
+    expect(repository.watchHistory().value.songsOpenedAt, isEmpty);
+    expect(repository.watchHistory().value.coversPlayedAt, isEmpty);
+
+    await Hive.close();
+    Hive.init(directory.path);
+    final HistoryRepositoryImpl reopened = await open();
+    expect(reopened.watchHistory().value.songsOpenedAt, isEmpty);
+    expect(reopened.watchHistory().value.coversPlayedAt, isEmpty);
+  });
 }

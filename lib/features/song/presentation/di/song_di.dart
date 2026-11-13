@@ -13,6 +13,7 @@ import '../../data/repositories/song_repository_impl.dart';
 import '../../domain/repositories/song_repository.dart';
 import '../../domain/use_cases/add_cover_use_case.dart';
 import '../../domain/use_cases/add_song_use_case.dart';
+import '../../domain/use_cases/delete_all_songs_use_case.dart';
 import '../../domain/use_cases/delete_cover_use_case.dart';
 import '../../domain/use_cases/delete_song_use_case.dart';
 import '../../domain/use_cases/keep_local_songs_use_case.dart';
@@ -59,6 +60,7 @@ void registerAndInitSong() {
   di.registerLazySingleton<UpdateSongLeadInUseCase>(() => UpdateSongLeadInUseCase(di<SongRepository>()));
   di.registerLazySingleton<UpdateSongLyricsUseCase>(() => UpdateSongLyricsUseCase(di<SongRepository>()));
   di.registerLazySingleton<DeleteSongUseCase>(() => DeleteSongUseCase(di<SongRepository>()));
+  di.registerLazySingleton<DeleteAllSongsUseCase>(() => DeleteAllSongsUseCase(di<SongRepository>()));
   di.registerLazySingleton<WatchLocalSongsToTransferUseCase>(
     () => WatchLocalSongsToTransferUseCase(di<SongRepository>()),
   );

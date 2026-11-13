@@ -1,33 +1,82 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:watch_it/watch_it.dart';
 
 import '../../../../core/domain/entities/result.dart';
 import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../../core/presentation/theme.dart';
+import '../../../auth/domain/entities/auth_failure.dart';
+import '../../../auth/domain/entities/auth_session.dart';
+import '../../../auth/presentation/di/auth_getters.dart';
+import '../../../auth/presentation/l10n/auth_texts.dart';
+import '../../../backup/domain/entities/backup_failure.dart';
+import '../../../backup/presentation/di/backup_getters.dart';
+import '../../../backup/presentation/l10n/backup_texts.dart';
+import '../../../backup/presentation/widgets/backup_options_dialog_widget.dart';
+import '../../../history/domain/entities/history_failure.dart';
+import '../../../history/presentation/di/history_getters.dart';
+import '../../../history/presentation/l10n/history_texts.dart';
+import '../../../practice/domain/entities/practice_failure.dart';
+import '../../../practice/presentation/di/practice_getters.dart';
+import '../../../practice/presentation/l10n/practice_texts.dart';
+import '../../../recordings/domain/entities/recordings_failure.dart';
+import '../../../recordings/presentation/di/recordings_getters.dart';
+import '../../../recordings/presentation/l10n/recordings_texts.dart';
+import '../../../song/domain/entities/song_failure.dart';
+import '../../../song/presentation/di/song_getters.dart';
+import '../../../song/presentation/l10n/song_texts.dart';
+import '../../../sync/presentation/di/sync_getters.dart';
+import '../../../sync/presentation/pages/sync_page.dart';
 import '../../domain/entities/accent_color.dart';
 import '../../domain/entities/app_language.dart';
 import '../../domain/entities/app_settings.dart';
 import '../../domain/entities/app_theme_style.dart';
 import '../../domain/entities/settings_failure.dart';
+import '../controllers/clear_data_controller.dart';
 import '../di/settings_getters.dart';
 import '../l10n/settings_texts.dart';
 import '../widgets/accent_color_picker_widget.dart';
+import '../widgets/clear_data_dialog_widget.dart';
 import '../widgets/language_picker_widget.dart';
 import '../widgets/theme_picker_widget.dart';
 
-/// The app settings: the language, the look and the main color of the app.
+/// The app settings: the look, the main color and the language of the app, the data (backup,
+/// sync, clearing) and the account.
 final class SettingsPage extends WatchingWidget {
+  /// Backup status while songs are exported.
+  static const String _backupStatusExporting = 'exporting';
+
+  /// Backup status while songs are imported.
+  static const String _backupStatusImporting = 'importing';
+
+  /// Height of the backup progress line under the app bar.
+  static const double _progressHeight = 2;
+
   /// Creates the page.
   const SettingsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     final AppSettings settings = watch(watchSettingsUseCase()).value;
+    final AuthSession session = watch(watchCurrentSessionUseCase()).value;
+    final String backupStatus = watch(watchBackupStatusUseCase()).value;
+    final bool isBackupRunning = backupStatus == _backupStatusExporting || backupStatus == _backupStatusImporting;
+    final bool isGuest = session is GuestAuthSession;
+    final bool isSignedIn = session is SignedInAuthSession;
     final Translations t = context.t;
-    final TextStyle? sectionStyle = Theme.of(context).textTheme.titleSmall;
+    final ThemeData theme = Theme.of(context);
+    final TextStyle? sectionStyle = theme.textTheme.titleSmall;
 
     return Scaffold(
-      appBar: AppBar(title: Text(t.settings.title)),
+      appBar: AppBar(
+        title: Text(t.settings.title),
+        bottom: isBackupRunning
+            ? const PreferredSize(
+                preferredSize: Size.fromHeight(_progressHeight),
+                child: LinearProgressIndicator(minHeight: _progressHeight),
+              )
+            : null,
+      ),
       body: ListView(
         padding: const EdgeInsets.only(bottom: AppTheme.spacingLarge),
         children: <Widget>[
@@ -47,27 +96,150 @@ final class SettingsPage extends WatchingWidget {
             selected: settings.language,
             onSelected: (AppLanguage language) => _onLanguageSelected(context, language),
           ),
+          ListTile(title: Text(t.settings.data, style: sectionStyle)),
+          ListTile(
+            leading: const Icon(Icons.file_upload_outlined),
+            title: Text(t.song.importSongs),
+            enabled: !isBackupRunning,
+            onTap: () => _onImportPressed(context),
+          ),
+          ListTile(
+            leading: const Icon(Icons.file_download_outlined),
+            title: Text(t.song.exportSongs),
+            enabled: !isBackupRunning,
+            onTap: () => _onExportPressed(context),
+          ),
+          if (isSyncSupportedUseCase())
+            ListTile(leading: const Icon(Icons.sync), title: Text(t.song.sync), onTap: () => _onSyncPressed(context)),
+          ListTile(
+            leading: Icon(Icons.delete_sweep_outlined, color: theme.colorScheme.error),
+            title: Text(t.settings.clearData, style: TextStyle(color: theme.colorScheme.error)),
+            enabled: !isBackupRunning,
+            onTap: () => _onClearDataPressed(context, isSignedIn),
+          ),
+          ListTile(title: Text(t.settings.account, style: sectionStyle)),
+          ListTile(
+            leading: Icon(isGuest ? Icons.login : Icons.logout),
+            title: Text(isGuest ? t.song.signInAccount : t.auth.signOut),
+            onTap: () => _onSignOutPressed(context),
+          ),
         ],
       ),
     );
   }
 
   Future<void> _onLanguageSelected(BuildContext context, AppLanguage language) =>
-      _show(context, setLanguageUseCase(language));
+      _showSettingsFailure(context, setLanguageUseCase(language));
 
   Future<void> _onThemeStyleSelected(BuildContext context, AppThemeStyle style) =>
-      _show(context, setThemeStyleUseCase(style));
+      _showSettingsFailure(context, setThemeStyleUseCase(style));
 
   Future<void> _onAccentColorSelected(BuildContext context, AccentColor color) =>
-      _show(context, setAccentColorUseCase(color));
+      _showSettingsFailure(context, setAccentColorUseCase(color));
+
+  Future<void> _onExportPressed(BuildContext context) async {
+    final Translations t = context.t;
+    final bool? includeRecordings = await _askIncludeRecordings(context, t.song.exportSongs, t.song.exportQuestion);
+    if (includeRecordings == null) return;
+    final Result<void, BackupFailure> result = await exportSongsUseCase(
+      includeRecordings: includeRecordings,
+      pickerTitle: t.backup.exportDialogTitle,
+    );
+    if (!context.mounted) return;
+    _showMessage(
+      ScaffoldMessenger.of(context),
+      result.when(success: (void _) => t.song.exportDone, failure: (BackupFailure failure) => failure.text(t)),
+    );
+  }
+
+  Future<void> _onImportPressed(BuildContext context) async {
+    final Translations t = context.t;
+    final bool? includeRecordings = await _askIncludeRecordings(context, t.song.importSongs, t.song.importQuestion);
+    if (includeRecordings == null) return;
+    final Result<void, BackupFailure> result = await importSongsUseCase(includeRecordings: includeRecordings);
+    if (!context.mounted) return;
+    _showMessage(
+      ScaffoldMessenger.of(context),
+      result.when(success: (void _) => t.song.importDone, failure: (BackupFailure failure) => failure.text(t)),
+    );
+  }
+
+  /// Asks whether the recordings go too; `null` when cancelled. The web keeps no recordings.
+  Future<bool?> _askIncludeRecordings(BuildContext context, String title, String message) async {
+    if (kIsWeb) return false;
+    return showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) => BackupOptionsDialogWidget(title: title, message: message, confirmLabel: title),
+    );
+  }
+
+  void _onSyncPressed(BuildContext context) {
+    Navigator.of(context).push(MaterialPageRoute<void>(builder: (BuildContext context) => const SyncPage()));
+  }
+
+  /// Asks what to clear, then clears it; the first failure stops and is shown.
+  Future<void> _onClearDataPressed(BuildContext context, bool isSignedIn) async {
+    final Translations t = context.t;
+    final Set<ClearableData>? chosen = await showDialog<Set<ClearableData>>(
+      context: context,
+      builder: (BuildContext context) => ClearDataDialogWidget(isSignedIn: isSignedIn),
+    );
+    if (chosen == null || chosen.isEmpty) return;
+    final String? failure = await _clear(t, chosen);
+    if (!context.mounted) return;
+    _showMessage(ScaffoldMessenger.of(context), failure ?? t.settings.cleared);
+  }
+
+  /// Clears [chosen]; the text of the first failure, or `null` when everything was cleared.
+  static Future<String?> _clear(Translations t, Set<ClearableData> chosen) async {
+    if (chosen.contains(ClearableData.songs)) {
+      final Result<void, SongFailure> songs = await deleteAllSongsUseCase();
+      if (songs case FailureResult<void, SongFailure>(:final SongFailure failure)) return failure.text(t);
+    }
+    if (chosen.contains(ClearableData.covers)) {
+      final Result<void, RecordingsFailure> covers = await deleteAllRecordingsUseCase();
+      if (covers case FailureResult<void, RecordingsFailure>(:final RecordingsFailure failure)) return failure.text(t);
+    }
+    if (chosen.contains(ClearableData.practice)) {
+      final Result<void, PracticeFailure> practice = await clearPracticeUseCase();
+      if (practice case FailureResult<void, PracticeFailure>(:final PracticeFailure failure)) return failure.text(t);
+    }
+    if (chosen.contains(ClearableData.history)) {
+      final Result<void, HistoryFailure> history = await clearHistoryUseCase();
+      if (history case FailureResult<void, HistoryFailure>(:final HistoryFailure failure)) return failure.text(t);
+    }
+    return null;
+  }
+
+  /// Signs out (a guest goes to the sign-in page); the app then shows the sign-in page, so this
+  /// page closes first.
+  Future<void> _onSignOutPressed(BuildContext context) async {
+    final Translations t = context.t;
+    final Result<void, AuthFailure> result = await signOutUseCase();
+    if (!context.mounted) return;
+    switch (result) {
+      case SuccessResult<void, AuthFailure>():
+        Navigator.of(context).popUntil(_isFirst);
+      case FailureResult<void, AuthFailure>(:final AuthFailure failure):
+        _showMessage(ScaffoldMessenger.of(context), failure.text(t));
+    }
+  }
+
+  static bool _isFirst(Route<dynamic> route) => route.isFirst;
 
   /// Waits for [saving] and shows its failure, if any.
-  static Future<void> _show(BuildContext context, Future<Result<void, SettingsFailure>> saving) async {
-    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+  static Future<void> _showSettingsFailure(BuildContext context, Future<Result<void, SettingsFailure>> saving) async {
     final Translations t = context.t;
     final Result<void, SettingsFailure> result = await saving;
+    if (!context.mounted) return;
     if (result case FailureResult<void, SettingsFailure>(:final SettingsFailure failure)) {
-      messenger.showSnackBar(SnackBar(content: Text(failure.text(t))));
+      _showMessage(ScaffoldMessenger.of(context), failure.text(t));
     }
+  }
+
+  static void _showMessage(ScaffoldMessengerState messenger, String message) {
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
   }
 }

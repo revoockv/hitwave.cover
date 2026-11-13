@@ -178,6 +178,9 @@ class Translations$practice$en {
 	/// en: 'All statistics'
 	String get allStats => 'All statistics';
 
+	/// en: 'Could not clear the practice'
+	String get clearFailed => 'Could not clear the practice';
+
 	/// en: 'Covers'
 	String get covers => 'Covers';
 
@@ -375,7 +378,43 @@ class Translations$settings$en {
 	/// en: 'Accent color'
 	String get accentColor => 'Accent color';
 
+	/// en: 'Account'
+	String get account => 'Account';
+
+	/// en: 'Clear'
+	String get clear => 'Clear';
+
+	/// en: 'You are signed in: the songs are deleted from your account on all devices.'
+	String get clearAccountNote => 'You are signed in: the songs are deleted from your account on all devices.';
+
+	/// en: 'Covers'
+	String get clearCovers => 'Covers';
+
+	/// en: 'Clear data'
+	String get clearData => 'Clear data';
+
+	/// en: 'Recently opened and played'
+	String get clearHistory => 'Recently opened and played';
+
+	/// en: 'Choose what to delete. This cannot be undone.'
+	String get clearMessage => 'Choose what to delete. This cannot be undone.';
+
+	/// en: 'Practice statistics'
+	String get clearPractice => 'Practice statistics';
+
+	/// en: 'Songs and their covers'
+	String get clearSongs => 'Songs and their covers';
+
+	/// en: 'Clear data?'
+	String get clearTitle => 'Clear data?';
+
+	/// en: 'Data cleared'
+	String get cleared => 'Data cleared';
+
 	late final Translations$settings$colors$en colors = Translations$settings$colors$en.internal(_root);
+
+	/// en: 'Data'
+	String get data => 'Data';
 
 	/// en: 'Language'
 	String get language => 'Language';
@@ -476,9 +515,6 @@ class Translations$song$en {
 
 	/// en: 'Microphone: {name}'
 	String microphone({required Object name}) => 'Microphone: ${name}';
-
-	/// en: 'More'
-	String get more => 'More';
 
 	/// en: 'My covers'
 	String get myCovers => 'My covers';
@@ -792,6 +828,9 @@ class Translations$history$failure$en {
 	final Translations _root; // ignore: unused_field
 
 	// Translations
+
+	/// en: 'Could not clear the history'
+	String get clear => 'Could not clear the history';
 
 	/// en: 'Could not remember the history'
 	String get save => 'Could not remember the history';
@@ -1193,8 +1232,10 @@ extension on Translations {
 			'common.genericError' => 'Something went wrong. Try again later.',
 			'common.nothingFound' => 'Nothing found.',
 			'common.songDeleted' => 'Song deleted',
+			'history.failure.clear' => 'Could not clear the history',
 			'history.failure.save' => 'Could not remember the history',
 			'practice.allStats' => 'All statistics',
+			'practice.clearFailed' => 'Could not clear the practice',
 			'practice.covers' => 'Covers',
 			'practice.dayStreak' => 'Day streak',
 			'practice.days' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, one: '${n} day', other: '${n} days', ), 
@@ -1282,6 +1323,17 @@ extension on Translations {
 			'recordings.systemMicrophone' => 'System default',
 			'recordings.title' => 'Takes',
 			'settings.accentColor' => 'Accent color',
+			'settings.account' => 'Account',
+			'settings.clear' => 'Clear',
+			'settings.clearAccountNote' => 'You are signed in: the songs are deleted from your account on all devices.',
+			'settings.clearCovers' => 'Covers',
+			'settings.clearData' => 'Clear data',
+			'settings.clearHistory' => 'Recently opened and played',
+			'settings.clearMessage' => 'Choose what to delete. This cannot be undone.',
+			'settings.clearPractice' => 'Practice statistics',
+			'settings.clearSongs' => 'Songs and their covers',
+			'settings.clearTitle' => 'Clear data?',
+			'settings.cleared' => 'Data cleared',
 			'settings.colors.blue' => 'Blue',
 			'settings.colors.green' => 'Green',
 			'settings.colors.indigo' => 'Indigo',
@@ -1290,6 +1342,7 @@ extension on Translations {
 			'settings.colors.red' => 'Red',
 			'settings.colors.teal' => 'Teal',
 			'settings.colors.violet' => 'Violet',
+			'settings.data' => 'Data',
 			'settings.language' => 'Language',
 			'settings.open' => 'Settings',
 			'settings.saveFailed' => 'Could not save the settings',
@@ -1336,7 +1389,6 @@ extension on Translations {
 			'song.leadIn' => 'Lead-in',
 			'song.lyrics' => 'Lyrics',
 			'song.microphone' => ({required Object name}) => 'Microphone: ${name}',
-			'song.more' => 'More',
 			'song.myCovers' => 'My covers',
 			'song.mySongs' => 'My songs',
 			'song.newSong' => 'New song',

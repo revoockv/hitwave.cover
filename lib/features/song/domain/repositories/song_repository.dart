@@ -85,6 +85,9 @@ abstract interface class SongRepository {
   /// when the deletion fails.
   Future<Result<void, SongFailure>> deleteSong({required String songId});
 
+  /// Deletes every song of the library — of the account when one is signed in — with its covers.
+  Future<Result<void, SongFailure>> deleteAllSongs();
+
   /// Adds a new cover to the song identified by [songId] with the given
   /// [audioBytes], optional [notes], and current date.
   ///

@@ -2,6 +2,7 @@ import 'package:watch_it/watch_it.dart';
 
 import '../../domain/use_cases/add_cover_use_case.dart';
 import '../../domain/use_cases/add_song_use_case.dart';
+import '../../domain/use_cases/delete_all_songs_use_case.dart';
 import '../../domain/use_cases/delete_cover_use_case.dart';
 import '../../domain/use_cases/delete_song_use_case.dart';
 import '../../domain/use_cases/keep_local_songs_use_case.dart';
@@ -52,3 +53,6 @@ UpdateCoverUseCase get updateCoverUseCase => di<UpdateCoverUseCase>();
 
 /// The use case that deletes a cover.
 DeleteCoverUseCase get deleteCoverUseCase => di<DeleteCoverUseCase>();
+
+/// The use case that deletes every song of the library with its covers.
+DeleteAllSongsUseCase get deleteAllSongsUseCase => di<DeleteAllSongsUseCase>();

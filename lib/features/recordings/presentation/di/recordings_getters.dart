@@ -1,6 +1,7 @@
 import 'package:watch_it/watch_it.dart';
 
 import '../../domain/use_cases/can_show_recording_in_folder_use_case.dart';
+import '../../domain/use_cases/delete_all_recordings_use_case.dart';
 import '../../domain/use_cases/delete_recording_use_case.dart';
 import '../../domain/use_cases/enhance_recording_again_use_case.dart';
 import '../../domain/use_cases/list_microphones_use_case.dart';
@@ -64,3 +65,6 @@ CanShowRecordingInFolderUseCase get canShowRecordingInFolderUseCase => di<CanSho
 
 /// The use case that lists the sound inputs of the device.
 ListMicrophonesUseCase get listMicrophonesUseCase => di<ListMicrophonesUseCase>();
+
+/// The use case that deletes every take of every song.
+DeleteAllRecordingsUseCase get deleteAllRecordingsUseCase => di<DeleteAllRecordingsUseCase>();

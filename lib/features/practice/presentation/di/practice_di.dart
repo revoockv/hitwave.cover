@@ -8,6 +8,7 @@ import '../../data/data_sources/hive_practice_service.dart';
 import '../../data/repositories/practice_repository_impl.dart';
 import '../../domain/repositories/practice_repository.dart';
 import '../../domain/use_cases/calculate_practice_stats_use_case.dart';
+import '../../domain/use_cases/clear_practice_use_case.dart';
 import '../../domain/use_cases/start_practice_use_case.dart';
 import '../../domain/use_cases/stop_practice_use_case.dart';
 import '../../domain/use_cases/watch_practice_sessions_use_case.dart';
@@ -34,6 +35,7 @@ void registerAndInitPractice() {
   // 3. use cases
   di.registerLazySingleton<StartPracticeUseCase>(() => StartPracticeUseCase(di<PracticeRepository>()));
   di.registerLazySingleton<StopPracticeUseCase>(() => StopPracticeUseCase(di<PracticeRepository>()));
+  di.registerLazySingleton<ClearPracticeUseCase>(() => ClearPracticeUseCase(di<PracticeRepository>()));
   di.registerLazySingleton<WatchPracticeSessionsUseCase>(() => WatchPracticeSessionsUseCase(di<PracticeRepository>()));
   di.registerLazySingleton<CalculatePracticeStatsUseCase>(CalculatePracticeStatsUseCase.new);
 }

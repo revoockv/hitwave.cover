@@ -38,6 +38,9 @@ abstract interface class RecordingsRepository {
   /// Deletes the recording [recordingId] and its files.
   Future<Result<void, RecordingsFailure>> deleteRecording(String recordingId);
 
+  /// Deletes every take of every song, with its files.
+  Future<Result<void, RecordingsFailure>> deleteAllRecordings();
+
   /// Adds [recordings] from a backup or another device to the library, moving their files into
   /// it; a recording whose id is already there is skipped.
   Future<Result<void, RecordingsFailure>> importRecordings(List<ImportedRecording> recordings);

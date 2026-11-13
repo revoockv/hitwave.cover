@@ -124,6 +124,7 @@ class _Translations$practice$isv extends Translations$practice$en {
 
 	// Translations
 	@override String get allStats => 'Вса статистика';
+	@override String get clearFailed => 'Не удало се очистити тренингы';
 	@override String get covers => 'Каверы';
 	@override String get dayStreak => 'Серија дниј';
 	@override String days({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('isv'))(n,
@@ -235,7 +236,19 @@ class _Translations$settings$isv extends Translations$settings$en {
 
 	// Translations
 	@override String get accentColor => 'Акцентна барва';
+	@override String get account => 'Конто';
+	@override String get clear => 'Очистити';
+	@override String get clearAccountNote => 'Вы јесте војдени: пєсни будут избрисане из вашего конта на всих устројствах.';
+	@override String get clearCovers => 'Каверы';
+	@override String get clearData => 'Очистити дане';
+	@override String get clearHistory => 'Недавно отворене и слушане';
+	@override String get clearMessage => 'Изберите, что избрисати. То не можно вратити.';
+	@override String get clearPractice => 'Статистика тренингов';
+	@override String get clearSongs => 'Пєсни и јих каверы';
+	@override String get clearTitle => 'Очистити дане?';
+	@override String get cleared => 'Дане очишчене';
 	@override late final _Translations$settings$colors$isv colors = _Translations$settings$colors$isv._(_root);
+	@override String get data => 'Дане';
 	@override String get language => 'Језык';
 	@override String get open => 'Наставјења';
 	@override String get saveFailed => 'Не удало се сохранити наставјења';
@@ -276,7 +289,6 @@ class _Translations$song$isv extends Translations$song$en {
 	@override String get leadIn => 'Отступ';
 	@override String get lyrics => 'Текст пєсњи';
 	@override String microphone({required Object name}) => 'Микрофон: ${name}';
-	@override String get more => 'Јешче';
 	@override String get myCovers => 'Моје каверы';
 	@override String get mySongs => 'Моје пєсни';
 	@override String get newSong => 'Нова пєсња';
@@ -418,6 +430,7 @@ class _Translations$history$failure$isv extends Translations$history$failure$en 
 	final TranslationsIsv _root; // ignore: unused_field
 
 	// Translations
+	@override String get clear => 'Не удало се очистити историју';
 	@override String get save => 'Не удало се запомнити историју';
 }
 
@@ -655,8 +668,10 @@ extension on TranslationsIsv {
 			'common.genericError' => 'Нечто пошло не тако. Попробујте позднєје.',
 			'common.nothingFound' => 'Ничто не најдено.',
 			'common.songDeleted' => 'Пєсња избрисана',
+			'history.failure.clear' => 'Не удало се очистити историју',
 			'history.failure.save' => 'Не удало се запомнити историју',
 			'practice.allStats' => 'Вса статистика',
+			'practice.clearFailed' => 'Не удало се очистити тренингы',
 			'practice.covers' => 'Каверы',
 			'practice.dayStreak' => 'Серија дниј',
 			'practice.days' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('isv'))(n, one: '${n} дењ', few: '${n} дни', many: '${n} дниј', other: '${n} дниј', ), 
@@ -744,6 +759,17 @@ extension on TranslationsIsv {
 			'recordings.systemMicrophone' => 'Како в системє',
 			'recordings.title' => 'Записы',
 			'settings.accentColor' => 'Акцентна барва',
+			'settings.account' => 'Конто',
+			'settings.clear' => 'Очистити',
+			'settings.clearAccountNote' => 'Вы јесте војдени: пєсни будут избрисане из вашего конта на всих устројствах.',
+			'settings.clearCovers' => 'Каверы',
+			'settings.clearData' => 'Очистити дане',
+			'settings.clearHistory' => 'Недавно отворене и слушане',
+			'settings.clearMessage' => 'Изберите, что избрисати. То не можно вратити.',
+			'settings.clearPractice' => 'Статистика тренингов',
+			'settings.clearSongs' => 'Пєсни и јих каверы',
+			'settings.clearTitle' => 'Очистити дане?',
+			'settings.cleared' => 'Дане очишчене',
 			'settings.colors.blue' => 'Сиња',
 			'settings.colors.green' => 'Зелена',
 			'settings.colors.indigo' => 'Индиго',
@@ -752,6 +778,7 @@ extension on TranslationsIsv {
 			'settings.colors.red' => 'Чрвена',
 			'settings.colors.teal' => 'Морска',
 			'settings.colors.violet' => 'Фиолетова',
+			'settings.data' => 'Дане',
 			'settings.language' => 'Језык',
 			'settings.open' => 'Наставјења',
 			'settings.saveFailed' => 'Не удало се сохранити наставјења',
@@ -798,7 +825,6 @@ extension on TranslationsIsv {
 			'song.leadIn' => 'Отступ',
 			'song.lyrics' => 'Текст пєсњи',
 			'song.microphone' => ({required Object name}) => 'Микрофон: ${name}',
-			'song.more' => 'Јешче',
 			'song.myCovers' => 'Моје каверы',
 			'song.mySongs' => 'Моје пєсни',
 			'song.newSong' => 'Нова пєсња',

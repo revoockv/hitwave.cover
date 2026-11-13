@@ -7,5 +7,6 @@ extension PracticeFailureText on PracticeFailure {
   String text(Translations t) => switch (this) {
     PracticeFailure.saveSession => t.practice.saveFailed,
     PracticeFailure.importSessions => t.practice.importFailed,
+    PracticeFailure.clear => t.practice.clearFailed,
   };
 }

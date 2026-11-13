@@ -7,6 +7,7 @@ import '../../../song/domain/repositories/song_repository.dart';
 import '../../data/data_sources/hive_history_service.dart';
 import '../../data/repositories/history_repository_impl.dart';
 import '../../domain/repositories/history_repository.dart';
+import '../../domain/use_cases/clear_history_use_case.dart';
 import '../../domain/use_cases/mark_cover_played_use_case.dart';
 import '../../domain/use_cases/mark_song_opened_use_case.dart';
 import '../../domain/use_cases/watch_usage_history_use_case.dart';
@@ -34,4 +35,5 @@ void registerAndInitHistory() {
   di.registerLazySingleton<WatchUsageHistoryUseCase>(() => WatchUsageHistoryUseCase(di<HistoryRepository>()));
   di.registerLazySingleton<MarkSongOpenedUseCase>(() => MarkSongOpenedUseCase(di<HistoryRepository>()));
   di.registerLazySingleton<MarkCoverPlayedUseCase>(() => MarkCoverPlayedUseCase(di<HistoryRepository>()));
+  di.registerLazySingleton<ClearHistoryUseCase>(() => ClearHistoryUseCase(di<HistoryRepository>()));
 }

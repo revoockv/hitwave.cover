@@ -312,6 +312,15 @@ final class SongRepositoryImpl implements SongRepository, DisposableResource {
   }
 
   @override
+  Future<Result<void, SongFailure>> deleteAllSongs() async {
+    for (final Song song in List<Song>.of(_songs.value)) {
+      final Result<void, SongFailure> deleted = await deleteSong(songId: song.id);
+      if (deleted.isFailure) return deleted;
+    }
+    return Result.ok;
+  }
+
+  @override
   Future<Result<void, SongFailure>> transferLocalSongs() async {
     final List<SongModel> localSongs = _localSongService.readSongs();
     _logger.i('$_transferLog$_startingCountLog${localSongs.length}');
