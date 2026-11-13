@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart' show ValueListenable;
 import '../../../../core/domain/entities/result.dart';
 
 import '../entities/auth_session.dart';
+import '../entities/auth_failure.dart';
 
 /// Defines the contract for authentication operations.
 ///
@@ -15,23 +16,23 @@ abstract interface class AuthRepository {
   /// Starts a guest session that is remembered on the device.
   ///
   /// Returns [Result.ok] on success, or a failure with an error message.
-  Future<Result<void>> continueWithoutAccount();
+  Future<Result<void, AuthFailure>> continueWithoutAccount();
 
   /// Signs in a user with the given [email] and [password].
   ///
   /// Returns [SuccessResult] on success, or [FailureResult] with an error message
   /// when authentication fails (invalid credentials, user not found, etc.).
-  Future<Result<void>> signIn({required String email, required String password});
+  Future<Result<void, AuthFailure>> signIn({required String email, required String password});
 
   /// Registers a new user with the given [email] and [password].
   ///
   /// Returns [SuccessResult] on success, or [FailureResult] with an error message
   /// when registration fails (email already in use, weak password, etc.).
-  Future<Result<void>> signUp({required String email, required String password});
+  Future<Result<void, AuthFailure>> signUp({required String email, required String password});
 
   /// Signs out the signed-in user, or leaves the guest session; the sign-in
   /// screen is shown again and the songs on the device are kept.
   ///
   /// Returns [SuccessResult] on success, or [FailureResult] if sign-out fails.
-  Future<Result<void>> signOut();
+  Future<Result<void, AuthFailure>> signOut();
 }

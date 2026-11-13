@@ -11,6 +11,7 @@ import '../../domain/repositories/auth_repository.dart';
 import '../data_sources/firebase_auth_service.dart';
 import '../data_sources/local_auth_service.dart';
 import '../models/user_model.dart';
+import '../../domain/entities/auth_failure.dart';
 
 /// Firebase-based implementation of [AuthRepository] with a guest mode.
 ///
@@ -19,7 +20,6 @@ import '../models/user_model.dart';
 /// Firebase user wins; otherwise the guest flag saved on the device decides
 /// between [GuestAuthSession] and [SignedOutAuthSession].
 final class AuthRepositoryImpl implements AuthRepository, DisposableResource {
-  static const String _genericErrorMessage = 'Сталася помилка. Спробуйте пізніше.';
   static const String _noEmail = '';
 
   static const String _initLog = 'Auth repository init: subscribed to auth state changes';
@@ -88,7 +88,7 @@ final class AuthRepositoryImpl implements AuthRepository, DisposableResource {
   }
 
   @override
-  Future<Result<void>> continueWithoutAccount() async {
+  Future<Result<void, AuthFailure>> continueWithoutAccount() async {
     _logger.i(_guestStartLog);
     try {
       await _localAuthService.setGuest(true);
@@ -97,12 +97,12 @@ final class AuthRepositoryImpl implements AuthRepository, DisposableResource {
       return Result.ok;
     } on Exception catch (e) {
       _logger.e('$_guestFailureLog$e');
-      return const Result.failure(_genericErrorMessage);
+      return const Result.failure(AuthFailure.unknown);
     }
   }
 
   @override
-  Future<Result<void>> signIn({required String email, required String password}) async {
+  Future<Result<void, AuthFailure>> signIn({required String email, required String password}) async {
     _logger.i('$_signInStartLog$email$_closingQuoteLog');
     try {
       await _authService.signIn(email: email, password: password);
@@ -111,15 +111,15 @@ final class AuthRepositoryImpl implements AuthRepository, DisposableResource {
       return Result.ok;
     } on AuthServiceException catch (e) {
       _logger.e('$_signInFailureLog$e');
-      return Result.failure(e.message);
+      return Result.failure(e.failure);
     } on Exception catch (e) {
       _logger.e('$_signInFailureLog$e');
-      return const Result.failure(_genericErrorMessage);
+      return const Result.failure(AuthFailure.unknown);
     }
   }
 
   @override
-  Future<Result<void>> signUp({required String email, required String password}) async {
+  Future<Result<void, AuthFailure>> signUp({required String email, required String password}) async {
     _logger.i('$_signUpStartLog$email$_closingQuoteLog');
     try {
       await _authService.signUp(email: email, password: password);
@@ -128,15 +128,15 @@ final class AuthRepositoryImpl implements AuthRepository, DisposableResource {
       return Result.ok;
     } on AuthServiceException catch (e) {
       _logger.e('$_signUpFailureLog$e');
-      return Result.failure(e.message);
+      return Result.failure(e.failure);
     } on Exception catch (e) {
       _logger.e('$_signUpFailureLog$e');
-      return const Result.failure(_genericErrorMessage);
+      return const Result.failure(AuthFailure.unknown);
     }
   }
 
   @override
-  Future<Result<void>> signOut() async {
+  Future<Result<void, AuthFailure>> signOut() async {
     _logger.i(_signOutStartLog);
     try {
       await _localAuthService.setGuest(false);
@@ -149,10 +149,10 @@ final class AuthRepositoryImpl implements AuthRepository, DisposableResource {
       return Result.ok;
     } on AuthServiceException catch (e) {
       _logger.e('$_signOutFailureLog$e');
-      return Result.failure(e.message);
+      return Result.failure(e.failure);
     } on Exception catch (e) {
       _logger.e('$_signOutFailureLog$e');
-      return const Result.failure(_genericErrorMessage);
+      return const Result.failure(AuthFailure.unknown);
     }
   }
 }

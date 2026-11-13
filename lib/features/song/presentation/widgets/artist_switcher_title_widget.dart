@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../../core/presentation/theme.dart';
 import '../../domain/entities/song.dart';
 import 'artist_picker_widget.dart';
@@ -9,9 +10,6 @@ import 'artist_picker_widget.dart';
 /// The sheet lists every artist of [songs] with a search field; the chosen
 /// one is passed to [onArtistSelected].
 final class ArtistSwitcherTitleWidget extends StatelessWidget {
-  /// Tooltip of the title.
-  static const String _tooltip = 'Інший виконавець';
-
   /// Part of the screen height taken by the sheet.
   static const double _sheetHeightFactor = 0.7;
 
@@ -38,10 +36,11 @@ final class ArtistSwitcherTitleWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Translations t = context.t;
     final Color iconColor = Theme.of(context).colorScheme.onSurfaceVariant;
 
     return Tooltip(
-      message: _tooltip,
+      message: t.song.otherArtist,
       child: InkWell(
         borderRadius: BorderRadius.circular(AppTheme.radius),
         onTap: () => _onPressed(context),

@@ -1,18 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../../core/presentation/theme.dart';
 import '../../domain/entities/sync_summary.dart';
 
 /// What a synchronisation added on this and on the other device.
 final class SyncSummaryWidget extends StatelessWidget {
-  static const String _title = 'Синхронізовано';
-  static const String _received = 'Додано сюди';
-  static const String _sent = 'Додано на інший пристрій';
-  static const String _songs = 'пісень: ';
-  static const String _covers = 'каверів: ';
-  static const String _sessions = 'тренувань: ';
-  static const String _deleted = 'видалено: ';
-  static const String _updated = 'оновлено: ';
   static const String _separator = ', ';
   static const double _iconSize = 64;
 
@@ -30,24 +23,25 @@ final class SyncSummaryWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Translations t = context.t;
     final ThemeData theme = Theme.of(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         Icon(Icons.check_circle_outline, size: _iconSize, color: theme.colorScheme.primary),
         const SizedBox(height: AppTheme.spacingMedium),
-        Text(_title, style: theme.textTheme.titleLarge),
+        Text(t.sync.synced, style: theme.textTheme.titleLarge),
         const SizedBox(height: AppTheme.spacingMedium),
-        Text(_received, style: theme.textTheme.titleSmall),
+        Text(t.sync.received, style: theme.textTheme.titleSmall),
         Text(
-          _counts(summary.songsReceived, summary.coversReceived, summary.sessionsReceived) +
-              _changes(summary.deletedHere, summary.updatedHere),
+          _counts(t, summary.songsReceived, summary.coversReceived, summary.sessionsReceived) +
+              _changes(t, summary.deletedHere, summary.updatedHere),
         ),
         const SizedBox(height: AppTheme.spacingSmall),
-        Text(_sent, style: theme.textTheme.titleSmall),
+        Text(t.sync.sent, style: theme.textTheme.titleSmall),
         Text(
-          _counts(summary.songsSent, summary.coversSent, summary.sessionsSent) +
-              _changes(summary.deletedThere, summary.updatedThere),
+          _counts(t, summary.songsSent, summary.coversSent, summary.sessionsSent) +
+              _changes(t, summary.deletedThere, summary.updatedThere),
         ),
         const SizedBox(height: AppTheme.spacingLarge),
         FilledButton(onPressed: onDonePressed, child: Text(doneLabel)),
@@ -55,8 +49,9 @@ final class SyncSummaryWidget extends StatelessWidget {
     );
   }
 
-  static String _changes(int deleted, int updated) => '$_separator$_deleted$deleted$_separator$_updated$updated';
+  static String _changes(Translations t, int deleted, int updated) =>
+      '$_separator${t.sync.deletedCount(n: deleted)}$_separator${t.sync.updatedCount(n: updated)}';
 
-  static String _counts(int songs, int covers, int sessions) =>
-      '$_songs$songs$_separator$_covers$covers$_separator$_sessions$sessions';
+  static String _counts(Translations t, int songs, int covers, int sessions) =>
+      '${t.sync.songsCount(n: songs)}$_separator${t.sync.coversCount(n: covers)}$_separator${t.sync.sessionsCount(n: sessions)}';
 }

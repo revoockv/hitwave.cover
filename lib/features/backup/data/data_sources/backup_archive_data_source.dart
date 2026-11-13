@@ -26,7 +26,7 @@ final class BackupArchiveDataSource {
   static const String _zipExtension = '.zip';
   static const String _tempPrefix = 'hitwave_backup_';
   static const String _separator = '/';
-  static const String _noJsonError = 'В архіві немає backup.json';
+  static const String _noJsonError = 'The archive has no backup.json';
 
   /// Writes [json] to the file at [path].
   Future<void> writeJson({required String path, required String json}) => File(path).writeAsString(json);

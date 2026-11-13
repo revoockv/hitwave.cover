@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:watch_it/watch_it.dart';
 
+import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../../core/presentation/theme.dart';
 import '../../domain/entities/recording.dart';
 import '../../domain/entities/shared_song.dart';
@@ -9,8 +10,6 @@ import 'recordings_list_widget.dart';
 
 /// Bottom sheet with the recordings of one song.
 final class RecordingsSheetWidget extends WatchingWidget {
-  static const String _title = 'Записи';
-  static const String _empty = 'Ще немає записів. Позначте «Запис» і натисніть «Старт».';
   static const double _heightFactor = 0.7;
 
   /// The song whose recordings are shown.
@@ -26,6 +25,7 @@ final class RecordingsSheetWidget extends WatchingWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Translations t = context.t;
     final List<Recording> recordings = watch(
       watchRecordingsUseCase(),
     ).value.where((Recording recording) => recording.songId == songId).toList();
@@ -38,10 +38,10 @@ final class RecordingsSheetWidget extends WatchingWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              Text(_title, style: Theme.of(context).textTheme.titleLarge),
+              Text(t.recordings.title, style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: AppTheme.spacingMedium),
               Expanded(
-                child: RecordingsListWidget(recordings: recordings, emptyText: _empty, songOf: _songOf),
+                child: RecordingsListWidget(recordings: recordings, emptyText: t.recordings.noTakes, songOf: _songOf),
               ),
             ],
           ),

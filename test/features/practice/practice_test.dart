@@ -45,7 +45,7 @@ Recording take(String songId, DateTime at) => Recording(
   keptFromSeconds: 0,
   keptToSeconds: null,
   status: RecordingStatus.enhanced,
-  enhanceError: null,
+  enhanceFailure: null,
 );
 
 void main() {

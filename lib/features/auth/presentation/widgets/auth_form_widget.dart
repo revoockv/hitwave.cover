@@ -4,9 +4,12 @@ import 'package:watch_it/watch_it.dart';
 
 import '../../../../core/domain/entities/result.dart';
 import '../../../../core/domain/entities/result_state.dart';
+import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../../core/presentation/theme.dart';
 import '../controllers/auth_form_controller.dart';
+import '../l10n/auth_texts.dart';
 import '../di/auth_getters.dart';
+import '../../domain/entities/auth_failure.dart';
 
 /// Main authentication form displayed for unauthenticated users.
 ///
@@ -17,7 +20,6 @@ import '../di/auth_getters.dart';
 /// the session.
 final class AuthFormWidget extends WatchingWidget {
   /// Error shown when a field is empty.
-  static const String _emptyFieldsError = 'Будь ласка, заповніть всі поля.';
 
   /// Creates a new [AuthFormWidget].
   const AuthFormWidget({super.key});
@@ -83,17 +85,18 @@ final class AuthFormWidget extends WatchingWidget {
 
   /// Signs in or up with the entered values; ignored while an attempt runs.
   Future<void> _onSubmitPressed(AuthFormController authFormController) async {
-    final ValueNotifier<ResultState<void>> submittingStateController = authFormController.submittingStateController;
+    final ValueNotifier<ResultState<void, AuthFailure>> submittingStateController =
+        authFormController.submittingStateController;
     if (submittingStateController.value.isLoading) return;
     if (authFormController.hasEmptyFields) {
-      submittingStateController.value = const ResultState<void>.failure(_emptyFieldsError);
+      submittingStateController.value = const ResultState<void, AuthFailure>.failure(AuthFailure.emptyFields);
       return;
     }
     submittingStateController.value = ResultState.loading;
 
     final String email = authFormController.email;
     final String password = authFormController.password;
-    final Result<void> result = authFormController.signUpModeController.value
+    final Result<void, AuthFailure> result = authFormController.signUpModeController.value
         ? await signUpUseCase(email: email, password: password)
         : await signInUseCase(email: email, password: password);
     if (authFormController.isDisposed) return;
@@ -105,7 +108,7 @@ final class AuthFormWidget extends WatchingWidget {
   Future<void> _onWithoutAccountPressed(AuthFormController authFormController) async {
     if (authFormController.submittingStateController.value.isLoading) return;
 
-    final Result<void> result = await continueWithoutAccountUseCase();
+    final Result<void, AuthFailure> result = await continueWithoutAccountUseCase();
     if (authFormController.isDisposed || result.isSuccess) return;
 
     authFormController.submittingStateController.value = ResultState.of(result);
@@ -125,14 +128,12 @@ final class _BrandHeaderWidget extends StatelessWidget {
   /// Name of the app.
   static const String _appName = 'Hitwave Cover';
 
-  /// Short description under the name.
-  static const String _tagline = 'Тексти пісень і кавери завжди під рукою';
-
   /// Creates a new [_BrandHeaderWidget].
   const _BrandHeaderWidget();
 
   @override
   Widget build(BuildContext context) {
+    final Translations t = context.t;
     final ThemeData theme = Theme.of(context);
     final ColorScheme colorScheme = theme.colorScheme;
 
@@ -155,7 +156,7 @@ final class _BrandHeaderWidget extends StatelessWidget {
         ),
         const SizedBox(height: AppTheme.spacingTiny),
         Text(
-          _tagline,
+          t.auth.tagline,
           style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
           textAlign: TextAlign.center,
         ),
@@ -166,12 +167,6 @@ final class _BrandHeaderWidget extends StatelessWidget {
 
 /// Title text that switches between sign-in and sign-up labels.
 final class _FormTitleWidget extends WatchingWidget {
-  /// Text shown in sign-up mode.
-  static const String _signUpText = 'Створіть акаунт';
-
-  /// Text shown in sign-in mode.
-  static const String _signInText = 'Увійдіть в акаунт';
-
   /// Whether the form is in sign-up mode.
   final ValueListenable<bool> signUpMode;
 
@@ -180,26 +175,28 @@ final class _FormTitleWidget extends WatchingWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Translations t = context.t;
     final bool signUp = watch(signUpMode).value;
-    return Text(signUp ? _signUpText : _signInText, style: Theme.of(context).textTheme.titleLarge);
+    return Text(signUp ? t.auth.createAccount : t.auth.signInTitle, style: Theme.of(context).textTheme.titleLarge);
   }
 }
 
 /// Shows the error of the last attempt, or nothing.
 final class _ErrorMessageWidget extends WatchingWidget {
   /// Progress of the last sign-in or sign-up.
-  final ValueListenable<ResultState<void>> submittingState;
+  final ValueListenable<ResultState<void, AuthFailure>> submittingState;
 
   /// Creates a new [_ErrorMessageWidget].
   const _ErrorMessageWidget({required this.submittingState});
 
   @override
   Widget build(BuildContext context) {
-    final ResultState<void> current = watch(submittingState).value;
-    if (current is! FailureResultState<void>) {
+    final ResultState<void, AuthFailure> current = watch(submittingState).value;
+    if (current is! FailureResultState<void, AuthFailure>) {
       return const SizedBox.shrink();
     }
 
+    final Translations t = context.t;
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: AppTheme.spacingMedium),
@@ -216,7 +213,7 @@ final class _ErrorMessageWidget extends WatchingWidget {
               Icon(Icons.error_outline, color: colorScheme.onErrorContainer),
               const SizedBox(width: AppTheme.spacingSmall),
               Expanded(
-                child: Text(current.message, style: TextStyle(color: colorScheme.onErrorContainer)),
+                child: Text(current.failure.text(t), style: TextStyle(color: colorScheme.onErrorContainer)),
               ),
             ],
           ),
@@ -228,9 +225,6 @@ final class _ErrorMessageWidget extends WatchingWidget {
 
 /// Email text field for the authentication form.
 final class _EmailFieldWidget extends StatelessWidget {
-  /// Label text for the email field.
-  static const String _emailLabelText = 'Email';
-
   /// The [AuthFormController] owning the field.
   final AuthFormController authFormController;
 
@@ -239,6 +233,7 @@ final class _EmailFieldWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Translations t = context.t;
     return TextField(
       controller: authFormController.emailController,
       focusNode: authFormController.emailFocusNode,
@@ -247,22 +242,13 @@ final class _EmailFieldWidget extends StatelessWidget {
       autocorrect: false,
       autofillHints: const <String>[AutofillHints.email],
       onEditingComplete: authFormController.focusPassword,
-      decoration: const InputDecoration(labelText: _emailLabelText, prefixIcon: Icon(Icons.mail_outline)),
+      decoration: InputDecoration(labelText: t.auth.email, prefixIcon: const Icon(Icons.mail_outline)),
     );
   }
 }
 
 /// Password text field with a show/hide toggle.
 final class _PasswordFieldWidget extends WatchingWidget {
-  /// Label text for the password field.
-  static const String _passwordLabelText = 'Пароль';
-
-  /// Tooltip of the toggle while the password is hidden.
-  static const String _showPasswordTooltip = 'Показати пароль';
-
-  /// Tooltip of the toggle while the password is visible.
-  static const String _hidePasswordTooltip = 'Сховати пароль';
-
   /// The [AuthFormController] owning the field.
   final AuthFormController authFormController;
 
@@ -274,6 +260,7 @@ final class _PasswordFieldWidget extends WatchingWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Translations t = context.t;
     final bool obscure = watch(authFormController.passwordHiddenController).value;
 
     return TextField(
@@ -284,10 +271,10 @@ final class _PasswordFieldWidget extends WatchingWidget {
       autofillHints: const <String>[AutofillHints.password],
       onEditingComplete: onSubmit,
       decoration: InputDecoration(
-        labelText: _passwordLabelText,
+        labelText: t.auth.password,
         prefixIcon: const Icon(Icons.lock_outline),
         suffixIcon: IconButton(
-          tooltip: obscure ? _showPasswordTooltip : _hidePasswordTooltip,
+          tooltip: obscure ? t.auth.showPassword : t.auth.hidePassword,
           icon: Icon(obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined),
           onPressed: authFormController.togglePasswordVisibility,
         ),
@@ -298,14 +285,8 @@ final class _PasswordFieldWidget extends WatchingWidget {
 
 /// Submit button that shows progress while the attempt runs.
 final class _SubmitButtonWidget extends WatchingWidget {
-  /// Text shown in sign-up mode.
-  static const String _signUpText = 'Зареєструватися';
-
-  /// Text shown in sign-in mode.
-  static const String _signInText = 'Увійти';
-
   /// Progress of the last sign-in or sign-up.
-  final ValueListenable<ResultState<void>> submittingState;
+  final ValueListenable<ResultState<void, AuthFailure>> submittingState;
 
   /// Whether the form is in sign-up mode.
   final ValueListenable<bool> signUpMode;
@@ -318,6 +299,7 @@ final class _SubmitButtonWidget extends WatchingWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Translations t = context.t;
     final bool isLoading = watch(submittingState).value.isLoading;
     final bool signUp = watch(signUpMode).value;
 
@@ -328,19 +310,13 @@ final class _SubmitButtonWidget extends WatchingWidget {
               dimension: AppTheme.loadingIndicatorSize,
               child: CircularProgressIndicator(strokeWidth: AppTheme.loadingIndicatorStroke),
             )
-          : Text(signUp ? _signUpText : _signInText),
+          : Text(signUp ? t.auth.signUp : t.auth.signIn),
     );
   }
 }
 
 /// Toggle button to switch between sign-in and sign-up modes.
 final class _ToggleButtonWidget extends WatchingWidget {
-  /// Shown in sign-up mode (switches to sign-in).
-  static const String _signedInText = 'Вже є акаунт? Увійти';
-
-  /// Shown in sign-in mode (switches to sign-up).
-  static const String _signedOutText = 'Немає акаунту? Зареєструватися';
-
   /// Whether the form is in sign-up mode.
   final ValueListenable<bool> signUpMode;
 
@@ -352,21 +328,16 @@ final class _ToggleButtonWidget extends WatchingWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Translations t = context.t;
     final bool signUp = watch(signUpMode).value;
-    return TextButton(onPressed: onPressed, child: Text(signUp ? _signedInText : _signedOutText));
+    return TextButton(onPressed: onPressed, child: Text(signUp ? t.auth.haveAccount : t.auth.noAccount));
   }
 }
 
 /// Button that starts using the app without an account, with a note where the songs are kept.
 final class _WithoutAccountButtonWidget extends WatchingWidget {
-  /// Label of the button.
-  static const String _label = 'Продовжити без акаунта';
-
-  /// Note under the button.
-  static const String _note = 'Пісні зберігатимуться лише на цьому пристрої. Увійти можна будь-коли пізніше.';
-
   /// Progress of the last sign-in or sign-up; the button waits while it runs.
-  final ValueListenable<ResultState<void>> submittingState;
+  final ValueListenable<ResultState<void, AuthFailure>> submittingState;
 
   /// Called when the button is pressed.
   final VoidCallback onPressed;
@@ -376,6 +347,7 @@ final class _WithoutAccountButtonWidget extends WatchingWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Translations t = context.t;
     final bool isLoading = watch(submittingState).value.isLoading;
     final ThemeData theme = Theme.of(context);
 
@@ -385,11 +357,11 @@ final class _WithoutAccountButtonWidget extends WatchingWidget {
         OutlinedButton.icon(
           onPressed: isLoading ? null : onPressed,
           icon: const Icon(Icons.phone_android),
-          label: const Text(_label),
+          label: Text(t.auth.withoutAccount),
         ),
         const SizedBox(height: AppTheme.spacingSmall),
         Text(
-          _note,
+          t.auth.withoutAccountNote,
           textAlign: TextAlign.center,
           style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
         ),

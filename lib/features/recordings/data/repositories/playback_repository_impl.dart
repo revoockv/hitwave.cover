@@ -10,6 +10,7 @@ import '../../domain/entities/recording.dart';
 import '../../domain/entities/recording_version.dart';
 import '../../domain/repositories/playback_repository.dart';
 import '../data_sources/audio_player_data_source.dart';
+import '../../domain/entities/recordings_failure.dart';
 
 /// [PlaybackRepository] on one audio player.
 ///
@@ -18,7 +19,6 @@ import '../data_sources/audio_player_data_source.dart';
 /// same singing.
 final class PlaybackRepositoryImpl implements PlaybackRepository, DisposableResource {
   static const int _millisecondsPerSecond = 1000;
-  static const String _playError = 'Не вдалося відтворити запис';
   static const String _playLog = 'PlayRecording: ';
   static const String _successLog = 'success — ';
   static const String _failureLog = 'failure — ';
@@ -51,7 +51,10 @@ final class PlaybackRepositoryImpl implements PlaybackRepository, DisposableReso
   ValueListenable<PlaybackState> watchPlayback() => _state;
 
   @override
-  Future<Result<void>> play({required Recording recording, required RecordingVersion version}) async {
+  Future<Result<void, RecordingsFailure>> play({
+    required Recording recording,
+    required RecordingVersion version,
+  }) async {
     final String? enhanced = recording.enhancedPath;
     final bool playEnhanced = version == RecordingVersion.enhanced && enhanced != null;
     try {
@@ -75,12 +78,12 @@ final class PlaybackRepositoryImpl implements PlaybackRepository, DisposableReso
     } on Exception catch (e) {
       _logger.e('$_playLog$_failureLog$e');
       _state.value = PlaybackState.stopped;
-      return const Result.failure(_playError);
+      return const Result.failure(RecordingsFailure.play);
     }
   }
 
   @override
-  Future<Result<void>> togglePause() async {
+  Future<Result<void, RecordingsFailure>> togglePause() async {
     final PlaybackState state = _state.value;
     if (state.recordingId == null) return Result.ok;
     try {
@@ -92,12 +95,12 @@ final class PlaybackRepositoryImpl implements PlaybackRepository, DisposableReso
       return Result.ok;
     } on Exception catch (e) {
       _logger.e('$_playLog$_failureLog$e');
-      return const Result.failure(_playError);
+      return const Result.failure(RecordingsFailure.play);
     }
   }
 
   @override
-  Future<Result<void>> stop() async {
+  Future<Result<void, RecordingsFailure>> stop() async {
     try {
       await _player.stop();
     } on Exception catch (e) {

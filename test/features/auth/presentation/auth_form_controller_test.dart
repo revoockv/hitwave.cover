@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hitwave.cover/core/domain/entities/result_state.dart';
 import 'package:hitwave.cover/features/auth/presentation/controllers/auth_form_controller.dart';
+import 'package:hitwave.cover/features/auth/domain/entities/auth_failure.dart';
 
 void main() {
   late AuthFormController authFormController;
@@ -28,7 +29,9 @@ void main() {
   });
 
   test('toggling the mode switches to sign-up and clears the last error', () {
-    authFormController.submittingStateController.value = const ResultState<void>.failure('taken');
+    authFormController.submittingStateController.value = const ResultState<void, AuthFailure>.failure(
+      AuthFailure.emailAlreadyInUse,
+    );
 
     authFormController.toggleMode();
 

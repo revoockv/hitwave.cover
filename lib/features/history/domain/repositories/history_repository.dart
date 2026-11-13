@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart' show ValueListenable;
 
 import '../../../../core/domain/entities/result.dart';
 import '../entities/usage_history.dart';
+import '../entities/history_failure.dart';
 
 /// Remembers when songs were opened and covers played, only on this device.
 ///
@@ -11,11 +12,11 @@ abstract interface class HistoryRepository {
   ValueListenable<UsageHistory> watchHistory();
 
   /// Remembers that [songId] was opened now.
-  Future<Result<void>> markSongOpened(String songId);
+  Future<Result<void, HistoryFailure>> markSongOpened(String songId);
 
   /// Remembers that the cover [recordingId] was played now.
-  Future<Result<void>> markCoverPlayed(String recordingId);
+  Future<Result<void, HistoryFailure>> markCoverPlayed(String recordingId);
 
   /// Adds the history of another device; the later time of every song and cover wins.
-  Future<Result<void>> importHistory(UsageHistory history);
+  Future<Result<void, HistoryFailure>> importHistory(UsageHistory history);
 }

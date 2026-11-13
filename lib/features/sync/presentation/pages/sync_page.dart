@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:watch_it/watch_it.dart';
 
 import '../../../../core/domain/entities/result.dart';
+import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../../core/presentation/theme.dart';
 import '../../domain/entities/sync_state.dart';
 import '../controllers/sync_page_controller.dart';
@@ -13,20 +14,13 @@ import '../widgets/sync_conflicts_widget.dart';
 import '../widgets/sync_qr_widget.dart';
 import '../widgets/sync_summary_widget.dart';
 import 'sync_scanner_page.dart';
+import '../../domain/entities/sync_failure.dart';
+import '../l10n/sync_texts.dart';
 
 /// Synchronises the songs, covers, practice and history with another device on the same Wi‑Fi:
 /// one device shows a QR code, the other scans it (or takes the code typed by hand).
 final class SyncPage extends WatchingWidget {
-  static const String _title = 'Синхронізація';
-  static const String _intro =
-      'Перенесіть пісні, кавери, тренування й історію між пристроями. Нічого не видаляється: кожен пристрій отримує те, чого йому бракує.';
-  static const String _showQrLabel = 'Показати QR-код';
-  static const String _scanLabel = 'Сканувати QR-код';
-  static const String _orLabel = 'або вставте код з іншого пристрою';
   static const String _codeHint = 'hitwave-sync:…';
-  static const String _connectLabel = 'Підключитися';
-  static const String _doneLabel = 'Готово';
-  static const String _copiedMessage = 'Код скопійовано';
   static const double _iconSize = 64;
 
   /// Creates a new [SyncPage].
@@ -34,6 +28,7 @@ final class SyncPage extends WatchingWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Translations t = context.t;
     final SyncPageController syncPageController = createOnce(
       _createSyncPageController,
       dispose: _disposeSyncPageController,
@@ -50,7 +45,7 @@ final class SyncPage extends WatchingWidget {
     return PopScope(
       onPopInvokedWithResult: _onPopped,
       child: Scaffold(
-        appBar: AppBar(title: const Text(_title)),
+        appBar: AppBar(title: Text(t.sync.title)),
         body: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(AppTheme.spacingLarge),
@@ -59,15 +54,15 @@ final class SyncPage extends WatchingWidget {
               child: switch (state) {
                 HostingSyncState(:final String code) => SyncQrWidget(
                   code: code,
-                  onCopyPressed: () => _copy(ScaffoldMessenger.of(context), code),
+                  onCopyPressed: () => _copy(ScaffoldMessenger.of(context), t, code),
                   onCancelPressed: stopSyncUseCase.call,
                 ),
-                SyncingSyncState(:final String step, :final double? fraction) => Column(
+                final SyncingSyncState syncing => Column(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
-                    LinearProgressIndicator(value: fraction),
+                    LinearProgressIndicator(value: syncing.fraction),
                     const SizedBox(height: AppTheme.spacingMedium),
-                    Text(step, textAlign: TextAlign.center, style: theme.textTheme.bodyLarge),
+                    Text(syncing.text(t), textAlign: TextAlign.center, style: theme.textTheme.bodyLarge),
                   ],
                 ),
                 ConflictsSyncState(:final List<SyncConflict> conflicts) => SyncConflictsWidget(
@@ -81,7 +76,7 @@ final class SyncPage extends WatchingWidget {
                 ),
                 DoneSyncState(:final summary) => SyncSummaryWidget(
                   summary: summary,
-                  doneLabel: _doneLabel,
+                  doneLabel: t.sync.done,
                   onDonePressed: () => _onDonePressed(context),
                 ),
                 IdleSyncState() || FailedSyncState() => Column(
@@ -90,11 +85,11 @@ final class SyncPage extends WatchingWidget {
                   children: <Widget>[
                     Icon(Icons.sync, size: _iconSize, color: theme.colorScheme.primary),
                     const SizedBox(height: AppTheme.spacingMedium),
-                    Text(_intro, textAlign: TextAlign.center, style: theme.textTheme.bodyMedium),
-                    if (state case FailedSyncState(:final String message)) ...<Widget>[
+                    Text(t.sync.intro, textAlign: TextAlign.center, style: theme.textTheme.bodyMedium),
+                    if (state case final FailedSyncState failed) ...<Widget>[
                       const SizedBox(height: AppTheme.spacingMedium),
                       Text(
-                        message,
+                        failed.text(context.t),
                         textAlign: TextAlign.center,
                         style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.error),
                       ),
@@ -103,28 +98,25 @@ final class SyncPage extends WatchingWidget {
                     FilledButton.icon(
                       onPressed: startSyncHostingUseCase.call,
                       icon: const Icon(Icons.qr_code_2),
-                      label: const Text(_showQrLabel),
+                      label: Text(t.sync.showQr),
                     ),
                     if (_canScan) ...<Widget>[
                       const SizedBox(height: AppTheme.spacingSmall),
                       OutlinedButton.icon(
                         onPressed: () => _scan(context),
                         icon: const Icon(Icons.qr_code_scanner),
-                        label: const Text(_scanLabel),
+                        label: Text(t.sync.scanQr),
                       ),
                     ],
                     const SizedBox(height: AppTheme.spacingLarge),
-                    Text(_orLabel, textAlign: TextAlign.center, style: theme.textTheme.labelMedium),
+                    Text(t.sync.orPaste, textAlign: TextAlign.center, style: theme.textTheme.labelMedium),
                     const SizedBox(height: AppTheme.spacingSmall),
                     TextField(
                       controller: syncPageController.codeController,
                       decoration: const InputDecoration(hintText: _codeHint, border: OutlineInputBorder()),
                     ),
                     const SizedBox(height: AppTheme.spacingSmall),
-                    OutlinedButton(
-                      onPressed: () => _connectTyped(syncPageController),
-                      child: const Text(_connectLabel),
-                    ),
+                    OutlinedButton(onPressed: () => _connectTyped(syncPageController), child: Text(t.sync.connect)),
                   ],
                 ),
               },
@@ -173,13 +165,13 @@ final class SyncPage extends WatchingWidget {
       _connect(syncPageController.codeController.text);
 
   static Future<void> _connect(String code) async {
-    final Result<void> result = await syncWithDeviceUseCase(code);
+    final Result<void, SyncFailure> result = await syncWithDeviceUseCase(code);
     if (result.isFailure) return; // The page shows the failure from the state.
   }
 
-  static Future<void> _copy(ScaffoldMessengerState messenger, String code) async {
+  static Future<void> _copy(ScaffoldMessengerState messenger, Translations t, String code) async {
     await Clipboard.setData(ClipboardData(text: code));
-    messenger.showSnackBar(const SnackBar(content: Text(_copiedMessage)));
+    messenger.showSnackBar(SnackBar(content: Text(t.sync.codeCopied)));
   }
 
   Future<void> _onDonePressed(BuildContext context) async {

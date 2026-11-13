@@ -3,6 +3,7 @@ import '../entities/recording.dart';
 import '../entities/recording_version.dart';
 import '../entities/shared_song.dart';
 import '../repositories/recording_files_repository.dart';
+import '../entities/recordings_failure.dart';
 
 /// Use case that sends a recording through the share sheet (a messenger, mail…).
 final class ShareRecordingUseCase {
@@ -13,7 +14,11 @@ final class ShareRecordingUseCase {
 
   /// Shares the [version] of [recording], named after its [song].
   /// `true` when the message went onto the clipboard for pasting.
-  Future<Result<bool>> call({required Recording recording, required RecordingVersion version, SharedSong? song}) async {
+  Future<Result<bool, RecordingsFailure>> call({
+    required Recording recording,
+    required RecordingVersion version,
+    SharedSong? song,
+  }) async {
     return _repository.shareRecording(recording: recording, version: version, song: song);
   }
 }

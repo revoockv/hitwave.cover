@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../domain/entities/song_practice.dart';
 import 'practice_time_text_widget.dart';
 
 /// Songs with their practice time and takes.
 final class SongPracticeListWidget extends StatelessWidget {
-  static const String _takesSuffix = ' зап.';
   static const String _separator = ' · ';
 
   /// The songs, in the order to show.
@@ -22,6 +22,7 @@ final class SongPracticeListWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Translations t = context.t;
     final ThemeData theme = Theme.of(context);
     if (songs.isEmpty) {
       return Text(emptyText, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant));
@@ -35,8 +36,8 @@ final class SongPracticeListWidget extends StatelessWidget {
             title: Text(titleOf(song.songId), maxLines: 1, overflow: TextOverflow.ellipsis),
             trailing: Text(
               song.takes > 0
-                  ? '${PracticeTimeTextWidget.format(song.time)}$_separator${song.takes}$_takesSuffix'
-                  : PracticeTimeTextWidget.format(song.time),
+                  ? '${PracticeTimeTextWidget.format(t, song.time)}$_separator${t.practice.takesCount(n: song.takes)}'
+                  : PracticeTimeTextWidget.format(t, song.time),
               style: theme.textTheme.bodyMedium,
             ),
           ),

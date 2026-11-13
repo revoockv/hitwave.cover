@@ -1,4 +1,6 @@
 import 'sync_conflict.dart';
+import 'sync_failure.dart';
+import 'sync_step.dart';
 import 'sync_summary.dart';
 
 /// State of the synchronisation with another device.
@@ -26,14 +28,33 @@ final class HostingSyncState extends SyncState {
 
 /// Data is being exchanged.
 final class SyncingSyncState extends SyncState {
-  /// What is being done now.
-  final String step;
+  /// The step that runs.
+  final SyncStep step;
 
-  /// Done part, 0.0–1.0, or `null` when unknown.
+  /// How many of [total] files are done in [SyncStep.downloading] and [SyncStep.uploading].
+  final int? done;
+
+  /// How many files the step moves.
+  final int? total;
+
+  /// Part of the step done, from 0 to 1, or `null` when unknown.
   final double? fraction;
 
-  /// Creates a [SyncingSyncState].
-  const SyncingSyncState({required this.step, required this.fraction});
+  /// Whether the other device reports the step.
+  final bool isPeer;
+
+  /// Name of the other device when [isPeer]; `null` when it has none.
+  final String? peerName;
+
+  /// Creates the state.
+  const SyncingSyncState({
+    required this.step,
+    required this.fraction,
+    this.done,
+    this.total,
+    this.isPeer = false,
+    this.peerName,
+  });
 }
 
 /// The devices differ in ways only the user can decide; the exchange waits for the choices.
@@ -56,9 +77,15 @@ final class DoneSyncState extends SyncState {
 
 /// The synchronisation failed with [message].
 final class FailedSyncState extends SyncState {
-  /// Why it failed.
-  final String message;
+  /// What went wrong.
+  final SyncFailure failure;
 
-  /// Creates a [FailedSyncState].
-  const FailedSyncState(this.message);
+  /// Name of the other device when it stopped the sync ([SyncFailure.peerStopped]); `null` when it has none.
+  final String? peerName;
+
+  /// Why the other device stopped, when it said so.
+  final SyncFailure? peerFailure;
+
+  /// Creates the state.
+  const FailedSyncState(this.failure, {this.peerName, this.peerFailure});
 }

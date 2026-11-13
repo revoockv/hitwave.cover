@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:watch_it/watch_it.dart';
 
+import 'core/presentation/l10n/app_translations.dart';
 import 'core/presentation/theme.dart';
 import 'di.dart';
 import 'features/auth/domain/entities/auth_session.dart';
@@ -21,10 +23,17 @@ Future<void> main() async {
 /// The root application widget.
 ///
 /// Renders the auth page while nobody is signed in, or the home page for a
-/// signed-in user and for a guest without an account.
+/// signed-in user and for a guest without an account, in the language of the device.
 final class HitwaveCoverAppWidget extends WatchingWidget {
-  /// Title of the app in the task switcher.
-  static const String _appTitle = 'Hitwave Cover';
+  /// Texts of the app first, then Flutter's own; the fallbacks give Interslavic English system texts.
+  static const List<LocalizationsDelegate<Object>> _localizationsDelegates = <LocalizationsDelegate<Object>>[
+    TranslationsDelegate(),
+    GlobalMaterialLocalizations.delegate,
+    GlobalCupertinoLocalizations.delegate,
+    GlobalWidgetsLocalizations.delegate,
+    FallbackMaterialLocalizationsDelegate(),
+    FallbackCupertinoLocalizationsDelegate(),
+  ];
 
   /// Key of the home page of a guest, so a sign-in builds a fresh home page.
   static const String _guestHomeKey = 'guest';
@@ -38,7 +47,9 @@ final class HitwaveCoverAppWidget extends WatchingWidget {
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: _appTitle,
+      onGenerateTitle: _title,
+      supportedLocales: AppLocaleUtils.supportedLocales,
+      localizationsDelegates: _localizationsDelegates,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       home: switch (session) {
@@ -48,4 +59,6 @@ final class HitwaveCoverAppWidget extends WatchingWidget {
       },
     );
   }
+
+  static String _title(BuildContext context) => context.t.appTitle;
 }

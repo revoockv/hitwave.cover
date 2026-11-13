@@ -1,3 +1,5 @@
+import 'song_difference.dart';
+
 /// What differs between the two devices.
 enum SyncConflictKind {
   /// The song was deleted on this device and is still on the other one.
@@ -39,14 +41,27 @@ final class SyncConflict {
   /// What differs.
   final SyncConflictKind kind;
 
-  /// The song (and, for a cover, its date) the conflict is about.
-  final String title;
+  /// "Name — Artist" of the song (of the cover's song for a cover); `null` when that song is gone.
+  final String? songTitle;
 
-  /// More about it (what changed), or `null`.
-  final String? detail;
+  /// When the cover was recorded; `null` for a song.
+  final DateTime? coverRecordedAt;
+
+  /// When the song or the cover was deleted; `null` when unknown or not deleted.
+  final DateTime? deletedAt;
+
+  /// What differs in a changed song.
+  final Set<SongDifference> differences;
 
   /// Creates a [SyncConflict].
-  const SyncConflict({required this.id, required this.kind, required this.title, required this.detail});
+  const SyncConflict({
+    required this.id,
+    required this.kind,
+    required this.songTitle,
+    this.coverRecordedAt,
+    this.deletedAt,
+    this.differences = const <SongDifference>{},
+  });
 
   /// The choices this conflict offers, the safe one (nothing is lost) first.
   List<SyncChoice> get choices => switch (kind) {

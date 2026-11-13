@@ -1,38 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../../core/presentation/theme.dart';
 import '../../domain/entities/sync_conflict.dart';
+import '../l10n/sync_texts.dart';
 
 /// The conflicts of a synchronisation with a choice for each, choices for all at once, and the
 /// buttons that go on or cancel. Knows nothing about use cases.
 final class SyncConflictsWidget extends StatelessWidget {
-  static const String _title = 'Що робити з розбіжностями?';
-  static const String _hint =
-      'Ці пісні й кавери видалили або змінили лише на одному з пристроїв. Оберіть для кожного, що зробити на обох.';
-  static const String _allDeletionsLabel = 'Усі видалення:';
-  static const String _allChangesLabel = 'Усі зміни:';
-  static const String _continueLabel = 'Продовжити';
-  static const String _cancelLabel = 'Скасувати';
-  static const String _restoreHere = 'Відновити тут';
-  static const String _deleteThere = 'Видалити й там';
-  static const String _restoreThere = 'Відновити там';
-  static const String _deleteHere = 'Видалити й тут';
-  static const String _takeOther = 'Взяти з іншого';
-  static const String _keepThis = 'Залишити цю';
-  static const Map<SyncConflictKind, String> _kindLabels = <SyncConflictKind, String>{
-    SyncConflictKind.songDeletedHere: 'Пісню видалено на цьому пристрої',
-    SyncConflictKind.songDeletedThere: 'Пісню видалено на іншому пристрої',
-    SyncConflictKind.songChanged: 'Пісня відрізняється',
-    SyncConflictKind.coverDeletedHere: 'Кавер видалено на цьому пристрої',
-    SyncConflictKind.coverDeletedThere: 'Кавер видалено на іншому пристрої',
-  };
-  static const Map<SyncChoice, String> _bulkLabels = <SyncChoice, String>{
-    SyncChoice.restore: 'відновити',
-    SyncChoice.delete: 'видалити',
-    SyncChoice.keepThis: 'залишити ці',
-    SyncChoice.takeOther: 'взяти з іншого',
-  };
-
   /// The conflicts.
   final List<SyncConflict> conflicts;
 
@@ -68,6 +43,7 @@ final class SyncConflictsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Translations t = context.t;
     final ThemeData theme = Theme.of(context);
     final bool hasDeletions = conflicts.any(_isDeletion);
     final bool hasChanges = conflicts.any(_isChange);
@@ -75,22 +51,22 @@ final class SyncConflictsWidget extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        Text(_title, style: theme.textTheme.titleLarge),
+        Text(t.sync.conflictsTitle, style: theme.textTheme.titleLarge),
         const SizedBox(height: AppTheme.spacingSmall),
-        Text(_hint, style: theme.textTheme.bodyMedium),
+        Text(t.sync.conflictsMessage, style: theme.textTheme.bodyMedium),
         const SizedBox(height: AppTheme.spacingMedium),
         if (hasDeletions)
           _BulkRowWidget(
-            label: _allDeletionsLabel,
+            label: t.sync.allDeletions,
             choices: const <SyncChoice>[SyncChoice.restore, SyncChoice.delete],
-            labels: _bulkLabels,
+            labels: _bulkLabels(t),
             onChosen: onAllDeletionsChosen,
           ),
         if (hasChanges)
           _BulkRowWidget(
-            label: _allChangesLabel,
+            label: t.sync.allChanges,
             choices: const <SyncChoice>[SyncChoice.keepThis, SyncChoice.takeOther],
-            labels: _bulkLabels,
+            labels: _bulkLabels(t),
             onChosen: onAllChangesChosen,
           ),
         const SizedBox(height: AppTheme.spacingSmall),
@@ -103,17 +79,17 @@ final class SyncConflictsWidget extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
                   Text(
-                    _kindLabels[conflict.kind]!,
+                    _kindLabel(t, conflict.kind),
                     style: theme.textTheme.labelMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                   ),
-                  Text(conflict.title, style: theme.textTheme.titleSmall),
-                  if (conflict.detail case final String detail) Text(detail, style: theme.textTheme.bodySmall),
+                  Text(conflict.title(t), style: theme.textTheme.titleSmall),
+                  if (conflict.detail(t) case final String detail) Text(detail, style: theme.textTheme.bodySmall),
                   const SizedBox(height: AppTheme.spacingSmall),
                   SegmentedButton<SyncChoice>(
                     showSelectedIcon: false,
                     segments: <ButtonSegment<SyncChoice>>[
                       for (final SyncChoice choice in conflict.choices)
-                        ButtonSegment<SyncChoice>(value: choice, label: Text(choiceLabel(conflict.kind, choice))),
+                        ButtonSegment<SyncChoice>(value: choice, label: Text(choiceLabel(t, conflict.kind, choice))),
                     ],
                     selected: <SyncChoice>{choices[conflict.id] ?? conflict.choices.first},
                     onSelectionChanged: (Set<SyncChoice> selected) => onChoiceChanged(conflict, selected.first),
@@ -123,25 +99,41 @@ final class SyncConflictsWidget extends StatelessWidget {
             ),
           ),
         const SizedBox(height: AppTheme.spacingMedium),
-        FilledButton(onPressed: onContinuePressed, child: const Text(_continueLabel)),
-        TextButton(onPressed: onCancelPressed, child: const Text(_cancelLabel)),
+        FilledButton(onPressed: onContinuePressed, child: Text(t.sync.continueSync)),
+        TextButton(onPressed: onCancelPressed, child: Text(t.common.cancel)),
       ],
     );
   }
 
   /// What [choice] does for a conflict of [kind], from the point of view of this device.
-  static String choiceLabel(SyncConflictKind kind, SyncChoice choice) => switch ((kind, choice)) {
-    (SyncConflictKind.songDeletedHere || SyncConflictKind.coverDeletedHere, SyncChoice.restore) => _restoreHere,
-    (SyncConflictKind.songDeletedHere || SyncConflictKind.coverDeletedHere, _) => _deleteThere,
-    (SyncConflictKind.songDeletedThere || SyncConflictKind.coverDeletedThere, SyncChoice.restore) => _restoreThere,
-    (SyncConflictKind.songDeletedThere || SyncConflictKind.coverDeletedThere, _) => _deleteHere,
-    (SyncConflictKind.songChanged, SyncChoice.takeOther) => _takeOther,
-    (SyncConflictKind.songChanged, _) => _keepThis,
+  static String choiceLabel(Translations t, SyncConflictKind kind, SyncChoice choice) => switch ((kind, choice)) {
+    (SyncConflictKind.songDeletedHere || SyncConflictKind.coverDeletedHere, SyncChoice.restore) => t.sync.restoreHere,
+    (SyncConflictKind.songDeletedHere || SyncConflictKind.coverDeletedHere, _) => t.sync.deleteThere,
+    (SyncConflictKind.songDeletedThere || SyncConflictKind.coverDeletedThere, SyncChoice.restore) =>
+      t.sync.restoreThere,
+    (SyncConflictKind.songDeletedThere || SyncConflictKind.coverDeletedThere, _) => t.sync.deleteHere,
+    (SyncConflictKind.songChanged, SyncChoice.takeOther) => t.sync.takeOther,
+    (SyncConflictKind.songChanged, _) => t.sync.keepThis,
   };
 
   static bool _isDeletion(SyncConflict conflict) => conflict.kind != SyncConflictKind.songChanged;
 
   static bool _isChange(SyncConflict conflict) => conflict.kind == SyncConflictKind.songChanged;
+
+  static String _kindLabel(Translations t, SyncConflictKind kind) => switch (kind) {
+    SyncConflictKind.songDeletedHere => t.sync.kind.songDeletedHere,
+    SyncConflictKind.songDeletedThere => t.sync.kind.songDeletedThere,
+    SyncConflictKind.songChanged => t.sync.kind.songChanged,
+    SyncConflictKind.coverDeletedHere => t.sync.kind.coverDeletedHere,
+    SyncConflictKind.coverDeletedThere => t.sync.kind.coverDeletedThere,
+  };
+
+  static Map<SyncChoice, String> _bulkLabels(Translations t) => <SyncChoice, String>{
+    SyncChoice.restore: t.sync.bulk.restore,
+    SyncChoice.delete: t.sync.bulk.delete,
+    SyncChoice.keepThis: t.sync.bulk.keepThis,
+    SyncChoice.takeOther: t.sync.bulk.takeOther,
+  };
 }
 
 /// "All deletions: restore / delete".

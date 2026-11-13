@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:watch_it/watch_it.dart';
 
 import '../../../../core/domain/entities/result_state.dart';
+import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../../core/presentation/theme.dart';
 import '../controllers/song_form_controller.dart';
+import '../../domain/entities/song_failure.dart';
 
 /// Song form shared by the add and edit pages.
 ///
@@ -14,24 +16,6 @@ import '../controllers/song_form_controller.dart';
 final class SongFormWidget extends StatelessWidget {
   /// Visible lines of the lyrics field before it scrolls.
   static const int _lyricsMinLines = 8;
-
-  /// Label of the author field.
-  static const String _authorLabel = 'Виконавець';
-
-  /// Label of the name field.
-  static const String _nameLabel = 'Назва пісні';
-
-  /// Label of the album field.
-  static const String _albumLabel = 'Альбом';
-
-  /// Helper under the album field.
-  static const String _albumHelper = "Необов'язково";
-
-  /// Label of the lyrics field.
-  static const String _lyricsLabel = 'Текст пісні';
-
-  /// Error shown under an empty required field.
-  static const String _requiredError = 'Заповніть це поле';
 
   /// Controller holding the fields and the saving progress.
   final SongFormController songFormController;
@@ -52,6 +36,7 @@ final class SongFormWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Translations t = context.t;
     return Column(
       children: <Widget>[
         Expanded(
@@ -64,26 +49,29 @@ final class SongFormWidget extends StatelessWidget {
                   controller: songFormController.authorController,
                   textCapitalization: TextCapitalization.words,
                   textInputAction: TextInputAction.next,
-                  decoration: const InputDecoration(labelText: _authorLabel, prefixIcon: Icon(Icons.person_outline)),
-                  validator: _validateRequired,
+                  decoration: InputDecoration(labelText: t.song.artist, prefixIcon: const Icon(Icons.person_outline)),
+                  validator: (String? value) => _validateRequired(t, value),
                 ),
                 const SizedBox(height: AppTheme.spacingMedium),
                 TextFormField(
                   controller: songFormController.nameController,
                   textCapitalization: TextCapitalization.sentences,
                   textInputAction: TextInputAction.next,
-                  decoration: const InputDecoration(labelText: _nameLabel, prefixIcon: Icon(Icons.music_note_outlined)),
-                  validator: _validateRequired,
+                  decoration: InputDecoration(
+                    labelText: t.song.songName,
+                    prefixIcon: const Icon(Icons.music_note_outlined),
+                  ),
+                  validator: (String? value) => _validateRequired(t, value),
                 ),
                 const SizedBox(height: AppTheme.spacingMedium),
                 TextFormField(
                   controller: songFormController.albumController,
                   textCapitalization: TextCapitalization.sentences,
                   textInputAction: TextInputAction.next,
-                  decoration: const InputDecoration(
-                    labelText: _albumLabel,
-                    helperText: _albumHelper,
-                    prefixIcon: Icon(Icons.album_outlined),
+                  decoration: InputDecoration(
+                    labelText: t.song.album,
+                    helperText: t.song.optional,
+                    prefixIcon: const Icon(Icons.album_outlined),
                   ),
                 ),
                 const SizedBox(height: AppTheme.spacingMedium),
@@ -94,8 +82,8 @@ final class SongFormWidget extends StatelessWidget {
                   minLines: _lyricsMinLines,
                   maxLines: null,
                   style: const TextStyle(height: AppTheme.readingLineHeight),
-                  decoration: const InputDecoration(labelText: _lyricsLabel, alignLabelWithHint: true),
-                  validator: _validateRequired,
+                  decoration: InputDecoration(labelText: t.song.lyrics, alignLabelWithHint: true),
+                  validator: (String? value) => _validateRequired(t, value),
                 ),
               ],
             ),
@@ -116,9 +104,9 @@ final class SongFormWidget extends StatelessWidget {
     );
   }
 
-  static String? _validateRequired(String? value) {
+  static String? _validateRequired(Translations t, String? value) {
     if (value == null || value.trim().isEmpty) {
-      return _requiredError;
+      return t.song.required;
     }
     return null;
   }
@@ -127,7 +115,7 @@ final class SongFormWidget extends StatelessWidget {
 /// Save button that shows progress while the save runs.
 final class _SaveButtonWidget extends WatchingWidget {
   /// Progress of saving.
-  final ValueListenable<ResultState<void>> savingState;
+  final ValueListenable<ResultState<void, SongFailure>> savingState;
 
   /// Label of the button.
   final String label;

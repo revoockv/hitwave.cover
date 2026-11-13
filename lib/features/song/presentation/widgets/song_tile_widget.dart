@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../domain/entities/song.dart';
 
 /// Actions offered in the menu of a song tile.
@@ -16,18 +17,6 @@ final class SongTileWidget extends StatelessWidget {
 
   /// Shown in the avatar when the song has no name.
   static const String _fallbackInitial = '♪';
-
-  /// Tooltip of the actions menu.
-  static const String _menuTooltip = 'Дії';
-
-  /// Label of the edit action.
-  static const String _editLabel = 'Редагувати';
-
-  /// Label of the delete action.
-  static const String _deleteLabel = 'Видалити';
-
-  /// Tooltip of the number of covers.
-  static const String _coversTooltip = 'Каверів';
 
   /// Size of the microphone icon next to the number of covers.
   static const double _coverIconSize = 16;
@@ -59,6 +48,7 @@ final class SongTileWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Translations t = context.t;
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final String? album = song.album;
     final String subtitle = album == null || album.isEmpty ? song.author : '${song.author}$_separator$album';
@@ -78,7 +68,7 @@ final class SongTileWidget extends StatelessWidget {
         children: <Widget>[
           if (coverCount > 0)
             Tooltip(
-              message: _coversTooltip,
+              message: t.song.coversTooltip,
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
@@ -88,7 +78,7 @@ final class SongTileWidget extends StatelessWidget {
               ),
             ),
           PopupMenuButton<_SongTileAction>(
-            tooltip: _menuTooltip,
+            tooltip: t.song.actions,
             onSelected: _onActionSelected,
             itemBuilder: _buildMenuItems,
           ),
@@ -99,17 +89,18 @@ final class SongTileWidget extends StatelessWidget {
   }
 
   List<PopupMenuEntry<_SongTileAction>> _buildMenuItems(BuildContext context) {
+    final Translations t = context.t;
     final Color errorColor = Theme.of(context).colorScheme.error;
     return <PopupMenuEntry<_SongTileAction>>[
-      const PopupMenuItem<_SongTileAction>(
+      PopupMenuItem<_SongTileAction>(
         value: _SongTileAction.edit,
-        child: ListTile(leading: Icon(Icons.edit_outlined), title: Text(_editLabel)),
+        child: ListTile(leading: const Icon(Icons.edit_outlined), title: Text(t.song.edit)),
       ),
       PopupMenuItem<_SongTileAction>(
         value: _SongTileAction.delete,
         child: ListTile(
           leading: Icon(Icons.delete_outline, color: errorColor),
-          title: Text(_deleteLabel, style: TextStyle(color: errorColor)),
+          title: Text(t.common.delete, style: TextStyle(color: errorColor)),
         ),
       ),
     ];

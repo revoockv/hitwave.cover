@@ -4,11 +4,14 @@ import '../models/recording_analysis_model.dart';
 
 /// Thrown when the audio engine cannot run a request; [message] is the engine's explanation.
 final class VocalEnhanceEngineException implements Exception {
-  /// What went wrong.
+  /// What went wrong, for the log.
   final String message;
 
+  /// Whether the engine does not run on this platform at all.
+  final bool isUnavailable;
+
   /// Creates a [VocalEnhanceEngineException].
-  const VocalEnhanceEngineException(this.message);
+  const VocalEnhanceEngineException(this.message, {this.isUnavailable = false});
 
   @override
   String toString() => message;

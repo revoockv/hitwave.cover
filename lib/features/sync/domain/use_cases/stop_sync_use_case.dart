@@ -1,5 +1,6 @@
 import '../../../../core/domain/entities/result.dart';
 import '../repositories/sync_repository.dart';
+import '../entities/sync_failure.dart';
 
 /// Use case that stops waiting for another device or closes the result.
 final class StopSyncUseCase {
@@ -9,7 +10,7 @@ final class StopSyncUseCase {
   StopSyncUseCase(this._repository);
 
   /// Goes back to idle.
-  Future<Result<void>> call() async {
+  Future<Result<void, SyncFailure>> call() async {
     return _repository.stopSync();
   }
 }

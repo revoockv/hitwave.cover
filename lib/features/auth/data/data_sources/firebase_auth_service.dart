@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 
 import 'firebase_options.dart';
 
+import '../../domain/entities/auth_failure.dart';
+
 /// Firebase backend implementation of the authentication service.
 ///
 /// Wraps the Firebase Auth SDK and provides Stream-based auth state changes
@@ -16,15 +18,6 @@ final class FirebaseAuthService {
   static const String _userDisabled = 'user-disabled';
   static const String _tooManyRequests = 'too-many-requests';
   static const String _invalidCredential = 'invalid-credential';
-  static const String _invalidEmailMessage = 'Невірний формат email адреси.';
-  static const String _userNotFoundMessage = 'Користувач з таким email не знайдений.';
-  static const String _wrongPasswordMessage = 'Невірний пароль.';
-  static const String _emailAlreadyInUseMessage = 'Цей email вже використовується.';
-  static const String _weakPasswordMessage = 'Пароль занадто простий.';
-  static const String _userDisabledMessage = 'Цей акаунт був відключений.';
-  static const String _tooManyRequestsMessage = 'Занадто багато спроб. Спробуйте пізніше.';
-  static const String _invalidCredentialMessage = 'Невірні облікові дані.';
-  static const String _genericErrorMessage = 'Сталася помилка. Спробуйте пізніше.';
 
   /// The Firebase Auth SDK; available after [init].
   firebase_auth.FirebaseAuth get _firebaseAuth => firebase_auth.FirebaseAuth.instance;
@@ -33,9 +26,7 @@ final class FirebaseAuthService {
   ///
   /// Must finish before any Firebase operation of any feature.
   Future<FirebaseAuthService> init() async {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
     await _firebaseAuth.setSettings(appVerificationDisabledForTesting: true);
     return this;
   }
@@ -50,16 +41,10 @@ final class FirebaseAuthService {
 
   /// Signs in a user with the given [email] and [password].
   ///
-  /// Throws an [AuthServiceException] with a user-friendly message when authentication fails.
-  Future<void> signIn({
-    required String email,
-    required String password,
-  }) async {
+  /// Throws an [AuthServiceException] with an [AuthFailure] when authentication fails.
+  Future<void> signIn({required String email, required String password}) async {
     try {
-      await _firebaseAuth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      await _firebaseAuth.signInWithEmailAndPassword(email: email, password: password);
     } on firebase_auth.FirebaseAuthException catch (e) {
       throw AuthServiceException(_mapFirebaseError(e.code));
     }
@@ -67,16 +52,10 @@ final class FirebaseAuthService {
 
   /// Registers a new user with the given [email] and [password].
   ///
-  /// Throws an [AuthServiceException] with a user-friendly message when registration fails.
-  Future<void> signUp({
-    required String email,
-    required String password,
-  }) async {
+  /// Throws an [AuthServiceException] with an [AuthFailure] when registration fails.
+  Future<void> signUp({required String email, required String password}) async {
     try {
-      await _firebaseAuth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      await _firebaseAuth.createUserWithEmailAndPassword(email: email, password: password);
     } on firebase_auth.FirebaseAuthException catch (e) {
       throw AuthServiceException(_mapFirebaseError(e.code));
     }
@@ -84,7 +63,7 @@ final class FirebaseAuthService {
 
   /// Signs out the currently signed-in user.
   ///
-  /// Throws an [AuthServiceException] with a user-friendly message when sign-out fails.
+  /// Throws an [AuthServiceException] with an [AuthFailure] when sign-out fails.
   Future<void> signOut() async {
     try {
       await _firebaseAuth.signOut();
@@ -98,39 +77,39 @@ final class FirebaseAuthService {
     return _firebaseAuth.currentUser;
   }
 
-  /// Maps a Firebase error code to a user-friendly error message.
-  String _mapFirebaseError(String code) {
+  /// Maps a Firebase error code to an [AuthFailure].
+  AuthFailure _mapFirebaseError(String code) {
     switch (code) {
       case _invalidEmail:
-        return _invalidEmailMessage;
+        return AuthFailure.invalidEmail;
       case _userNotFound:
-        return _userNotFoundMessage;
+        return AuthFailure.userNotFound;
       case _wrongPassword:
-        return _wrongPasswordMessage;
+        return AuthFailure.wrongPassword;
       case _emailAlreadyInUse:
-        return _emailAlreadyInUseMessage;
+        return AuthFailure.emailAlreadyInUse;
       case _weakPassword:
-        return _weakPasswordMessage;
+        return AuthFailure.weakPassword;
       case _userDisabled:
-        return _userDisabledMessage;
+        return AuthFailure.userDisabled;
       case _tooManyRequests:
-        return _tooManyRequestsMessage;
+        return AuthFailure.tooManyRequests;
       case _invalidCredential:
-        return _invalidCredentialMessage;
+        return AuthFailure.invalidCredential;
       default:
-        return _genericErrorMessage;
+        return AuthFailure.unknown;
     }
   }
 }
 
-/// A failed auth operation with a message that can be shown to the user.
+/// A failed auth operation with what went wrong.
 final class AuthServiceException implements Exception {
-  /// User-friendly error message.
-  final String message;
+  /// What went wrong.
+  final AuthFailure failure;
 
-  /// Creates the exception with [message].
-  const AuthServiceException(this.message);
+  /// Creates the exception with [failure].
+  const AuthServiceException(this.failure);
 
   @override
-  String toString() => message;
+  String toString() => failure.name;
 }

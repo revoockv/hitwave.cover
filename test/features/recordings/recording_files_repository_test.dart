@@ -16,7 +16,7 @@ void main() {
       keptFromSeconds: 0,
       keptToSeconds: null,
       status: RecordingStatus.enhanced,
-      enhanceError: null,
+      enhanceFailure: null,
     );
     const SharedSong song = SharedSong(author: 'Океан Ельзи', name: 'Обійми');
 

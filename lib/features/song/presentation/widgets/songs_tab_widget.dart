@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../../core/presentation/theme.dart';
 import '../../domain/entities/song.dart';
 import '../controllers/song_view_controller.dart';
@@ -10,15 +11,6 @@ import 'songs_widget.dart';
 ///
 /// Gets the songs already found and ordered; knows nothing about use cases.
 final class SongsTabWidget extends StatelessWidget {
-  static const String _searchHint = 'Пошук пісні чи виконавця';
-  static const String _nothingFound = 'Нічого не знайдено.';
-  static const Map<SongSort, String> _sortLabels = <SongSort, String>{
-    SongSort.artists: 'Виконавці',
-    SongSort.name: 'А–Я',
-    SongSort.recent: 'Нещодавні',
-    SongSort.covers: 'Кавери',
-  };
-
   /// Whether the library has no songs at all.
   final bool isLibraryEmpty;
 
@@ -74,6 +66,7 @@ final class SongsTabWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Translations t = context.t;
     if (isLibraryEmpty) return EmptySongsWidget(onAddPressed: onAddPressed);
     final bool isSearching = searchController.text.trim().isNotEmpty;
     final bool showsArtist = sort == SongSort.artists && selectedArtist.isNotEmpty && !isSearching;
@@ -95,7 +88,7 @@ final class SongsTabWidget extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
-                    SearchFieldWidget(searchController: searchController, hint: _searchHint),
+                    SearchFieldWidget(searchController: searchController, hint: t.song.searchSongs),
                     const SizedBox(height: AppTheme.spacingSmall),
                     SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
@@ -105,7 +98,7 @@ final class SongsTabWidget extends StatelessWidget {
                             Padding(
                               padding: const EdgeInsets.only(right: AppTheme.spacingSmall),
                               child: ChoiceChip(
-                                label: Text(_sortLabels[option]!),
+                                label: Text(_sortLabel(t, option)),
                                 selected: option == sort,
                                 onSelected: (bool selected) => onSortSelected(option),
                               ),
@@ -120,7 +113,7 @@ final class SongsTabWidget extends StatelessWidget {
           ),
         Expanded(
           child: songs.isEmpty
-              ? const Center(child: Text(_nothingFound))
+              ? Center(child: Text(t.common.nothingFound))
               : SongsWidget(
                   songs: songs,
                   coverCounts: coverCounts,
@@ -136,4 +129,11 @@ final class SongsTabWidget extends StatelessWidget {
       ],
     );
   }
+
+  static String _sortLabel(Translations t, SongSort sort) => switch (sort) {
+    SongSort.artists => t.song.sort.artists,
+    SongSort.name => t.song.sort.name,
+    SongSort.recent => t.song.sort.recent,
+    SongSort.covers => t.song.sort.covers,
+  };
 }

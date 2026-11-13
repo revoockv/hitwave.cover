@@ -7,6 +7,7 @@ import 'package:hitwave.cover/features/song/domain/repositories/song_repository.
 import 'package:hitwave.cover/features/song/domain/use_cases/add_song_use_case.dart';
 import 'package:hitwave.cover/features/song/domain/use_cases/delete_song_use_case.dart';
 import 'package:hitwave.cover/features/song/domain/use_cases/watch_list_of_songs_use_case.dart';
+import 'package:hitwave.cover/features/song/domain/entities/song_failure.dart';
 
 /// Records calls instead of storing songs.
 final class FakeSongRepository implements SongRepository {
@@ -14,7 +15,7 @@ final class FakeSongRepository implements SongRepository {
 
   final List<String> deletedIds = <String>[];
 
-  Result<void> nextResult = Result.ok;
+  Result<void, SongFailure> nextResult = Result.ok;
 
   final ValueNotifier<List<Song>> _songs = ValueNotifier<List<Song>>(const <Song>[]);
 
@@ -23,7 +24,7 @@ final class FakeSongRepository implements SongRepository {
   ValueListenable<List<Song>> watchSongs() => _songs;
 
   @override
-  Future<Result<void>> addSong({
+  Future<Result<void, SongFailure>> addSong({
     required String author,
     required String name,
     String? album,
@@ -34,18 +35,19 @@ final class FakeSongRepository implements SongRepository {
   }
 
   @override
-  Future<Result<void>> deleteSong({required String songId}) async {
+  Future<Result<void, SongFailure>> deleteSong({required String songId}) async {
     deletedIds.add(songId);
     return nextResult;
   }
 
   @override
-  Future<Result<void>> updateSongScrollSpeed({required String songId, required double speed}) async => nextResult;
+  Future<Result<void, SongFailure>> updateSongScrollSpeed({required String songId, required double speed}) async =>
+      nextResult;
 
   @override
-  Future<Result<List<String>>> addSongs(List<Song> songs) async => nextResult.when(
-    success: (_) => const Result<List<String>>.success(<String>[]),
-    failure: Result<List<String>>.failure,
+  Future<Result<List<String>, SongFailure>> addSongs(List<Song> songs) async => nextResult.when(
+    success: (_) => const Result<List<String>, SongFailure>.success(<String>[]),
+    failure: Result<List<String>, SongFailure>.failure,
   );
 
   @override
@@ -57,19 +59,21 @@ final class FakeSongRepository implements SongRepository {
   final ValueNotifier<int> _localSongsToTransfer = ValueNotifier<int>(0);
 
   @override
-  Future<Result<void>> transferLocalSongs() async => nextResult;
+  Future<Result<void, SongFailure>> transferLocalSongs() async => nextResult;
 
   @override
-  Future<Result<void>> keepLocalSongs() async => nextResult;
+  Future<Result<void, SongFailure>> keepLocalSongs() async => nextResult;
 
   @override
-  Future<Result<void>> updateSongLeadIn({required String songId, required double leadIn}) async => nextResult;
+  Future<Result<void, SongFailure>> updateSongLeadIn({required String songId, required double leadIn}) async =>
+      nextResult;
 
   @override
-  Future<Result<void>> updateSongLyrics({required String songId, required String lyrics}) async => nextResult;
+  Future<Result<void, SongFailure>> updateSongLyrics({required String songId, required String lyrics}) async =>
+      nextResult;
 
   @override
-  Future<Result<void>> updateSong({
+  Future<Result<void, SongFailure>> updateSong({
     required String songId,
     required String author,
     required String name,
@@ -78,11 +82,14 @@ final class FakeSongRepository implements SongRepository {
   }) async => nextResult;
 
   @override
-  Future<Result<void>> addCover({required String songId, required List<int> audioBytes, String? notes}) async =>
-      nextResult;
+  Future<Result<void, SongFailure>> addCover({
+    required String songId,
+    required List<int> audioBytes,
+    String? notes,
+  }) async => nextResult;
 
   @override
-  Future<Result<void>> updateCover({
+  Future<Result<void, SongFailure>> updateCover({
     required String songId,
     required String coverId,
     required List<int> audioBytes,
@@ -90,7 +97,7 @@ final class FakeSongRepository implements SongRepository {
   }) async => nextResult;
 
   @override
-  Future<Result<void>> deleteCover({required String songId, required String coverId}) async => nextResult;
+  Future<Result<void, SongFailure>> deleteCover({required String songId, required String coverId}) async => nextResult;
 }
 
 void main() {
@@ -101,7 +108,7 @@ void main() {
   });
 
   test('add song passes the song to the repository', () async {
-    final Result<void> result = await AddSongUseCase(repository)(
+    final Result<void, SongFailure> result = await AddSongUseCase(repository)(
       author: 'Thorinshield',
       name: 'One Girl',
       lyrics: 'la',
@@ -112,9 +119,9 @@ void main() {
   });
 
   test('delete song returns the failure of the repository', () async {
-    repository.nextResult = const Result.failure('Помилка при видаленні пісні.');
+    repository.nextResult = const Result.failure(SongFailure.deleteSong);
 
-    final Result<void> result = await DeleteSongUseCase(repository)(songId: 's1');
+    final Result<void, SongFailure> result = await DeleteSongUseCase(repository)(songId: 's1');
 
     expect(result.isFailure, isTrue);
     expect(repository.deletedIds, <String>['s1']);

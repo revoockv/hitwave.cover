@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../../core/presentation/theme.dart';
 import '../../domain/entities/practice_day.dart';
 import 'practice_day_cell_widget.dart';
@@ -7,23 +8,6 @@ import 'practice_day_cell_widget.dart';
 /// Month calendar with a mark on every day of practice ([PracticeDayCellWidget]); weeks start
 /// on Monday.
 final class PracticeCalendarWidget extends StatelessWidget {
-  static const List<String> _monthNames = <String>[
-    'Січень',
-    'Лютий',
-    'Березень',
-    'Квітень',
-    'Травень',
-    'Червень',
-    'Липень',
-    'Серпень',
-    'Вересень',
-    'Жовтень',
-    'Листопад',
-    'Грудень',
-  ];
-  static const List<String> _weekdayNames = <String>['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'];
-  static const String _previousLabel = 'Попередній місяць';
-  static const String _nextLabel = 'Наступний місяць';
   static const String _space = ' ';
   static const int _daysPerWeek = 7;
 
@@ -62,6 +46,7 @@ final class PracticeCalendarWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Translations t = context.t;
     final ThemeData theme = Theme.of(context);
     final int leading = month.weekday - DateTime.monday;
     final int length = DateTime(month.year, month.month + 1, 0).day;
@@ -75,20 +60,28 @@ final class PracticeCalendarWidget extends StatelessWidget {
           children: <Widget>[
             Row(
               children: <Widget>[
-                IconButton(tooltip: _previousLabel, onPressed: onPreviousMonth, icon: const Icon(Icons.chevron_left)),
+                IconButton(
+                  tooltip: t.practice.previousMonth,
+                  onPressed: onPreviousMonth,
+                  icon: const Icon(Icons.chevron_left),
+                ),
                 Expanded(
                   child: Text(
-                    '${_monthNames[month.month - 1]}$_space${month.year}',
+                    '${t.practice.monthNames[month.month - 1]}$_space${month.year}',
                     textAlign: TextAlign.center,
                     style: theme.textTheme.titleMedium,
                   ),
                 ),
-                IconButton(tooltip: _nextLabel, onPressed: onNextMonth, icon: const Icon(Icons.chevron_right)),
+                IconButton(
+                  tooltip: t.practice.nextMonth,
+                  onPressed: onNextMonth,
+                  icon: const Icon(Icons.chevron_right),
+                ),
               ],
             ),
             Row(
               children: <Widget>[
-                for (final String name in _weekdayNames)
+                for (final String name in t.practice.weekdayNames)
                   Expanded(
                     child: Text(
                       name,

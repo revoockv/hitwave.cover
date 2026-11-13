@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../../core/presentation/theme.dart';
 import '../../../practice/domain/entities/practice_stats.dart';
 import '../../../practice/presentation/widgets/practice_overview_widget.dart';
@@ -11,12 +12,6 @@ import 'song_tile_widget.dart';
 
 /// The home tab: the mini statistics, the songs opened last and the covers played last.
 final class HomeDashboardWidget extends StatelessWidget {
-  static const String _recentSongsTitle = 'Нещодавно відкриті';
-  static const String _recentCoversTitle = 'Нещодавно зіграні кавери';
-  static const String _allLabel = 'Усі';
-  static const String _noSongs = 'Відкрийте пісню — вона з’явиться тут.';
-  static const String _noCovers = 'Послухайте свій кавер — він з’явиться тут.';
-
   /// The practice stats.
   final PracticeStats stats;
 
@@ -76,6 +71,7 @@ final class HomeDashboardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Translations t = context.t;
     final ThemeData theme = Theme.of(context);
     final TextStyle? hintStyle = theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant);
 
@@ -87,9 +83,13 @@ final class HomeDashboardWidget extends StatelessWidget {
           children: <Widget>[
             PracticeOverviewWidget(stats: stats, today: today, onOpenPressed: onStatsPressed),
             const SizedBox(height: AppTheme.spacingMedium),
-            _SectionTitleWidget(title: _recentSongsTitle, actionLabel: _allLabel, onActionPressed: onAllSongsPressed),
+            _SectionTitleWidget(
+              title: t.song.recentlyOpened,
+              actionLabel: t.song.all,
+              onActionPressed: onAllSongsPressed,
+            ),
             if (recentSongs.isEmpty)
-              Text(_noSongs, style: hintStyle)
+              Text(t.song.noRecentSongs, style: hintStyle)
             else
               for (final Song song in recentSongs)
                 SongTileWidget(
@@ -100,13 +100,17 @@ final class HomeDashboardWidget extends StatelessWidget {
                   coverCount: coverCounts[song.id] ?? 0,
                 ),
             const SizedBox(height: AppTheme.spacingMedium),
-            _SectionTitleWidget(title: _recentCoversTitle, actionLabel: _allLabel, onActionPressed: onAllCoversPressed),
+            _SectionTitleWidget(
+              title: t.song.recentlyPlayed,
+              actionLabel: t.song.all,
+              onActionPressed: onAllCoversPressed,
+            ),
             if (recentCovers.isEmpty)
-              Text(_noCovers, style: hintStyle)
+              Text(t.song.noRecentCovers, style: hintStyle)
             else
               RecordingsListWidget(
                 recordings: recentCovers,
-                emptyText: _noCovers,
+                emptyText: t.song.noRecentCovers,
                 headerOf: coverTitleOf,
                 songOf: coverSongOf,
                 shrinkWrap: true,

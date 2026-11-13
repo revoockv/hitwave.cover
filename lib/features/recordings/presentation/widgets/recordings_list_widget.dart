@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:watch_it/watch_it.dart';
 
 import '../../../../core/domain/entities/result.dart';
+import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../../core/presentation/theme.dart';
 import '../../../history/presentation/di/history_getters.dart';
 import '../../../vocal_enhance/domain/entities/enhance_progress.dart';
@@ -15,14 +16,14 @@ import '../controllers/recording_versions_controller.dart';
 import '../di/recordings_getters.dart';
 import 'delete_recording_dialog_widget.dart';
 import 'recording_tile_widget.dart';
+import '../../domain/entities/recordings_failure.dart';
+import '../l10n/recordings_texts.dart';
 
 /// List of recordings: listen to the original or the enhanced take, delete it, enhance it again
 /// after a failure. Calls the recordings use cases.
 ///
 /// With [headerOf], a header (the song) is shown above every run of recordings with the same one.
 final class RecordingsListWidget extends WatchingWidget {
-  static const String _captionCopied = 'Опис скопійовано — вставте його (⌘V) як підпис до файлу.';
-
   /// The recordings, in the order to show.
   final List<Recording> recordings;
 
@@ -143,7 +144,7 @@ final class RecordingsListWidget extends WatchingWidget {
     RecordingVersion version,
   ) async {
     if (playback.recordingId == recording.id) {
-      final Result<void> result = await togglePlaybackPauseUseCase();
+      final Result<void, RecordingsFailure> result = await togglePlaybackPauseUseCase();
       if (!context.mounted) return;
       _showFailure(context, result);
       return;
@@ -169,7 +170,7 @@ final class RecordingsListWidget extends WatchingWidget {
   }
 
   Future<void> _play(BuildContext context, Recording recording, RecordingVersion version) async {
-    final Result<void> result = await playRecordingUseCase(recording: recording, version: version);
+    final Result<void, RecordingsFailure> result = await playRecordingUseCase(recording: recording, version: version);
     if (result.isSuccess) await markCoverPlayedUseCase(recording.id);
     if (!context.mounted) return;
     _showFailure(context, result);
@@ -182,8 +183,9 @@ final class RecordingsListWidget extends WatchingWidget {
     Recording recording,
     RecordingVersion version,
   ) async {
+    final Translations t = context.t;
     recordingVersionsController.setSharing(recording.id, sharing: true);
-    final Result<bool> result = await shareRecordingUseCase(
+    final Result<bool, RecordingsFailure> result = await shareRecordingUseCase(
       recording: recording,
       version: version,
       song: songOf?.call(recording),
@@ -191,23 +193,26 @@ final class RecordingsListWidget extends WatchingWidget {
     if (!context.mounted) return;
     recordingVersionsController.setSharing(recording.id, sharing: false);
     switch (result) {
-      case SuccessResult<bool>(value: true):
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text(_captionCopied)));
-      case SuccessResult<bool>():
+      case SuccessResult<bool, RecordingsFailure>(value: true):
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.recordings.captionCopied)));
+      case SuccessResult<bool, RecordingsFailure>():
         break;
-      case FailureResult<bool>(:final String error):
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+      case FailureResult<bool, RecordingsFailure>(:final RecordingsFailure failure):
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(failure.text(context.t))));
     }
   }
 
   Future<void> _showInFolder(BuildContext context, Recording recording) async {
-    final Result<void> result = await showRecordingInFolderUseCase(recording);
+    final Result<void, RecordingsFailure> result = await showRecordingInFolderUseCase(recording);
     if (!context.mounted) return;
     _showFailure(context, result);
   }
 
   Future<void> _retry(BuildContext context, Recording recording, bool trimSilence) async {
-    final Result<void> result = await enhanceRecordingAgainUseCase(recordingId: recording.id, trimSilence: trimSilence);
+    final Result<void, RecordingsFailure> result = await enhanceRecordingAgainUseCase(
+      recordingId: recording.id,
+      trimSilence: trimSilence,
+    );
     if (!context.mounted) return;
     _showFailure(context, result);
   }
@@ -219,14 +224,14 @@ final class RecordingsListWidget extends WatchingWidget {
     );
     if (confirmed != true) return;
     if (playback.recordingId == recording.id) await stopPlaybackUseCase();
-    final Result<void> result = await deleteRecordingUseCase(recording.id);
+    final Result<void, RecordingsFailure> result = await deleteRecordingUseCase(recording.id);
     if (!context.mounted) return;
     _showFailure(context, result);
   }
 
-  static void _showFailure(BuildContext context, Result<void> result) {
-    if (result case FailureResult<void>(:final String error)) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+  static void _showFailure(BuildContext context, Result<void, RecordingsFailure> result) {
+    if (result case FailureResult<void, RecordingsFailure>(:final RecordingsFailure failure)) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(failure.text(context.t))));
     }
   }
 }

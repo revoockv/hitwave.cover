@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart' show FocusNode, TextEditingController, ValueNotifier;
 
 import '../../../../core/domain/entities/result_state.dart';
+import '../../domain/entities/auth_failure.dart';
 
 /// UI state of the authentication form, like a Flutter controller: the fields,
 /// the mode, the password visibility and the progress of submitting.
@@ -27,7 +28,8 @@ final class AuthFormController {
   final ValueNotifier<bool> passwordHiddenController = ValueNotifier<bool>(true);
 
   /// Progress of the last sign-in or sign-up; its failure is shown above the fields.
-  final ValueNotifier<ResultState<void>> submittingStateController = ValueNotifier<ResultState<void>>(ResultState.idle);
+  final ValueNotifier<ResultState<void, AuthFailure>> submittingStateController =
+      ValueNotifier<ResultState<void, AuthFailure>>(ResultState.idle);
 
   bool _isDisposed = false;
 

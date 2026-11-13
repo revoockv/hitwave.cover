@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../../core/presentation/theme.dart';
 import '../../domain/entities/song.dart';
 import '../controllers/song_view_controller.dart';
@@ -13,15 +14,6 @@ final class EmptySongsWidget extends StatelessWidget {
   /// Size of the music icon.
   static const double _iconSize = 72;
 
-  /// Title of the empty state.
-  static const String _title = 'Поки що немає пісень';
-
-  /// Hint under the title.
-  static const String _message = 'Додайте першу пісню або імпортуйте резервну копію.';
-
-  /// Label of the add button.
-  static const String _addLabel = 'Додати пісню';
-
   /// Called when the add button is pressed.
   final VoidCallback onAddPressed;
 
@@ -30,6 +22,7 @@ final class EmptySongsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Translations t = context.t;
     final ThemeData theme = Theme.of(context);
 
     return Center(
@@ -40,15 +33,15 @@ final class EmptySongsWidget extends StatelessWidget {
           children: <Widget>[
             Icon(Icons.library_music_outlined, size: _iconSize, color: theme.colorScheme.primary),
             const SizedBox(height: AppTheme.spacingMedium),
-            Text(_title, style: theme.textTheme.titleLarge, textAlign: TextAlign.center),
+            Text(t.song.noSongsTitle, style: theme.textTheme.titleLarge, textAlign: TextAlign.center),
             const SizedBox(height: AppTheme.spacingSmall),
             Text(
-              _message,
+              t.song.noSongsMessage,
               style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppTheme.spacingLarge),
-            FilledButton.icon(onPressed: onAddPressed, icon: const Icon(Icons.add), label: const Text(_addLabel)),
+            FilledButton.icon(onPressed: onAddPressed, icon: const Icon(Icons.add), label: Text(t.song.addSong)),
           ],
         ),
       ),

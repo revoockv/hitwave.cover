@@ -14,6 +14,7 @@ import 'package:hitwave.cover/features/song/data/models/song_model.dart';
 import 'package:hitwave.cover/features/song/data/repositories/song_repository_impl.dart';
 import 'package:hive_ce/hive_ce.dart';
 import 'package:logger/logger.dart';
+import 'package:hitwave.cover/features/song/domain/entities/song_failure.dart';
 
 /// Songs of an account kept in memory instead of Firestore.
 final class FakeAccountSongs implements SongDataSource {
@@ -124,7 +125,7 @@ void main() {
     session.value = const SignedOutAuthSession();
     await _settle();
 
-    final Result<void> result = await repository.addSong(author: 'A', name: 'B', lyrics: 'c');
+    final Result<void, SongFailure> result = await repository.addSong(author: 'A', name: 'B', lyrics: 'c');
 
     expect(result.isFailure, isTrue);
     expect(repository.watchSongs().value, isEmpty);
@@ -138,7 +139,7 @@ void main() {
     await _settle();
     expect(repository.watchLocalSongsToTransfer().value, 1);
 
-    final Result<void> result = await repository.transferLocalSongs();
+    final Result<void, SongFailure> result = await repository.transferLocalSongs();
     await _settle();
 
     expect(result.isSuccess, isTrue);

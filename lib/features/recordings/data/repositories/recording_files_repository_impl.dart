@@ -9,15 +9,13 @@ import '../../domain/entities/shared_song.dart';
 import '../../domain/repositories/recording_files_repository.dart';
 import '../data_sources/mp3_encoder_service.dart';
 import '../data_sources/system_files_data_source.dart';
+import '../../domain/entities/recordings_failure.dart';
 
 /// [RecordingFilesRepository] on the system share sheet, the file manager and an MP3 encoder.
 ///
 /// A cover is shared as MP3 (the library keeps WAV): the recordings repository makes the MP3s
 /// beside the WAVs right after the enhancement; one still missing is made on sharing.
 final class RecordingFilesRepositoryImpl implements RecordingFilesRepository {
-  static const String _shareError = 'Не вдалося надіслати запис';
-  static const String _folderError = 'Не вдалося відкрити папку';
-  static const String _missingError = 'Файл запису не знайдено';
   static const String _shareLog = 'ShareRecording: failure — ';
   static const String _folderLog = 'ShowRecordingInFolder: failure — ';
   static const String _extension = '.mp3';
@@ -41,7 +39,7 @@ final class RecordingFilesRepositoryImpl implements RecordingFilesRepository {
   RecordingFilesRepositoryImpl({required this._system, required this._encoder, required this._logger});
 
   @override
-  Future<Result<bool>> shareRecording({
+  Future<Result<bool, RecordingsFailure>> shareRecording({
     required Recording recording,
     required RecordingVersion version,
     required SharedSong? song,
@@ -49,14 +47,14 @@ final class RecordingFilesRepositoryImpl implements RecordingFilesRepository {
     final String? enhanced = recording.enhancedPath;
     final String path = version == RecordingVersion.enhanced && enhanced != null ? enhanced : recording.rawPath;
     try {
-      if (!await File(path).exists()) return const Result.failure(_missingError);
+      if (!await File(path).exists()) return const Result.failure(RecordingsFailure.fileMissing);
       final String mp3 = await _mp3Of(recording, path);
       return Result.success(
         await _system.shareFile(path: mp3, fileName: fileName(recording, song), text: message(song)),
       );
     } on Exception catch (e) {
       _logger.e('$_shareLog$e');
-      return const Result.failure(_shareError);
+      return const Result.failure(RecordingsFailure.share);
     }
   }
 
@@ -74,13 +72,13 @@ final class RecordingFilesRepositoryImpl implements RecordingFilesRepository {
   bool canShowInFolder() => _system.canOpenFolder;
 
   @override
-  Future<Result<void>> showInFolder(Recording recording) async {
+  Future<Result<void, RecordingsFailure>> showInFolder(Recording recording) async {
     try {
       final bool opened = await _system.openFolder(File(recording.rawPath).parent.path);
-      return opened ? Result.ok : const Result.failure(_folderError);
+      return opened ? Result.ok : const Result.failure(RecordingsFailure.showInFolder);
     } on Exception catch (e) {
       _logger.e('$_folderLog$e');
-      return const Result.failure(_folderError);
+      return const Result.failure(RecordingsFailure.showInFolder);
     }
   }
 

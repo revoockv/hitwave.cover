@@ -1,6 +1,7 @@
 import '../../../../core/domain/entities/result.dart';
 
 import '../repositories/song_repository.dart';
+import '../entities/song_failure.dart';
 
 /// Use case for saving the space above a song's lyrics before they scroll.
 ///
@@ -12,7 +13,7 @@ final class UpdateSongLeadInUseCase {
   UpdateSongLeadInUseCase(this._repository);
 
   /// Saves [leadIn] (a part of the screen height) for the song identified by [songId].
-  Future<Result<void>> call({required String songId, required double leadIn}) async {
+  Future<Result<void, SongFailure>> call({required String songId, required double leadIn}) async {
     return _repository.updateSongLeadIn(songId: songId, leadIn: leadIn);
   }
 }

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../../core/domain/entities/result_state.dart';
+import '../../domain/entities/song_failure.dart';
 
 /// UI state of the lyrics page, like a Flutter controller: auto-scroll, the
 /// speed, the space above the lyrics, the controls visibility and the text field.
@@ -41,22 +42,19 @@ final class LyricsPageController {
   final ValueNotifier<double> speedController;
 
   /// Progress of saving the speed with the song; a failure is shown by the page.
-  final ValueNotifier<ResultState<void>> speedSavingStateController = ValueNotifier<ResultState<void>>(
-    ResultState.idle,
-  );
+  final ValueNotifier<ResultState<void, SongFailure>> speedSavingStateController =
+      ValueNotifier<ResultState<void, SongFailure>>(ResultState.idle);
 
   /// Space above the lyrics before they scroll, as a part of the screen height.
   final ValueNotifier<double> leadInController;
 
   /// Progress of saving the space above the lyrics; a failure is shown by the page.
-  final ValueNotifier<ResultState<void>> leadInSavingStateController = ValueNotifier<ResultState<void>>(
-    ResultState.idle,
-  );
+  final ValueNotifier<ResultState<void, SongFailure>> leadInSavingStateController =
+      ValueNotifier<ResultState<void, SongFailure>>(ResultState.idle);
 
   /// Progress of saving the edited lyrics; a failure is shown by the page.
-  final ValueNotifier<ResultState<void>> lyricsSavingStateController = ValueNotifier<ResultState<void>>(
-    ResultState.idle,
-  );
+  final ValueNotifier<ResultState<void, SongFailure>> lyricsSavingStateController =
+      ValueNotifier<ResultState<void, SongFailure>>(ResultState.idle);
 
   double _savedSpeed;
 

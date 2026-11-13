@@ -1,0 +1,9 @@
+base_locale: en
+fallback_strategy: base_locale
+input_directory: lib/core/presentation/l10n
+input_file_pattern: .i18n.json
+output_directory: lib/core/presentation/l10n
+output_file_name: strings.g.dart
+locale_handling: false
+lazy: false
+string_interpolation: braces

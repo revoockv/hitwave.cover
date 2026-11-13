@@ -1,11 +1,12 @@
 import '../../../../core/domain/entities/result.dart';
 
 import '../repositories/backup_repository.dart';
+import '../entities/backup_failure.dart';
 
 /// Use case that imports songs from a user-selected JSON file.
 ///
 /// Wraps the repository [importSongs] method as a single-responsibility
-/// use case. Returns [Result<void>] indicating success or failure.
+/// use case. Returns [Result<void, BackupFailure>] indicating success or failure.
 /// The file picker is called internally by the repository.
 final class ImportSongsUseCase {
   final BackupRepository _repository;
@@ -21,7 +22,7 @@ final class ImportSongsUseCase {
   /// message when the import fails.
   ///
   /// [includeRecordings] also adds the recordings of a ZIP backup.
-  Future<Result<void>> call({required bool includeRecordings}) async {
+  Future<Result<void, BackupFailure>> call({required bool includeRecordings}) async {
     return _repository.importSongs(includeRecordings: includeRecordings);
   }
 }

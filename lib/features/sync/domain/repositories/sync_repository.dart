@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart' show ValueListenable;
 import '../../../../core/domain/entities/result.dart';
 import '../entities/sync_conflict.dart';
 import '../entities/sync_state.dart';
+import '../entities/sync_failure.dart';
 
 /// Synchronises the songs, covers, practice and history with another device on the same network.
 ///
@@ -19,15 +20,15 @@ abstract interface class SyncRepository {
   bool isSupported();
 
   /// Starts waiting for another device; the state gets the code to show.
-  Future<Result<void>> startHosting();
+  Future<Result<void, SyncFailure>> startHosting();
 
   /// Synchronises with the device that shows [code]. When the devices conflict, the state turns
   /// to [ConflictsSyncState] and the exchange waits for [resolveConflicts].
-  Future<Result<void>> syncWith(String code);
+  Future<Result<void, SyncFailure>> syncWith(String code);
 
   /// Goes on with the exchange that waits, doing for every conflict (by id) what [choices] says.
-  Future<Result<void>> resolveConflicts(Map<String, SyncChoice> choices);
+  Future<Result<void, SyncFailure>> resolveConflicts(Map<String, SyncChoice> choices);
 
   /// Stops waiting or forgets the result; back to idle.
-  Future<Result<void>> stopSync();
+  Future<Result<void, SyncFailure>> stopSync();
 }

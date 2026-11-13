@@ -13,10 +13,9 @@ final class SyncClientDataSource {
   static const String _get = 'GET';
   static const String _post = 'POST';
   static const String _put = 'PUT';
-  static const String _unreachableError =
-      'Не вдалося підключитися до пристрою. Перевірте, що обидва в одній мережі Wi‑Fi.';
-  static const String _statusError = 'Пристрій відповів помилкою ';
-  static const String _shortFileError = 'Файл передався не повністю: ';
+  static const String _unreachableError = 'Could not connect to the device';
+  static const String _statusError = 'The device answered with the status ';
+  static const String _shortFileError = 'The file came incomplete: ';
   static const String _space = ' ';
   static const String _of = '/';
 

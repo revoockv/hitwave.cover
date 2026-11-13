@@ -1,24 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/presentation/l10n/app_translations.dart';
+
 /// Confirmation dialog for deleting a song.
 ///
 /// Pops `true` when the user confirms and `false` when they cancel.
 final class DeleteSongDialogWidget extends StatelessWidget {
-  /// Dialog title.
-  static const String _title = 'Видалити пісню?';
-
-  /// Text before the song name.
-  static const String _messagePrefix = 'Пісню «';
-
-  /// Text after the song name.
-  static const String _messageSuffix = '» буде видалено назавжди.';
-
-  /// Label of the cancel button.
-  static const String _cancelLabel = 'Скасувати';
-
-  /// Label of the delete button.
-  static const String _deleteLabel = 'Видалити';
-
   /// Name of the song to delete.
   final String songName;
 
@@ -27,18 +14,19 @@ final class DeleteSongDialogWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Translations t = context.t;
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
 
     return AlertDialog(
       icon: Icon(Icons.delete_outline, color: colorScheme.error),
-      title: const Text(_title),
-      content: Text('$_messagePrefix$songName$_messageSuffix'),
+      title: Text(t.song.deleteTitle),
+      content: Text(t.song.deleteMessage(name: songName)),
       actions: <Widget>[
-        TextButton(onPressed: () => _onCancelPressed(context), child: const Text(_cancelLabel)),
+        TextButton(onPressed: () => _onCancelPressed(context), child: Text(t.common.cancel)),
         FilledButton(
           style: FilledButton.styleFrom(backgroundColor: colorScheme.error, foregroundColor: colorScheme.onError),
           onPressed: () => _onDeletePressed(context),
-          child: const Text(_deleteLabel),
+          child: Text(t.common.delete),
         ),
       ],
     );

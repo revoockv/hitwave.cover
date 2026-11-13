@@ -35,7 +35,7 @@ abstract interface class BackupDataSource {
   /// Picks a directory for the export and returns its path.
   ///
   /// Returns `null` if the user cancels the picker or no directory is selected.
-  Future<String?> pickExportDirectory();
+  Future<String?> pickExportDirectory(String title);
 
   /// Triggers a browser download with the given JSON string.
   ///

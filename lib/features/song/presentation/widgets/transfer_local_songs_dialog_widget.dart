@@ -1,26 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/presentation/l10n/app_translations.dart';
+
 /// Asks after a sign-in whether to move the songs on the device into the account.
 ///
 /// Pops `true` to move them and `false` to keep them on the device.
 final class TransferLocalSongsDialogWidget extends StatelessWidget {
-  /// Dialog title.
-  static const String _title = 'Перенести пісні в акаунт?';
-
-  /// Text before the number of songs.
-  static const String _countPrefix = 'Пісень на цьому пристрої: ';
-
-  /// Explanation after the number of songs.
-  static const String _explanation =
-      '.\n\nПеренесені пісні будуть в акаунті на всіх пристроях і зникнуть звідси. '
-      'Якщо лишити, вони будуть доступні, коли ви продовжите без акаунта.';
-
-  /// Label of the keep button.
-  static const String _keepLabel = 'Лишити на пристрої';
-
-  /// Label of the transfer button.
-  static const String _transferLabel = 'Перенести';
-
   /// Number of songs on the device.
   final int songCount;
 
@@ -29,13 +14,14 @@ final class TransferLocalSongsDialogWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Translations t = context.t;
     return AlertDialog(
       icon: const Icon(Icons.cloud_upload_outlined),
-      title: const Text(_title),
-      content: Text('$_countPrefix$songCount$_explanation'),
+      title: Text(t.song.transferTitle),
+      content: Text(t.song.transferMessage(n: songCount)),
       actions: <Widget>[
-        TextButton(onPressed: () => _onKeepPressed(context), child: const Text(_keepLabel)),
-        FilledButton(onPressed: () => _onTransferPressed(context), child: const Text(_transferLabel)),
+        TextButton(onPressed: () => _onKeepPressed(context), child: Text(t.song.keepOnDevice)),
+        FilledButton(onPressed: () => _onTransferPressed(context), child: Text(t.song.transfer)),
       ],
     );
   }

@@ -1,4 +1,5 @@
 import 'recording_status.dart';
+import 'enhance_failure.dart';
 
 /// One recorded take of a song, kept only on this device.
 ///
@@ -32,7 +33,7 @@ final class Recording {
   final RecordingStatus status;
 
   /// Why the enhancement failed, when [status] is [RecordingStatus.enhanceFailed].
-  final String? enhanceError;
+  final EnhanceFailure? enhanceFailure;
 
   /// Whether the microphone gave no sound during the whole take (a wrong input chosen).
   final bool isSilent;
@@ -48,7 +49,7 @@ final class Recording {
     required this.keptFromSeconds,
     required this.keptToSeconds,
     required this.status,
-    required this.enhanceError,
+    required this.enhanceFailure,
     this.isSilent = false,
   });
 }
