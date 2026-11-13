@@ -9,6 +9,7 @@ import '../../data/data_sources/audio_player_data_source.dart';
 import '../../data/data_sources/hive_recording_preferences_service.dart';
 import '../../data/data_sources/hive_recording_service.dart';
 import '../../data/data_sources/just_audio_player_data_source.dart';
+import '../../data/data_sources/mp3_encoder_service.dart';
 import '../../data/data_sources/record_recorder_data_source.dart';
 import '../../data/data_sources/system_files_data_source.dart';
 import '../../data/data_sources/recorder_data_source.dart';
@@ -51,6 +52,7 @@ void registerAndInitRecordings() {
   di.registerLazySingleton<RecorderDataSource>(RecordRecorderDataSource.new);
   di.registerLazySingleton<AudioPlayerDataSource>(JustAudioPlayerDataSource.new);
   di.registerLazySingleton<SystemFilesDataSource>(SystemFilesDataSource.new);
+  di.registerLazySingleton<Mp3EncoderService>(Mp3EncoderService.new);
 
   // 2. repositories
   di.registerSingletonAsync<RecordingsRepository>(
@@ -58,6 +60,7 @@ void registerAndInitRecordings() {
       store: di<HiveRecordingService>(),
       recorder: di<RecorderDataSource>(),
       engine: di<VocalEnhanceRepository>(),
+      mp3: di<Mp3EncoderService>(),
       songs: di<SongRepository>(),
       logger: di<Logger>(),
     ).init(),
@@ -75,7 +78,11 @@ void registerAndInitRecordings() {
   );
 
   di.registerLazySingleton<RecordingFilesRepository>(
-    () => RecordingFilesRepositoryImpl(system: di<SystemFilesDataSource>(), logger: di<Logger>()),
+    () => RecordingFilesRepositoryImpl(
+      system: di<SystemFilesDataSource>(),
+      encoder: di<Mp3EncoderService>(),
+      logger: di<Logger>(),
+    ),
   );
 
   // 3. use cases

@@ -7,16 +7,23 @@ import '../../domain/entities/recording.dart';
 import '../../domain/entities/recording_version.dart';
 import '../../domain/entities/shared_song.dart';
 import '../../domain/repositories/recording_files_repository.dart';
+import '../data_sources/mp3_encoder_service.dart';
 import '../data_sources/system_files_data_source.dart';
 
-/// [RecordingFilesRepository] on the system share sheet and file manager.
+/// [RecordingFilesRepository] on the system share sheet, the file manager and an MP3 encoder.
+///
+/// A cover is shared as MP3 (the library keeps WAV): the recordings repository makes the MP3s
+/// beside the WAVs right after the enhancement; one still missing is made on sharing.
 final class RecordingFilesRepositoryImpl implements RecordingFilesRepository {
   static const String _shareError = 'Не вдалося надіслати запис';
   static const String _folderError = 'Не вдалося відкрити папку';
   static const String _missingError = 'Файл запису не знайдено';
   static const String _shareLog = 'ShareRecording: failure — ';
   static const String _folderLog = 'ShowRecordingInFolder: failure — ';
-  static const String _extension = '.wav';
+  static const String _extension = '.mp3';
+  static const String _encodeLog = 'EncodeMp3: ';
+  static const String _successLog = 'success — ';
+  static const String _millisecondsLog = ' ms';
   static const String _fallbackName = 'cover';
   static const String _fileSeparator = '-';
   static const String _messageSeparator = ' - ';
@@ -27,10 +34,11 @@ final class RecordingFilesRepositoryImpl implements RecordingFilesRepository {
   static final RegExp _unsafeCharacters = RegExp(r'[\\/:*?"<>|]');
 
   final SystemFilesDataSource _system;
+  final Mp3EncoderService _encoder;
   final Logger _logger;
 
   /// Creates a [RecordingFilesRepositoryImpl].
-  RecordingFilesRepositoryImpl({required this._system, required this._logger});
+  RecordingFilesRepositoryImpl({required this._system, required this._encoder, required this._logger});
 
   @override
   Future<Result<bool>> shareRecording({
@@ -42,13 +50,24 @@ final class RecordingFilesRepositoryImpl implements RecordingFilesRepository {
     final String path = version == RecordingVersion.enhanced && enhanced != null ? enhanced : recording.rawPath;
     try {
       if (!await File(path).exists()) return const Result.failure(_missingError);
+      final String mp3 = await _mp3Of(recording, path);
       return Result.success(
-        await _system.shareFile(path: path, fileName: fileName(recording, song), text: message(song)),
+        await _system.shareFile(path: mp3, fileName: fileName(recording, song), text: message(song)),
       );
     } on Exception catch (e) {
       _logger.e('$_shareLog$e');
       return const Result.failure(_shareError);
     }
+  }
+
+  /// The MP3 kept beside the WAV at [wavPath]; made now (and kept) when it is not there yet.
+  Future<String> _mp3Of(Recording recording, String wavPath) async {
+    final String mp3 = Mp3EncoderService.mp3PathOf(wavPath);
+    if (await File(mp3).exists()) return mp3;
+    final Stopwatch stopwatch = Stopwatch()..start();
+    await _encoder.encode(wavPath: wavPath, mp3Path: mp3);
+    _logger.i('$_encodeLog$_successLog${recording.id} ${stopwatch.elapsedMilliseconds}$_millisecondsLog');
+    return mp3;
   }
 
   @override
@@ -69,7 +88,7 @@ final class RecordingFilesRepositoryImpl implements RecordingFilesRepository {
   static String? message(SharedSong? song) =>
       song == null ? null : '${song.author.trim()}$_messageSeparator${song.name.trim()}';
 
-  /// `2026-11-12-19-05 Artist-Song.wav` (recording time, 24 h), without characters a file system
+  /// `2026-11-12-19-05 Artist-Song.mp3` (recording time, 24 h), without characters a file system
   /// refuses.
   static String fileName(Recording recording, SharedSong? song) {
     final String? title = song == null ? null : '${song.author.trim()}$_fileSeparator${song.name.trim()}';

@@ -59,6 +59,7 @@ final class RecordingsListWidget extends WatchingWidget {
       dispose: _disposeRecordingVersionsController,
     );
     watch(recordingVersionsController.versionsController);
+    watch(recordingVersionsController.sharingController);
     final PlaybackState playback = watch(watchPlaybackUseCase()).value;
     final EnhanceProgress? progress = watch(watchEnhanceProgressUseCase()).value;
     final bool trimSilence = watch(watchRecordingPreferencesUseCase()).value.trimSilence;
@@ -101,7 +102,8 @@ final class RecordingsListWidget extends WatchingWidget {
               _onVersionChanged(context, recordingVersionsController, recording, chosen, isLoaded: isLoaded),
           onPlayPressed: () => _onPlayPressed(context, recording, playback, version),
           onDeletePressed: () => _confirmDelete(context, recording, playback),
-          onSharePressed: () => _share(context, recording, version),
+          onSharePressed: () => _share(context, recordingVersionsController, recording, version),
+          isSharing: recordingVersionsController.isSharing(recording.id),
           onShowInFolderPressed: canShowInFolder ? () => _showInFolder(context, recording) : null,
           onRetryPressed: () => _retry(context, recording, trimSilence),
         );
@@ -173,13 +175,21 @@ final class RecordingsListWidget extends WatchingWidget {
     _showFailure(context, result);
   }
 
-  Future<void> _share(BuildContext context, Recording recording, RecordingVersion version) async {
+  /// Makes the MP3 (the card shows it is busy) and opens the share sheet.
+  Future<void> _share(
+    BuildContext context,
+    RecordingVersionsController recordingVersionsController,
+    Recording recording,
+    RecordingVersion version,
+  ) async {
+    recordingVersionsController.setSharing(recording.id, sharing: true);
     final Result<bool> result = await shareRecordingUseCase(
       recording: recording,
       version: version,
       song: songOf?.call(recording),
     );
     if (!context.mounted) return;
+    recordingVersionsController.setSharing(recording.id, sharing: false);
     switch (result) {
       case SuccessResult<bool>(value: true):
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text(_captionCopied)));

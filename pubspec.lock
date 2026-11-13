@@ -343,6 +343,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "9.3.0"
+  glint_audio_pure:
+    dependency: "direct main"
+    description:
+      name: glint_audio_pure
+      sha256: a036833345478711a0cbba8cddba7d720263ce2232d6863a45a5468a40ccaa85
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.7.0"
   glob:
     dependency: transitive
     description:
