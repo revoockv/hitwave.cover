@@ -31,15 +31,14 @@ Built with Flutter for Android, iOS, macOS, Windows, Linux and the web.
   calendar of practice days and the most practiced songs.
 - The home tab shows the recently opened songs and the recently played covers.
 
-### Accounts, sync and backup
-- Sign in with an email and a password (Firebase) to keep the songs in the cloud, or continue
-  without an account and keep them only on the device. Songs of a guest can move into an account
-  later.
+### Sync and backup
+- Everything stays on the device; there is no account to create.
 - **Sync between devices** over the local Wi‑Fi network: one device shows a QR code, the other
   scans it. Songs, covers, practice and history are merged; nothing is deleted without asking —
   the app shows the differences and lets you choose what to do on both devices.
 - **Backup**: export the songs to a file and import them back; with the takes, the file is a
   ZIP archive.
+- **Settings → Data** also clears the songs, the covers, the practice statistics or the history.
 
 ### Settings
 - **Language**: English (default) or Interslavic (Medžuslovjansky, written in Cyrillic).
@@ -60,8 +59,6 @@ Vocal enhancement needs the embedded Python of `python/` (see [python/README.md]
 The web build has no embedded Python and no sync between devices: there the app keeps the
 songs and the lyrics without vocal enhancement.
 
-Firebase is configured in `firebase.json`; without an account the app works fully offline.
-
 ## Development
 
 - **Architecture**: clean architecture by the `revoockv-original@2.0.0` template (see
@@ -75,7 +72,7 @@ Firebase is configured in `firebase.json`; without an account the app works full
   `dart run slang`.
 - **Themes**: `lib/core/presentation/theme.dart` builds the theme of a style, a brightness and an
   accent; `SurfaceWidget` draws glass or neumorphic panels.
-- **Storage**: Hive on the device, Cloud Firestore for signed-in users.
+- **Storage**: Hive on the device.
 
 ```bash
 flutter analyze

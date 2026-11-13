@@ -1,34 +1,5 @@
 {
   "appTitle": "Hitwave Cover",
-  "auth": {
-    "createAccount": "Create an account",
-    "email": "Email",
-    "failure": {
-      "emailAlreadyInUse": "This email is already in use.",
-      "emptyFields": "Please fill in all fields.",
-      "invalidCredential": "Wrong email or password.",
-      "invalidEmail": "The email address is not valid.",
-      "tooManyRequests": "Too many attempts. Try again later.",
-      "userDisabled": "This account has been disabled.",
-      "userNotFound": "No user has this email.",
-      "weakPassword": "The password is too simple.",
-      "wrongPassword": "Wrong password."
-    },
-    "haveAccount": "Already have an account? Sign in",
-    "hidePassword": "Hide password",
-    "noAccount": "No account? Sign up",
-    "password": "Password",
-    "showPassword": "Show password",
-    "signIn": "Sign in",
-    "signInTitle": "Sign in to your account",
-    "signOut": "Sign out",
-    "signOutFailed": "Could not sign out.",
-    "signUp": "Sign up",
-    "tagline": "Song lyrics and covers always at hand",
-    "welcome": "Welcome!",
-    "withoutAccount": "Continue without an account",
-    "withoutAccountNote": "Songs will be kept only on this device. You can sign in any time later."
-  },
   "backup": {
     "exportDialogTitle": "Choose a folder for the export",
     "failure": {
@@ -42,7 +13,6 @@
     "cancel": "Cancel",
     "clear": "Clear",
     "delete": "Delete",
-    "genericError": "Something went wrong. Try again later.",
     "nothingFound": "Nothing found.",
     "songDeleted": "Song deleted"
   },
@@ -165,9 +135,7 @@
   },
   "settings": {
     "accentColor": "Accent color",
-    "account": "Account",
     "clear": "Clear",
-    "clearAccountNote": "You are signed in: the songs are deleted from your account on all devices.",
     "clearCovers": "Covers",
     "clearData": "Clear data",
     "clearHistory": "Recently opened and played",
@@ -223,9 +191,6 @@
       "addSongs": "Could not add the songs.",
       "deleteCover": "Could not delete the cover.",
       "deleteSong": "Could not delete the song.",
-      "keepLocal": "Could not remember the choice.",
-      "notAuthenticated": "Sign in or continue without an account first.",
-      "transfer": "Not all songs moved to the account. The rest stayed on this device.",
       "updateCover": "Could not update the cover.",
       "updateLeadIn": "Could not save the lead-in.",
       "updateLyrics": "Could not save the lyrics.",
@@ -235,7 +200,6 @@
     "importDone": "Import finished",
     "importQuestion": "The songs from the file will be added to yours. Takes come only from a ZIP archive.",
     "importSongs": "Import",
-    "keepOnDevice": "Keep on the device",
     "leadIn": "Lead-in",
     "lyrics": "Lyrics",
     "microphone": "Microphone: {name}",
@@ -255,7 +219,6 @@
     "required": "Fill in this field",
     "saveChanges": "Save changes",
     "searchSongs": "Search songs or artists",
-    "signInAccount": "Sign in to an account",
     "silentTake": "The take has no sound. Check the microphone (the microphone button on the panel).",
     "songName": "Song title",
     "songsCount": {
@@ -277,10 +240,6 @@
     "tabHome": "Home",
     "tabSongs": "Songs",
     "takeSaved": "Take saved, enhancing the sound…",
-    "transfer": "Move",
-    "transferMessage": "Songs on this device: {n}.\n\nMoved songs will be in the account on all devices and will disappear from here. If you keep them, they stay available when you continue without an account.",
-    "transferTitle": "Move the songs to the account?",
-    "transferred": "Songs moved to the account",
     "trimSilence": "Trim silence"
   },
   "sync": {

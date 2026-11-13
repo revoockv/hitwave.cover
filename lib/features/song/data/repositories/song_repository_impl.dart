@@ -5,30 +5,22 @@ import 'package:logger/logger.dart';
 
 import '../../../../core/domain/entities/disposable_resource.dart';
 import '../../../../core/domain/entities/result.dart';
-import '../../../auth/domain/entities/auth_session.dart';
 import '../../domain/entities/cover.dart';
 import '../../domain/entities/song.dart';
 import '../../domain/entities/song_id_change.dart';
 import '../../domain/repositories/song_repository.dart';
-import '../data_sources/hive_song_service.dart';
 import '../data_sources/song_data_source.dart';
 import '../models/cover_model.dart';
 import '../models/song_model.dart';
 import '../../domain/entities/song_failure.dart';
 
-/// Implementation of [SongRepository] that follows the session.
+/// [SongRepository] on the songs of this device (Hive).
 ///
-/// A signed-in user keeps the songs in Firestore, a guest keeps them on the
-/// device in Hive, and nobody is signed out with no songs. On every session
-/// change [init]'s listener switches the [SongDataSource], subscribes to its
-/// songs and keeps them in a private [ValueNotifier], exposed as [ValueListenable].
-/// After a sign-in it offers the songs left on the device for the account.
+/// Subscribes to the songs of the [SongDataSource] in [init] and keeps them in a private
+/// [ValueNotifier], exposed as [ValueListenable].
 final class SongRepositoryImpl implements SongRepository, DisposableResource {
   static const String _newDocumentId = '';
 
-  static const String _signedOutLog = 'Song repository: signed out, no songs';
-  static const String _guestLog = 'Song repository: guest, songs on the device';
-  static const String _signedInLog = 'Song repository: songs of user ';
   static const String _streamErrorLog = 'Song repository watchSongs stream error: ';
   static const String _disposeLog = 'Song repository dispose: unsubscribed';
 
@@ -41,8 +33,6 @@ final class SongRepositoryImpl implements SongRepository, DisposableResource {
   static const String _leadInLog = '", leadIn=';
   static const String _updateLyricsLog = 'UpdateSongLyrics';
   static const String _addSongsLog = 'AddSongs';
-  static const String _transferLog = 'TransferLocalSongs';
-  static const String _keepLog = 'KeepLocalSongs';
   static const String _addCoverLog = 'AddCover';
   static const String _updateCoverLog = 'UpdateCover';
   static const String _deleteCoverLog = 'DeleteCover';
@@ -51,51 +41,34 @@ final class SongRepositoryImpl implements SongRepository, DisposableResource {
   static const String _startingNameLog = ': starting for name="';
   static const String _startingCountLog = ': starting for songs: ';
   static const String _successLog = ': success';
-  static const String _successCountLog = ': success — songs: ';
   static const String _coverIdLog = '", coverId="';
   static const String _closingQuoteLog = '"';
-  static const String _notAuthenticatedLog = ': failed — nobody is signed in';
   static const String _failureLog = ': failure — ';
 
-  /// Makes the data source of the account [userId] (Firestore in the app).
-  final SongDataSource Function(String userId) _accountSongsOf;
-  final HiveSongService _localSongService;
-  final ValueListenable<AuthSession> _session;
+  final SongDataSource _dataSource;
   final Logger _logger;
 
   final ValueNotifier<List<Song>> _songs = ValueNotifier<List<Song>>(const <Song>[]);
 
-  final ValueNotifier<int> _localSongsToTransfer = ValueNotifier<int>(0);
-
   final StreamController<SongIdChange> _songIdChanges = StreamController<SongIdChange>.broadcast();
-
-  SongDataSource? _dataSource;
 
   StreamSubscription<List<SongModel>>? _subscription;
 
-  /// Creates a new [SongRepositoryImpl] that follows [session].
-  SongRepositoryImpl({
-    required this._accountSongsOf,
-    required this._localSongService,
-    required this._session,
-    required this._logger,
-  });
+  /// Creates a new [SongRepositoryImpl] on [_dataSource].
+  SongRepositoryImpl({required this._dataSource, required this._logger});
 
-  /// Starts following the session; returns this for `registerSingletonAsync`.
+  /// Subscribes to the songs; returns this for `registerSingletonAsync`.
   Future<SongRepositoryImpl> init() async {
-    _session.addListener(_onSessionChanged);
-    await _useSession(_session.value);
+    _subscription = _dataSource.watchSongs().listen(_onSongModels, onError: _onSongsError);
     return this;
   }
 
-  /// Stops following the session, cancels the subscription and releases the state.
+  /// Cancels the subscription and releases the state.
   @override
   Future<void> dispose() async {
-    _session.removeListener(_onSessionChanged);
     await _subscription?.cancel();
     _subscription = null;
     _songs.dispose();
-    _localSongsToTransfer.dispose();
     await _songIdChanges.close();
     _logger.i(_disposeLog);
   }
@@ -103,50 +76,8 @@ final class SongRepositoryImpl implements SongRepository, DisposableResource {
   @override
   ValueListenable<List<Song>> watchSongs() => _songs;
 
-  @override
-  ValueListenable<int> watchLocalSongsToTransfer() => _localSongsToTransfer;
-
-  void _onSessionChanged() {
-    unawaited(_useSession(_session.value));
-  }
-
-  Future<void> _useSession(AuthSession session) async {
-    await _subscription?.cancel();
-    _subscription = null;
-    _songs.value = const <Song>[];
-
-    final SongDataSource? dataSource = switch (session) {
-      SignedOutAuthSession() => null,
-      GuestAuthSession() => _localSongService,
-      SignedInAuthSession(:final user) => _accountSongsOf(user.id),
-    };
-    _dataSource = dataSource;
-    _updateLocalSongsToTransfer();
-
-    switch (session) {
-      case SignedOutAuthSession():
-        _logger.i(_signedOutLog);
-      case GuestAuthSession():
-        _logger.i(_guestLog);
-      case SignedInAuthSession(:final user):
-        _logger.i('$_signedInLog${user.id}');
-    }
-    if (dataSource == null) return;
-
-    _subscription = dataSource.watchSongs().listen(
-      (List<SongModel> models) => _onSongModels(dataSource, models),
-      onError: _onSongsError,
-    );
-  }
-
-  /// Offers the songs on the device after a sign-in, unless the user already refused them.
-  void _updateLocalSongsToTransfer() {
-    final bool offer = _session.value is SignedInAuthSession && !_localSongService.isTransferDeclined;
-    _localSongsToTransfer.value = offer ? _localSongService.songCount : 0;
-  }
-
-  void _onSongModels(SongDataSource dataSource, List<SongModel> models) {
-    unawaited(_processModels(dataSource, models));
+  void _onSongModels(List<SongModel> models) {
+    unawaited(_processModels(models));
   }
 
   void _onSongsError(Object error) {
@@ -154,25 +85,22 @@ final class SongRepositoryImpl implements SongRepository, DisposableResource {
     _songs.value = const <Song>[];
   }
 
-  Future<void> _processModels(SongDataSource dataSource, List<SongModel> models) async {
-    final List<Song> songs = await Future.wait(models.map((SongModel model) => _toSong(dataSource, model)));
-    if (!identical(dataSource, _dataSource)) return;
-
-    _songs.value = songs;
+  Future<void> _processModels(List<SongModel> models) async {
+    _songs.value = await Future.wait(models.map(_toSong));
   }
 
-  Future<Song> _toSong(SongDataSource dataSource, SongModel model) async {
+  Future<Song> _toSong(SongModel model) async {
     if (model.coverIds.isEmpty) {
       return model.toEntity(covers: const <Cover>[]);
     }
 
-    final List<CoverModel> coverModels = await dataSource.getCovers(model.id);
+    final List<CoverModel> coverModels = await _dataSource.getCovers(model.id);
     return model.toEntity(covers: coverModels.map(_toCover).toList());
   }
 
   Cover _toCover(CoverModel model) => model.toEntity();
 
-  /// Runs [operation] on the data source of the session and logs it as [logName].
+  /// Runs [operation] on the data source and logs it as [logName].
   Future<Result<void, SongFailure>> _run(
     String logName,
     String startDetails,
@@ -180,15 +108,8 @@ final class SongRepositoryImpl implements SongRepository, DisposableResource {
     Future<void> Function(SongDataSource dataSource) operation,
   ) async {
     _logger.i('$logName$startDetails');
-
-    final SongDataSource? dataSource = _dataSource;
-    if (dataSource == null) {
-      _logger.w('$logName$_notAuthenticatedLog');
-      return const Result.failure(SongFailure.notAuthenticated);
-    }
-
     try {
-      await operation(dataSource);
+      await operation(_dataSource);
       _logger.i('$logName$_successLog');
       return Result.ok;
     } on Exception catch (e) {
@@ -318,51 +239,6 @@ final class SongRepositoryImpl implements SongRepository, DisposableResource {
       if (deleted.isFailure) return deleted;
     }
     return Result.ok;
-  }
-
-  @override
-  Future<Result<void, SongFailure>> transferLocalSongs() async {
-    final List<SongModel> localSongs = _localSongService.readSongs();
-    _logger.i('$_transferLog$_startingCountLog${localSongs.length}');
-
-    final SongDataSource? account = _dataSource;
-    if (_session.value is! SignedInAuthSession || account == null) {
-      _logger.w('$_transferLog$_notAuthenticatedLog');
-      return const Result.failure(SongFailure.notAuthenticated);
-    }
-
-    try {
-      for (final SongModel song in localSongs) {
-        final List<CoverModel> covers = await _localSongService.getCovers(song.id);
-        final String accountSongId = await account.addSong(song);
-        for (final CoverModel cover in covers) {
-          await account.addCover(songId: accountSongId, cover: cover);
-        }
-        // Deleted one by one, so a failure in the middle never copies a song twice.
-        await _localSongService.deleteSong(song.id);
-        _songIdChanges.add(SongMovedIdChange(fromId: song.id, toId: accountSongId));
-      }
-      _localSongsToTransfer.value = 0;
-      _logger.i('$_transferLog$_successCountLog${localSongs.length}');
-      return Result.ok;
-    } on Exception catch (e) {
-      _logger.e('$_transferLog$_failureLog$e');
-      _updateLocalSongsToTransfer();
-      return const Result.failure(SongFailure.transfer);
-    }
-  }
-
-  @override
-  Future<Result<void, SongFailure>> keepLocalSongs() async {
-    _logger.i(_keepLog);
-    try {
-      await _localSongService.setTransferDeclined(true);
-      _localSongsToTransfer.value = 0;
-      return Result.ok;
-    } on Exception catch (e) {
-      _logger.e('$_keepLog$_failureLog$e');
-      return const Result.failure(SongFailure.keepLocal);
-    }
   }
 
   @override

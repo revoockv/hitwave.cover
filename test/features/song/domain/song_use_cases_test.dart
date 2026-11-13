@@ -57,17 +57,6 @@ final class FakeSongRepository implements SongRepository {
   Stream<SongIdChange> watchSongIdChanges() => const Stream<SongIdChange>.empty();
 
   @override
-  ValueListenable<int> watchLocalSongsToTransfer() => _localSongsToTransfer;
-
-  final ValueNotifier<int> _localSongsToTransfer = ValueNotifier<int>(0);
-
-  @override
-  Future<Result<void, SongFailure>> transferLocalSongs() async => nextResult;
-
-  @override
-  Future<Result<void, SongFailure>> keepLocalSongs() async => nextResult;
-
-  @override
   Future<Result<void, SongFailure>> updateSongLeadIn({required String songId, required double leadIn}) async =>
       nextResult;
 

@@ -5,10 +5,6 @@ import 'package:watch_it/watch_it.dart';
 import '../../../../core/domain/entities/result.dart';
 import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../../core/presentation/theme.dart';
-import '../../../auth/domain/entities/auth_failure.dart';
-import '../../../auth/domain/entities/auth_session.dart';
-import '../../../auth/presentation/di/auth_getters.dart';
-import '../../../auth/presentation/l10n/auth_texts.dart';
 import '../../../backup/domain/entities/backup_failure.dart';
 import '../../../backup/presentation/di/backup_getters.dart';
 import '../../../backup/presentation/l10n/backup_texts.dart';
@@ -41,7 +37,7 @@ import '../widgets/language_picker_widget.dart';
 import '../widgets/theme_picker_widget.dart';
 
 /// The app settings: the look, the main color and the language of the app, the data (backup,
-/// sync, clearing) and the account.
+/// sync, clearing).
 final class SettingsPage extends WatchingWidget {
   /// Backup status while songs are exported.
   static const String _backupStatusExporting = 'exporting';
@@ -58,11 +54,8 @@ final class SettingsPage extends WatchingWidget {
   @override
   Widget build(BuildContext context) {
     final AppSettings settings = watch(watchSettingsUseCase()).value;
-    final AuthSession session = watch(watchCurrentSessionUseCase()).value;
     final String backupStatus = watch(watchBackupStatusUseCase()).value;
     final bool isBackupRunning = backupStatus == _backupStatusExporting || backupStatus == _backupStatusImporting;
-    final bool isGuest = session is GuestAuthSession;
-    final bool isSignedIn = session is SignedInAuthSession;
     final Translations t = context.t;
     final ThemeData theme = Theme.of(context);
     final TextStyle? sectionStyle = theme.textTheme.titleSmall;
@@ -115,13 +108,7 @@ final class SettingsPage extends WatchingWidget {
             leading: Icon(Icons.delete_sweep_outlined, color: theme.colorScheme.error),
             title: Text(t.settings.clearData, style: TextStyle(color: theme.colorScheme.error)),
             enabled: !isBackupRunning,
-            onTap: () => _onClearDataPressed(context, isSignedIn),
-          ),
-          ListTile(title: Text(t.settings.account, style: sectionStyle)),
-          ListTile(
-            leading: Icon(isGuest ? Icons.login : Icons.logout),
-            title: Text(isGuest ? t.song.signInAccount : t.auth.signOut),
-            onTap: () => _onSignOutPressed(context),
+            onTap: () => _onClearDataPressed(context),
           ),
         ],
       ),
@@ -178,11 +165,11 @@ final class SettingsPage extends WatchingWidget {
   }
 
   /// Asks what to clear, then clears it; the first failure stops and is shown.
-  Future<void> _onClearDataPressed(BuildContext context, bool isSignedIn) async {
+  Future<void> _onClearDataPressed(BuildContext context) async {
     final Translations t = context.t;
     final Set<ClearableData>? chosen = await showDialog<Set<ClearableData>>(
       context: context,
-      builder: (BuildContext context) => ClearDataDialogWidget(isSignedIn: isSignedIn),
+      builder: (BuildContext context) => const ClearDataDialogWidget(),
     );
     if (chosen == null || chosen.isEmpty) return;
     final String? failure = await _clear(t, chosen);
@@ -210,22 +197,6 @@ final class SettingsPage extends WatchingWidget {
     }
     return null;
   }
-
-  /// Signs out (a guest goes to the sign-in page); the app then shows the sign-in page, so this
-  /// page closes first.
-  Future<void> _onSignOutPressed(BuildContext context) async {
-    final Translations t = context.t;
-    final Result<void, AuthFailure> result = await signOutUseCase();
-    if (!context.mounted) return;
-    switch (result) {
-      case SuccessResult<void, AuthFailure>():
-        Navigator.of(context).popUntil(_isFirst);
-      case FailureResult<void, AuthFailure>(:final AuthFailure failure):
-        _showMessage(ScaffoldMessenger.of(context), failure.text(t));
-    }
-  }
-
-  static bool _isFirst(Route<dynamic> route) => route.isFirst;
 
   /// Waits for [saving] and shows its failure, if any.
   static Future<void> _showSettingsFailure(BuildContext context, Future<Result<void, SettingsFailure>> saving) async {

@@ -7,15 +7,11 @@ import '../models/cover_model.dart';
 import '../models/song_model.dart';
 import 'song_data_source.dart';
 
-/// The songs kept on this device in Hive CE, used without an account.
+/// The songs kept on this device in Hive CE.
 ///
-/// Each song is one map in the songs box, keyed by its id, with its covers
-/// inside. A second box remembers whether the user refused to move these songs
-/// into an account; any change of the songs asks again.
+/// Each song is one map in the songs box, keyed by its id, with its covers inside.
 final class HiveSongService implements SongDataSource {
   static const String _songsBoxName = 'songs';
-  static const String _settingsBoxName = 'song_settings';
-  static const String _transferDeclinedKey = 'transferDeclined';
   static const String _idField = 'id';
   static const String _authorField = 'author';
   static const String _nameField = 'name';
@@ -33,8 +29,6 @@ final class HiveSongService implements SongDataSource {
 
   Box<dynamic>? _songsBox;
 
-  Box<dynamic>? _settingsBox;
-
   int _idCounter = 0;
 
   /// Creates a new [HiveSongService].
@@ -43,22 +37,10 @@ final class HiveSongService implements SongDataSource {
   /// Opens the boxes; returns this for `registerSingletonAsync`.
   Future<HiveSongService> init() async {
     _songsBox = await _storage.openBox(_songsBoxName);
-    _settingsBox = await _storage.openBox(_settingsBoxName);
     return this;
   }
 
   Box<dynamic> get _songs => _songsBox!;
-
-  Box<dynamic> get _settings => _settingsBox!;
-
-  /// Number of songs on the device.
-  int get songCount => _songs.length;
-
-  /// Whether the user refused to move the songs on the device into the account.
-  bool get isTransferDeclined => _settings.get(_transferDeclinedKey, defaultValue: false) as bool;
-
-  /// Saves whether the user refused to move the songs into the account.
-  Future<void> setTransferDeclined(bool isDeclined) => _settings.put(_transferDeclinedKey, isDeclined);
 
   /// The songs on the device sorted by name.
   List<SongModel> readSongs() {
@@ -137,10 +119,7 @@ final class HiveSongService implements SongDataSource {
       _updateFields(songId, <String, dynamic>{_lyricsField: lyrics});
 
   @override
-  Future<void> deleteSong(String songId) async {
-    await _songs.delete(songId);
-    await setTransferDeclined(false);
-  }
+  Future<void> deleteSong(String songId) => _songs.delete(songId);
 
   @override
   Future<String> addCover({required String songId, required CoverModel cover}) async {
@@ -177,10 +156,7 @@ final class HiveSongService implements SongDataSource {
     await _writeSong(songId, song);
   }
 
-  Future<void> _writeSong(String songId, Map<String, dynamic> song) async {
-    await _songs.put(songId, song);
-    await setTransferDeclined(false);
-  }
+  Future<void> _writeSong(String songId, Map<String, dynamic> song) => _songs.put(songId, song);
 
   Map<String, dynamic>? _readSong(String songId) {
     final Object? stored = _songs.get(songId);

@@ -35,21 +35,6 @@ abstract interface class SongRepository {
   /// Emits when a song id stops being valid: the song moved into the account or was deleted.
   Stream<SongIdChange> watchSongIdChanges();
 
-  /// Number of songs left on the device that may be moved into the account
-  /// just signed in; `0` when there are none or the user chose to keep them.
-  ValueListenable<int> watchLocalSongsToTransfer();
-
-  /// Moves the songs on the device into the signed-in account and deletes
-  /// them from the device; songs that failed stay on the device.
-  ///
-  /// Returns [Result.ok] on success, or a failure with an error message.
-  Future<Result<void, SongFailure>> transferLocalSongs();
-
-  /// Keeps the songs on the device and stops offering them until they change.
-  ///
-  /// Returns [Result.ok] on success, or a failure with an error message.
-  Future<Result<void, SongFailure>> keepLocalSongs();
-
   /// Updates an existing song identified by [songId] with the given [author],
   /// [name], optional [album], and [lyrics].
   ///
