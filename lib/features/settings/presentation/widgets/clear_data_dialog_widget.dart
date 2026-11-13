@@ -6,11 +6,8 @@ import '../controllers/clear_data_controller.dart';
 
 /// Asks what to clear; returns the chosen data, or `null` when cancelled.
 final class ClearDataDialogWidget extends WatchingWidget {
-  /// Whether an account is signed in, so the songs go from the account on every device.
-  final bool isSignedIn;
-
   /// Creates the dialog.
-  const ClearDataDialogWidget({required this.isSignedIn, super.key});
+  const ClearDataDialogWidget({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +35,6 @@ final class ClearDataDialogWidget extends WatchingWidget {
                     ? null
                     : (bool? chosen) => clearDataController.choose(data, chosen: chosen ?? false),
               ),
-            if (isSignedIn && songsChosen) Text(t.settings.clearAccountNote, style: TextStyle(color: colors.error)),
           ],
         ),
       ),

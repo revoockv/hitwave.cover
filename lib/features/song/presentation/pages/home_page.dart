@@ -23,7 +23,6 @@ import '../widgets/delete_song_dialog_widget.dart';
 import '../widgets/home_dashboard_widget.dart';
 import '../widgets/search_field_widget.dart';
 import '../widgets/songs_tab_widget.dart';
-import '../widgets/transfer_local_songs_dialog_widget.dart';
 import 'add_song_page.dart';
 import 'edit_song_page.dart';
 import 'lyrics_page.dart';
@@ -73,11 +72,6 @@ final class HomePage extends WatchingWidget {
     final List<PracticeSession> sessions = watch(watchPracticeSessionsUseCase()).value;
     final List<Recording> recordings = watch(watchRecordingsUseCase()).value;
     final UsageHistory history = watch(watchUsageHistoryUseCase()).value;
-    registerHandler(
-      target: watchLocalSongsToTransferUseCase(),
-      handler: _onLocalSongsToTransferChanged,
-      executeImmediately: true,
-    );
 
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final Map<String, int> coverCounts = <String, int>{};
@@ -310,34 +304,8 @@ final class HomePage extends WatchingWidget {
     }
   }
 
-  /// Asks about the songs on the device once there are some to move into the account.
-  void _onLocalSongsToTransferChanged(BuildContext context, int songCount, void Function() cancel) {
-    if (songCount == 0) return;
-    _askToTransfer(context, songCount);
-  }
-
   void _onSongDeletePressed(BuildContext context, Song song) {
     _confirmDelete(context, ScaffoldMessenger.of(context), song);
-  }
-
-  /// Shows the question after the current frame (the handler may run during a build).
-  Future<void> _askToTransfer(BuildContext context, int songCount) async {
-    await WidgetsBinding.instance.endOfFrame;
-    if (!context.mounted) return;
-    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
-    final Translations t = context.t;
-
-    final bool? transfer = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) => TransferLocalSongsDialogWidget(songCount: songCount),
-    );
-
-    final Result<void, SongFailure> result = transfer == true
-        ? await transferLocalSongsUseCase()
-        : await keepLocalSongsUseCase();
-    if (transfer == true && result.isSuccess) _showMessage(messenger, t.song.transferred);
-    result.when(success: _ignore, failure: (SongFailure failure) => _showMessage(messenger, failure.text(t)));
   }
 
   Future<void> _confirmDelete(BuildContext context, ScaffoldMessengerState messenger, Song song) async {
@@ -362,8 +330,6 @@ final class HomePage extends WatchingWidget {
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(message)));
   }
-
-  static void _ignore(void _) {}
 
   void _openSettings(BuildContext context) {
     Navigator.of(context).push(MaterialPageRoute<void>(builder: (BuildContext context) => const SettingsPage()));

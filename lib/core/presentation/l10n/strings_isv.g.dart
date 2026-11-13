@@ -40,7 +40,6 @@ class TranslationsIsv extends Translations with BaseTranslations<AppLocale, Tran
 
 	// Translations
 	@override String get appTitle => 'Hitwave Cover';
-	@override late final _Translations$auth$isv auth = _Translations$auth$isv._(_root);
 	@override late final _Translations$backup$isv backup = _Translations$backup$isv._(_root);
 	@override late final _Translations$common$isv common = _Translations$common$isv._(_root);
 	@override late final _Translations$history$isv history = _Translations$history$isv._(_root);
@@ -50,32 +49,6 @@ class TranslationsIsv extends Translations with BaseTranslations<AppLocale, Tran
 	@override late final _Translations$song$isv song = _Translations$song$isv._(_root);
 	@override late final _Translations$sync$isv sync = _Translations$sync$isv._(_root);
 	@override late final _Translations$vocalEnhance$isv vocalEnhance = _Translations$vocalEnhance$isv._(_root);
-}
-
-// Path: auth
-class _Translations$auth$isv extends Translations$auth$en {
-	_Translations$auth$isv._(TranslationsIsv root) : this._root = root, super.internal(root);
-
-	final TranslationsIsv _root; // ignore: unused_field
-
-	// Translations
-	@override String get createAccount => 'Создајте конто';
-	@override String get email => 'Е-пошта';
-	@override late final _Translations$auth$failure$isv failure = _Translations$auth$failure$isv._(_root);
-	@override String get haveAccount => 'Уже имате конто? Војдите';
-	@override String get hidePassword => 'Скрыти парољ';
-	@override String get noAccount => 'Немате конта? Региструјте се';
-	@override String get password => 'Парољ';
-	@override String get showPassword => 'Показати парољ';
-	@override String get signIn => 'Војти';
-	@override String get signInTitle => 'Војдите в своје конто';
-	@override String get signOut => 'Выјти';
-	@override String get signOutFailed => 'Не удало се выјти.';
-	@override String get signUp => 'Регистровати се';
-	@override String get tagline => 'Тексты пєснеј и каверы всегда под рукоју';
-	@override String get welcome => 'Добро дошли!';
-	@override String get withoutAccount => 'Продолжити без конта';
-	@override String get withoutAccountNote => 'Пєсни будут храњене само на том устројству. Војти можете когдаколи позднєје.';
 }
 
 // Path: backup
@@ -101,7 +74,6 @@ class _Translations$common$isv extends Translations$common$en {
 	@override String get cancel => 'Отмєнити';
 	@override String get clear => 'Очистити';
 	@override String get delete => 'Избрисати';
-	@override String get genericError => 'Нечто пошло не тако. Попробујте позднєје.';
 	@override String get nothingFound => 'Ничто не најдено.';
 	@override String get songDeleted => 'Пєсња избрисана';
 }
@@ -236,9 +208,7 @@ class _Translations$settings$isv extends Translations$settings$en {
 
 	// Translations
 	@override String get accentColor => 'Акцентна барва';
-	@override String get account => 'Конто';
 	@override String get clear => 'Очистити';
-	@override String get clearAccountNote => 'Вы јесте војдени: пєсни будут избрисане из вашего конта на всих устројствах.';
 	@override String get clearCovers => 'Каверы';
 	@override String get clearData => 'Очистити дане';
 	@override String get clearHistory => 'Недавно отворене и слушане';
@@ -285,7 +255,6 @@ class _Translations$song$isv extends Translations$song$en {
 	@override String get importDone => 'Импорт кончены';
 	@override String get importQuestion => 'Пєсни из фајла будут додане к вашим. Записы приходјат само из ZIP-архива.';
 	@override String get importSongs => 'Импортовати';
-	@override String get keepOnDevice => 'Оставити на устројству';
 	@override String get leadIn => 'Отступ';
 	@override String get lyrics => 'Текст пєсњи';
 	@override String microphone({required Object name}) => 'Микрофон: ${name}';
@@ -305,7 +274,6 @@ class _Translations$song$isv extends Translations$song$en {
 	@override String get required => 'Наполните то поље';
 	@override String get saveChanges => 'Сохранити измєны';
 	@override String get searchSongs => 'Искати пєсни или изполнитељев';
-	@override String get signInAccount => 'Војти в конто';
 	@override String get silentTake => 'Запис без звука. Провєрите микрофон (кнопка с микрофоном на панелу).';
 	@override String get songName => 'Назва пєсњи';
 	@override String songsCount({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('isv'))(n,
@@ -324,10 +292,6 @@ class _Translations$song$isv extends Translations$song$en {
 	@override String get tabHome => 'Дом';
 	@override String get tabSongs => 'Пєсни';
 	@override String get takeSaved => 'Запис сохрањены, улєпшају звук…';
-	@override String get transfer => 'Пренести';
-	@override String transferMessage({required Object n}) => 'Пєсни на том устројству: ${n}.\n\nПренесени пєсни будут в конту на всих устројствах и изчезнут одсуда. Ако их оставите, будут доступне, когда продолжите без конта.';
-	@override String get transferTitle => 'Пренести пєсни в конто?';
-	@override String get transferred => 'Пєсни пренесени в конто';
 	@override String get trimSilence => 'Обрєзати тишину';
 }
 
@@ -392,24 +356,6 @@ class _Translations$vocalEnhance$isv extends Translations$vocalEnhance$en {
 
 	// Translations
 	@override late final _Translations$vocalEnhance$failure$isv failure = _Translations$vocalEnhance$failure$isv._(_root);
-}
-
-// Path: auth.failure
-class _Translations$auth$failure$isv extends Translations$auth$failure$en {
-	_Translations$auth$failure$isv._(TranslationsIsv root) : this._root = root, super.internal(root);
-
-	final TranslationsIsv _root; // ignore: unused_field
-
-	// Translations
-	@override String get emailAlreadyInUse => 'Та адреса уже се користи.';
-	@override String get emptyFields => 'Прошу, наполните все поља.';
-	@override String get invalidCredential => 'Неправилна адреса или парољ.';
-	@override String get invalidEmail => 'Неправилны формат адресы е-пошты.';
-	@override String get tooManyRequests => 'Прємного покусов. Попробујте позднєје.';
-	@override String get userDisabled => 'То конто је изкључено.';
-	@override String get userNotFound => 'Нема уживатеља с такоју адресоју.';
-	@override String get weakPassword => 'Парољ је прємного просты.';
-	@override String get wrongPassword => 'Неправилны парољ.';
 }
 
 // Path: backup.failure
@@ -511,9 +457,6 @@ class _Translations$song$failure$isv extends Translations$song$failure$en {
 	@override String get addSongs => 'Не удало се додати пєсни.';
 	@override String get deleteCover => 'Не удало се избрисати кавер.';
 	@override String get deleteSong => 'Не удало се избрисати пєсњу.';
-	@override String get keepLocal => 'Не удало се запомнити избор.';
-	@override String get notAuthenticated => 'Најпрво војдите или продолжите без конта.';
-	@override String get transfer => 'Не удало се пренести все пєсни в конто. Остаток остал на том устројству.';
 	@override String get updateCover => 'Не удало се обновити кавер.';
 	@override String get updateLeadIn => 'Не удало се сохранити отступ.';
 	@override String get updateLyrics => 'Не удало се сохранити текст.';
@@ -632,31 +575,6 @@ extension on TranslationsIsv {
 	dynamic _flatMapFunction(String path) {
 		return switch (path) {
 			'appTitle' => 'Hitwave Cover',
-			'auth.createAccount' => 'Создајте конто',
-			'auth.email' => 'Е-пошта',
-			'auth.failure.emailAlreadyInUse' => 'Та адреса уже се користи.',
-			'auth.failure.emptyFields' => 'Прошу, наполните все поља.',
-			'auth.failure.invalidCredential' => 'Неправилна адреса или парољ.',
-			'auth.failure.invalidEmail' => 'Неправилны формат адресы е-пошты.',
-			'auth.failure.tooManyRequests' => 'Прємного покусов. Попробујте позднєје.',
-			'auth.failure.userDisabled' => 'То конто је изкључено.',
-			'auth.failure.userNotFound' => 'Нема уживатеља с такоју адресоју.',
-			'auth.failure.weakPassword' => 'Парољ је прємного просты.',
-			'auth.failure.wrongPassword' => 'Неправилны парољ.',
-			'auth.haveAccount' => 'Уже имате конто? Војдите',
-			'auth.hidePassword' => 'Скрыти парољ',
-			'auth.noAccount' => 'Немате конта? Региструјте се',
-			'auth.password' => 'Парољ',
-			'auth.showPassword' => 'Показати парољ',
-			'auth.signIn' => 'Војти',
-			'auth.signInTitle' => 'Војдите в своје конто',
-			'auth.signOut' => 'Выјти',
-			'auth.signOutFailed' => 'Не удало се выјти.',
-			'auth.signUp' => 'Регистровати се',
-			'auth.tagline' => 'Тексты пєснеј и каверы всегда под рукоју',
-			'auth.welcome' => 'Добро дошли!',
-			'auth.withoutAccount' => 'Продолжити без конта',
-			'auth.withoutAccountNote' => 'Пєсни будут храњене само на том устројству. Војти можете когдаколи позднєје.',
 			'backup.exportDialogTitle' => 'Изберите папку за експорт',
 			'backup.failure.exportSongs' => 'Не удало се експортовати пєсни',
 			'backup.failure.importSongs' => 'Не удало се импортовати пєсни',
@@ -665,7 +583,6 @@ extension on TranslationsIsv {
 			'common.cancel' => 'Отмєнити',
 			'common.clear' => 'Очистити',
 			'common.delete' => 'Избрисати',
-			'common.genericError' => 'Нечто пошло не тако. Попробујте позднєје.',
 			'common.nothingFound' => 'Ничто не најдено.',
 			'common.songDeleted' => 'Пєсња избрисана',
 			'history.failure.clear' => 'Не удало се очистити историју',
@@ -759,9 +676,7 @@ extension on TranslationsIsv {
 			'recordings.systemMicrophone' => 'Како в системє',
 			'recordings.title' => 'Записы',
 			'settings.accentColor' => 'Акцентна барва',
-			'settings.account' => 'Конто',
 			'settings.clear' => 'Очистити',
-			'settings.clearAccountNote' => 'Вы јесте војдени: пєсни будут избрисане из вашего конта на всих устројствах.',
 			'settings.clearCovers' => 'Каверы',
 			'settings.clearData' => 'Очистити дане',
 			'settings.clearHistory' => 'Недавно отворене и слушане',
@@ -810,9 +725,6 @@ extension on TranslationsIsv {
 			'song.failure.addSongs' => 'Не удало се додати пєсни.',
 			'song.failure.deleteCover' => 'Не удало се избрисати кавер.',
 			'song.failure.deleteSong' => 'Не удало се избрисати пєсњу.',
-			'song.failure.keepLocal' => 'Не удало се запомнити избор.',
-			'song.failure.notAuthenticated' => 'Најпрво војдите или продолжите без конта.',
-			'song.failure.transfer' => 'Не удало се пренести все пєсни в конто. Остаток остал на том устројству.',
 			'song.failure.updateCover' => 'Не удало се обновити кавер.',
 			'song.failure.updateLeadIn' => 'Не удало се сохранити отступ.',
 			'song.failure.updateLyrics' => 'Не удало се сохранити текст.',
@@ -821,7 +733,6 @@ extension on TranslationsIsv {
 			'song.importDone' => 'Импорт кончены',
 			'song.importQuestion' => 'Пєсни из фајла будут додане к вашим. Записы приходјат само из ZIP-архива.',
 			'song.importSongs' => 'Импортовати',
-			'song.keepOnDevice' => 'Оставити на устројству',
 			'song.leadIn' => 'Отступ',
 			'song.lyrics' => 'Текст пєсњи',
 			'song.microphone' => ({required Object name}) => 'Микрофон: ${name}',
@@ -841,7 +752,6 @@ extension on TranslationsIsv {
 			'song.required' => 'Наполните то поље',
 			'song.saveChanges' => 'Сохранити измєны',
 			'song.searchSongs' => 'Искати пєсни или изполнитељев',
-			'song.signInAccount' => 'Војти в конто',
 			'song.silentTake' => 'Запис без звука. Провєрите микрофон (кнопка с микрофоном на панелу).',
 			'song.songName' => 'Назва пєсњи',
 			'song.songsCount' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('isv'))(n, one: '${n} пєсња', few: '${n} пєсни', many: '${n} пєсењ', other: '${n} пєсењ', ), 
@@ -858,10 +768,6 @@ extension on TranslationsIsv {
 			'song.tabHome' => 'Дом',
 			'song.tabSongs' => 'Пєсни',
 			'song.takeSaved' => 'Запис сохрањены, улєпшају звук…',
-			'song.transfer' => 'Пренести',
-			'song.transferMessage' => ({required Object n}) => 'Пєсни на том устројству: ${n}.\n\nПренесени пєсни будут в конту на всих устројствах и изчезнут одсуда. Ако их оставите, будут доступне, когда продолжите без конта.',
-			'song.transferTitle' => 'Пренести пєсни в конто?',
-			'song.transferred' => 'Пєсни пренесени в конто',
 			'song.trimSilence' => 'Обрєзати тишину',
 			'sync.allChanges' => 'Все измєны:',
 			'sync.allDeletions' => 'Все избрисања:',

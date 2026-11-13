@@ -39,7 +39,6 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	/// en: 'Hitwave Cover'
 	String get appTitle => 'Hitwave Cover';
 
-	late final Translations$auth$en auth = Translations$auth$en.internal(_root);
 	late final Translations$backup$en backup = Translations$backup$en.internal(_root);
 	late final Translations$common$en common = Translations$common$en.internal(_root);
 	late final Translations$history$en history = Translations$history$en.internal(_root);
@@ -49,65 +48,6 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final Translations$song$en song = Translations$song$en.internal(_root);
 	late final Translations$sync$en sync = Translations$sync$en.internal(_root);
 	late final Translations$vocalEnhance$en vocalEnhance = Translations$vocalEnhance$en.internal(_root);
-}
-
-// Path: auth
-class Translations$auth$en {
-	Translations$auth$en.internal(this._root);
-
-	final Translations _root; // ignore: unused_field
-
-	// Translations
-
-	/// en: 'Create an account'
-	String get createAccount => 'Create an account';
-
-	/// en: 'Email'
-	String get email => 'Email';
-
-	late final Translations$auth$failure$en failure = Translations$auth$failure$en.internal(_root);
-
-	/// en: 'Already have an account? Sign in'
-	String get haveAccount => 'Already have an account? Sign in';
-
-	/// en: 'Hide password'
-	String get hidePassword => 'Hide password';
-
-	/// en: 'No account? Sign up'
-	String get noAccount => 'No account? Sign up';
-
-	/// en: 'Password'
-	String get password => 'Password';
-
-	/// en: 'Show password'
-	String get showPassword => 'Show password';
-
-	/// en: 'Sign in'
-	String get signIn => 'Sign in';
-
-	/// en: 'Sign in to your account'
-	String get signInTitle => 'Sign in to your account';
-
-	/// en: 'Sign out'
-	String get signOut => 'Sign out';
-
-	/// en: 'Could not sign out.'
-	String get signOutFailed => 'Could not sign out.';
-
-	/// en: 'Sign up'
-	String get signUp => 'Sign up';
-
-	/// en: 'Song lyrics and covers always at hand'
-	String get tagline => 'Song lyrics and covers always at hand';
-
-	/// en: 'Welcome!'
-	String get welcome => 'Welcome!';
-
-	/// en: 'Continue without an account'
-	String get withoutAccount => 'Continue without an account';
-
-	/// en: 'Songs will be kept only on this device. You can sign in any time later.'
-	String get withoutAccountNote => 'Songs will be kept only on this device. You can sign in any time later.';
 }
 
 // Path: backup
@@ -146,9 +86,6 @@ class Translations$common$en {
 
 	/// en: 'Delete'
 	String get delete => 'Delete';
-
-	/// en: 'Something went wrong. Try again later.'
-	String get genericError => 'Something went wrong. Try again later.';
 
 	/// en: 'Nothing found.'
 	String get nothingFound => 'Nothing found.';
@@ -378,14 +315,8 @@ class Translations$settings$en {
 	/// en: 'Accent color'
 	String get accentColor => 'Accent color';
 
-	/// en: 'Account'
-	String get account => 'Account';
-
 	/// en: 'Clear'
 	String get clear => 'Clear';
-
-	/// en: 'You are signed in: the songs are deleted from your account on all devices.'
-	String get clearAccountNote => 'You are signed in: the songs are deleted from your account on all devices.';
 
 	/// en: 'Covers'
 	String get clearCovers => 'Covers';
@@ -504,9 +435,6 @@ class Translations$song$en {
 	/// en: 'Import'
 	String get importSongs => 'Import';
 
-	/// en: 'Keep on the device'
-	String get keepOnDevice => 'Keep on the device';
-
 	/// en: 'Lead-in'
 	String get leadIn => 'Lead-in';
 
@@ -564,9 +492,6 @@ class Translations$song$en {
 	/// en: 'Search songs or artists'
 	String get searchSongs => 'Search songs or artists';
 
-	/// en: 'Sign in to an account'
-	String get signInAccount => 'Sign in to an account';
-
 	/// en: 'The take has no sound. Check the microphone (the microphone button on the panel).'
 	String get silentTake => 'The take has no sound. Check the microphone (the microphone button on the panel).';
 
@@ -607,18 +532,6 @@ class Translations$song$en {
 
 	/// en: 'Take saved, enhancing the sound…'
 	String get takeSaved => 'Take saved, enhancing the sound…';
-
-	/// en: 'Move'
-	String get transfer => 'Move';
-
-	/// en: 'Songs on this device: {n}. Moved songs will be in the account on all devices and will disappear from here. If you keep them, they stay available when you continue without an account.'
-	String transferMessage({required Object n}) => 'Songs on this device: ${n}.\n\nMoved songs will be in the account on all devices and will disappear from here. If you keep them, they stay available when you continue without an account.';
-
-	/// en: 'Move the songs to the account?'
-	String get transferTitle => 'Move the songs to the account?';
-
-	/// en: 'Songs moved to the account'
-	String get transferred => 'Songs moved to the account';
 
 	/// en: 'Trim silence'
 	String get trimSilence => 'Trim silence';
@@ -768,42 +681,6 @@ class Translations$vocalEnhance$en {
 
 	// Translations
 	late final Translations$vocalEnhance$failure$en failure = Translations$vocalEnhance$failure$en.internal(_root);
-}
-
-// Path: auth.failure
-class Translations$auth$failure$en {
-	Translations$auth$failure$en.internal(this._root);
-
-	final Translations _root; // ignore: unused_field
-
-	// Translations
-
-	/// en: 'This email is already in use.'
-	String get emailAlreadyInUse => 'This email is already in use.';
-
-	/// en: 'Please fill in all fields.'
-	String get emptyFields => 'Please fill in all fields.';
-
-	/// en: 'Wrong email or password.'
-	String get invalidCredential => 'Wrong email or password.';
-
-	/// en: 'The email address is not valid.'
-	String get invalidEmail => 'The email address is not valid.';
-
-	/// en: 'Too many attempts. Try again later.'
-	String get tooManyRequests => 'Too many attempts. Try again later.';
-
-	/// en: 'This account has been disabled.'
-	String get userDisabled => 'This account has been disabled.';
-
-	/// en: 'No user has this email.'
-	String get userNotFound => 'No user has this email.';
-
-	/// en: 'The password is too simple.'
-	String get weakPassword => 'The password is too simple.';
-
-	/// en: 'Wrong password.'
-	String get wrongPassword => 'Wrong password.';
 }
 
 // Path: backup.failure
@@ -981,15 +858,6 @@ class Translations$song$failure$en {
 
 	/// en: 'Could not delete the song.'
 	String get deleteSong => 'Could not delete the song.';
-
-	/// en: 'Could not remember the choice.'
-	String get keepLocal => 'Could not remember the choice.';
-
-	/// en: 'Sign in or continue without an account first.'
-	String get notAuthenticated => 'Sign in or continue without an account first.';
-
-	/// en: 'Not all songs moved to the account. The rest stayed on this device.'
-	String get transfer => 'Not all songs moved to the account. The rest stayed on this device.';
 
 	/// en: 'Could not update the cover.'
 	String get updateCover => 'Could not update the cover.';
@@ -1196,31 +1064,6 @@ extension on Translations {
 	dynamic _flatMapFunction(String path) {
 		return switch (path) {
 			'appTitle' => 'Hitwave Cover',
-			'auth.createAccount' => 'Create an account',
-			'auth.email' => 'Email',
-			'auth.failure.emailAlreadyInUse' => 'This email is already in use.',
-			'auth.failure.emptyFields' => 'Please fill in all fields.',
-			'auth.failure.invalidCredential' => 'Wrong email or password.',
-			'auth.failure.invalidEmail' => 'The email address is not valid.',
-			'auth.failure.tooManyRequests' => 'Too many attempts. Try again later.',
-			'auth.failure.userDisabled' => 'This account has been disabled.',
-			'auth.failure.userNotFound' => 'No user has this email.',
-			'auth.failure.weakPassword' => 'The password is too simple.',
-			'auth.failure.wrongPassword' => 'Wrong password.',
-			'auth.haveAccount' => 'Already have an account? Sign in',
-			'auth.hidePassword' => 'Hide password',
-			'auth.noAccount' => 'No account? Sign up',
-			'auth.password' => 'Password',
-			'auth.showPassword' => 'Show password',
-			'auth.signIn' => 'Sign in',
-			'auth.signInTitle' => 'Sign in to your account',
-			'auth.signOut' => 'Sign out',
-			'auth.signOutFailed' => 'Could not sign out.',
-			'auth.signUp' => 'Sign up',
-			'auth.tagline' => 'Song lyrics and covers always at hand',
-			'auth.welcome' => 'Welcome!',
-			'auth.withoutAccount' => 'Continue without an account',
-			'auth.withoutAccountNote' => 'Songs will be kept only on this device. You can sign in any time later.',
 			'backup.exportDialogTitle' => 'Choose a folder for the export',
 			'backup.failure.exportSongs' => 'Could not export the songs',
 			'backup.failure.importSongs' => 'Could not import the songs',
@@ -1229,7 +1072,6 @@ extension on Translations {
 			'common.cancel' => 'Cancel',
 			'common.clear' => 'Clear',
 			'common.delete' => 'Delete',
-			'common.genericError' => 'Something went wrong. Try again later.',
 			'common.nothingFound' => 'Nothing found.',
 			'common.songDeleted' => 'Song deleted',
 			'history.failure.clear' => 'Could not clear the history',
@@ -1323,9 +1165,7 @@ extension on Translations {
 			'recordings.systemMicrophone' => 'System default',
 			'recordings.title' => 'Takes',
 			'settings.accentColor' => 'Accent color',
-			'settings.account' => 'Account',
 			'settings.clear' => 'Clear',
-			'settings.clearAccountNote' => 'You are signed in: the songs are deleted from your account on all devices.',
 			'settings.clearCovers' => 'Covers',
 			'settings.clearData' => 'Clear data',
 			'settings.clearHistory' => 'Recently opened and played',
@@ -1374,9 +1214,6 @@ extension on Translations {
 			'song.failure.addSongs' => 'Could not add the songs.',
 			'song.failure.deleteCover' => 'Could not delete the cover.',
 			'song.failure.deleteSong' => 'Could not delete the song.',
-			'song.failure.keepLocal' => 'Could not remember the choice.',
-			'song.failure.notAuthenticated' => 'Sign in or continue without an account first.',
-			'song.failure.transfer' => 'Not all songs moved to the account. The rest stayed on this device.',
 			'song.failure.updateCover' => 'Could not update the cover.',
 			'song.failure.updateLeadIn' => 'Could not save the lead-in.',
 			'song.failure.updateLyrics' => 'Could not save the lyrics.',
@@ -1385,7 +1222,6 @@ extension on Translations {
 			'song.importDone' => 'Import finished',
 			'song.importQuestion' => 'The songs from the file will be added to yours. Takes come only from a ZIP archive.',
 			'song.importSongs' => 'Import',
-			'song.keepOnDevice' => 'Keep on the device',
 			'song.leadIn' => 'Lead-in',
 			'song.lyrics' => 'Lyrics',
 			'song.microphone' => ({required Object name}) => 'Microphone: ${name}',
@@ -1405,7 +1241,6 @@ extension on Translations {
 			'song.required' => 'Fill in this field',
 			'song.saveChanges' => 'Save changes',
 			'song.searchSongs' => 'Search songs or artists',
-			'song.signInAccount' => 'Sign in to an account',
 			'song.silentTake' => 'The take has no sound. Check the microphone (the microphone button on the panel).',
 			'song.songName' => 'Song title',
 			'song.songsCount' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, one: '${n} song', other: '${n} songs', ), 
@@ -1422,10 +1257,6 @@ extension on Translations {
 			'song.tabHome' => 'Home',
 			'song.tabSongs' => 'Songs',
 			'song.takeSaved' => 'Take saved, enhancing the sound…',
-			'song.transfer' => 'Move',
-			'song.transferMessage' => ({required Object n}) => 'Songs on this device: ${n}.\n\nMoved songs will be in the account on all devices and will disappear from here. If you keep them, they stay available when you continue without an account.',
-			'song.transferTitle' => 'Move the songs to the account?',
-			'song.transferred' => 'Songs moved to the account',
 			'song.trimSilence' => 'Trim silence',
 			'sync.allChanges' => 'All changes:',
 			'sync.allDeletions' => 'All deletions:',

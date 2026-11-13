@@ -1,8 +1,5 @@
 /// What can go wrong with songs and covers; the presentation layer turns it into text.
 enum SongFailure {
-  /// Nobody is signed in and the guest mode is off.
-  notAuthenticated,
-
   /// The song could not be added.
   addSong,
 
@@ -23,12 +20,6 @@ enum SongFailure {
 
   /// The song could not be deleted.
   deleteSong,
-
-  /// Not all songs of this device moved to the account.
-  transfer,
-
-  /// The choice to keep the songs on this device could not be remembered.
-  keepLocal,
 
   /// The cover could not be added.
   addCover,
