@@ -7,5 +7,6 @@ extension BackupFailureText on BackupFailure {
   String text(Translations t) => switch (this) {
     BackupFailure.exportSongs => t.backup.failure.exportSongs,
     BackupFailure.importSongs => t.backup.failure.importSongs,
+    BackupFailure.shareBackup => t.backup.failure.shareBackup,
   };
 }

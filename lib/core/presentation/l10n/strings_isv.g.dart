@@ -60,8 +60,12 @@ class _Translations$backup$isv extends Translations$backup$en {
 	// Translations
 	@override String get exportDialogTitle => 'Изберите папку за експорт';
 	@override late final _Translations$backup$failure$isv failure = _Translations$backup$failure$isv._(_root);
+	@override String get importHint => 'Из фајла, такоже из Google Drive';
 	@override String get includeRecordings => 'Вкључити записы';
 	@override String get recordingsNote => 'Записы сут храњене само на том устројству; с ними фајл стање ZIP-архивом.';
+	@override String get share => 'Поделити резервну копију';
+	@override String get shareHint => 'Сохраните ју в Google Drive или пошљите в другу апликацију';
+	@override String get shareQuestion => 'Пєсни будут подељене како фајл, кторы можете сохранити в Google Drive. Записы идут само в ZIP-архиву.';
 }
 
 // Path: common
@@ -367,6 +371,7 @@ class _Translations$backup$failure$isv extends Translations$backup$failure$en {
 	// Translations
 	@override String get exportSongs => 'Не удало се експортовати пєсни';
 	@override String get importSongs => 'Не удало се импортовати пєсни';
+	@override String get shareBackup => 'Не удало се поделити резервну копију';
 }
 
 // Path: history.failure
@@ -578,8 +583,13 @@ extension on TranslationsIsv {
 			'backup.exportDialogTitle' => 'Изберите папку за експорт',
 			'backup.failure.exportSongs' => 'Не удало се експортовати пєсни',
 			'backup.failure.importSongs' => 'Не удало се импортовати пєсни',
+			'backup.failure.shareBackup' => 'Не удало се поделити резервну копију',
+			'backup.importHint' => 'Из фајла, такоже из Google Drive',
 			'backup.includeRecordings' => 'Вкључити записы',
 			'backup.recordingsNote' => 'Записы сут храњене само на том устројству; с ними фајл стање ZIP-архивом.',
+			'backup.share' => 'Поделити резервну копију',
+			'backup.shareHint' => 'Сохраните ју в Google Drive или пошљите в другу апликацију',
+			'backup.shareQuestion' => 'Пєсни будут подељене како фајл, кторы можете сохранити в Google Drive. Записы идут само в ZIP-архиву.',
 			'common.cancel' => 'Отмєнити',
 			'common.clear' => 'Очистити',
 			'common.delete' => 'Избрисати',

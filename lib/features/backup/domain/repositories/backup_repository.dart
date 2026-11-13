@@ -36,4 +36,8 @@ abstract interface class BackupRepository {
   ///
   /// A `backup.zip` may hold recordings; they are added only with [includeRecordings].
   Future<Result<void, BackupFailure>> importSongs({required bool includeRecordings});
+
+  /// Makes a backup of the songs (a ZIP with the takes when [includeRecordings]) and opens the
+  /// share sheet with it, so it can go to Google Drive or another app.
+  Future<Result<void, BackupFailure>> shareBackup({required bool includeRecordings});
 }

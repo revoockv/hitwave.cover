@@ -1,8 +1,10 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
 
+import '../../../../core/data/data_sources/system_files_data_source.dart';
 import '../../../../core/domain/entities/disposable_resource.dart';
 import '../../../../core/domain/entities/result.dart';
 import '../../../recordings/domain/entities/imported_recording.dart';
@@ -60,11 +62,22 @@ final class BackupRepositoryImpl implements BackupRepository, DisposableResource
   static const String _importedSongsLog = ' songs imported, recordings: ';
   static const String _importFailureLog = 'ImportSongs: failure — ';
   static const String _closingQuoteLog = '"';
+  static const String _shareStartLog = 'ShareBackup: starting';
+  static const String _shareSuccessLog = 'ShareBackup: success — shared ';
+  static const String _shareFailureLog = 'ShareBackup: failure — ';
+  static const String _shareFolderPrefix = 'hitwave_backup_';
+  static const String _shareFilePrefix = 'hitwave_cover_backup_';
+  static const String _jsonExtension = '.json';
+  static const String _zipExtension = '.zip';
+  static const String _dateSeparator = '-';
+  static const String _zero = '0';
+  static const int _twoDigits = 2;
 
   final SongRepository _songRepository;
   final RecordingsRepository _recordingsRepository;
   final BackupDataSource _dataSource;
   final BackupArchiveDataSource _archive;
+  final SystemFilesDataSource _system;
   final Logger _logger;
 
   final ValueNotifier<String> _status = ValueNotifier<String>(_statusIdle);
@@ -75,6 +88,7 @@ final class BackupRepositoryImpl implements BackupRepository, DisposableResource
     required this._recordingsRepository,
     required this._dataSource,
     required this._archive,
+    required this._system,
     required this._logger,
   });
 
@@ -150,6 +164,54 @@ final class BackupRepositoryImpl implements BackupRepository, DisposableResource
       return const Result.failure(BackupFailure.exportSongs);
     }
   }
+
+  @override
+  Future<Result<void, BackupFailure>> shareBackup({required bool includeRecordings}) async {
+    _logger.i(_shareStartLog);
+    try {
+      _status.value = _statusExporting;
+      final List<Song> songs = _songRepository.watchSongs().value;
+      final Set<String> songIds = songs.map(_songId).toSet();
+      final List<Recording> recordings = includeRecordings
+          ? _recordingsRepository
+                .watchRecordings()
+                .value
+                .where((Recording recording) => songIds.contains(recording.songId))
+                .toList()
+          : const <Recording>[];
+      final List<BackupRecordingModel> recordingModels = recordings.map(BackupRecordingModel.fromEntity).toList();
+      final BackupDataModel model = BackupDataModel(
+        exportedAt: DateTime.now(),
+        songs: songs.map(_encodeSong).toList(),
+        recordings: recordingModels.map(_encodeRecording).toList(),
+      );
+
+      final Directory folder = await Directory.systemTemp.createTemp(_shareFolderPrefix);
+      final String name = '$_shareFilePrefix${_date(model.exportedAt)}';
+      final String fileName = recordings.isEmpty ? '$name$_jsonExtension' : '$name$_zipExtension';
+      final String filePath = '${folder.path}$_separator$fileName';
+      if (recordings.isEmpty) {
+        await _archive.writeJson(path: filePath, json: model.toJson());
+      } else {
+        await _archive.writeZip(path: filePath, json: model.toJson(), files: _filesOf(recordings, recordingModels));
+      }
+      _status.value = _statusSuccess;
+      await _system.shareFile(path: filePath, fileName: fileName, text: null);
+      _logger.i('$_shareSuccessLog$fileName');
+      return Result.ok;
+    } on Exception catch (e) {
+      _logger.e('$_shareFailureLog$e');
+      _status.value = _statusFailed;
+      return const Result.failure(BackupFailure.shareBackup);
+    }
+  }
+
+  /// `2026-11-13` of [time], for the name of a shared backup.
+  static String _date(DateTime time) => <int>[
+    time.year,
+    time.month,
+    time.day,
+  ].map((int part) => part.toString().padLeft(_twoDigits, _zero)).join(_dateSeparator);
 
   @override
   Future<Result<void, BackupFailure>> importSongs({required bool includeRecordings}) async {

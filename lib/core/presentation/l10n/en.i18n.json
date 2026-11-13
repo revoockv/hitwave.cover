@@ -4,10 +4,15 @@
     "exportDialogTitle": "Choose a folder for the export",
     "failure": {
       "exportSongs": "Could not export the songs",
-      "importSongs": "Could not import the songs"
+      "importSongs": "Could not import the songs",
+      "shareBackup": "Could not share the backup"
     },
+    "importHint": "From a file, also from Google Drive",
     "includeRecordings": "Include takes",
-    "recordingsNote": "Takes are kept only on this device; with them the file becomes a ZIP archive."
+    "recordingsNote": "Takes are kept only on this device; with them the file becomes a ZIP archive.",
+    "share": "Share a backup",
+    "shareHint": "Save it to Google Drive or send it to another app",
+    "shareQuestion": "The songs will be shared as a file you can save to Google Drive. Takes come only in a ZIP archive."
   },
   "common": {
     "cancel": "Cancel",
