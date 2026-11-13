@@ -226,8 +226,7 @@ final class SurfaceTheme extends ThemeExtension<SurfaceTheme> {
   static const Color _glassLightBorder = Color(0xB3FFFFFF);
   static const Color _glassLightField = Color(0x99FFFFFF);
   static const Color _glassLightSolid = Color(0xFFF6F7FA);
-  static const Color _glassLightBlob = Color(0xFF9AA3C9);
-  static const Color _glassLightBlobSoft = Color(0xFFC7CEE8);
+  static const Color _glassLightMiddle = Color(0xFFE3E5F0);
   static const Color _glassLightShadow = Color(0x1F2A3050);
 
   // Glass, dark.
@@ -237,8 +236,7 @@ final class SurfaceTheme extends ThemeExtension<SurfaceTheme> {
   static const Color _glassDarkBorder = Color(0x26FFFFFF);
   static const Color _glassDarkField = Color(0x1AFFFFFF);
   static const Color _glassDarkSolid = Color(0xFF1C1F28);
-  static const Color _glassDarkBlob = Color(0xFF4C5BA8);
-  static const Color _glassDarkBlobSoft = Color(0xFF26305C);
+  static const Color _glassDarkMiddle = Color(0xFF181C2A);
   static const Color _glassDarkShadow = Color(0x66000000);
 
   // Neumorphic, light.
@@ -253,19 +251,16 @@ final class SurfaceTheme extends ThemeExtension<SurfaceTheme> {
   static const Color _neuDarkShade = Color(0xFF1D1F23);
   static const Color _neuDarkField = Color(0xFF24272B);
 
-  static const double _accentBlobAlpha = 0.35;
-  static const double _accentBlobAlphaDark = 0.22;
+  static const double _accentTintAlpha = 0.16;
+  static const double _accentTintAlphaDark = 0.14;
   static const double _glassBlur = 24;
 
   /// The style.
   final SurfaceStyle style;
 
-  /// Top and bottom of the background gradient (one color twice for a flat background).
+  /// The background gradient, from the top left to the bottom right (one color twice for a flat
+  /// background).
   final List<Color> background;
-
-  /// Colors of the blurred spots behind glass — the accent glow, the main and the soft spot;
-  /// empty for neumorphic.
-  final List<Color> blobs;
 
   /// Fill of a panel: translucent for glass, the background color for neumorphic.
   final Color panel;
@@ -292,7 +287,6 @@ final class SurfaceTheme extends ThemeExtension<SurfaceTheme> {
   const SurfaceTheme({
     required this.style,
     required this.background,
-    required this.blobs,
     required this.panel,
     required this.field,
     required this.solid,
@@ -308,13 +302,13 @@ final class SurfaceTheme extends ThemeExtension<SurfaceTheme> {
     return switch (style) {
       SurfaceStyle.glass => SurfaceTheme(
         style: style,
-        background: isDark
-            ? const <Color>[_glassDarkTop, _glassDarkBottom]
-            : const <Color>[_glassLightTop, _glassLightBottom],
-        blobs: <Color>[
-          accent.withValues(alpha: isDark ? _accentBlobAlphaDark : _accentBlobAlpha),
-          if (isDark) _glassDarkBlob else _glassLightBlob,
-          if (isDark) _glassDarkBlobSoft else _glassLightBlobSoft,
+        background: <Color>[
+          if (isDark) _glassDarkTop else _glassLightTop,
+          if (isDark) _glassDarkMiddle else _glassLightMiddle,
+          Color.alphaBlend(
+            accent.withValues(alpha: isDark ? _accentTintAlphaDark : _accentTintAlpha),
+            isDark ? _glassDarkBottom : _glassLightBottom,
+          ),
         ],
         panel: isDark ? _glassDarkPanel : _glassLightPanel,
         field: isDark ? _glassDarkField : _glassLightField,
@@ -327,7 +321,6 @@ final class SurfaceTheme extends ThemeExtension<SurfaceTheme> {
       SurfaceStyle.neumorphic => SurfaceTheme(
         style: style,
         background: isDark ? const <Color>[_neuDarkBase, _neuDarkBase] : const <Color>[_neuLightBase, _neuLightBase],
-        blobs: const <Color>[],
         panel: isDark ? _neuDarkBase : _neuLightBase,
         field: isDark ? _neuDarkField : _neuLightField,
         solid: isDark ? _neuDarkBase : _neuLightBase,
@@ -351,7 +344,6 @@ final class SurfaceTheme extends ThemeExtension<SurfaceTheme> {
   SurfaceTheme copyWith({
     SurfaceStyle? style,
     List<Color>? background,
-    List<Color>? blobs,
     Color? panel,
     Color? field,
     Color? solid,
@@ -362,7 +354,6 @@ final class SurfaceTheme extends ThemeExtension<SurfaceTheme> {
   }) => SurfaceTheme(
     style: style ?? this.style,
     background: background ?? this.background,
-    blobs: blobs ?? this.blobs,
     panel: panel ?? this.panel,
     field: field ?? this.field,
     solid: solid ?? this.solid,

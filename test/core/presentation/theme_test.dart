@@ -14,7 +14,7 @@ void main() {
         expect(theme.brightness, brightness);
         expect(theme.colorScheme.primary, AppTheme.accentBlue);
         expect(surfaces.style, style);
-        expect(surfaces.blobs.isNotEmpty, style == SurfaceStyle.glass);
+        expect(surfaces.background.length, style == SurfaceStyle.glass ? 3 : 2);
       });
 
       testWidgets('$style $brightness draws a panel', (WidgetTester tester) async {
