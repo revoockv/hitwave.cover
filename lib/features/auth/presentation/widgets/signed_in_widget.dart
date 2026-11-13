@@ -1,21 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:watch_it/watch_it.dart';
 
+import '../../../../core/presentation/theme.dart';
+
 import '../di/auth_getters.dart';
 import '../../domain/entities/user.dart';
 
 /// Displays a welcome screen for authenticated users with a sign-out option.
 ///
 /// Watches the current session and shows user info when signed in.
-class SignedInWidget extends WatchingWidget {
-  /// Padding applied to the scaffold body.
-  static const double _padding = 24;
-
+final class SignedInWidget extends WatchingWidget {
   /// Size of the check-circle icon.
   static const double _iconSize = 80;
-
-  /// Small spacing between columns.
-  static const double _spacingSmall = 16;
 
   /// Large spacing between columns.
   static const double _spacingLarge = 48;
@@ -51,7 +47,7 @@ class SignedInWidget extends WatchingWidget {
   /// Builds the signed-in welcome screen.
   @override
   Widget build(BuildContext context) {
-    final User? user = watchValue((watchUseCase) => watchCurrentSessionUseCase);
+    final User? user = watch(watchCurrentSessionUseCase()).value;
 
     if (user == null) {
       return const SizedBox.shrink();
@@ -60,15 +56,15 @@ class SignedInWidget extends WatchingWidget {
     return Scaffold(
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(_padding),
+          padding: const EdgeInsets.all(AppTheme.spacingLarge),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Spacer(),
               const _SignedIconWidget(size: _iconSize),
-              const SizedBox(height: _spacingSmall),
+              const SizedBox(height: AppTheme.spacingMedium),
               const _SignedTitleWidget(),
-              const SizedBox(height: _spacingSmall),
+              const SizedBox(height: AppTheme.spacingMedium),
               _SignedEmailWidget(email: user.email),
               const SizedBox(height: _spacingLarge),
               _SignedOutButtonWidget(onPressed: () => _handleSignOut(context)),

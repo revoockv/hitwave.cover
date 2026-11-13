@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:hitwave.cover/features/song/domain/entities/song.dart';
-import 'package:hitwave.cover/features/song/presentation/pages/home_page.dart';
-import '../../../../core/presentation/theme.dart';
 
+import '../../../../core/presentation/theme.dart';
+import '../../domain/entities/song.dart';
+import '../controllers/song_view_controller.dart';
 import 'song_tile_widget.dart';
 
 /// Displays artist names as wrapable chips with song counts.
@@ -32,17 +32,17 @@ final class ArtistListViewWidget extends StatelessWidget {
   /// Selected chip border width.
   static const double _selectedBorderWidth = 1.5;
 
-  /// Spacing between artist chips.
-  static const double _chipSpacing = 8;
-
-  /// Run spacing between wrapped chip rows.
-  static const double _chipRunSpacing = 8;
-
   /// Alpha value for song count text.
   static const double _songCountAlpha = 0.7;
 
   /// Alpha value for unselected chip border.
   static const double _unselectedBorderAlpha = 0.3;
+
+  /// Opens the song count.
+  static const String _countOpen = '(';
+
+  /// Closes the song count.
+  static const String _countClose = ')';
 
   /// The list of all songs to extract unique artists from.
   final List<Song> songs;
@@ -72,10 +72,10 @@ final class ArtistListViewWidget extends StatelessWidget {
     uniqueArtists.sort();
 
     return Padding(
-          padding: EdgeInsets.symmetric(horizontal: kLargePadding, vertical: kSmallVerticalPadding),
+          padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingMedium, vertical: AppTheme.spacingSmall),
       child: Wrap(
-        spacing: ArtistListViewWidget._chipSpacing,
-        runSpacing: ArtistListViewWidget._chipRunSpacing,
+        spacing: AppTheme.spacingSmall,
+        runSpacing: AppTheme.spacingSmall,
         children: uniqueArtists.map((String artist) {
           final bool isSelected = artist == selectedArtist;
           final int songCount = _getSongCountForArtist(artist);
@@ -92,9 +92,9 @@ final class ArtistListViewWidget extends StatelessWidget {
                   ),
                 ),
                 Padding(
-                  padding: EdgeInsets.only(left: kSmallPadding),
+                  padding: const EdgeInsets.only(left: AppTheme.spacingTiny),
                   child: Text(
-                    '($songCount)',
+                    '$_countOpen$songCount$_countClose',
                     style: TextStyle(
                       color: colorScheme.onSurface.withValues(
                         alpha: ArtistListViewWidget._songCountAlpha,
@@ -242,7 +242,7 @@ final class ArtistModeWidget extends StatelessWidget {
     return ListView(
       children: <Widget>[
         Padding(
-      padding: EdgeInsets.symmetric(horizontal: kLargePadding, vertical: kSmallVerticalPadding),
+      padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingMedium, vertical: AppTheme.spacingSmall),
           child: ArtistListViewWidget(
             songs: songs,
             selectedArtist: selectedArtist,
@@ -269,7 +269,7 @@ final class ArtistModeWidget extends StatelessWidget {
 
     return <Widget>[
       Padding(
-        padding: EdgeInsets.symmetric(horizontal: kLargePadding),
+        padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingMedium),
         child: ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),

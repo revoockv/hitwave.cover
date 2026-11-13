@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/domain/result.dart';
+import '../../../../core/domain/entities/result.dart';
 import '../../../../core/presentation/theme.dart';
 import '../controllers/song_form_controller.dart';
 import '../di/song_getters.dart';
 
-import 'package:hitwave.cover/features/song/domain/entities/song.dart';
 
 /// A full page for adding a new song.
 ///
@@ -65,7 +64,7 @@ class _AddSongPageState extends State<AddSongPage> {
 
     _controller.isLoading.value = true;
 
-    final Result result = await addSongUseCase(
+    final Result<void> result = await addSongUseCase(
       author: author,
       name: name,
       album: album,
@@ -78,15 +77,16 @@ class _AddSongPageState extends State<AddSongPage> {
 
     if (!context.mounted) return;
 
-    if (result.isSuccess) {
-      Navigator.pop(context);
-    } else {
-      if (!context.mounted) return;
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result.errorMessage!)),
-      );
-    }
+    Navigator.pop(context);
+    result.when(success: _onSucceeded, failure: _onFailed);
+  }
+
+  /// Nothing more to do after a successful action: the page is already closed.
+  void _onSucceeded(void _) {}
+
+  /// Shows the error of a failed action.
+  void _onFailed(String error) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
   }
 
   VoidCallback _onCancel(BuildContext context) {
@@ -102,7 +102,7 @@ class _AddSongPageState extends State<AddSongPage> {
       ),
       body: SingleChildScrollView(
         child: Padding(
-          padding: EdgeInsets.all(kLargePadding),
+          padding: const EdgeInsets.all(AppTheme.spacingMedium),
           child: Column(
             children: <Widget>[
               TextField(
@@ -111,21 +111,21 @@ class _AddSongPageState extends State<AddSongPage> {
                   labelText: _authorLabelText,
                 ),
               ),
-              SizedBox(height: kLargePadding),
+              const SizedBox(height: AppTheme.spacingMedium),
               TextField(
                 controller: _controller.nameController,
                 decoration: const InputDecoration(
                   labelText: _nameLabelText,
                 ),
               ),
-              SizedBox(height: kLargePadding),
+              const SizedBox(height: AppTheme.spacingMedium),
               TextField(
                 controller: _controller.albumController,
                 decoration: const InputDecoration(
                   labelText: _albumLabelText,
                 ),
               ),
-              SizedBox(height: kLargePadding),
+              const SizedBox(height: AppTheme.spacingMedium),
               TextField(
                 controller: _controller.lyricsController,
                 maxLines: _lyricsMaxLines,
@@ -133,7 +133,7 @@ class _AddSongPageState extends State<AddSongPage> {
                   labelText: _lyricsLabelText,
                 ),
               ),
-              SizedBox(height: kLargePadding),
+              const SizedBox(height: AppTheme.spacingMedium),
               Row(
                 children: <Widget>[
                   Expanded(
@@ -142,7 +142,7 @@ class _AddSongPageState extends State<AddSongPage> {
                       child: const Text(_cancelButtonText),
                     ),
                   ),
-                  SizedBox(width: kStandardPadding),
+                  const SizedBox(width: AppTheme.spacingSmall),
                   Expanded(
                     child: ValueListenableBuilder<bool>(
                       valueListenable: _controller.isLoading,
@@ -150,9 +150,9 @@ class _AddSongPageState extends State<AddSongPage> {
                         return ElevatedButton(
                           onPressed: loading ? null : () => _onSave(context),
                           child: loading
-                              ? SizedBox(
-                                  width: kLoadingIconSize,
-                                  height: kLoadingIconSize,
+                              ? const SizedBox(
+                                  width: AppTheme.loadingIndicatorSize,
+                                  height: AppTheme.loadingIndicatorSize,
                                   child: CircularProgressIndicator(strokeWidth: 2),
                                 )
                               : const Text(_saveButtonText),

@@ -1,29 +1,21 @@
-/// Shared layout constants for the song feature.
+/// Values shared by more than one feature: spacing, sizes, colors.
 ///
-/// All numeric values used in EdgeInsets, sizes, and other layout
-/// constructors must be declared here to avoid magic numbers.
-library;
+/// A value used by a single widget stays a private `static const` of that widget.
+final class AppTheme {
+  /// Tiny gap between closely related elements.
+  static const double spacingTiny = 6;
 
-/// Small horizontal/vertical padding (6px).
-const double kSmallPadding = 6;
+  /// Small gap between related elements.
+  static const double spacingSmall = 8;
 
-/// Standard horizontal padding (8px).
-const double kStandardPadding = 8;
+  /// Default padding of screens and cards.
+  static const double spacingMedium = 16;
 
-/// Medium horizontal padding (12px).
-const double kMediumPadding = 12;
+  /// Large gap between sections and around full-screen text.
+  static const double spacingLarge = 24;
 
-/// Large horizontal padding (16px).
-const double kLargePadding = 16;
+  /// Size of the small progress indicator inside buttons.
+  static const double loadingIndicatorSize = 20;
 
-/// Extra large content padding (24px).
-const double kExtraLargePadding = 24;
-
-/// Small vertical padding (8px).
-const double kSmallVerticalPadding = 8;
-
-/// Medium vertical padding (12px).
-const double kMediumVerticalPadding = 12;
-
-/// Loading indicator size (20px).
-const double kLoadingIconSize = 20;
+  const AppTheme._();
+}

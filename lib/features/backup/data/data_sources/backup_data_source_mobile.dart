@@ -12,6 +12,7 @@ import 'backup_data_source.dart';
 final class BackupDataSourceMobile implements BackupDataSource {
   static const String _backupFileName = 'backup.json';
   static const List<String> _allowedExtensions = ['json'];
+  static const String _pathSeparator = '/';
   static const String _exportDialogTitle = 'Оберіть папку для експорту';
 
   @override
@@ -49,7 +50,7 @@ final class BackupDataSourceMobile implements BackupDataSource {
         return null;
       }
 
-      return '$directoryPath/$_backupFileName';
+      return '$directoryPath$_pathSeparator$_backupFileName';
     } catch (e) {
       return null;
     }

@@ -1,6 +1,6 @@
-import 'package:flutter/foundation.dart' show ValueNotifier;
+import 'package:flutter/foundation.dart' show ValueListenable;
 
-import '../../../../core/domain/result.dart';
+import '../../../../core/domain/entities/result.dart';
 
 import '../entities/user.dart';
 
@@ -9,11 +9,10 @@ import '../entities/user.dart';
 /// Implementations handle the actual authentication logic,
 /// typically delegating to a backend or SDK.
 abstract interface class AuthRepository {
-  /// Returns a [ValueNotifier] containing the current authentication session state.
+  /// The current authentication session.
   ///
-  /// The session contains a [User] when signed in, or [null] when signed out.
-  /// This is exposed as a [ValueNotifier] so the UI can reactively watch changes.
-  ValueNotifier<User?> get session;
+  /// Holds a [User] when signed in, or `null` when signed out.
+  ValueListenable<User?> watchSession();
 
   /// Signs in a user with the given [email] and [password].
   ///
@@ -37,9 +36,4 @@ abstract interface class AuthRepository {
   ///
   /// Returns [SuccessResult] on success, or [FailureResult] if sign-out fails.
   Future<Result<void>> signOut();
-
-  /// Initializes the repository and starts listening for auth state changes.
-  ///
-  /// Must be called once at app startup via [runAppInitiations].
-  Future<void> init();
 }

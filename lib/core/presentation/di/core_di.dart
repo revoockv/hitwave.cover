@@ -1,12 +1,15 @@
-import 'package:get_it/get_it.dart';
+import 'dart:async';
+
 import 'package:logger/logger.dart';
+import 'package:watch_it/watch_it.dart';
 
-/// Registers core application dependencies in GetIt.
-///
-/// Must be called before any feature DI registration. Registers a singleton
-/// [Logger] instance accessible via `getIt<Logger>()`.
-Future<void> registerCoreDI() async {
-  final getIt = GetIt.instance;
+import '../../domain/entities/disposable_resource.dart';
 
-  getIt.registerSingleton<Logger>(Logger());
+/// GetIt `dispose:` callback: calls our [DisposableResource.dispose] if [instance] owns resources.
+FutureOr<void> disposeResource(Object instance) =>
+    instance is DisposableResource ? instance.dispose() : null;
+
+/// Registers app-wide services used by every feature.
+void registerAndInitCore() {
+  di.registerSingleton<Logger>(Logger());
 }

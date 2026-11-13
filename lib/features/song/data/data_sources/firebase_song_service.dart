@@ -26,8 +26,8 @@ final class FirebaseSongService {
 
   /// Creates a new [FirebaseSongService].
   FirebaseSongService({
-    required FirebaseFirestore firestore,
-  }) : _firestore = firestore;
+    required this._firestore,
+  });
 
   /// Returns the Firestore reference for the user's songs collection.
   CollectionReference<Map<String, dynamic>> _songsCollection(String userId) {
@@ -45,73 +45,61 @@ final class FirebaseSongService {
   /// Adds a new song document to Firestore.
   ///
   /// Returns the document ID of the newly created song.
-  /// Throws a [String] error message when the operation fails.
+  /// Throws the Firestore exception when the operation fails.
   Future<String> addSong({
     required String userId,
     required SongModel song,
   }) async {
-    try {
-      final docRef = _songsCollection(userId).doc();
-      final songData = <String, dynamic>{
-        _idField: docRef.id,
-        _authorField: song.author,
-        _nameField: song.name,
-        _albumField: song.album,
-        _lyricsField: song.lyrics,
-        _coverIdsField: <String>[],
-        _createdAtField: FieldValue.serverTimestamp(),
-      };
+    final docRef = _songsCollection(userId).doc();
+    final songData = <String, dynamic>{
+      _idField: docRef.id,
+      _authorField: song.author,
+      _nameField: song.name,
+      _albumField: song.album,
+      _lyricsField: song.lyrics,
+      _coverIdsField: <String>[],
+      _createdAtField: FieldValue.serverTimestamp(),
+    };
 
-      await docRef.set(songData);
+    await docRef.set(songData);
 
-      return docRef.id;
-    } catch (e) {
-      throw 'Помилка при створенні пісні: $e';
-    }
+    return docRef.id;
   }
 
   /// Updates an existing song document in Firestore.
   ///
-  /// Throws a [String] error message when the operation fails.
+  /// Throws the Firestore exception when the operation fails.
   Future<void> updateSong({
     required String userId,
     required SongModel song,
   }) async {
-    try {
-      final docRef = _songsCollection(userId).doc(song.id);
-      final songData = <String, dynamic>{
-        _authorField: song.author,
-        _nameField: song.name,
-        _albumField: song.album,
-        _lyricsField: song.lyrics,
-        _updatedAtField: FieldValue.serverTimestamp(),
-      };
+    final docRef = _songsCollection(userId).doc(song.id);
+    final songData = <String, dynamic>{
+      _authorField: song.author,
+      _nameField: song.name,
+      _albumField: song.album,
+      _lyricsField: song.lyrics,
+      _updatedAtField: FieldValue.serverTimestamp(),
+    };
 
-      await docRef.update(songData);
-    } catch (e) {
-      throw 'Помилка при оновленні пісні: $e';
-    }
+    await docRef.update(songData);
   }
 
   /// Deletes a song document from Firestore and all its covers.
   ///
-  /// Throws a [String] error message when the operation fails.
+  /// Throws the Firestore exception when the operation fails.
   Future<void> deleteSong({
     required String userId,
     required String songId,
   }) async {
-    try {
-      final songDocRef = _songsCollection(userId).doc(songId);
-      final coversSnapshot = await _coversCollection(userId, songId).get();
+    final songDocRef = _songsCollection(userId).doc(songId);
+    final coversSnapshot = await _coversCollection(userId, songId).get();
 
-      for (final coverDoc in coversSnapshot.docs) {
-        await coverDoc.reference.delete();
-      }
-
-      await songDocRef.delete();
-    } catch (e) {
-      throw 'Помилка при видаленні пісні: $e';
+    for (final coverDoc in coversSnapshot.docs) {
+      await coverDoc.reference.delete();
     }
+
+    await songDocRef.delete();
   }
 
   /// Watches all songs for a user as a Stream of [SongModel].
@@ -140,72 +128,60 @@ final class FirebaseSongService {
   /// Adds a new cover document to Firestore.
   ///
   /// Returns the document ID of the newly created cover.
-  /// Throws a [String] error message when the operation fails.
+  /// Throws the Firestore exception when the operation fails.
   Future<String> addCover({
     required String userId,
     required String songId,
     required CoverModel cover,
   }) async {
-    try {
-      final docRef = _coversCollection(userId, songId).doc();
-      final coverData = <String, dynamic>{
-        _idField: docRef.id,
-        _timestampField: FieldValue.serverTimestamp(),
-        _notesField: cover.notes,
-      };
+    final docRef = _coversCollection(userId, songId).doc();
+    final coverData = <String, dynamic>{
+      _idField: docRef.id,
+      _timestampField: FieldValue.serverTimestamp(),
+      _notesField: cover.notes,
+    };
 
-      await docRef.set(coverData);
+    await docRef.set(coverData);
 
-      await _songsCollection(userId).doc(songId).update({
-        _coverIdsField: FieldValue.arrayUnion([docRef.id]),
-      });
+    await _songsCollection(userId).doc(songId).update({
+      _coverIdsField: FieldValue.arrayUnion([docRef.id]),
+    });
 
-      return docRef.id;
-    } catch (e) {
-      throw 'Помилка при створенні обкладинки: $e';
-    }
+    return docRef.id;
   }
 
   /// Updates an existing cover document in Firestore.
   ///
-  /// Throws a [String] error message when the operation fails.
+  /// Throws the Firestore exception when the operation fails.
   Future<void> updateCover({
     required String userId,
     required String songId,
     required CoverModel cover,
   }) async {
-    try {
-      final docRef = _coversCollection(userId, songId).doc(cover.id);
-      final coverData = <String, dynamic>{
-        _timestampField: FieldValue.serverTimestamp(),
-        _notesField: cover.notes,
-      };
+    final docRef = _coversCollection(userId, songId).doc(cover.id);
+    final coverData = <String, dynamic>{
+      _timestampField: FieldValue.serverTimestamp(),
+      _notesField: cover.notes,
+    };
 
-      await docRef.update(coverData);
-    } catch (e) {
-      throw 'Помилка при оновленні обкладинки: $e';
-    }
+    await docRef.update(coverData);
   }
 
   /// Deletes a cover document from Firestore.
   ///
   /// Also removes the cover ID from the parent song's coverIds array.
-  /// Throws a [String] error message when the operation fails.
+  /// Throws the Firestore exception when the operation fails.
   Future<void> deleteCover({
     required String userId,
     required String songId,
     required String coverId,
   }) async {
-    try {
-      final coversRef = _coversCollection(userId, songId).doc(coverId);
-      await coversRef.delete();
+    final coversRef = _coversCollection(userId, songId).doc(coverId);
+    await coversRef.delete();
 
-      await _songsCollection(userId).doc(songId).update({
-        _coverIdsField: FieldValue.arrayRemove([coverId]),
-      });
-    } catch (e) {
-      throw 'Помилка при видаленні обкладинки: $e';
-    }
+    await _songsCollection(userId).doc(songId).update({
+      _coverIdsField: FieldValue.arrayRemove([coverId]),
+    });
   }
 
   /// Watches all covers for a specific song as a Stream of [CoverModel].

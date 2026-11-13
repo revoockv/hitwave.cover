@@ -1,6 +1,6 @@
-import 'package:flutter/foundation.dart' show ValueNotifier;
+import 'package:flutter/foundation.dart' show ValueListenable;
 
-import '../../../../core/domain/result.dart';
+import '../../../../core/domain/entities/result.dart';
 
 /// Defines the contract for backup and restore operations via files.
 ///
@@ -9,11 +9,11 @@ import '../../../../core/domain/result.dart';
 /// operations are encapsulated within the repository — no file paths
 /// are exposed to the interface.
 abstract interface class BackupRepository {
-  /// Returns the current backup status as a [ValueNotifier].
+  /// The current backup status.
   ///
-  /// Contains a [String] describing the current state: idle, exporting,
-  /// importing, success, or error message.
-  ValueNotifier<String> get status;
+  /// Holds a [String] describing the current state: idle, exporting,
+  /// importing, success, or an error message.
+  ValueListenable<String> watchStatus();
 
   /// Exports all songs to a JSON file in a user-selected directory.
   ///

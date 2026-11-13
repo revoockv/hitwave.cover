@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/domain/result.dart';
+import '../../../../core/domain/entities/result.dart';
 import '../../../../core/presentation/theme.dart';
 import '../controllers/song_form_controller.dart';
 import '../di/song_getters.dart';
@@ -88,15 +88,16 @@ class _EditSongPageState extends State<EditSongPage> {
 
     if (!context.mounted) return;
 
-    if (result.isSuccess) {
-      Navigator.pop(context);
-    } else {
-      if (!context.mounted) return;
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result.errorMessage!)),
-      );
-    }
+    Navigator.pop(context);
+    result.when(success: _onSucceeded, failure: _onFailed);
+  }
+
+  /// Nothing more to do after a successful action: the page is already closed.
+  void _onSucceeded(void _) {}
+
+  /// Shows the error of a failed action.
+  void _onFailed(String error) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
   }
 
   VoidCallback _onCancel(BuildContext context) {
@@ -112,7 +113,7 @@ class _EditSongPageState extends State<EditSongPage> {
       ),
       body: SingleChildScrollView(
         child: Padding(
-          padding: EdgeInsets.all(kLargePadding),
+          padding: const EdgeInsets.all(AppTheme.spacingMedium),
           child: Column(
             children: <Widget>[
               TextField(
@@ -121,21 +122,21 @@ class _EditSongPageState extends State<EditSongPage> {
                   labelText: _authorLabelText,
                 ),
               ),
-              SizedBox(height: kLargePadding),
+              const SizedBox(height: AppTheme.spacingMedium),
               TextField(
                 controller: _controller.nameController,
                 decoration: const InputDecoration(
                   labelText: _nameLabelText,
                 ),
               ),
-              SizedBox(height: kLargePadding),
+              const SizedBox(height: AppTheme.spacingMedium),
               TextField(
                 controller: _controller.albumController,
                 decoration: const InputDecoration(
                   labelText: _albumLabelText,
                 ),
               ),
-              SizedBox(height: kLargePadding),
+              const SizedBox(height: AppTheme.spacingMedium),
               TextField(
                 controller: _controller.lyricsController,
                 maxLines: _lyricsMaxLines,
@@ -143,7 +144,7 @@ class _EditSongPageState extends State<EditSongPage> {
                   labelText: _lyricsLabelText,
                 ),
               ),
-              SizedBox(height: kLargePadding),
+              const SizedBox(height: AppTheme.spacingMedium),
               Row(
                 children: <Widget>[
                   Expanded(
@@ -152,7 +153,7 @@ class _EditSongPageState extends State<EditSongPage> {
                       child: const Text(_cancelButtonText),
                     ),
                   ),
-                  SizedBox(width: kStandardPadding),
+                  const SizedBox(width: AppTheme.spacingSmall),
                   Expanded(
                     child: ValueListenableBuilder<bool>(
                       valueListenable: _controller.isLoading,
@@ -160,9 +161,9 @@ class _EditSongPageState extends State<EditSongPage> {
                         return ElevatedButton(
                           onPressed: loading ? null : () => _onSave(context),
                           child: loading
-                              ? SizedBox(
-                                  width: kLoadingIconSize,
-                                  height: kLoadingIconSize,
+                              ? const SizedBox(
+                                  width: AppTheme.loadingIndicatorSize,
+                                  height: AppTheme.loadingIndicatorSize,
                                   child: CircularProgressIndicator(strokeWidth: 2),
                                 )
                               : const Text(_saveButtonText),

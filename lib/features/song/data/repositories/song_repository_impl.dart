@@ -1,10 +1,11 @@
 import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
-import 'package:flutter/foundation.dart' show ValueNotifier;
+import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
 
-import '../../../../core/domain/result.dart';
+import '../../../../core/domain/entities/disposable_resource.dart';
+import '../../../../core/domain/entities/result.dart';
 import '../../domain/entities/cover.dart';
 import '../../domain/entities/song.dart';
 import '../../domain/repositories/song_repository.dart';
@@ -14,78 +15,115 @@ import '../models/song_model.dart';
 
 /// Firebase-based implementation of [SongRepository].
 ///
-/// Subscribes to Firebase Firestore song changes and exposes the current
-/// song list as a [ValueNotifier<List<Song>]> for reactive UI updates.
-final class SongRepositoryImpl implements SongRepository {
+/// Subscribes to Firebase Firestore song changes in [init] and keeps the
+/// current song list in a private [ValueNotifier], exposed as [ValueListenable].
+final class SongRepositoryImpl implements SongRepository, DisposableResource {
   static const String _userNotAuthenticated = 'Користувач не авторизований.';
+  static const String _addSongFailedMessage = 'Помилка при додаванні пісні.';
+  static const String _updateSongFailedMessage = 'Помилка при оновленні пісні.';
+  static const String _deleteSongFailedMessage = 'Помилка при видаленні пісні.';
+  static const String _addCoverFailedMessage = 'Помилка при додаванні обкладинки.';
+  static const String _updateCoverFailedMessage = 'Помилка при оновленні обкладинки.';
+  static const String _deleteCoverFailedMessage = 'Помилка при видаленні обкладинки.';
+
+  static const String _newDocumentId = '';
+
+  static const String _initNoUserLog = 'Song repository init: no authenticated user, skipping subscription';
+  static const String _initSubscribedLog = 'Song repository init: subscribed to songs for user ';
+  static const String _streamErrorLog = 'Song repository watchSongs stream error: ';
+  static const String _disposeLog = 'Song repository dispose: unsubscribed';
+
+  static const String _addSongLog = 'AddSong';
+  static const String _updateSongLog = 'UpdateSong';
+  static const String _deleteSongLog = 'DeleteSong';
+  static const String _addCoverLog = 'AddCover';
+  static const String _updateCoverLog = 'UpdateCover';
+  static const String _deleteCoverLog = 'DeleteCover';
+
+  static const String _startingLog = ': starting for songId="';
+  static const String _startingNameLog = ': starting for name="';
+  static const String _successLog = ': success — songId="';
+  static const String _successNameLog = ': success — name="';
+  static const String _coverIdLog = '", coverId="';
+  static const String _closingQuoteLog = '"';
+  static const String _notAuthenticatedLog = ': failed — user is not authenticated';
+  static const String _failureLog = ': failure — ';
 
   final FirebaseSongService _songService;
   final firebase_auth.FirebaseAuth _auth;
   final Logger _logger;
 
-  /// Exposes the current song list as a [ValueNotifier].
-  ///
-  /// Contains a [List<Song>] sorted by name.
-  final ValueNotifier<List<Song>> _songs = ValueNotifier(const []);
+  final ValueNotifier<List<Song>> _songs = ValueNotifier<List<Song>>(const <Song>[]);
 
-  @override
-  ValueNotifier<List<Song>> get songs => _songs;
+  StreamSubscription<List<SongModel>>? _subscription;
 
   String? _currentUserId;
 
   /// Creates a new [SongRepositoryImpl].
   SongRepositoryImpl({
-    required FirebaseSongService songService,
-    required firebase_auth.FirebaseAuth auth,
-    required Logger logger,
-  })  : _songService = songService,
-        _auth = auth,
-        _logger = logger;
+    required this._songService,
+    required this._auth,
+    required this._logger,
+  });
+
+  /// Subscribes to the songs of the signed-in user; returns this for `registerSingletonAsync`.
+  Future<SongRepositoryImpl> init() async {
+    final String? userId = _auth.currentUser?.uid;
+    _currentUserId = userId;
+    if (userId == null) {
+      _logger.i(_initNoUserLog);
+      return this;
+    }
+
+    _subscription ??= _songService.watchSongs(userId).listen(_onSongModels, onError: _onSongsError);
+    _logger.i('$_initSubscribedLog$userId');
+    return this;
+  }
+
+  /// Cancels the subscription and releases the state.
+  @override
+  Future<void> dispose() async {
+    await _subscription?.cancel();
+    _subscription = null;
+    _songs.dispose();
+    _logger.i(_disposeLog);
+  }
 
   @override
-  Future<void> init() async {
-    _currentUserId = _auth.currentUser?.uid;
-    if (_currentUserId == null) {
-      _logger.i('Song repository init: no authenticated user, skipping subscription');
+  ValueListenable<List<Song>> watchSongs() => _songs;
+
+  void _onSongModels(List<SongModel> models) {
+    unawaited(_processModels(models));
+  }
+
+  void _onSongsError(Object error) {
+    _logger.e('$_streamErrorLog$error');
+    _songs.value = const <Song>[];
+  }
+
+  Future<void> _processModels(List<SongModel> models) async {
+    final String? userId = _currentUserId;
+    if (userId == null) {
       return;
     }
 
-    _logger.i('Song repository init: subscribed to songs for user $_currentUserId');
-
-    _songService.watchSongs(_currentUserId!).listen(
-      (List<SongModel> models) {
-        _processModels(models);
-      },
-      onError: (Object e) {
-        _logger.e('Song repository watchSongs stream error: $e');
-        _songs.value = const [];
-      },
-    );
-  }
-
-  void _processModels(List<SongModel> models) async {
-    final String userId = _currentUserId!;
-
     final List<Song> songs = await Future.wait(
-      models.map(
-        (SongModel model) async {
-          final List<Cover> covers = model.coverIds.isEmpty
-              ? const []
-              : await _songService.getCovers(userId, model.id).then(
-                  (List<CoverModel> coverModels) {
-                    return coverModels.map((CoverModel coverModel) {
-                      return coverModel.toEntity();
-                    }).toList();
-                  },
-                );
-
-          return model.toEntity(covers: covers);
-        },
-      ),
+      models.map((SongModel model) => _toSong(userId, model)),
     );
 
     _songs.value = songs;
   }
+
+  Future<Song> _toSong(String userId, SongModel model) async {
+    if (model.coverIds.isEmpty) {
+      return model.toEntity(covers: const <Cover>[]);
+    }
+
+    final List<CoverModel> coverModels = await _songService.getCovers(userId, model.id);
+    return model.toEntity(covers: coverModels.map(_toCover).toList());
+  }
+
+  Cover _toCover(CoverModel model) => model.toEntity();
 
   @override
   Future<Result<void>> addSong({
@@ -94,34 +132,31 @@ final class SongRepositoryImpl implements SongRepository {
     String? album,
     required String lyrics,
   }) async {
+    _logger.i('$_addSongLog$_startingNameLog$name$_closingQuoteLog');
+
+    final String? userId = _currentUserId;
+    if (userId == null) {
+      _logger.w('$_addSongLog$_notAuthenticatedLog');
+      return const Result.failure(_userNotAuthenticated);
+    }
+
     try {
-      _logger.i('AddSong: starting for author="$author", name="$name"');
-
-      final userId = _currentUserId;
-      if (userId == null) {
-        _logger.w('AddSong: failed — користувач не авторизований');
-        return Result.failure(_userNotAuthenticated);
-      }
-
-      final song = SongModel(
-        id: '',
+      final SongModel song = SongModel(
+        id: _newDocumentId,
         author: author,
         name: name,
         album: album,
         lyrics: lyrics,
-        coverIds: const [],
+        coverIds: const <String>[],
       );
 
-      await _songService.addSong(
-        userId: userId,
-        song: song,
-      );
+      await _songService.addSong(userId: userId, song: song);
 
-      _logger.i('AddSong: success — song "$name" by "$author" added');
-      return Result.success();
-    } catch (e) {
-      _logger.e('AddSong: failure — $e');
-      return Result.failure('Помилка при додаванні пісні: $e');
+      _logger.i('$_addSongLog$_successNameLog$name$_closingQuoteLog');
+      return Result.ok;
+    } on Exception catch (e) {
+      _logger.e('$_addSongLog$_failureLog$e');
+      return const Result.failure(_addSongFailedMessage);
     }
   }
 
@@ -133,30 +168,31 @@ final class SongRepositoryImpl implements SongRepository {
     String? album,
     required String lyrics,
   }) async {
+    _logger.i('$_updateSongLog$_startingLog$songId$_closingQuoteLog');
+
+    final String? userId = _currentUserId;
+    if (userId == null) {
+      _logger.w('$_updateSongLog$_notAuthenticatedLog');
+      return const Result.failure(_userNotAuthenticated);
+    }
+
     try {
-      _logger.i('UpdateSong: starting for songId="$songId", name="$name"');
-
-      final userId = _currentUserId;
-      if (userId == null) {
-        _logger.w('UpdateSong: failed — користувач не авторизований');
-        return Result.failure(_userNotAuthenticated);
-      }
-
-      final song = SongModel(
+      final SongModel song = SongModel(
         id: songId,
         author: author,
         name: name,
         album: album,
         lyrics: lyrics,
-        coverIds: const [],
+        coverIds: const <String>[],
       );
 
       await _songService.updateSong(userId: userId, song: song);
-      _logger.i('UpdateSong: success — song "$name" updated');
-      return Result.success();
-    } catch (e) {
-      _logger.e('UpdateSong: failure — $e');
-      return Result.failure('Помилка при оновленні пісні: $e');
+
+      _logger.i('$_updateSongLog$_successLog$songId$_closingQuoteLog');
+      return Result.ok;
+    } on Exception catch (e) {
+      _logger.e('$_updateSongLog$_failureLog$e');
+      return const Result.failure(_updateSongFailedMessage);
     }
   }
 
@@ -164,21 +200,22 @@ final class SongRepositoryImpl implements SongRepository {
   Future<Result<void>> deleteSong({
     required String songId,
   }) async {
+    _logger.i('$_deleteSongLog$_startingLog$songId$_closingQuoteLog');
+
+    final String? userId = _currentUserId;
+    if (userId == null) {
+      _logger.w('$_deleteSongLog$_notAuthenticatedLog');
+      return const Result.failure(_userNotAuthenticated);
+    }
+
     try {
-      _logger.i('DeleteSong: starting for songId="$songId"');
-
-      final userId = _currentUserId;
-      if (userId == null) {
-        _logger.w('DeleteSong: failed — користувач не авторизований');
-        return Result.failure(_userNotAuthenticated);
-      }
-
       await _songService.deleteSong(userId: userId, songId: songId);
-      _logger.i('DeleteSong: success — song "$songId" deleted');
-      return Result.success();
-    } catch (e) {
-      _logger.e('DeleteSong: failure — $e');
-      return Result.failure('Помилка при видаленні пісні: $e');
+
+      _logger.i('$_deleteSongLog$_successLog$songId$_closingQuoteLog');
+      return Result.ok;
+    } on Exception catch (e) {
+      _logger.e('$_deleteSongLog$_failureLog$e');
+      return const Result.failure(_deleteSongFailedMessage);
     }
   }
 
@@ -188,33 +225,29 @@ final class SongRepositoryImpl implements SongRepository {
     required List<int> audioBytes,
     String? notes,
   }) async {
+    _logger.i('$_addCoverLog$_startingLog$songId$_closingQuoteLog');
+
+    final String? userId = _currentUserId;
+    if (userId == null) {
+      _logger.w('$_addCoverLog$_notAuthenticatedLog');
+      return const Result.failure(_userNotAuthenticated);
+    }
+
     try {
-      _logger.i('AddCover: starting for songId="$songId", size=${audioBytes.length} bytes');
-
-      final userId = _currentUserId;
-      if (userId == null) {
-        _logger.w('AddCover: failed — користувач не авторизований');
-        return Result.failure(_userNotAuthenticated);
-      }
-
-      final cover = CoverModel(
-        id: '',
+      final CoverModel cover = CoverModel(
+        id: _newDocumentId,
         timestamp: DateTime.now().millisecondsSinceEpoch,
         audioBytes: audioBytes,
         notes: notes,
       );
 
-      await _songService.addCover(
-        userId: userId,
-        songId: songId,
-        cover: cover,
-      );
+      await _songService.addCover(userId: userId, songId: songId, cover: cover);
 
-      _logger.i('AddCover: success — cover added to song "$songId"');
-      return Result.success();
-    } catch (e) {
-      _logger.e('AddCover: failure — $e');
-      return Result.failure('Помилка: $e');
+      _logger.i('$_addCoverLog$_successLog$songId$_closingQuoteLog');
+      return Result.ok;
+    } on Exception catch (e) {
+      _logger.e('$_addCoverLog$_failureLog$e');
+      return const Result.failure(_addCoverFailedMessage);
     }
   }
 
@@ -225,33 +258,29 @@ final class SongRepositoryImpl implements SongRepository {
     required List<int> audioBytes,
     String? notes,
   }) async {
+    _logger.i('$_updateCoverLog$_startingLog$songId$_coverIdLog$coverId$_closingQuoteLog');
+
+    final String? userId = _currentUserId;
+    if (userId == null) {
+      _logger.w('$_updateCoverLog$_notAuthenticatedLog');
+      return const Result.failure(_userNotAuthenticated);
+    }
+
     try {
-      _logger.i('UpdateCover: starting for songId="$songId", coverId="$coverId", size=${audioBytes.length} bytes');
-
-      final userId = _currentUserId;
-      if (userId == null) {
-        _logger.w('UpdateCover: failed — користувач не авторизований');
-        return Result.failure(_userNotAuthenticated);
-      }
-
-      final cover = CoverModel(
+      final CoverModel cover = CoverModel(
         id: coverId,
         timestamp: DateTime.now().millisecondsSinceEpoch,
         audioBytes: audioBytes,
         notes: notes,
       );
 
-      await _songService.updateCover(
-        userId: userId,
-        songId: songId,
-        cover: cover,
-      );
+      await _songService.updateCover(userId: userId, songId: songId, cover: cover);
 
-      _logger.i('UpdateCover: success — cover "$coverId" updated on song "$songId"');
-      return Result.success();
-    } catch (e) {
-      _logger.e('UpdateCover: failure — $e');
-      return Result.failure('Помилка: $e');
+      _logger.i('$_updateCoverLog$_successLog$songId$_coverIdLog$coverId$_closingQuoteLog');
+      return Result.ok;
+    } on Exception catch (e) {
+      _logger.e('$_updateCoverLog$_failureLog$e');
+      return const Result.failure(_updateCoverFailedMessage);
     }
   }
 
@@ -260,26 +289,22 @@ final class SongRepositoryImpl implements SongRepository {
     required String songId,
     required String coverId,
   }) async {
+    _logger.i('$_deleteCoverLog$_startingLog$songId$_coverIdLog$coverId$_closingQuoteLog');
+
+    final String? userId = _currentUserId;
+    if (userId == null) {
+      _logger.w('$_deleteCoverLog$_notAuthenticatedLog');
+      return const Result.failure(_userNotAuthenticated);
+    }
+
     try {
-      _logger.i('DeleteCover: starting for songId="$songId", coverId="$coverId"');
+      await _songService.deleteCover(userId: userId, songId: songId, coverId: coverId);
 
-      final userId = _currentUserId;
-      if (userId == null) {
-        _logger.w('DeleteCover: failed — користувач не авторизований');
-        return Result.failure(_userNotAuthenticated);
-      }
-
-      await _songService.deleteCover(
-        userId: userId,
-        songId: songId,
-        coverId: coverId,
-      );
-
-      _logger.i('DeleteCover: success — cover "$coverId" deleted from song "$songId"');
-      return Result.success();
-    } catch (e) {
-      _logger.e('DeleteCover: failure — $e');
-      return Result.failure('Помилка: $e');
+      _logger.i('$_deleteCoverLog$_successLog$songId$_coverIdLog$coverId$_closingQuoteLog');
+      return Result.ok;
+    } on Exception catch (e) {
+      _logger.e('$_deleteCoverLog$_failureLog$e');
+      return const Result.failure(_deleteCoverFailedMessage);
     }
   }
 }

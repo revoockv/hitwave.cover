@@ -26,24 +26,18 @@ final class FirebaseAuthService {
   static const String _invalidCredentialMessage = 'Невірні облікові дані.';
   static const String _genericErrorMessage = 'Сталася помилка. Спробуйте пізніше.';
 
-  final firebase_auth.FirebaseAuth _firebaseAuth;
+  /// The Firebase Auth SDK; available after [init].
+  firebase_auth.FirebaseAuth get _firebaseAuth => firebase_auth.FirebaseAuth.instance;
 
-  /// Creates a new [FirebaseAuthService].
+  /// Initializes Firebase with platform-specific options; returns this for `registerSingletonAsync`.
   ///
-  /// [firebaseAuth] is required after [init] is called. Pass
-  /// [firebase_auth.FirebaseAuth.instance] from the DI layer.
-  FirebaseAuthService({
-    required firebase_auth.FirebaseAuth firebaseAuth,
-  }) : _firebaseAuth = firebaseAuth;
-
-  /// Initializes Firebase with platform-specific options.
-  ///
-  /// Must be called before any Firebase operations. Called automatically by
-  /// [AuthRepositoryImpl.init].
-  static Future<void> init() async {
+  /// Must finish before any Firebase operation of any feature.
+  Future<FirebaseAuthService> init() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    await _firebaseAuth.setSettings(appVerificationDisabledForTesting: true);
+    return this;
   }
 
   /// Returns a Stream of Firebase user changes.
@@ -56,7 +50,7 @@ final class FirebaseAuthService {
 
   /// Signs in a user with the given [email] and [password].
   ///
-  /// Throws a [String] error message when authentication fails.
+  /// Throws an [AuthServiceException] with a user-friendly message when authentication fails.
   Future<void> signIn({
     required String email,
     required String password,
@@ -67,13 +61,13 @@ final class FirebaseAuthService {
         password: password,
       );
     } on firebase_auth.FirebaseAuthException catch (e) {
-      throw _mapFirebaseError(e.code);
+      throw AuthServiceException(_mapFirebaseError(e.code));
     }
   }
 
   /// Registers a new user with the given [email] and [password].
   ///
-  /// Throws a [String] error message when registration fails.
+  /// Throws an [AuthServiceException] with a user-friendly message when registration fails.
   Future<void> signUp({
     required String email,
     required String password,
@@ -84,18 +78,18 @@ final class FirebaseAuthService {
         password: password,
       );
     } on firebase_auth.FirebaseAuthException catch (e) {
-      throw _mapFirebaseError(e.code);
+      throw AuthServiceException(_mapFirebaseError(e.code));
     }
   }
 
   /// Signs out the currently signed-in user.
   ///
-  /// Throws a [String] error message when sign-out fails.
+  /// Throws an [AuthServiceException] with a user-friendly message when sign-out fails.
   Future<void> signOut() async {
     try {
       await _firebaseAuth.signOut();
     } on firebase_auth.FirebaseAuthException catch (e) {
-      throw _mapFirebaseError(e.code);
+      throw AuthServiceException(_mapFirebaseError(e.code));
     }
   }
 
@@ -127,4 +121,16 @@ final class FirebaseAuthService {
         return _genericErrorMessage;
     }
   }
+}
+
+/// A failed auth operation with a message that can be shown to the user.
+final class AuthServiceException implements Exception {
+  /// User-friendly error message.
+  final String message;
+
+  /// Creates the exception with [message].
+  const AuthServiceException(this.message);
+
+  @override
+  String toString() => message;
 }
