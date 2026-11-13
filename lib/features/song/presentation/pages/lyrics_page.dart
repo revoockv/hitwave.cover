@@ -11,6 +11,7 @@ import '../../../practice/presentation/di/practice_getters.dart';
 import '../../../recordings/domain/entities/recorder_state.dart';
 import '../../../recordings/domain/entities/recording.dart';
 import '../../../recordings/domain/entities/recording_preferences.dart';
+import '../../../recordings/domain/entities/shared_song.dart';
 import '../../../recordings/presentation/di/recordings_getters.dart';
 import '../../../recordings/domain/entities/microphone.dart';
 import '../../../recordings/presentation/widgets/microphone_picker_dialog_widget.dart';
@@ -51,9 +52,6 @@ final class LyricsPage extends WatchingWidget {
 
   /// Label of the trim-silence checkbox.
   static const String _trimSilenceLabel = 'Обрізати тишу';
-
-  /// Separator between the song and its artist in a shared recording.
-  static const String _titleSeparator = ' — ';
 
   /// Tooltip of the recordings button.
   static const String _recordingsLabel = 'Записи';
@@ -400,8 +398,10 @@ final class LyricsPage extends WatchingWidget {
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-      builder: (BuildContext context) =>
-          RecordingsSheetWidget(songId: song.id, songTitle: '${song.name}$_titleSeparator${song.author}'),
+      builder: (BuildContext context) => RecordingsSheetWidget(
+        songId: song.id,
+        song: SharedSong(author: song.author, name: song.name),
+      ),
     );
     await stopPlaybackUseCase();
   }

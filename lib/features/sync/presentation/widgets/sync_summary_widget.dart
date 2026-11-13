@@ -11,6 +11,8 @@ final class SyncSummaryWidget extends StatelessWidget {
   static const String _songs = 'пісень: ';
   static const String _covers = 'каверів: ';
   static const String _sessions = 'тренувань: ';
+  static const String _deleted = 'видалено: ';
+  static const String _updated = 'оновлено: ';
   static const String _separator = ', ';
   static const double _iconSize = 64;
 
@@ -37,15 +39,23 @@ final class SyncSummaryWidget extends StatelessWidget {
         Text(_title, style: theme.textTheme.titleLarge),
         const SizedBox(height: AppTheme.spacingMedium),
         Text(_received, style: theme.textTheme.titleSmall),
-        Text(_counts(summary.songsReceived, summary.coversReceived, summary.sessionsReceived)),
+        Text(
+          _counts(summary.songsReceived, summary.coversReceived, summary.sessionsReceived) +
+              _changes(summary.deletedHere, summary.updatedHere),
+        ),
         const SizedBox(height: AppTheme.spacingSmall),
         Text(_sent, style: theme.textTheme.titleSmall),
-        Text(_counts(summary.songsSent, summary.coversSent, summary.sessionsSent)),
+        Text(
+          _counts(summary.songsSent, summary.coversSent, summary.sessionsSent) +
+              _changes(summary.deletedThere, summary.updatedThere),
+        ),
         const SizedBox(height: AppTheme.spacingLarge),
         FilledButton(onPressed: onDonePressed, child: Text(doneLabel)),
       ],
     );
   }
+
+  static String _changes(int deleted, int updated) => '$_separator$_deleted$deleted$_separator$_updated$updated';
 
   static String _counts(int songs, int covers, int sessions) =>
       '$_songs$songs$_separator$_covers$covers$_separator$_sessions$sessions';

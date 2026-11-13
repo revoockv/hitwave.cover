@@ -1,3 +1,4 @@
+import 'sync_conflict.dart';
 import 'sync_summary.dart';
 
 /// State of the synchronisation with another device.
@@ -33,6 +34,15 @@ final class SyncingSyncState extends SyncState {
 
   /// Creates a [SyncingSyncState].
   const SyncingSyncState({required this.step, required this.fraction});
+}
+
+/// The devices differ in ways only the user can decide; the exchange waits for the choices.
+final class ConflictsSyncState extends SyncState {
+  /// What differs.
+  final List<SyncConflict> conflicts;
+
+  /// Creates a [ConflictsSyncState].
+  const ConflictsSyncState(this.conflicts);
 }
 
 /// The synchronisation finished.

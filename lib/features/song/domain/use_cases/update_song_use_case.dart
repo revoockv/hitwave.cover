@@ -24,12 +24,6 @@ final class UpdateSongUseCase {
     String? album,
     required String lyrics,
   }) async {
-    return _repository.updateSong(
-      songId: songId,
-      author: author,
-      name: name,
-      album: album,
-      lyrics: lyrics,
-    );
+    return _repository.updateSong(songId: songId, author: author, name: name, album: album, lyrics: lyrics);
   }
 }

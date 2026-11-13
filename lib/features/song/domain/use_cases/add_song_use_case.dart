@@ -22,11 +22,6 @@ final class AddSongUseCase {
     String? album,
     required String lyrics,
   }) async {
-    return _repository.addSong(
-      author: author,
-      name: name,
-      album: album,
-      lyrics: lyrics,
-    );
+    return _repository.addSong(author: author, name: name, album: album, lyrics: lyrics);
   }
 }

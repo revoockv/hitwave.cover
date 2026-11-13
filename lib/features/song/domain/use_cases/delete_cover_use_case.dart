@@ -16,13 +16,7 @@ final class DeleteCoverUseCase {
   ///
   /// Returns [SuccessResult] when the cover is deleted, or [FailureResult]
   /// with an error message when the operation fails.
-  Future<Result<void>> call({
-    required String songId,
-    required String coverId,
-  }) async {
-    return _repository.deleteCover(
-      songId: songId,
-      coverId: coverId,
-    );
+  Future<Result<void>> call({required String songId, required String coverId}) async {
+    return _repository.deleteCover(songId: songId, coverId: coverId);
   }
 }

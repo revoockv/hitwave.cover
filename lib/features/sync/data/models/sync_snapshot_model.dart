@@ -6,6 +6,7 @@ import '../../../recordings/domain/entities/recording.dart';
 import '../../../recordings/domain/entities/recording_status.dart';
 import '../../../song/domain/entities/cover.dart';
 import '../../../song/domain/entities/song.dart';
+import 'sync_song_key_model.dart';
 
 /// A recording as another device describes it; its files are fetched separately.
 final class SyncRecordingModel {
@@ -95,13 +96,15 @@ final class SyncRecordingModel {
 }
 
 /// Everything one device sends to the other: songs, recordings (without files), practice
-/// sessions and history.
+/// sessions, history and what was deleted on it.
 final class SyncSnapshotModel {
   static const String _songsField = 'songs';
   static const String _recordingsField = 'recordings';
   static const String _sessionsField = 'sessions';
   static const String _songsOpenedField = 'songsOpenedAt';
   static const String _coversPlayedField = 'coversPlayedAt';
+  static const String _deletedSongsField = 'deletedSongs';
+  static const String _deletedCoversField = 'deletedCovers';
   static const String _idField = 'id';
   static const String _authorField = 'author';
   static const String _nameField = 'name';
@@ -126,47 +129,59 @@ final class SyncSnapshotModel {
   /// The history.
   final UsageHistory history;
 
+  /// The songs deleted on the device.
+  final List<SyncSongKeyModel> deletedSongs;
+
+  /// The covers deleted on the device by id, with the time when it is known.
+  final Map<String, DateTime?> deletedCovers;
+
   /// Creates a [SyncSnapshotModel].
   const SyncSnapshotModel({
     required this.songs,
     required this.recordings,
     required this.sessions,
     required this.history,
+    required this.deletedSongs,
+    required this.deletedCovers,
   });
 
   /// Reads the JSON text of another device.
-  factory SyncSnapshotModel.fromJsonText(String text) {
-    final Map<String, dynamic> json = jsonDecode(text) as Map<String, dynamic>;
-    return SyncSnapshotModel(
-      songs: <Song>[for (final dynamic song in json[_songsField] as List<dynamic>) _song(song as Map<String, dynamic>)],
-      recordings: <SyncRecordingModel>[
-        for (final dynamic recording in json[_recordingsField] as List<dynamic>)
-          SyncRecordingModel.fromJson(recording as Map<String, dynamic>),
-      ],
-      sessions: <PracticeSession>[
-        for (final dynamic session in json[_sessionsField] as List<dynamic>) _session(session as Map<String, dynamic>),
-      ],
-      history: UsageHistory(
-        songsOpenedAt: _times(json[_songsOpenedField] as Map<String, dynamic>),
-        coversPlayedAt: _times(json[_coversPlayedField] as Map<String, dynamic>),
-      ),
-    );
-  }
+  factory SyncSnapshotModel.fromJsonText(String text) =>
+      SyncSnapshotModel.fromJson(jsonDecode(text) as Map<String, dynamic>);
+
+  /// Reads the JSON of another device.
+  factory SyncSnapshotModel.fromJson(Map<String, dynamic> json) => SyncSnapshotModel(
+    songs: <Song>[
+      for (final dynamic song in json[_songsField] as List<dynamic>) songFromJson(song as Map<String, dynamic>),
+    ],
+    recordings: <SyncRecordingModel>[
+      for (final dynamic recording in json[_recordingsField] as List<dynamic>)
+        SyncRecordingModel.fromJson(recording as Map<String, dynamic>),
+    ],
+    sessions: <PracticeSession>[
+      for (final dynamic session in json[_sessionsField] as List<dynamic>) _session(session as Map<String, dynamic>),
+    ],
+    history: UsageHistory(
+      songsOpenedAt: _times(json[_songsOpenedField] as Map<String, dynamic>),
+      coversPlayedAt: _times(json[_coversPlayedField] as Map<String, dynamic>),
+    ),
+    deletedSongs: <SyncSongKeyModel>[
+      for (final dynamic song in json[_deletedSongsField] as List<dynamic>? ?? const <dynamic>[])
+        SyncSongKeyModel.fromJson(song as Map<String, dynamic>),
+    ],
+    deletedCovers: <String, DateTime?>{
+      for (final MapEntry<String, dynamic> entry
+          in (json[_deletedCoversField] as Map<String, dynamic>? ?? const <String, dynamic>{}).entries)
+        entry.key: DateTime.tryParse(entry.value as String? ?? '')?.toLocal(),
+    },
+  );
 
   /// The JSON text to send.
-  String toJsonText() => jsonEncode(<String, dynamic>{
-    _songsField: <Map<String, dynamic>>[
-      for (final Song song in songs)
-        <String, dynamic>{
-          _idField: song.id,
-          _authorField: song.author,
-          _nameField: song.name,
-          _albumField: song.album,
-          _lyricsField: song.lyrics,
-          _scrollSpeedField: song.scrollSpeed,
-          _leadInField: song.leadIn,
-        },
-    ],
+  String toJsonText() => jsonEncode(toJson());
+
+  /// The JSON to send.
+  Map<String, dynamic> toJson() => <String, dynamic>{
+    _songsField: <Map<String, dynamic>>[for (final Song song in songs) songToJson(song)],
     _recordingsField: <Map<String, dynamic>>[for (final SyncRecordingModel recording in recordings) recording.toJson()],
     _sessionsField: <Map<String, dynamic>>[
       for (final PracticeSession session in sessions)
@@ -179,11 +194,27 @@ final class SyncSnapshotModel {
     ],
     _songsOpenedField: _encodeTimes(history.songsOpenedAt),
     _coversPlayedField: _encodeTimes(history.coversPlayedAt),
-  });
+    _deletedSongsField: <Map<String, dynamic>>[for (final SyncSongKeyModel song in deletedSongs) song.toJson()],
+    _deletedCoversField: <String, String?>{
+      for (final MapEntry<String, DateTime?> entry in deletedCovers.entries)
+        entry.key: entry.value?.toUtc().toIso8601String(),
+    },
+  };
 
-  /// A song of another device keeps its id here only to match its recordings; it is added with
-  /// a new one.
-  static Song _song(Map<String, dynamic> json) => Song(
+  /// The JSON of [song].
+  static Map<String, dynamic> songToJson(Song song) => <String, dynamic>{
+    _idField: song.id,
+    _authorField: song.author,
+    _nameField: song.name,
+    _albumField: song.album,
+    _lyricsField: song.lyrics,
+    _scrollSpeedField: song.scrollSpeed,
+    _leadInField: song.leadIn,
+  };
+
+  /// A song of another device; it keeps its id there only to match its recordings and is added
+  /// here with a new one.
+  static Song songFromJson(Map<String, dynamic> json) => Song(
     id: json[_idField] as String? ?? _newSongId,
     author: json[_authorField] as String,
     name: json[_nameField] as String,

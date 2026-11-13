@@ -5,6 +5,7 @@ import '../../../../core/presentation/theme.dart';
 import '../../../song/domain/entities/song.dart';
 import '../../../song/presentation/di/song_getters.dart';
 import '../../domain/entities/recording.dart';
+import '../../domain/entities/shared_song.dart';
 import '../di/recordings_getters.dart';
 import 'recordings_list_widget.dart';
 
@@ -29,6 +30,9 @@ final class CoversListWidget extends WatchingWidget {
     final Map<String, String> titles = <String, String>{
       for (final Song song in songs) song.id: '${song.name}$_titleSeparator${song.author}',
     };
+    final Map<String, SharedSong> sharedSongs = <String, SharedSong>{
+      for (final Song song in songs) song.id: SharedSong(author: song.author, name: song.name),
+    };
     final String needle = query.trim().toLowerCase();
     final List<Recording> grouped =
         recordings
@@ -43,6 +47,7 @@ final class CoversListWidget extends WatchingWidget {
           recordings: grouped,
           emptyText: needle.isEmpty ? _empty : _nothingFound,
           headerOf: (Recording recording) => titles[recording.songId] ?? _unknownSong,
+          songOf: (Recording recording) => sharedSongs[recording.songId],
           padding: const EdgeInsets.all(AppTheme.spacingMedium),
         ),
       ),

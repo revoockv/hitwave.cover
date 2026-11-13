@@ -10,6 +10,8 @@ import '../../domain/entities/playback_state.dart';
 import '../../domain/entities/recording.dart';
 import '../../domain/entities/recording_status.dart';
 import '../../domain/entities/recording_version.dart';
+import '../../domain/entities/shared_song.dart';
+import '../controllers/recording_versions_controller.dart';
 import '../di/recordings_getters.dart';
 import 'delete_recording_dialog_widget.dart';
 import 'recording_tile_widget.dart';
@@ -19,14 +21,16 @@ import 'recording_tile_widget.dart';
 ///
 /// With [headerOf], a header (the song) is shown above every run of recordings with the same one.
 final class RecordingsListWidget extends WatchingWidget {
+  static const String _captionCopied = 'Опис скопійовано — вставте його (⌘V) як підпис до файлу.';
+
   /// The recordings, in the order to show.
   final List<Recording> recordings;
 
   /// Header of a recording, or `null` for none.
   final String? Function(Recording recording)? headerOf;
 
-  /// Song title sent with a shared recording when [headerOf] gives none.
-  final String? shareTitle;
+  /// The song a shared recording is named after, or `null` when unknown.
+  final SharedSong? Function(Recording recording)? songOf;
 
   /// Shown when there are no recordings.
   final String emptyText;
@@ -43,17 +47,21 @@ final class RecordingsListWidget extends WatchingWidget {
     required this.recordings,
     required this.emptyText,
     this.headerOf,
-    this.shareTitle,
+    this.songOf,
     this.padding = EdgeInsets.zero,
     this.shrinkWrap = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final RecordingVersionsController recordingVersionsController = createOnce(
+      _createRecordingVersionsController,
+      dispose: _disposeRecordingVersionsController,
+    );
+    watch(recordingVersionsController.versionsController);
     final PlaybackState playback = watch(watchPlaybackUseCase()).value;
     final EnhanceProgress? progress = watch(watchEnhanceProgressUseCase()).value;
     final bool trimSilence = watch(watchRecordingPreferencesUseCase()).value.trimSilence;
-    final RecordingVersion chosen = playback.recordingId == null ? RecordingVersion.enhanced : playback.version;
     final String? firstEnhancing = _firstEnhancing(recordings);
     final bool canShowInFolder = canShowRecordingInFolderUseCase();
     final ThemeData theme = Theme.of(context);
@@ -78,20 +86,22 @@ final class RecordingsListWidget extends WatchingWidget {
       itemBuilder: (BuildContext context, int index) {
         final Recording recording = recordings[index];
         final bool isLoaded = playback.recordingId == recording.id;
+        final RecordingVersion version = recordingVersionsController.versionOf(recording.id);
         final String? header = headerOf?.call(recording);
         final bool showHeader = header != null && (index == 0 || headerOf?.call(recordings[index - 1]) != header);
         final Widget tile = RecordingTileWidget(
           key: ValueKey<String>(recording.id),
           recording: recording,
-          version: isLoaded ? playback.version : chosen,
+          version: version,
           isLoaded: isLoaded,
           isPlaying: isLoaded && playback.isPlaying,
           playedFraction: isLoaded ? _fraction(playback) : 0,
           enhanceFraction: recording.id == firstEnhancing ? progress?.fraction : null,
-          onVersionChanged: (RecordingVersion version) => _play(context, recording, version),
-          onPlayPressed: () => _onPlayPressed(context, recording, playback, chosen),
+          onVersionChanged: (RecordingVersion chosen) =>
+              _onVersionChanged(context, recordingVersionsController, recording, chosen, isLoaded: isLoaded),
+          onPlayPressed: () => _onPlayPressed(context, recording, playback, version),
           onDeletePressed: () => _confirmDelete(context, recording, playback),
-          onSharePressed: () => _share(context, recording, isLoaded ? playback.version : chosen),
+          onSharePressed: () => _share(context, recording, version),
           onShowInFolderPressed: canShowInFolder ? () => _showInFolder(context, recording) : null,
           onRetryPressed: () => _retry(context, recording, trimSilence),
         );
@@ -139,6 +149,23 @@ final class RecordingsListWidget extends WatchingWidget {
     await _play(context, recording, version);
   }
 
+  static RecordingVersionsController _createRecordingVersionsController() => RecordingVersionsController();
+
+  static void _disposeRecordingVersionsController(RecordingVersionsController recordingVersionsController) =>
+      recordingVersionsController.dispose();
+
+  /// Chooses [version] on this card only; the card playing now goes on with the chosen version.
+  Future<void> _onVersionChanged(
+    BuildContext context,
+    RecordingVersionsController recordingVersionsController,
+    Recording recording,
+    RecordingVersion version, {
+    required bool isLoaded,
+  }) async {
+    recordingVersionsController.choose(recording.id, version);
+    if (isLoaded) await _play(context, recording, version);
+  }
+
   Future<void> _play(BuildContext context, Recording recording, RecordingVersion version) async {
     final Result<void> result = await playRecordingUseCase(recording: recording, version: version);
     if (result.isSuccess) await markCoverPlayedUseCase(recording.id);
@@ -147,13 +174,20 @@ final class RecordingsListWidget extends WatchingWidget {
   }
 
   Future<void> _share(BuildContext context, Recording recording, RecordingVersion version) async {
-    final Result<void> result = await shareRecordingUseCase(
+    final Result<bool> result = await shareRecordingUseCase(
       recording: recording,
       version: version,
-      title: headerOf?.call(recording) ?? shareTitle,
+      song: songOf?.call(recording),
     );
     if (!context.mounted) return;
-    _showFailure(context, result);
+    switch (result) {
+      case SuccessResult<bool>(value: true):
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text(_captionCopied)));
+      case SuccessResult<bool>():
+        break;
+      case FailureResult<bool>(:final String error):
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+    }
   }
 
   Future<void> _showInFolder(BuildContext context, Recording recording) async {

@@ -15,6 +15,7 @@ import '../../../practice/domain/entities/practice_stats.dart';
 import '../../../practice/presentation/di/practice_getters.dart';
 import '../../../practice/presentation/widgets/practice_stats_widget.dart';
 import '../../../recordings/domain/entities/recording.dart';
+import '../../../recordings/domain/entities/shared_song.dart';
 import '../../../recordings/presentation/di/recordings_getters.dart';
 import '../../../recordings/presentation/widgets/covers_list_widget.dart';
 import '../../../sync/presentation/di/sync_getters.dart';
@@ -238,6 +239,7 @@ final class HomePage extends WatchingWidget {
             recentCovers: _recentCovers(recordings, history),
             coverCounts: coverCounts,
             coverTitleOf: (Recording recording) => _songTitle(songsById[recording.songId]),
+            coverSongOf: (Recording recording) => _sharedSong(songsById[recording.songId]),
             onStatsPressed: () => _selectTab(songViewController, HomeTab.stats),
             onAllSongsPressed: () => _selectTab(songViewController, HomeTab.songs),
             onAllCoversPressed: () => _selectTab(songViewController, HomeTab.covers),
@@ -325,6 +327,8 @@ final class HomePage extends WatchingWidget {
   };
 
   static int _countOf(List<Song> songs, String artist) => songs.where((Song song) => song.author == artist).length;
+
+  static SharedSong? _sharedSong(Song? song) => song == null ? null : SharedSong(author: song.author, name: song.name);
 
   static String _songTitle(Song? song) => song == null ? _unknownSong : '${song.name}$_titleSeparator${song.author}';
 

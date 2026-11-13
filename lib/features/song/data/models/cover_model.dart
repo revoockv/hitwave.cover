@@ -17,21 +17,11 @@ final class CoverModel {
   final String? notes;
 
   /// Creates a new [CoverModel] instance.
-  const CoverModel({
-    required this.id,
-    required this.timestamp,
-    required this.audioBytes,
-    this.notes,
-  });
+  const CoverModel({required this.id, required this.timestamp, required this.audioBytes, this.notes});
 
   /// Converts this model to a domain [Cover] entity.
   Cover toEntity() {
-    return Cover(
-      id: id,
-      date: DateTime.fromMillisecondsSinceEpoch(timestamp),
-      audioBytes: audioBytes,
-      notes: notes,
-    );
+    return Cover(id: id, date: DateTime.fromMillisecondsSinceEpoch(timestamp), audioBytes: audioBytes, notes: notes);
   }
 
   /// Creates a [CoverModel] from a domain [Cover] entity.

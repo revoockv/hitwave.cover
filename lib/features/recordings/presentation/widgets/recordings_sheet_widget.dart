@@ -3,6 +3,7 @@ import 'package:watch_it/watch_it.dart';
 
 import '../../../../core/presentation/theme.dart';
 import '../../domain/entities/recording.dart';
+import '../../domain/entities/shared_song.dart';
 import '../di/recordings_getters.dart';
 import 'recordings_list_widget.dart';
 
@@ -15,11 +16,13 @@ final class RecordingsSheetWidget extends WatchingWidget {
   /// The song whose recordings are shown.
   final String songId;
 
-  /// Title of the song, sent with a shared recording.
-  final String songTitle;
+  /// The song, which shared recordings are named after.
+  final SharedSong song;
 
   /// Creates a new [RecordingsSheetWidget].
-  const RecordingsSheetWidget({super.key, required this.songId, required this.songTitle});
+  const RecordingsSheetWidget({super.key, required this.songId, required this.song});
+
+  SharedSong _songOf(Recording recording) => song;
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +41,7 @@ final class RecordingsSheetWidget extends WatchingWidget {
               Text(_title, style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: AppTheme.spacingMedium),
               Expanded(
-                child: RecordingsListWidget(recordings: recordings, emptyText: _empty, shareTitle: songTitle),
+                child: RecordingsListWidget(recordings: recordings, emptyText: _empty, songOf: _songOf),
               ),
             ],
           ),

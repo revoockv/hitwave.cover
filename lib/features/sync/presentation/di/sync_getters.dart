@@ -1,6 +1,7 @@
 import 'package:watch_it/watch_it.dart';
 
 import '../../domain/use_cases/is_sync_supported_use_case.dart';
+import '../../domain/use_cases/resolve_sync_conflicts_use_case.dart';
 import '../../domain/use_cases/start_sync_hosting_use_case.dart';
 import '../../domain/use_cases/stop_sync_use_case.dart';
 import '../../domain/use_cases/sync_with_device_use_case.dart';
@@ -20,3 +21,6 @@ SyncWithDeviceUseCase get syncWithDeviceUseCase => di<SyncWithDeviceUseCase>();
 
 /// The use case that stops the synchronisation.
 StopSyncUseCase get stopSyncUseCase => di<StopSyncUseCase>();
+
+/// The use case that goes on with a synchronisation after the conflicts are decided.
+ResolveSyncConflictsUseCase get resolveSyncConflictsUseCase => di<ResolveSyncConflictsUseCase>();

@@ -5,6 +5,7 @@ import 'package:logger/logger.dart';
 import '../../../../core/domain/entities/result.dart';
 import '../../domain/entities/recording.dart';
 import '../../domain/entities/recording_version.dart';
+import '../../domain/entities/shared_song.dart';
 import '../../domain/repositories/recording_files_repository.dart';
 import '../data_sources/system_files_data_source.dart';
 
@@ -15,9 +16,10 @@ final class RecordingFilesRepositoryImpl implements RecordingFilesRepository {
   static const String _missingError = 'Файл запису не знайдено';
   static const String _shareLog = 'ShareRecording: failure — ';
   static const String _folderLog = 'ShowRecordingInFolder: failure — ';
-  static const String _originalSuffix = ' (оригінал)';
   static const String _extension = '.wav';
   static const String _fallbackName = 'cover';
+  static const String _fileSeparator = '-';
+  static const String _messageSeparator = ' - ';
   static const String _dateSeparator = '-';
   static const String _nameSeparator = ' ';
   static const String _zero = '0';
@@ -31,21 +33,18 @@ final class RecordingFilesRepositoryImpl implements RecordingFilesRepository {
   RecordingFilesRepositoryImpl({required this._system, required this._logger});
 
   @override
-  Future<Result<void>> shareRecording({
+  Future<Result<bool>> shareRecording({
     required Recording recording,
     required RecordingVersion version,
-    required String? title,
+    required SharedSong? song,
   }) async {
     final String? enhanced = recording.enhancedPath;
     final String path = version == RecordingVersion.enhanced && enhanced != null ? enhanced : recording.rawPath;
     try {
       if (!await File(path).exists()) return const Result.failure(_missingError);
-      await _system.shareFile(
-        path: path,
-        fileName: _fileName(recording, title, isOriginal: path == recording.rawPath),
-        text: title,
+      return Result.success(
+        await _system.shareFile(path: path, fileName: fileName(recording, song), text: message(song)),
       );
-      return Result.ok;
     } on Exception catch (e) {
       _logger.e('$_shareLog$e');
       return const Result.failure(_shareError);
@@ -66,15 +65,23 @@ final class RecordingFilesRepositoryImpl implements RecordingFilesRepository {
     }
   }
 
-  /// `<song> 2026-11-12.wav`, without characters a file system refuses.
-  static String _fileName(Recording recording, String? title, {required bool isOriginal}) {
+  /// The text sent with the file: `Artist - Song`, or `null` when the song is unknown.
+  static String? message(SharedSong? song) =>
+      song == null ? null : '${song.author.trim()}$_messageSeparator${song.name.trim()}';
+
+  /// `2026-11-12-19-05 Artist-Song.wav` (recording time, 24 h), without characters a file system
+  /// refuses.
+  static String fileName(Recording recording, SharedSong? song) {
+    final String? title = song == null ? null : '${song.author.trim()}$_fileSeparator${song.name.trim()}';
     final DateTime at = recording.recordedAt;
-    final String date = <int>[
+    final String time = <int>[
       at.year,
       at.month,
       at.day,
+      at.hour,
+      at.minute,
     ].map((int part) => part.toString().padLeft(_twoDigits, _zero)).join(_dateSeparator);
-    final String song = (title ?? _fallbackName).replaceAll(_unsafeCharacters, _nameSeparator).trim();
-    return '$song$_nameSeparator$date${isOriginal ? _originalSuffix : ''}$_extension';
+    final String stem = (title ?? _fallbackName).replaceAll(_unsafeCharacters, _nameSeparator).trim();
+    return '$time$_nameSeparator$stem$_extension';
   }
 }

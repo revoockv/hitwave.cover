@@ -15,10 +15,5 @@ final class Cover {
   final String? notes;
 
   /// Creates a new [Cover] instance.
-  const Cover({
-    required this.id,
-    required this.date,
-    required this.audioBytes,
-    this.notes,
-  });
+  const Cover({required this.id, required this.date, required this.audioBytes, this.notes});
 }
