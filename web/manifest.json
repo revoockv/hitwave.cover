@@ -1,11 +1,11 @@
 {
-    "name": "hitwave.cover",
-    "short_name": "hitwave.cover",
+    "name": "Hitwave Cover",
+    "short_name": "Hitwave Cover",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Song lyrics and cover recordings, always at hand.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
