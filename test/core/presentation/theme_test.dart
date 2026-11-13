@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hitwave.cover/core/presentation/theme.dart';
+import 'package:hitwave.cover/core/presentation/widgets/accent_action_button_widget.dart';
 import 'package:hitwave.cover/core/presentation/widgets/surface_widget.dart';
 
 void main() {
@@ -28,5 +29,23 @@ void main() {
         expect(find.byType(BackdropFilter), style == SurfaceStyle.glass ? findsOneWidget : findsNothing);
       });
     }
+  }
+
+  for (final SurfaceStyle style in SurfaceStyle.values) {
+    testWidgets('the action button of $style shows its label and reacts to a tap', (WidgetTester tester) async {
+      int taps = 0;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.build(style: style, brightness: Brightness.dark, accent: AppTheme.accentBlue),
+          home: Scaffold(
+            floatingActionButton: AccentActionButtonWidget(icon: Icons.add, label: 'Add', onPressed: () => taps++),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Add'));
+
+      expect(taps, 1);
+    });
   }
 }

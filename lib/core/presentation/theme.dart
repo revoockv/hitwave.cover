@@ -144,8 +144,8 @@ final class AppTheme {
           shape: shape,
           backgroundColor: accent,
           foregroundColor: onColor(accent),
-          elevation: buttonElevation,
-          shadowColor: surfaces.shade,
+          elevation: style == SurfaceStyle.glass ? _glassButtonElevation : buttonElevation,
+          shadowColor: style == SurfaceStyle.glass ? accent : surfaces.shade,
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -195,6 +195,7 @@ final class AppTheme {
   static const Color _lightText = Color(0xFFFFFFFF);
   static const double _indicatorAlpha = 0.22;
   static const double _neumorphicButtonElevation = 4;
+  static const double _glassButtonElevation = 6;
   static const Color _darkOnSurface = Color(0xFF1C2028);
   static const Color _darkOnSurfaceVariant = Color(0xFF555C6B);
   static const Color _lightOnSurface = Color(0xFFE7E9EE);
