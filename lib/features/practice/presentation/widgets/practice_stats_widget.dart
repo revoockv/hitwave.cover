@@ -50,15 +50,15 @@ final class PracticeStatsWidget extends WatchingWidget {
     final PracticeDay? day = stats.days[selectedDay];
     final ThemeData theme = Theme.of(context);
 
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: AppTheme.maxContentWidth),
-        child: ListView(
-          padding: const EdgeInsets.all(AppTheme.spacingMedium),
-          children: <Widget>[
-            PracticeSummaryWidget(stats: stats),
-            const SizedBox(height: AppTheme.spacingMedium),
-            PracticeCalendarWidget(
+    return ListView(
+      padding: const EdgeInsets.all(AppTheme.spacingMedium),
+      children: <Widget>[
+        PracticeSummaryWidget(stats: stats),
+        const SizedBox(height: AppTheme.spacingMedium),
+        Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: AppTheme.maxContentWidth),
+            child: PracticeCalendarWidget(
               month: month,
               selectedDay: selectedDay,
               today: PracticeStats.dayOf(now),
@@ -67,26 +67,26 @@ final class PracticeStatsWidget extends WatchingWidget {
               onPreviousMonth: practicePageController.showPreviousMonth,
               onNextMonth: practicePageController.showNextMonth,
             ),
-            const SizedBox(height: AppTheme.spacingMedium),
-            Text(
-              '${_formatDate(selectedDay)}$_dayTitleSeparator${PracticeTimeTextWidget.format(t, day?.time ?? Duration.zero)}',
-              style: theme.textTheme.titleMedium,
-            ),
-            SongPracticeListWidget(
-              songs: day?.songs ?? const <SongPractice>[],
-              titleOf: (String songId) => titles[songId] ?? t.common.songDeleted,
-              emptyText: t.practice.noPracticeThisDay,
-            ),
-            const SizedBox(height: AppTheme.spacingMedium),
-            Text(t.practice.topSongs, style: theme.textTheme.titleMedium),
-            SongPracticeListWidget(
-              songs: stats.topSongs,
-              titleOf: (String songId) => titles[songId] ?? t.common.songDeleted,
-              emptyText: t.practice.noPracticeYet,
-            ),
-          ],
+          ),
         ),
-      ),
+        const SizedBox(height: AppTheme.spacingMedium),
+        Text(
+          '${_formatDate(selectedDay)}$_dayTitleSeparator${PracticeTimeTextWidget.format(t, day?.time ?? Duration.zero)}',
+          style: theme.textTheme.titleMedium,
+        ),
+        SongPracticeListWidget(
+          songs: day?.songs ?? const <SongPractice>[],
+          titleOf: (String songId) => titles[songId] ?? t.common.songDeleted,
+          emptyText: t.practice.noPracticeThisDay,
+        ),
+        const SizedBox(height: AppTheme.spacingMedium),
+        Text(t.practice.topSongs, style: theme.textTheme.titleMedium),
+        SongPracticeListWidget(
+          songs: stats.topSongs,
+          titleOf: (String songId) => titles[songId] ?? t.common.songDeleted,
+          emptyText: t.practice.noPracticeYet,
+        ),
+      ],
     );
   }
 

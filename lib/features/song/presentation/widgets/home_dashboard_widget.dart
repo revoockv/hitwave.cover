@@ -75,49 +75,36 @@ final class HomeDashboardWidget extends StatelessWidget {
     final ThemeData theme = Theme.of(context);
     final TextStyle? hintStyle = theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant);
 
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: AppTheme.maxContentWidth),
-        child: ListView(
-          padding: const EdgeInsets.all(AppTheme.spacingMedium),
-          children: <Widget>[
-            PracticeOverviewWidget(stats: stats, today: today, onOpenPressed: onStatsPressed),
-            const SizedBox(height: AppTheme.spacingMedium),
-            _SectionTitleWidget(
-              title: t.song.recentlyOpened,
-              actionLabel: t.song.all,
-              onActionPressed: onAllSongsPressed,
+    return ListView(
+      padding: const EdgeInsets.all(AppTheme.spacingMedium),
+      children: <Widget>[
+        PracticeOverviewWidget(stats: stats, today: today, onOpenPressed: onStatsPressed),
+        const SizedBox(height: AppTheme.spacingMedium),
+        _SectionTitleWidget(title: t.song.recentlyOpened, actionLabel: t.song.all, onActionPressed: onAllSongsPressed),
+        if (recentSongs.isEmpty)
+          Text(t.song.noRecentSongs, style: hintStyle)
+        else
+          for (final Song song in recentSongs)
+            SongTileWidget(
+              song: song,
+              onTap: onSongTap,
+              onEdit: onSongEdit,
+              onDelete: onSongDelete,
+              coverCount: coverCounts[song.id] ?? 0,
             ),
-            if (recentSongs.isEmpty)
-              Text(t.song.noRecentSongs, style: hintStyle)
-            else
-              for (final Song song in recentSongs)
-                SongTileWidget(
-                  song: song,
-                  onTap: onSongTap,
-                  onEdit: onSongEdit,
-                  onDelete: onSongDelete,
-                  coverCount: coverCounts[song.id] ?? 0,
-                ),
-            const SizedBox(height: AppTheme.spacingMedium),
-            _SectionTitleWidget(
-              title: t.song.recentlyPlayed,
-              actionLabel: t.song.all,
-              onActionPressed: onAllCoversPressed,
-            ),
-            if (recentCovers.isEmpty)
-              Text(t.song.noRecentCovers, style: hintStyle)
-            else
-              RecordingsListWidget(
-                recordings: recentCovers,
-                emptyText: t.song.noRecentCovers,
-                headerOf: coverTitleOf,
-                songOf: coverSongOf,
-                shrinkWrap: true,
-              ),
-          ],
-        ),
-      ),
+        const SizedBox(height: AppTheme.spacingMedium),
+        _SectionTitleWidget(title: t.song.recentlyPlayed, actionLabel: t.song.all, onActionPressed: onAllCoversPressed),
+        if (recentCovers.isEmpty)
+          Text(t.song.noRecentCovers, style: hintStyle)
+        else
+          RecordingsListWidget(
+            recordings: recentCovers,
+            emptyText: t.song.noRecentCovers,
+            headerOf: coverTitleOf,
+            songOf: coverSongOf,
+            shrinkWrap: true,
+          ),
+      ],
     );
   }
 }
