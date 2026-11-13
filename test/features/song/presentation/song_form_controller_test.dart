@@ -59,4 +59,12 @@ void main() {
     expect(songFormController.authorController.text, 'A');
     expect(songFormController.album, 'Al');
   });
+
+  test('a new song added on the page of an artist starts with that artist', () {
+    final SongFormController songFormController = SongFormController(author: 'Океан Ельзи');
+    addTearDown(songFormController.dispose);
+
+    expect(songFormController.author, 'Океан Ельзи');
+    expect(songFormController.name, isEmpty);
+  });
 }

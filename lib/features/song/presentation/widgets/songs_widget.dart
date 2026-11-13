@@ -56,7 +56,7 @@ final class EmptySongsWidget extends StatelessWidget {
   }
 }
 
-/// Displays songs in a vertical list sorted by name.
+/// Displays songs in a vertical list, in the order given.
 final class SongListModeWidget extends StatelessWidget {
   /// Bottom padding so the last tile is not hidden by the floating button.
   static const double _fabClearance = 96;
@@ -73,9 +73,13 @@ final class SongListModeWidget extends StatelessWidget {
   /// Called when "delete" is chosen for a song.
   final void Function(Song song) onSongDelete;
 
+  /// Number of covers by song id.
+  final Map<String, int> coverCounts;
+
   /// Creates a new [SongListModeWidget].
   const SongListModeWidget({
     required this.songs,
+    this.coverCounts = const <String, int>{},
     required this.onSongTap,
     required this.onSongEdit,
     required this.onSongDelete,
@@ -84,18 +88,21 @@ final class SongListModeWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final List<Song> sortedSongs = List<Song>.from(songs)..sort(_compareByName);
-
     return ListView.builder(
       padding: const EdgeInsets.only(top: AppTheme.spacingSmall, bottom: _fabClearance),
-      itemCount: sortedSongs.length,
+      itemCount: songs.length,
       itemBuilder: (BuildContext context, int index) {
-        return SongTileWidget(song: sortedSongs[index], onTap: onSongTap, onEdit: onSongEdit, onDelete: onSongDelete);
+        final Song song = songs[index];
+        return SongTileWidget(
+          song: song,
+          onTap: onSongTap,
+          onEdit: onSongEdit,
+          onDelete: onSongDelete,
+          coverCount: coverCounts[song.id] ?? 0,
+        );
       },
     );
   }
-
-  static int _compareByName(Song a, Song b) => a.name.toLowerCase().compareTo(b.name.toLowerCase());
 }
 
 /// Artist mode: a compact artist list, or the songs of the selected artist.
@@ -124,9 +131,13 @@ final class ArtistModeWidget extends StatelessWidget {
   /// Called when "delete" is chosen for a song.
   final void Function(Song song) onSongDelete;
 
+  /// Number of covers by song id.
+  final Map<String, int> coverCounts;
+
   /// Creates a new [ArtistModeWidget].
   const ArtistModeWidget({
     required this.songs,
+    this.coverCounts = const <String, int>{},
     required this.selectedArtist,
     required this.onArtistSelected,
     required this.onSongTap,
@@ -138,7 +149,7 @@ final class ArtistModeWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final List<Song> artistSongs = songs.where((Song song) => song.author == selectedArtist).toList()
-      ..sort(SongListModeWidget._compareByName);
+      ..sort(_compareByName);
 
     if (artistSongs.isEmpty) {
       return ArtistPickerWidget(songs: songs, onArtistSelected: onArtistSelected);
@@ -147,10 +158,17 @@ final class ArtistModeWidget extends StatelessWidget {
     return ListView.builder(
       padding: const EdgeInsets.only(top: AppTheme.spacingSmall, bottom: _fabClearance),
       itemCount: artistSongs.length,
-      itemBuilder: (BuildContext context, int index) =>
-          SongTileWidget(song: artistSongs[index], onTap: onSongTap, onEdit: onSongEdit, onDelete: onSongDelete),
+      itemBuilder: (BuildContext context, int index) => SongTileWidget(
+        song: artistSongs[index],
+        onTap: onSongTap,
+        onEdit: onSongEdit,
+        onDelete: onSongDelete,
+        coverCount: coverCounts[artistSongs[index].id] ?? 0,
+      ),
     );
   }
+
+  static int _compareByName(Song a, Song b) => a.name.toLowerCase().compareTo(b.name.toLowerCase());
 }
 
 /// Displays songs as a list or grouped by artist, or an empty state.
@@ -166,7 +184,11 @@ final class SongsWidget extends StatelessWidget {
     required this.onSongDelete,
     required this.onAddPressed,
     this.selectedArtist = '',
+    this.coverCounts = const <String, int>{},
   });
+
+  /// Number of covers by song id.
+  final Map<String, int> coverCounts;
 
   /// The list of songs.
   final List<Song> songs;
@@ -199,11 +221,18 @@ final class SongsWidget extends StatelessWidget {
     }
 
     if (viewMode == SongViewMode.list) {
-      return SongListModeWidget(songs: songs, onSongTap: onSongTap, onSongEdit: onSongEdit, onSongDelete: onSongDelete);
+      return SongListModeWidget(
+        songs: songs,
+        coverCounts: coverCounts,
+        onSongTap: onSongTap,
+        onSongEdit: onSongEdit,
+        onSongDelete: onSongDelete,
+      );
     }
 
     return ArtistModeWidget(
       songs: songs,
+      coverCounts: coverCounts,
       selectedArtist: selectedArtist,
       onArtistSelected: onArtistSelected,
       onSongTap: onSongTap,

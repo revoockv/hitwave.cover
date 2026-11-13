@@ -11,13 +11,16 @@ import '../../domain/entities/backup_data.dart';
 /// strings for file-based export and import operations.
 final class BackupDataModel {
   /// The schema version of this backup format.
-  static const String version = '1.0';
+  static const String version = '1.1';
 
   /// Firestore field name for export timestamp.
   static const String _exportedAtField = 'exportedAt';
 
   /// Firestore field name for songs list.
   static const String _songsField = 'songs';
+
+  /// Field of the recordings list (only in a ZIP backup).
+  static const String _recordingsField = 'recordings';
 
   /// Firestore field name for song ID.
   static const String _idField = 'id';
@@ -46,18 +49,19 @@ final class BackupDataModel {
   /// The list of songs included in this backup.
   final List<Map<String, dynamic>> songs;
 
+  /// The recordings of the songs: one map per recording with its file names in the archive.
+  final List<Map<String, dynamic>> recordings;
+
   /// Creates a new [BackupDataModel] instance.
   const BackupDataModel({
     required this.exportedAt,
     required this.songs,
+    this.recordings = const <Map<String, dynamic>>[],
   });
 
   /// Converts this model to a domain [BackupData] entity.
   BackupData toEntity() {
-    return BackupData(
-      exportedAt: exportedAt,
-      songs: songs.map(_decodeSong).toList(),
-    );
+    return BackupData(exportedAt: exportedAt, songs: songs.map(_decodeSong).toList());
   }
 
   /// Creates a [BackupDataModel] from a JSON string.
@@ -78,6 +82,7 @@ final class BackupDataModel {
     return BackupDataModel(
       exportedAt: DateTime.parse(data[_exportedAtField] as String),
       songs: List<Map<String, dynamic>>.from(data[_songsField] as List),
+      recordings: List<Map<String, dynamic>>.from(data[_recordingsField] as List? ?? const <dynamic>[]),
     );
   }
 
@@ -87,6 +92,7 @@ final class BackupDataModel {
       _versionKey: version,
       _exportedAtField: exportedAt.toIso8601String(),
       _songsField: songs,
+      if (recordings.isNotEmpty) _recordingsField: recordings,
     });
   }
 
@@ -98,9 +104,9 @@ final class BackupDataModel {
       name: songData[_nameField] as String,
       album: songData[_albumField] as String?,
       lyrics: songData[_lyricsField] as String,
-      covers: List<String>.from(songData[_coverIdsField] as List<dynamic>)
-          .map((coverId) => Cover(id: coverId, date: DateTime.now(), audioBytes: const [], notes: null))
-          .toList(),
+      covers: List<String>.from(
+        songData[_coverIdsField] as List<dynamic>,
+      ).map((coverId) => Cover(id: coverId, date: DateTime.now(), audioBytes: const [], notes: null)).toList(),
     );
   }
 }

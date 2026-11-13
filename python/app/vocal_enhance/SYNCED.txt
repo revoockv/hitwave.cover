@@ -1,0 +1,1 @@
+vocal_enhance 0.1.0 (5e81b91cabce), synced from ~/.agents/skills/revoockv-vocal-enhance

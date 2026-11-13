@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart' show ValueListenable;
 import '../../../../core/domain/entities/result.dart';
 
 import '../entities/song.dart';
+import '../entities/song_id_change.dart';
 
 /// Defines the contract for song management operations.
 ///
@@ -22,8 +23,11 @@ abstract interface class SongRepository {
   /// Adds every song of [songs] with its speed and space, but without covers
   /// (used by the import from a backup file).
   ///
-  /// Returns [Result.ok] on success, or a failure with an error message.
-  Future<Result<void>> addSongs(List<Song> songs);
+  /// Returns the ids of the new songs in the order of [songs], or a failure with an error message.
+  Future<Result<List<String>>> addSongs(List<Song> songs);
+
+  /// Emits when a song id stops being valid: the song moved into the account or was deleted.
+  Stream<SongIdChange> watchSongIdChanges();
 
   /// Number of songs left on the device that may be moved into the account
   /// just signed in; `0` when there are none or the user chose to keep them.

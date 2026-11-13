@@ -4,57 +4,37 @@ import 'package:file_picker/file_picker.dart';
 
 import 'backup_data_source.dart';
 
-/// Platform-agnostic implementation of [BackupDataSource] using
-/// `file_picker` and `path_provider` packages.
+/// [BackupDataSource] of the platforms with a file system (mobile and desktop).
 ///
-/// Handles file selection for import (picks a JSON file and reads its content)
-/// and directory selection for export (picks a directory path).
+/// Picks a backup file for import (its path is returned, the repository reads it) and a
+/// directory for export.
 final class BackupDataSourceMobile implements BackupDataSource {
-  static const String _backupFileName = 'backup.json';
-  static const List<String> _allowedExtensions = ['json'];
-  static const String _pathSeparator = '/';
+  static const List<String> _allowedExtensions = <String>['json', 'zip'];
   static const String _exportDialogTitle = 'Оберіть папку для експорту';
+  static const String _tempPrefix = 'hitwave_picked_';
+  static const String _separator = '/';
 
   @override
   bool get supportsDirectorySelection => true;
 
   @override
-  Future<String?> pickBackupFile() async {
-    try {
-      final FilePickerResult? result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: _allowedExtensions,
-        allowMultiple: false,
-      );
+  Future<PickedBackupFile?> pickBackupFile() async {
+    final PlatformFile? file = await FilePicker.pickFile(type: FileType.custom, allowedExtensions: _allowedExtensions);
+    if (file == null) return null;
+    return PickedBackupFile(name: file.name, path: file.path ?? await _copyToTemp(file), bytes: null);
+  }
 
-      if (result?.files.single.path == null) {
-        return null;
-      }
-
-      final String filePath = result!.files.single.path!;
-      final String content = await File(filePath).readAsString();
-      return content;
-    } catch (e) {
-      return null;
-    }
+  /// Copies a picked file that has no path on disk (an Android `content://` document) into a
+  /// temporary file, so the repository can read it like any other.
+  static Future<String> _copyToTemp(PlatformFile file) async {
+    final Directory folder = await Directory.systemTemp.createTemp(_tempPrefix);
+    final File copy = File('${folder.path}$_separator${file.name}');
+    await copy.writeAsBytes(await file.readAsBytes());
+    return copy.path;
   }
 
   @override
-  Future<String?> pickExportDirectory() async {
-    try {
-      final String? directoryPath = await FilePicker.platform.getDirectoryPath(
-        dialogTitle: _exportDialogTitle,
-      );
-
-      if (directoryPath == null) {
-        return null;
-      }
-
-      return '$directoryPath$_pathSeparator$_backupFileName';
-    } catch (e) {
-      return null;
-    }
-  }
+  Future<String?> pickExportDirectory() => FilePicker.getDirectoryPath(dialogTitle: _exportDialogTitle);
 
   @override
   Future<void> triggerExportDownload(String jsonString) async {

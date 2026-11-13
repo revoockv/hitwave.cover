@@ -19,7 +19,9 @@ final class ExportSongsUseCase {
   /// then writes all songs to a `backup.json` file within that directory.
   /// Returns [SuccessResult] on success, or [FailureResult] with an error
   /// message when the export fails.
-  Future<Result<void>> call() async {
-    return _repository.exportSongs();
+  ///
+  /// [includeRecordings] adds the recordings of the songs (the file becomes a ZIP).
+  Future<Result<void>> call({required bool includeRecordings}) async {
+    return _repository.exportSongs(includeRecordings: includeRecordings);
   }
 }

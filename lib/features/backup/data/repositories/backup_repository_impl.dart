@@ -1,22 +1,27 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
 
 import '../../../../core/domain/entities/disposable_resource.dart';
 import '../../../../core/domain/entities/result.dart';
+import '../../../recordings/domain/entities/imported_recording.dart';
+import '../../../recordings/domain/entities/recording.dart';
+import '../../../recordings/domain/repositories/recordings_repository.dart';
 import '../../../song/domain/entities/cover.dart';
 import '../../../song/domain/entities/song.dart';
 import '../../../song/domain/repositories/song_repository.dart';
 import '../../domain/repositories/backup_repository.dart';
+import '../data_sources/backup_archive_data_source.dart';
 import '../data_sources/backup_data_source.dart';
 import '../models/backup_data_model.dart';
+import '../models/backup_recording_model.dart';
 
-/// Implementation of [BackupRepository] on top of [SongRepository].
+/// Implementation of [BackupRepository] on top of [SongRepository] and [RecordingsRepository].
 ///
-/// Handles exporting songs to JSON files and importing songs from JSON files,
-/// adding them where the session keeps its songs (the account or the device). File picker operations are encapsulated
+/// Exports the songs to `backup.json`, or — with recordings — to `backup.zip` holding
+/// `backup.json` and the WAV files of the recordings. Imports either file; recordings are added
+/// to the songs as they were created on this device. File picker operations are encapsulated
 /// internally — the interface exposes no file paths.
 final class BackupRepositoryImpl implements BackupRepository, DisposableResource {
   static const String _statusIdle = 'idle';
@@ -36,28 +41,40 @@ final class BackupRepositoryImpl implements BackupRepository, DisposableResource
   static const String _coverIdsField = 'coverIds';
   static const String _scrollSpeedField = 'scrollSpeed';
   static const String _leadInField = 'leadIn';
+  static const String _jsonFileName = 'backup.json';
+  static const String _zipFileName = 'backup.zip';
+  static const String _separator = '/';
 
   static const String _exportStartLog = 'ExportSongs: starting';
   static const String _exportCancelledLog = 'ExportSongs: cancelled by user';
   static const String _exportSuccessLog = 'ExportSongs: success — exported ';
   static const String _exportToFileLog = ' songs to "';
+  static const String _exportRecordingsLog = ' recordings and ';
   static const String _exportWebLog = ' songs (web download)';
   static const String _exportFailureLog = 'ExportSongs: failure — ';
   static const String _importStartLog = 'ImportSongs: starting';
   static const String _importCancelledLog = 'ImportSongs: cancelled by user';
   static const String _importSuccessLog = 'ImportSongs: success — ';
-  static const String _importedSongsLog = ' songs imported';
+  static const String _importedSongsLog = ' songs imported, recordings: ';
   static const String _importFailureLog = 'ImportSongs: failure — ';
   static const String _closingQuoteLog = '"';
 
   final SongRepository _songRepository;
+  final RecordingsRepository _recordingsRepository;
   final BackupDataSource _dataSource;
+  final BackupArchiveDataSource _archive;
   final Logger _logger;
 
   final ValueNotifier<String> _status = ValueNotifier<String>(_statusIdle);
 
   /// Creates a new [BackupRepositoryImpl].
-  BackupRepositoryImpl({required this._songRepository, required this._dataSource, required this._logger});
+  BackupRepositoryImpl({
+    required this._songRepository,
+    required this._recordingsRepository,
+    required this._dataSource,
+    required this._archive,
+    required this._logger,
+  });
 
   /// Releases the status state.
   @override
@@ -69,27 +86,50 @@ final class BackupRepositoryImpl implements BackupRepository, DisposableResource
   ValueListenable<String> watchStatus() => _status;
 
   @override
-  Future<Result<void>> exportSongs() async {
+  Future<Result<void>> exportSongs({required bool includeRecordings}) async {
     _logger.i(_exportStartLog);
 
     try {
       _status.value = _statusExporting;
 
       final List<Song> songs = _songRepository.watchSongs().value;
+      final Set<String> songIds = songs.map(_songId).toSet();
+      final List<Recording> recordings = includeRecordings && _dataSource.supportsDirectorySelection
+          ? _recordingsRepository
+                .watchRecordings()
+                .value
+                .where((Recording recording) => songIds.contains(recording.songId))
+                .toList()
+          : const <Recording>[];
+      final List<BackupRecordingModel> recordingModels = recordings.map(BackupRecordingModel.fromEntity).toList();
 
-      final BackupDataModel model = BackupDataModel(exportedAt: DateTime.now(), songs: songs.map(_encodeSong).toList());
+      final BackupDataModel model = BackupDataModel(
+        exportedAt: DateTime.now(),
+        songs: songs.map(_encodeSong).toList(),
+        recordings: recordingModels.map(_encodeRecording).toList(),
+      );
 
       if (_dataSource.supportsDirectorySelection) {
-        final String? filePath = await _dataSource.pickExportDirectory();
-        if (filePath == null) {
+        final String? folder = await _dataSource.pickExportDirectory();
+        if (folder == null) {
           _logger.i(_exportCancelledLog);
           _status.value = _pickerCancelled;
           return Result.ok;
         }
 
-        await File(filePath).writeAsString(model.toJson());
+        final String filePath;
+        if (recordings.isEmpty) {
+          filePath = '$folder$_separator$_jsonFileName';
+          await _archive.writeJson(path: filePath, json: model.toJson());
+        } else {
+          filePath = '$folder$_separator$_zipFileName';
+          await _archive.writeZip(path: filePath, json: model.toJson(), files: _filesOf(recordings, recordingModels));
+        }
 
-        _logger.i('$_exportSuccessLog${songs.length}$_exportToFileLog$filePath$_closingQuoteLog');
+        _logger.i(
+          '$_exportSuccessLog${recordings.length}$_exportRecordingsLog${songs.length}'
+          '$_exportToFileLog$filePath$_closingQuoteLog',
+        );
       } else {
         final Map<String, dynamic> jsonMap = jsonDecode(model.toJson()) as Map<String, dynamic>;
         final String jsonString = const JsonEncoder.withIndent(_jsonIndent).convert(jsonMap);
@@ -107,37 +147,94 @@ final class BackupRepositoryImpl implements BackupRepository, DisposableResource
   }
 
   @override
-  Future<Result<void>> importSongs() async {
+  Future<Result<void>> importSongs({required bool includeRecordings}) async {
     _logger.i(_importStartLog);
+    String? extractedFolder;
 
     try {
       _status.value = _statusImporting;
 
-      final String? fileContent = await _dataSource.pickBackupFile();
-      if (fileContent == null) {
+      final PickedBackupFile? file = await _dataSource.pickBackupFile();
+      if (file == null) {
         _logger.i(_importCancelledLog);
         _status.value = _pickerCancelled;
         return Result.ok;
       }
 
-      final BackupDataModel backupDataModel = BackupDataModel.fromJson(fileContent);
+      final String? path = file.path;
+      final Uint8List? bytes = file.bytes;
+      final OpenedBackup backup = path != null
+          ? await _archive.openFile(path)
+          : _archive.openBytes(name: file.name, bytes: bytes ?? Uint8List(0));
+      extractedFolder = backup.extractedFolder;
+      final BackupDataModel backupDataModel = BackupDataModel.fromJson(backup.json);
 
       final List<Song> songs = backupDataModel.songs.map(_decodeSong).toList();
-      final Result<void> added = await _songRepository.addSongs(songs);
-      if (added.isFailure) {
-        _status.value = _importFailedMessage;
-        return added;
+      final Result<List<String>> added = await _songRepository.addSongs(songs);
+      final List<String> newIds;
+      switch (added) {
+        case SuccessResult<List<String>>(:final List<String> value):
+          newIds = value;
+        case FailureResult<List<String>>(:final String error):
+          _status.value = _importFailedMessage;
+          return Result.failure(error);
       }
 
-      _logger.i('$_importSuccessLog${backupDataModel.songs.length}$_importedSongsLog');
+      final List<ImportedRecording> recordings = <ImportedRecording>[];
+      final String? folder = extractedFolder;
+      if (includeRecordings && folder != null) {
+        final Map<String, String> songIds = <String, String>{
+          for (int i = 0; i < newIds.length && i < backupDataModel.songs.length; i++)
+            backupDataModel.songs[i][_idField] as String: newIds[i],
+        };
+        for (final Map<String, dynamic> json in backupDataModel.recordings) {
+          final BackupRecordingModel model = BackupRecordingModel.fromJson(json);
+          final String? songId = songIds[model.songId];
+          if (songId != null) recordings.add(model.toEntity(songId: songId, folder: folder));
+        }
+      }
+      if (recordings.isNotEmpty) {
+        final Result<void> imported = await _recordingsRepository.importRecordings(recordings);
+        if (imported.isFailure) {
+          _status.value = _importFailedMessage;
+          return imported;
+        }
+      }
+
+      _logger.i('$_importSuccessLog${songs.length}$_importedSongsLog${recordings.length}');
       _status.value = _statusSuccess;
       return Result.ok;
     } on Exception catch (e) {
       _logger.e('$_importFailureLog$e');
       _status.value = _importFailedMessage;
       return const Result.failure(_importFailedMessage);
+    } finally {
+      final String? folder = extractedFolder;
+      if (folder != null) {
+        try {
+          await _archive.deleteFolder(folder);
+        } on Exception catch (e) {
+          _logger.w('$_importFailureLog$e');
+        }
+      }
     }
   }
+
+  /// Archive name → file on disk of every file of [recordings].
+  static Map<String, String> _filesOf(List<Recording> recordings, List<BackupRecordingModel> models) {
+    final Map<String, String> files = <String, String>{};
+    for (int i = 0; i < recordings.length; i++) {
+      files[models[i].rawFile] = recordings[i].rawPath;
+      final String? enhancedFile = models[i].enhancedFile;
+      final String? enhancedPath = recordings[i].enhancedPath;
+      if (enhancedFile != null && enhancedPath != null) files[enhancedFile] = enhancedPath;
+    }
+    return files;
+  }
+
+  static String _songId(Song song) => song.id;
+
+  static Map<String, dynamic> _encodeRecording(BackupRecordingModel model) => model.toJson();
 
   /// Encodes a song into a JSON-serializable map.
   Map<String, dynamic> _encodeSong(Song song) {

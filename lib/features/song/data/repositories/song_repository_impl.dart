@@ -8,6 +8,7 @@ import '../../../../core/domain/entities/result.dart';
 import '../../../auth/domain/entities/auth_session.dart';
 import '../../domain/entities/cover.dart';
 import '../../domain/entities/song.dart';
+import '../../domain/entities/song_id_change.dart';
 import '../../domain/repositories/song_repository.dart';
 import '../data_sources/hive_song_service.dart';
 import '../data_sources/song_data_source.dart';
@@ -79,6 +80,8 @@ final class SongRepositoryImpl implements SongRepository, DisposableResource {
 
   final ValueNotifier<int> _localSongsToTransfer = ValueNotifier<int>(0);
 
+  final StreamController<SongIdChange> _songIdChanges = StreamController<SongIdChange>.broadcast();
+
   SongDataSource? _dataSource;
 
   StreamSubscription<List<SongModel>>? _subscription;
@@ -106,6 +109,7 @@ final class SongRepositoryImpl implements SongRepository, DisposableResource {
     _subscription = null;
     _songs.dispose();
     _localSongsToTransfer.dispose();
+    await _songIdChanges.close();
     _logger.i(_disposeLog);
   }
 
@@ -225,15 +229,20 @@ final class SongRepositoryImpl implements SongRepository, DisposableResource {
   }
 
   @override
-  Future<Result<void>> addSongs(List<Song> songs) {
-    return _run(_addSongsLog, '$_startingCountLog${songs.length}', _addSongsFailedMessage, (
+  Future<Result<List<String>>> addSongs(List<Song> songs) async {
+    final List<String> ids = <String>[];
+    final Result<void> result = await _run(_addSongsLog, '$_startingCountLog${songs.length}', _addSongsFailedMessage, (
       SongDataSource dataSource,
     ) async {
       for (final Song song in songs) {
-        await dataSource.addSong(SongModel.fromEntity(song));
+        ids.add(await dataSource.addSong(SongModel.fromEntity(song)));
       }
     });
+    return result.when(success: (_) => Result.success(ids), failure: Result<List<String>>.failure);
   }
+
+  @override
+  Stream<SongIdChange> watchSongIdChanges() => _songIdChanges.stream;
 
   @override
   Future<Result<void>> updateSong({
@@ -290,13 +299,15 @@ final class SongRepositoryImpl implements SongRepository, DisposableResource {
   }
 
   @override
-  Future<Result<void>> deleteSong({required String songId}) {
-    return _run(
+  Future<Result<void>> deleteSong({required String songId}) async {
+    final Result<void> result = await _run(
       _deleteSongLog,
       '$_startingLog$songId$_closingQuoteLog',
       _deleteSongFailedMessage,
       (SongDataSource dataSource) => dataSource.deleteSong(songId),
     );
+    if (result.isSuccess) _songIdChanges.add(SongDeletedIdChange(songId));
+    return result;
   }
 
   @override
@@ -319,6 +330,7 @@ final class SongRepositoryImpl implements SongRepository, DisposableResource {
         }
         // Deleted one by one, so a failure in the middle never copies a song twice.
         await _localSongService.deleteSong(song.id);
+        _songIdChanges.add(SongMovedIdChange(fromId: song.id, toId: accountSongId));
       }
       _localSongsToTransfer.value = 0;
       _logger.i('$_transferLog$_successCountLog${localSongs.length}');

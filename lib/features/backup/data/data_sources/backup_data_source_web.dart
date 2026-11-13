@@ -1,17 +1,17 @@
-import 'dart:convert';
-import 'package:universal_html/html.dart' as html;
+import 'dart:typed_data';
+
 import 'package:file_picker/file_picker.dart';
+import 'package:universal_html/html.dart' as html;
 
 import 'backup_data_source.dart';
 
 /// Web implementation of [BackupDataSource] using `file_picker` with
 /// browser-compatible file handling.
 ///
-/// On web, `dart:io` is unavailable, so we read file bytes from the
-/// `file_picker` result and decode them as UTF-8. For export, we return
-/// `null` since the repository handles browser downloads directly.
+/// On web, `dart:io` is unavailable, so the picked file comes back as bytes. For export, the
+/// repository triggers a browser download directly.
 final class BackupDataSourceWeb implements BackupDataSource {
-  static const List<String> _allowedExtensions = ['json'];
+  static const List<String> _allowedExtensions = <String>['json', 'zip'];
   static const String _backupFileName = 'backup.json';
   static const String _anchorTag = 'a';
 
@@ -19,27 +19,13 @@ final class BackupDataSourceWeb implements BackupDataSource {
   bool get supportsDirectorySelection => false;
 
   @override
-  Future<String?> pickBackupFile() async {
-    try {
-      final FilePickerResult? result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: _allowedExtensions,
-        allowMultiple: false,
-      );
-
-      if (result == null || result.files.isEmpty) {
-        return null;
-      }
-
-      final bytes = result.files.single.bytes;
-      if (bytes != null) {
-        return utf8.decode(bytes);
-      }
-
-      return null;
-    } catch (e) {
+  Future<PickedBackupFile?> pickBackupFile() async {
+    final PlatformFile? file = await FilePicker.pickFile(type: FileType.custom, allowedExtensions: _allowedExtensions);
+    if (file == null) {
       return null;
     }
+    final Uint8List bytes = await file.readAsBytes();
+    return PickedBackupFile(name: file.name, path: null, bytes: bytes);
   }
 
   @override

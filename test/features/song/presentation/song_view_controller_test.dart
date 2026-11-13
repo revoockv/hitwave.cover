@@ -12,17 +12,25 @@ void main() {
     songViewController.dispose();
   });
 
-  test('starts in artist mode with no artist selected', () {
-    expect(songViewController.viewModeController.value, SongViewMode.artist);
+  test('starts on the home tab, songs by artist, nothing searched', () {
+    expect(songViewController.homeTabController.value, HomeTab.home);
+    expect(songViewController.songSortController.value, SongSort.artists);
+    expect(songViewController.selectedArtistController.value, isEmpty);
+    expect(songViewController.songSearchController.text, isEmpty);
+  });
+
+  test('choosing another order clears the selected artist', () {
+    songViewController.selectArtist('Thorinshield');
+
+    songViewController.selectSort(SongSort.recent);
+
+    expect(songViewController.songSortController.value, SongSort.recent);
     expect(songViewController.selectedArtistController.value, isEmpty);
   });
 
-  test('toggling the view mode clears the selected artist', () {
-    songViewController.selectArtist('Thorinshield');
+  test('switches tabs', () {
+    songViewController.selectTab(HomeTab.covers);
 
-    songViewController.toggleViewMode();
-
-    expect(songViewController.viewModeController.value, SongViewMode.list);
-    expect(songViewController.selectedArtistController.value, isEmpty);
+    expect(songViewController.homeTabController.value, HomeTab.covers);
   });
 }
