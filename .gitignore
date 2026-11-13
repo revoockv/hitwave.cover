@@ -52,3 +52,6 @@ firebase.json
 # OS
 Thumbs.db
 /lib/features/auth/data/data_sources/firebase_options.dart
+
+# Android Gradle Plugin 9 build output
+/android/build/

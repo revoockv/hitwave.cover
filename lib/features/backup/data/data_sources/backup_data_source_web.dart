@@ -20,17 +20,11 @@ final class BackupDataSourceWeb implements BackupDataSource {
 
   @override
   Future<PickedBackupFile?> pickBackupFile() async {
-    final FilePickerResult? result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: _allowedExtensions,
-      allowMultiple: false,
-      withData: true,
-    );
-    final PlatformFile? file = result?.files.single;
-    final Uint8List? bytes = file?.bytes;
-    if (file == null || bytes == null) {
+    final PlatformFile? file = await FilePicker.pickFile(type: FileType.custom, allowedExtensions: _allowedExtensions);
+    if (file == null) {
       return null;
     }
+    final Uint8List bytes = await file.readAsBytes();
     return PickedBackupFile(name: file.name, path: null, bytes: bytes);
   }
 
