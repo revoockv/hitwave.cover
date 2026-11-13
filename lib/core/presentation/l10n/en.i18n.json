@@ -161,6 +161,12 @@
     "systemMicrophone": "System default",
     "title": "Takes"
   },
+  "settings": {
+    "language": "Language",
+    "open": "Settings",
+    "saveFailed": "Could not save the settings",
+    "title": "Settings"
+  },
   "song": {
     "actions": "Actions",
     "add": "Add",

@@ -6,6 +6,7 @@ import 'features/backup/presentation/di/backup_di.dart';
 import 'features/history/presentation/di/history_di.dart';
 import 'features/practice/presentation/di/practice_di.dart';
 import 'features/recordings/presentation/di/recordings_di.dart';
+import 'features/settings/presentation/di/settings_di.dart';
 import 'features/song/presentation/di/song_di.dart';
 import 'features/sync/presentation/di/sync_di.dart';
 import 'features/vocal_enhance/presentation/di/vocal_enhance_di.dart';
@@ -15,6 +16,7 @@ Future<void> registerAndInit() async {
   await di.reset();
 
   registerAndInitCore();
+  registerAndInitSettings();
 
   registerAndInitAuth();
   registerAndInitSong();

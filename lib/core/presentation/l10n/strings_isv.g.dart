@@ -46,6 +46,7 @@ class TranslationsIsv extends Translations with BaseTranslations<AppLocale, Tran
 	@override late final _Translations$history$isv history = _Translations$history$isv._(_root);
 	@override late final _Translations$practice$isv practice = _Translations$practice$isv._(_root);
 	@override late final _Translations$recordings$isv recordings = _Translations$recordings$isv._(_root);
+	@override late final _Translations$settings$isv settings = _Translations$settings$isv._(_root);
 	@override late final _Translations$song$isv song = _Translations$song$isv._(_root);
 	@override late final _Translations$sync$isv sync = _Translations$sync$isv._(_root);
 	@override late final _Translations$vocalEnhance$isv vocalEnhance = _Translations$vocalEnhance$isv._(_root);
@@ -224,6 +225,19 @@ class _Translations$recordings$isv extends Translations$recordings$en {
 	@override String get silent => 'Без звука — провєрите микрофон';
 	@override String get systemMicrophone => 'Како в системє';
 	@override String get title => 'Записы';
+}
+
+// Path: settings
+class _Translations$settings$isv extends Translations$settings$en {
+	_Translations$settings$isv._(TranslationsIsv root) : this._root = root, super.internal(root);
+
+	final TranslationsIsv _root; // ignore: unused_field
+
+	// Translations
+	@override String get language => 'Језык';
+	@override String get open => 'Наставјења';
+	@override String get saveFailed => 'Не удало се сохранити наставјења';
+	@override String get title => 'Наставјења';
 }
 
 // Path: song
@@ -695,6 +709,10 @@ extension on TranslationsIsv {
 			'recordings.silent' => 'Без звука — провєрите микрофон',
 			'recordings.systemMicrophone' => 'Како в системє',
 			'recordings.title' => 'Записы',
+			'settings.language' => 'Језык',
+			'settings.open' => 'Наставјења',
+			'settings.saveFailed' => 'Не удало се сохранити наставјења',
+			'settings.title' => 'Наставјења',
 			'song.actions' => 'Дєјствија',
 			'song.add' => 'Додати',
 			'song.addSong' => 'Додати пєсњу',

@@ -18,6 +18,7 @@ import '../../../recordings/domain/entities/recording.dart';
 import '../../../recordings/domain/entities/shared_song.dart';
 import '../../../recordings/presentation/di/recordings_getters.dart';
 import '../../../recordings/presentation/widgets/covers_list_widget.dart';
+import '../../../settings/presentation/pages/settings_page.dart';
 import '../../../sync/presentation/di/sync_getters.dart';
 import '../../../sync/presentation/pages/sync_page.dart';
 import '../../domain/entities/song.dart';
@@ -156,6 +157,11 @@ final class HomePage extends WatchingWidget {
                 )
               : titleText,
           actions: <Widget>[
+            IconButton(
+              tooltip: t.settings.open,
+              icon: const Icon(Icons.settings_outlined),
+              onPressed: () => _openSettings(context),
+            ),
             PopupMenuButton<_HomeMenuAction>(
               tooltip: t.song.more,
               enabled: !isBackupRunning,
@@ -478,6 +484,10 @@ final class HomePage extends WatchingWidget {
 
   void _openSync(BuildContext context) {
     Navigator.of(context).push(MaterialPageRoute<void>(builder: (BuildContext context) => const SyncPage()));
+  }
+
+  void _openSettings(BuildContext context) {
+    Navigator.of(context).push(MaterialPageRoute<void>(builder: (BuildContext context) => const SettingsPage()));
   }
 
   void _navigateToLyrics(BuildContext context, Song song) {
