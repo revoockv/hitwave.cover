@@ -4,7 +4,7 @@ import 'package:watch_it/watch_it.dart';
 import '../../../../core/presentation/theme.dart';
 
 import '../di/auth_getters.dart';
-import '../../domain/entities/user.dart';
+import '../../domain/entities/auth_session.dart';
 
 /// Displays a welcome screen for authenticated users with a sign-out option.
 ///
@@ -13,12 +13,8 @@ final class SignedInWidget extends WatchingWidget {
   /// Size of the check-circle icon.
   static const double _iconSize = 80;
 
-  /// Large spacing between columns.
-  static const double _spacingLarge = 48;
-
   /// Red color extracted as static const for error snackbar.
   static const Color _errorColor = Colors.red;
-
 
   /// Error message text for sign-out failure.
   static const String _errorMessage = 'Помилка виходу з системи.';
@@ -35,23 +31,21 @@ final class SignedInWidget extends WatchingWidget {
     if (!context.mounted) return;
 
     if (result.isFailure) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(_errorMessage),
-          backgroundColor: _errorColor,
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text(_errorMessage), backgroundColor: _errorColor));
     }
   }
 
   /// Builds the signed-in welcome screen.
   @override
   Widget build(BuildContext context) {
-    final User? user = watch(watchCurrentSessionUseCase()).value;
+    final AuthSession session = watch(watchCurrentSessionUseCase()).value;
 
-    if (user == null) {
+    if (session is! SignedInAuthSession) {
       return const SizedBox.shrink();
     }
+    final String email = session.user.email;
 
     return Scaffold(
       body: SafeArea(
@@ -65,8 +59,8 @@ final class SignedInWidget extends WatchingWidget {
               const SizedBox(height: AppTheme.spacingMedium),
               const _SignedTitleWidget(),
               const SizedBox(height: AppTheme.spacingMedium),
-              _SignedEmailWidget(email: user.email),
-              const SizedBox(height: _spacingLarge),
+              _SignedEmailWidget(email: email),
+              const SizedBox(height: AppTheme.spacingExtraLarge),
               _SignedOutButtonWidget(onPressed: () => _handleSignOut(context)),
               const Spacer(),
             ],
@@ -88,11 +82,7 @@ class _SignedIconWidget extends StatelessWidget {
   /// Builds the check-circle icon.
   @override
   Widget build(BuildContext context) {
-    return Icon(
-      Icons.check_circle,
-      size: size,
-      color: Theme.of(context).colorScheme.primary,
-    );
+    return Icon(Icons.check_circle, size: size, color: Theme.of(context).colorScheme.primary);
   }
 }
 
@@ -109,9 +99,7 @@ class _SignedTitleWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       _titleText,
-      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+      style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
       textAlign: TextAlign.center,
     );
   }
@@ -133,9 +121,9 @@ class _SignedEmailWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       email,
-      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: _alpha),
-          ),
+      style: Theme.of(
+        context,
+      ).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: _alpha)),
       textAlign: TextAlign.center,
     );
   }
@@ -174,16 +162,11 @@ class _SignedOutButtonWidget extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: _errorColor,
           foregroundColor: _buttonForegroundColor,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(_buttonRadius),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(_buttonRadius)),
         ),
         child: const Text(
           _buttonText,
-          style: TextStyle(
-            fontSize: _fontSize,
-            fontWeight: FontWeight.w600,
-          ),
+          style: TextStyle(fontSize: _fontSize, fontWeight: FontWeight.w600),
         ),
       ),
     );

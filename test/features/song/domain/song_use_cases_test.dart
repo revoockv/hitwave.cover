@@ -22,7 +22,12 @@ final class FakeSongRepository implements SongRepository {
   ValueListenable<List<Song>> watchSongs() => _songs;
 
   @override
-  Future<Result<void>> addSong({required String author, required String name, String? album, required String lyrics}) async {
+  Future<Result<void>> addSong({
+    required String author,
+    required String name,
+    String? album,
+    required String lyrics,
+  }) async {
     addedNames.add(name);
     return nextResult;
   }
@@ -34,17 +39,40 @@ final class FakeSongRepository implements SongRepository {
   }
 
   @override
+  Future<Result<void>> updateSongScrollSpeed({required String songId, required double speed}) async => nextResult;
+
+  @override
+  Future<Result<void>> addSongs(List<Song> songs) async => nextResult;
+
+  @override
+  ValueListenable<int> watchLocalSongsToTransfer() => _localSongsToTransfer;
+
+  final ValueNotifier<int> _localSongsToTransfer = ValueNotifier<int>(0);
+
+  @override
+  Future<Result<void>> transferLocalSongs() async => nextResult;
+
+  @override
+  Future<Result<void>> keepLocalSongs() async => nextResult;
+
+  @override
+  Future<Result<void>> updateSongLeadIn({required String songId, required double leadIn}) async => nextResult;
+
+  @override
+  Future<Result<void>> updateSongLyrics({required String songId, required String lyrics}) async => nextResult;
+
+  @override
   Future<Result<void>> updateSong({
     required String songId,
     required String author,
     required String name,
     String? album,
     required String lyrics,
-  }) async =>
-      nextResult;
+  }) async => nextResult;
 
   @override
-  Future<Result<void>> addCover({required String songId, required List<int> audioBytes, String? notes}) async => nextResult;
+  Future<Result<void>> addCover({required String songId, required List<int> audioBytes, String? notes}) async =>
+      nextResult;
 
   @override
   Future<Result<void>> updateCover({
@@ -52,8 +80,7 @@ final class FakeSongRepository implements SongRepository {
     required String coverId,
     required List<int> audioBytes,
     String? notes,
-  }) async =>
-      nextResult;
+  }) async => nextResult;
 
   @override
   Future<Result<void>> deleteCover({required String songId, required String coverId}) async => nextResult;
@@ -67,7 +94,11 @@ void main() {
   });
 
   test('add song passes the song to the repository', () async {
-    final Result<void> result = await AddSongUseCase(repository)(author: 'Thorinshield', name: 'One Girl', lyrics: 'la');
+    final Result<void> result = await AddSongUseCase(repository)(
+      author: 'Thorinshield',
+      name: 'One Girl',
+      lyrics: 'la',
+    );
 
     expect(result.isSuccess, isTrue);
     expect(repository.addedNames, <String>['One Girl']);

@@ -1,15 +1,50 @@
+import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:hitwave.cover/features/song/domain/entities/song.dart';
-import 'package:hitwave.cover/features/song/presentation/controllers/lyrics_page_controller.dart';
-import 'package:hitwave.cover/features/song/presentation/widgets/lyrics_controls_widget.dart';
+import 'package:watch_it/watch_it.dart';
+
+import '../../../../core/domain/entities/result.dart';
+import '../../../../core/domain/entities/result_state.dart';
 import '../../../../core/presentation/theme.dart';
+import '../../domain/entities/song.dart';
+import '../controllers/lyrics_page_controller.dart';
+import '../di/song_getters.dart';
+import '../widgets/lyrics_controls_widget.dart';
 
 /// Lyrics display page with auto-scroll functionality.
 ///
 /// Shows the song title, author, and lyrics with a speed-controlled
-/// auto-scroll feature. Controls auto-hide after inactivity.
-final class LyricsPage extends StatefulWidget {
+/// auto-scroll feature. Controls auto-hide after inactivity. The lyrics can be
+/// edited in place: they are saved when the field loses focus (done, start of
+/// scrolling) and when the page closes. The speed and the space above the
+/// lyrics are saved with the song.
+final class LyricsPage extends WatchingWidget {
+  /// Speed label text.
+  static const String _speedLabel = 'Швидкість';
+
+  /// Label of the space above the lyrics.
+  static const String _leadInLabel = 'Відступ';
+
+  /// Stop button label text.
+  static const String _stopLabel = 'Пауза';
+
+  /// Start button label text.
+  static const String _startLabel = 'Старт';
+
+  /// Font size for lyrics text.
+  static const double _lyricsFontSize = 20;
+
+  /// Bottom space so the last line can scroll above the control panel.
+  static const double _controlsClearance = 120;
+
+  /// Padding around the lyrics; the top is replaced by the space chosen for the song.
+  static const EdgeInsets _lyricsPadding = EdgeInsets.fromLTRB(
+    AppTheme.spacingLarge,
+    AppTheme.spacingLarge,
+    AppTheme.spacingLarge,
+    _controlsClearance,
+  );
+
   /// The song whose lyrics to display.
   final Song song;
 
@@ -17,142 +52,162 @@ final class LyricsPage extends StatefulWidget {
   const LyricsPage({required this.song, super.key});
 
   @override
-  State<LyricsPage> createState() => _LyricsPageState();
-}
-
-class _LyricsPageState extends State<LyricsPage> {
-  /// Speed label text.
-  static const String _speedLabel = 'Швидкість';
-
-  /// Stop button label text.
-  static const String _stopLabel = 'Зупинити';
-
-  /// Start button label text.
-  static const String _startLabel = 'Старт';
-
-  /// Font family for lyrics text.
-  static const String _robotoFontFamily = 'Roboto';
-
-  /// Font size for lyrics text.
-  static const double _lyricsFontSize = 18;
-
-  late final LyricsPageController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = LyricsPageController();
-    _controller.initControllers(widget.song.lyrics);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _hideKeyboard() {
-    if (_controller.focusNode.hasFocus) {
-      _controller.focusNode.unfocus();
-    }
-  }
-
-  void _startScrolling() {
-    if (_controller.isScrolling.value) return;
-    _controller.startScrolling(_resetHideTimer, _hideKeyboard);
-  }
-
-  void _stopScrolling() {
-    _controller.stopScrolling(_resetHideTimer);
-  }
-
-  void _resetHideTimer() {
-    _controller.resetHideTimer();
-  }
-
-  void _toggleScroll() {
-    if (_controller.isScrolling.value) {
-      _stopScrolling();
-    } else {
-      if (_controller.textController.text.trim().isEmpty) return;
-      _startScrolling();
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(widget.song.name),
-            Text(
-              widget.song.author,
-              style: Theme.of(context).textTheme.bodySmall,
+    final LyricsPageController lyricsPageController = createOnce(
+      _createLyricsPageController,
+      dispose: _disposeLyricsPageController,
+    );
+    final bool isScrolling = watch(lyricsPageController.scrollingController).value;
+    final double leadInFactor = watch(lyricsPageController.leadInController).value;
+    registerHandler(target: lyricsPageController.speedSavingStateController, handler: _onSavingChanged);
+    registerHandler(target: lyricsPageController.leadInSavingStateController, handler: _onSavingChanged);
+    registerHandler(target: lyricsPageController.lyricsSavingStateController, handler: _onSavingChanged);
+    final double leadIn = MediaQuery.sizeOf(context).height * leadInFactor;
+
+    final ThemeData theme = Theme.of(context);
+    final TextStyle? lyricsStyle = theme.textTheme.bodyLarge?.copyWith(
+      fontSize: _lyricsFontSize,
+      height: AppTheme.readingLineHeight,
+    );
+
+    return PopScope(
+      onPopInvokedWithResult: (bool didPop, Object? result) => _onPagePopped(lyricsPageController),
+      child: Scaffold(
+        appBar: AppBar(
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(song.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+              Text(
+                song.author,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              ),
+            ],
+          ),
+        ),
+        body: Stack(
+          children: <Widget>[
+            Positioned.fill(
+              child: GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onTap: lyricsPageController.onLyricsTapped,
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: AppTheme.maxContentWidth),
+                    child: SingleChildScrollView(
+                      controller: lyricsPageController.lyricsScrollController,
+                      padding: _lyricsPadding.copyWith(top: leadIn),
+                      child: IgnorePointer(
+                        ignoring: isScrolling,
+                        child: Focus(
+                          onFocusChange: (bool hasFocus) => _onLyricsFocusChanged(lyricsPageController, hasFocus),
+                          child: TextField(
+                            controller: lyricsPageController.lyricsTextController,
+                            focusNode: lyricsPageController.lyricsFocusNode,
+                            readOnly: isScrolling,
+                            textInputAction: TextInputAction.done,
+                            onEditingComplete: lyricsPageController.hideKeyboard,
+                            maxLines: null,
+                            decoration: const InputDecoration(
+                              filled: false,
+                              border: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                              isCollapsed: true,
+                            ),
+                            style: lyricsStyle,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: AppTheme.maxContentWidth),
+                  child: LyricsControlsWidget(
+                    lyricsPageController: lyricsPageController,
+                    onSpeedChosen: (double speed) => _onSpeedChosen(lyricsPageController, speed),
+                    onLeadInChosen: (double leadIn) => _onLeadInChosen(lyricsPageController, leadIn),
+                    speedLabel: _speedLabel,
+                    leadInLabel: _leadInLabel,
+                    stopLabel: _stopLabel,
+                    startLabel: _startLabel,
+                  ),
+                ),
+              ),
             ),
           ],
         ),
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: GestureDetector(
-              onTap: () {
-                if (_controller.isScrolling.value) {
-                  _resetHideTimer();
-                  FocusScope.of(context).unfocus();
-                } else {
-                  _resetHideTimer();
-                }
-              },
-              child: ValueListenableBuilder<bool>(
-                valueListenable: _controller.isScrolling,
-                builder: (context, isScrollingValue, child) {
-                  return isScrollingValue
-                      ? SingleChildScrollView(
-                          controller: _controller.scrollController,
-                          child: Padding(
-                            padding: const EdgeInsets.all(AppTheme.spacingLarge),
-                            child: Align(
-                              alignment: Alignment.topLeft,
-                              child: Text(
-                                _controller.textController.text,
-                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                      fontSize: _lyricsFontSize,
-                                    ),
-                              ),
-                            ),
-                          ),
-                        )
-                      : TextField(
-                          controller: _controller.textController,
-                          focusNode: _controller.focusNode,
-                          scrollController: _controller.editScrollController,
-                          textInputAction: TextInputAction.done,
-                          onEditingComplete: _hideKeyboard,
-                          maxLines: null,
-                          minLines: 1,
-                          decoration: const InputDecoration(
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.all(AppTheme.spacingLarge),
-                          ),
-                          style: const TextStyle(fontSize: _lyricsFontSize, fontFamily: _robotoFontFamily),
-                        );
-                },
-              ),
-            ),
-          ),
-          LyricsControlsWidget(
-            controller: _controller,
-            speedLabel: _speedLabel,
-            stopLabel: _stopLabel,
-            startLabel: _startLabel,
-            toggleScroll: _toggleScroll,
-            resetHideTimer: _resetHideTimer,
-          ),
-        ],
-      ),
     );
+  }
+
+  LyricsPageController _createLyricsPageController() =>
+      LyricsPageController(lyrics: song.lyrics, initialSpeed: song.scrollSpeed, initialLeadIn: song.leadIn);
+
+  static void _disposeLyricsPageController(LyricsPageController lyricsPageController) => lyricsPageController.dispose();
+
+  /// Shows an error when the speed, the space or the lyrics could not be saved.
+  void _onSavingChanged(BuildContext context, ResultState<void> state, void Function() cancel) {
+    if (state is! FailureResultState<void>) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.message)));
+  }
+
+  /// Saves [speed] with this song when it changed; ignored while a save runs.
+  Future<void> _onSpeedChosen(LyricsPageController lyricsPageController, double speed) async {
+    if (!lyricsPageController.canSaveSpeed(speed)) return;
+    final ValueNotifier<ResultState<void>> speedSavingStateController = lyricsPageController.speedSavingStateController;
+    speedSavingStateController.value = ResultState.loading;
+
+    final Result<void> result = await updateSongScrollSpeedUseCase(songId: song.id, speed: speed);
+    if (lyricsPageController.isDisposed) return;
+
+    if (result.isSuccess) lyricsPageController.markSpeedSaved(speed);
+    speedSavingStateController.value = ResultState.of(result);
+  }
+
+  /// Saves the space above the lyrics ([leadIn]) with this song when it changed.
+  Future<void> _onLeadInChosen(LyricsPageController lyricsPageController, double leadIn) async {
+    if (!lyricsPageController.canSaveLeadIn(leadIn)) return;
+    final ValueNotifier<ResultState<void>> leadInSavingStateController =
+        lyricsPageController.leadInSavingStateController;
+    leadInSavingStateController.value = ResultState.loading;
+
+    final Result<void> result = await updateSongLeadInUseCase(songId: song.id, leadIn: leadIn);
+    if (lyricsPageController.isDisposed) return;
+
+    if (result.isSuccess) lyricsPageController.markLeadInSaved(leadIn);
+    leadInSavingStateController.value = ResultState.of(result);
+  }
+
+  /// Saves the edited lyrics when the field loses focus.
+  Future<void> _onLyricsFocusChanged(LyricsPageController lyricsPageController, bool hasFocus) async {
+    if (hasFocus || !lyricsPageController.canSaveLyrics()) return;
+    final ValueNotifier<ResultState<void>> lyricsSavingStateController =
+        lyricsPageController.lyricsSavingStateController;
+    final String lyrics = lyricsPageController.lyrics;
+    lyricsSavingStateController.value = ResultState.loading;
+
+    final Result<void> result = await updateSongLyricsUseCase(songId: song.id, lyrics: lyrics);
+    if (lyricsPageController.isDisposed) return;
+
+    if (result.isSuccess) lyricsPageController.markLyricsSaved(lyrics);
+    lyricsSavingStateController.value = ResultState.of(result);
+  }
+
+  /// Saves the lyrics that are still unsaved when the page closes; the page is
+  /// gone by then, so nothing is recorded.
+  void _onPagePopped(LyricsPageController lyricsPageController) {
+    if (!lyricsPageController.hasUnsavedLyrics) return;
+    unawaited(updateSongLyricsUseCase(songId: song.id, lyrics: lyricsPageController.lyrics));
   }
 }

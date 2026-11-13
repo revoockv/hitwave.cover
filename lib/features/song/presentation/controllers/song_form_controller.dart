@@ -1,70 +1,69 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart' show FormState, GlobalKey, TextEditingController, ValueNotifier;
 
-/// Controller for song form dialogs (add and edit).
+import '../../../../core/domain/entities/result_state.dart';
+import '../../domain/entities/song.dart';
+
+/// UI state of the add and edit song pages, like a Flutter controller: the form
+/// fields and the progress of saving.
 ///
-/// Manages [TextEditingController] instances for the four form fields
-/// (author, name, album, lyrics) and an [isLoading] notifier for
-/// showing a loading indicator during save operations.
+/// Knows nothing about use cases: the page calls them and records the outcome
+/// in [savingStateController].
 final class SongFormController {
-  /// Controller for the author field.
-  late TextEditingController authorController;
+  /// Key of the form, validated before saving.
+  final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
-  /// Controller for the name field.
-  late TextEditingController nameController;
+  /// Text of the author field.
+  final TextEditingController authorController;
 
-  /// Controller for the album field.
-  late TextEditingController albumController;
+  /// Text of the name field.
+  final TextEditingController nameController;
 
-  /// Controller for the lyrics field.
-  late TextEditingController lyricsController;
+  /// Text of the album field.
+  final TextEditingController albumController;
 
-  /// Whether the save operation is in progress.
-  final ValueNotifier<bool> isLoading = ValueNotifier(false);
+  /// Text of the lyrics field.
+  final TextEditingController lyricsController;
 
-  /// Initializes all text controllers with empty values for add mode.
-  void init() {
-    authorController = TextEditingController();
-    nameController = TextEditingController();
-    albumController = TextEditingController();
-    lyricsController = TextEditingController();
+  /// Progress of saving the song; the save button is disabled while it runs.
+  final ValueNotifier<ResultState<void>> savingStateController = ValueNotifier<ResultState<void>>(ResultState.idle);
+
+  bool _isDisposed = false;
+
+  /// Creates the controller; the fields start with the values of [song] when given.
+  SongFormController({Song? song})
+    : authorController = TextEditingController(text: song?.author),
+      nameController = TextEditingController(text: song?.name),
+      albumController = TextEditingController(text: song?.album),
+      lyricsController = TextEditingController(text: song?.lyrics);
+
+  /// Whether [dispose] was called; the owner checks it after every `await`.
+  bool get isDisposed => _isDisposed;
+
+  /// Entered author without surrounding spaces.
+  String get author => authorController.text.trim();
+
+  /// Entered name without surrounding spaces.
+  String get name => nameController.text.trim();
+
+  /// Entered album, or `null` when the field is empty.
+  String? get album {
+    final String text = albumController.text.trim();
+    return text.isEmpty ? null : text;
   }
 
-  /// Initializes all text controllers with the given song values for edit mode.
-  void initEdit({
-    required String author,
-    required String name,
-    required String? album,
-    required String lyrics,
-  }) {
-    authorController = TextEditingController(text: author);
-    nameController = TextEditingController(text: name);
-    albumController = TextEditingController(text: album);
-    lyricsController = TextEditingController(text: lyrics);
-  }
+  /// Entered lyrics without surrounding spaces.
+  String get lyrics => lyricsController.text.trim();
 
-  /// Disposes all controllers and notifiers.
+  /// Whether a save may start: none is running and every required field is filled.
+  bool canSave() => !savingStateController.value.isLoading && formKey.currentState?.validate() == true;
+
+  /// Releases the fields and the notifier. Called by the owner (`createOnce(..., dispose: ...)`).
   void dispose() {
+    _isDisposed = true;
     authorController.dispose();
     nameController.dispose();
     albumController.dispose();
     lyricsController.dispose();
-    isLoading.dispose();
+    savingStateController.dispose();
   }
-
-  /// Returns the author text.
-  String get author => authorController.text;
-
-  /// Returns the name text.
-  String get name => nameController.text;
-
-  /// Returns the album text, or null if empty.
-  String? get album =>
-      albumController.text.isEmpty ? null : albumController.text;
-
-  /// Returns the lyrics text.
-  String get lyrics => lyricsController.text;
-
-  /// Validates that required fields are non-empty.
-  bool get isValid =>
-      author.isNotEmpty && name.isNotEmpty && lyrics.isNotEmpty;
 }

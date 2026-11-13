@@ -3,212 +3,108 @@ import 'package:flutter/material.dart';
 import '../../../../core/presentation/theme.dart';
 import '../../domain/entities/song.dart';
 import '../controllers/song_view_controller.dart';
+import 'artist_picker_widget.dart';
 import 'song_tile_widget.dart';
 
-/// Displays artist names as wrapable chips with song counts.
+/// Empty state shown when there are no songs yet.
 ///
-/// Each artist is rendered as a [FilterChip] showing the artist name and the
-/// number of songs they have. Chips wrap to multiple lines when needed.
-/// Uses a blocky, vibrant style with clear selected/unselected states.
-final class ArtistListViewWidget extends StatelessWidget {
-  /// Empty artist list message.
-  static const String _emptyArtistListMessage = 'Артисти не знайдені';
+/// An icon, a title, a hint and a button that calls [onAddPressed].
+final class EmptySongsWidget extends StatelessWidget {
+  /// Size of the music icon.
+  static const double _iconSize = 72;
 
-  /// Semi-transparent alpha value for selected chip background.
-  static const double _selectedChipAlpha = 0.2;
+  /// Title of the empty state.
+  static const String _title = 'Поки що немає пісень';
 
-  /// Border radius for artist chips (blocky rounded corners).
-  static const double _chipBorderRadius = 12;
+  /// Hint under the title.
+  static const String _message = 'Додайте першу пісню або імпортуйте резервну копію.';
 
-  /// Padding inside artist chips.
-  static const EdgeInsets _chipPadding = EdgeInsets.symmetric(
-    horizontal: 12,
-    vertical: 8,
-  );
+  /// Label of the add button.
+  static const String _addLabel = 'Додати пісню';
 
-  /// Unselected chip border width.
-  static const double _unselectedBorderWidth = 1;
+  /// Called when the add button is pressed.
+  final VoidCallback onAddPressed;
 
-  /// Selected chip border width.
-  static const double _selectedBorderWidth = 1.5;
-
-  /// Alpha value for song count text.
-  static const double _songCountAlpha = 0.7;
-
-  /// Alpha value for unselected chip border.
-  static const double _unselectedBorderAlpha = 0.3;
-
-  /// Opens the song count.
-  static const String _countOpen = '(';
-
-  /// Closes the song count.
-  static const String _countClose = ')';
-
-  /// The list of all songs to extract unique artists from.
-  final List<Song> songs;
-
-  /// The currently selected artist, or empty string if no artist is selected.
-  final String selectedArtist;
-
-  /// Callback when an artist is selected.
-  final void Function(String artist) onArtistSelected;
-
-  /// Creates a new [ArtistListViewWidget].
-  const ArtistListViewWidget({
-    required this.songs,
-    required this.selectedArtist,
-    required this.onArtistSelected,
-    super.key,
-  });
+  /// Creates a new [EmptySongsWidget].
+  const EmptySongsWidget({required this.onAddPressed, super.key});
 
   @override
   Widget build(BuildContext context) {
-    final List<String> uniqueArtists = _getUniqueArtists();
+    final ThemeData theme = Theme.of(context);
 
-    if (uniqueArtists.isEmpty) {
-      return const Center(child: Text(_emptyArtistListMessage));
-    }
-
-    uniqueArtists.sort();
-
-    return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingMedium, vertical: AppTheme.spacingSmall),
-      child: Wrap(
-        spacing: AppTheme.spacingSmall,
-        runSpacing: AppTheme.spacingSmall,
-        children: uniqueArtists.map((String artist) {
-          final bool isSelected = artist == selectedArtist;
-          final int songCount = _getSongCountForArtist(artist);
-          final ColorScheme colorScheme = Theme.of(context).colorScheme;
-
-          return FilterChip(
-            label: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                Text(
-                  artist,
-                  style: TextStyle(
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(left: AppTheme.spacingTiny),
-                  child: Text(
-                    '$_countOpen$songCount$_countClose',
-                    style: TextStyle(
-                      color: colorScheme.onSurface.withValues(
-                        alpha: ArtistListViewWidget._songCountAlpha,
-                      ),
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                ),
-              ],
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(AppTheme.spacingLarge),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Icon(Icons.library_music_outlined, size: _iconSize, color: theme.colorScheme.primary),
+            const SizedBox(height: AppTheme.spacingMedium),
+            Text(_title, style: theme.textTheme.titleLarge, textAlign: TextAlign.center),
+            const SizedBox(height: AppTheme.spacingSmall),
+            Text(
+              _message,
+              style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              textAlign: TextAlign.center,
             ),
-            selected: isSelected,
-            onSelected: (bool value) {
-              if (value) {
-                onArtistSelected(artist);
-              }
-            },
-            selectedColor: colorScheme.primary.withValues(
-              alpha: _selectedChipAlpha,
-            ),
-            labelStyle: const TextStyle(fontWeight: FontWeight.w400),
-            visualDensity: VisualDensity.compact,
-            padding: ArtistListViewWidget._chipPadding,
-            side: BorderSide(
-              color: isSelected
-                  ? colorScheme.primary
-                  : colorScheme.outline.withValues(
-                      alpha: ArtistListViewWidget._unselectedBorderAlpha,
-                    ),
-              width: isSelected
-                  ? ArtistListViewWidget._selectedBorderWidth
-                  : ArtistListViewWidget._unselectedBorderWidth,
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(
-                ArtistListViewWidget._chipBorderRadius,
-              ),
-              side: BorderSide(
-                color: isSelected
-                    ? colorScheme.primary
-                    : colorScheme.outline.withValues(
-                        alpha: ArtistListViewWidget._unselectedBorderAlpha,
-                      ),
-                width: isSelected
-                    ? ArtistListViewWidget._selectedBorderWidth
-                    : ArtistListViewWidget._unselectedBorderWidth,
-              ),
-            ),
-            checkmarkColor: colorScheme.primary,
-          );
-        }).toList(),
+            const SizedBox(height: AppTheme.spacingLarge),
+            FilledButton.icon(onPressed: onAddPressed, icon: const Icon(Icons.add), label: const Text(_addLabel)),
+          ],
+        ),
       ),
     );
-  }
-
-  List<String> _getUniqueArtists() {
-    final Set<String> artistSet = songs.map((Song song) => song.author).toSet();
-    return artistSet.toList();
-  }
-
-  int _getSongCountForArtist(String artist) {
-    return songs.where((Song song) => song.author == artist).length;
   }
 }
 
 /// Displays songs in a vertical list sorted by name.
-///
-/// Each song is rendered as a [SongTileWidget] widget.
 final class SongListModeWidget extends StatelessWidget {
-  /// Empty song list message.
-  static const String _emptySongListMessage = 'Список пісень порожній';
+  /// Bottom padding so the last tile is not hidden by the floating button.
+  static const double _fabClearance = 96;
 
   /// The list of songs.
   final List<Song> songs;
 
-  /// Callback when a song tile is tapped.
+  /// Called when a song tile is tapped.
   final void Function(Song song) onSongTap;
+
+  /// Called when "edit" is chosen for a song.
+  final void Function(Song song) onSongEdit;
+
+  /// Called when "delete" is chosen for a song.
+  final void Function(Song song) onSongDelete;
 
   /// Creates a new [SongListModeWidget].
   const SongListModeWidget({
     required this.songs,
     required this.onSongTap,
+    required this.onSongEdit,
+    required this.onSongDelete,
     super.key,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (songs.isEmpty) {
-      return const Center(child: Text(_emptySongListMessage));
-    }
-
-    final List<Song> sortedSongs = _getSortedSongs();
+    final List<Song> sortedSongs = List<Song>.from(songs)..sort(_compareByName);
 
     return ListView.builder(
+      padding: const EdgeInsets.only(top: AppTheme.spacingSmall, bottom: _fabClearance),
       itemCount: sortedSongs.length,
       itemBuilder: (BuildContext context, int index) {
-        return SongTileWidget(song: sortedSongs[index], onTap: onSongTap);
+        return SongTileWidget(song: sortedSongs[index], onTap: onSongTap, onEdit: onSongEdit, onDelete: onSongDelete);
       },
     );
   }
 
-  List<Song> _getSortedSongs() {
-    final List<Song> sorted = List<Song>.from(songs);
-    sorted.sort((Song a, Song b) => a.name.compareTo(b.name));
-    return sorted;
-  }
+  static int _compareByName(Song a, Song b) => a.name.toLowerCase().compareTo(b.name.toLowerCase());
 }
 
-/// Displays songs grouped by artist in horizontal lists.
+/// Artist mode: a compact artist list, or the songs of the selected artist.
 ///
-/// Shows a horizontal list of artist chips at the top, and when an artist
-/// is selected, displays their songs in a horizontal list below.
+/// With no artist selected it shows [ArtistPickerWidget]; with one selected
+/// it shows only that artist's songs (the app bar title switches artists).
 final class ArtistModeWidget extends StatelessWidget {
-  /// Empty song list message.
-  static const String _emptySongListMessage = 'Список пісень порожній';
+  /// Bottom padding so the last tile is not hidden by the floating button.
+  static const double _fabClearance = 96;
 
   /// The list of songs.
   final List<Song> songs;
@@ -219,8 +115,14 @@ final class ArtistModeWidget extends StatelessWidget {
   /// Callback when an artist is selected.
   final void Function(String artist) onArtistSelected;
 
-  /// Callback when a song tile is tapped.
+  /// Called when a song tile is tapped.
   final void Function(Song song) onSongTap;
+
+  /// Called when "edit" is chosen for a song.
+  final void Function(Song song) onSongEdit;
+
+  /// Called when "delete" is chosen for a song.
+  final void Function(Song song) onSongDelete;
 
   /// Creates a new [ArtistModeWidget].
   const ArtistModeWidget({
@@ -228,83 +130,44 @@ final class ArtistModeWidget extends StatelessWidget {
     required this.selectedArtist,
     required this.onArtistSelected,
     required this.onSongTap,
+    required this.onSongEdit,
+    required this.onSongDelete,
     super.key,
   });
 
   @override
   Widget build(BuildContext context) {
-    final List<String> uniqueArtists = _getUniqueArtists();
-
-    if (uniqueArtists.isEmpty) {
-      return const Center(child: Text(_emptySongListMessage));
-    }
-
-    return ListView(
-      children: <Widget>[
-        Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingMedium, vertical: AppTheme.spacingSmall),
-          child: ArtistListViewWidget(
-            songs: songs,
-            selectedArtist: selectedArtist,
-            onArtistSelected: onArtistSelected,
-          ),
-        ),
-        ..._buildArtistSongTiles(),
-      ],
-    );
-  }
-
-  List<Widget> _buildArtistSongTiles() {
-    if (selectedArtist.isEmpty) {
-      return const <Widget>[];
-    }
-
-    final List<Song> artistSongs = _getSongsByArtist(selectedArtist);
+    final List<Song> artistSongs = songs.where((Song song) => song.author == selectedArtist).toList()
+      ..sort(SongListModeWidget._compareByName);
 
     if (artistSongs.isEmpty) {
-      return [const Center(child: Text(_emptySongListMessage))];
+      return ArtistPickerWidget(songs: songs, onArtistSelected: onArtistSelected);
     }
 
-    final List<Song> sortedSongs = _getSortedSongs(artistSongs);
-
-    return <Widget>[
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingMedium),
-        child: ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: sortedSongs.length,
-          itemBuilder: (BuildContext context, int index) {
-            return SongTileWidget(
-              song: sortedSongs[index],
-              onTap: onSongTap,
-            );
-          },
-        ),
-      ),
-    ];
-  }
-
-  List<Song> _getSortedSongs(List<Song> songList) {
-    final List<Song> sorted = List<Song>.from(songList);
-    sorted.sort((Song a, Song b) => a.name.compareTo(b.name));
-    return sorted;
-  }
-
-  List<String> _getUniqueArtists() {
-    final Set<String> artistSet = songs.map((Song song) => song.author).toSet();
-    return artistSet.toList();
-  }
-
-  List<Song> _getSongsByArtist(String artist) {
-    return songs.where((Song song) => song.author == artist).toList();
+    return ListView.builder(
+      padding: const EdgeInsets.only(top: AppTheme.spacingSmall, bottom: _fabClearance),
+      itemCount: artistSongs.length,
+      itemBuilder: (BuildContext context, int index) =>
+          SongTileWidget(song: artistSongs[index], onTap: onSongTap, onEdit: onSongEdit, onDelete: onSongDelete),
+    );
   }
 }
 
-/// Displays songs as a [ListView] or horizontal artist/song lists.
-///
-/// Each song is rendered as a [SongTileWidget] widget.
+/// Displays songs as a list or grouped by artist, or an empty state.
 final class SongsWidget extends StatelessWidget {
+  /// Creates a new [SongsWidget].
+  const SongsWidget({
+    super.key,
+    required this.songs,
+    required this.viewMode,
+    required this.onArtistSelected,
+    required this.onSongTap,
+    required this.onSongEdit,
+    required this.onSongDelete,
+    required this.onAddPressed,
+    this.selectedArtist = '',
+  });
+
   /// The list of songs.
   final List<Song> songs;
 
@@ -317,27 +180,26 @@ final class SongsWidget extends StatelessWidget {
   /// Callback when an artist is selected.
   final void Function(String artist) onArtistSelected;
 
-  /// Callback when a song tile is tapped.
+  /// Called when a song tile is tapped.
   final void Function(Song song) onSongTap;
 
-  /// Creates a new [SongsWidget].
-  const SongsWidget({
-    required this.songs,
-    required this.viewMode,
-    required this.onArtistSelected,
-    required this.onSongTap,
-    this.selectedArtist = '',
-    super.key,
-  });
+  /// Called when "edit" is chosen for a song.
+  final void Function(Song song) onSongEdit;
 
-  /// Builds the song list view.
-  ///
-  /// Returns an empty state message when the list is empty, or a [ListView.builder]
-  /// displaying all songs as [SongTileWidget] widgets.
+  /// Called when "delete" is chosen for a song.
+  final void Function(Song song) onSongDelete;
+
+  /// Called from the empty state to add the first song.
+  final VoidCallback onAddPressed;
+
   @override
   Widget build(BuildContext context) {
+    if (songs.isEmpty) {
+      return EmptySongsWidget(onAddPressed: onAddPressed);
+    }
+
     if (viewMode == SongViewMode.list) {
-      return SongListModeWidget(songs: songs, onSongTap: onSongTap);
+      return SongListModeWidget(songs: songs, onSongTap: onSongTap, onSongEdit: onSongEdit, onSongDelete: onSongDelete);
     }
 
     return ArtistModeWidget(
@@ -345,6 +207,8 @@ final class SongsWidget extends StatelessWidget {
       selectedArtist: selectedArtist,
       onArtistSelected: onArtistSelected,
       onSongTap: onSongTap,
+      onSongEdit: onSongEdit,
+      onSongDelete: onSongDelete,
     );
   }
 }

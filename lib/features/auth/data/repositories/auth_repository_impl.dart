@@ -6,15 +6,18 @@ import 'package:logger/logger.dart';
 
 import '../../../../core/domain/entities/disposable_resource.dart';
 import '../../../../core/domain/entities/result.dart';
-import '../../domain/entities/user.dart';
+import '../../domain/entities/auth_session.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../data_sources/firebase_auth_service.dart';
+import '../data_sources/local_auth_service.dart';
 import '../models/user_model.dart';
 
-/// Firebase-based implementation of [AuthRepository].
+/// Firebase-based implementation of [AuthRepository] with a guest mode.
 ///
 /// Subscribes to Firebase auth state changes in [init] and keeps the current
-/// session in a private [ValueNotifier], exposed as [ValueListenable].
+/// session in a private [ValueNotifier], exposed as [ValueListenable]. A signed-in
+/// Firebase user wins; otherwise the guest flag saved on the device decides
+/// between [GuestAuthSession] and [SignedOutAuthSession].
 final class AuthRepositoryImpl implements AuthRepository, DisposableResource {
   static const String _genericErrorMessage = 'Сталася помилка. Спробуйте пізніше.';
   static const String _noEmail = '';
@@ -30,24 +33,25 @@ final class AuthRepositoryImpl implements AuthRepository, DisposableResource {
   static const String _signOutStartLog = 'SignOut: starting';
   static const String _signOutSuccessLog = 'SignOut: success — user signed out';
   static const String _signOutFailureLog = 'SignOut: failure — ';
+  static const String _guestStartLog = 'ContinueWithoutAccount: starting';
+  static const String _guestSuccessLog = 'ContinueWithoutAccount: success — guest session';
+  static const String _guestFailureLog = 'ContinueWithoutAccount: failure — ';
   static const String _closingQuoteLog = '"';
 
   final FirebaseAuthService _authService;
+  final LocalAuthService _localAuthService;
   final Logger _logger;
 
-  final ValueNotifier<User?> _session = ValueNotifier<User?>(null);
+  final ValueNotifier<AuthSession> _session = ValueNotifier<AuthSession>(const SignedOutAuthSession());
 
   StreamSubscription<firebase_auth.User?>? _subscription;
 
   /// Creates a new [AuthRepositoryImpl].
-  AuthRepositoryImpl({
-    required this._authService,
-    required this._logger,
-  });
+  AuthRepositoryImpl({required this._authService, required this._localAuthService, required this._logger});
 
   /// Subscribes to Firebase auth state changes; returns this for `registerSingletonAsync`.
   Future<AuthRepositoryImpl> init() async {
-    _session.value = _toUser(_authService.currentUser);
+    _session.value = _toSession(_authService.currentUser);
     _subscription ??= _authService.userChanges().listen(_onUserChanged);
     _logger.i(_initLog);
     return this;
@@ -63,32 +67,46 @@ final class AuthRepositoryImpl implements AuthRepository, DisposableResource {
   }
 
   @override
-  ValueListenable<User?> watchSession() => _session;
+  ValueListenable<AuthSession> watchSession() => _session;
 
   void _onUserChanged(firebase_auth.User? firebaseUser) {
-    _session.value = _toUser(firebaseUser);
+    _session.value = _toSession(firebaseUser);
   }
 
-  User? _toUser(firebase_auth.User? firebaseUser) {
+  AuthSession _toSession(firebase_auth.User? firebaseUser) {
     if (firebaseUser == null) {
-      return null;
+      return _localAuthService.isGuest ? const GuestAuthSession() : const SignedOutAuthSession();
     }
-    return UserModel(
-      id: firebaseUser.uid,
-      email: firebaseUser.email ?? _noEmail,
-      displayName: firebaseUser.displayName,
-      photoURL: firebaseUser.photoURL,
-    ).toEntity();
+    return SignedInAuthSession(
+      UserModel(
+        id: firebaseUser.uid,
+        email: firebaseUser.email ?? _noEmail,
+        displayName: firebaseUser.displayName,
+        photoURL: firebaseUser.photoURL,
+      ).toEntity(),
+    );
   }
 
   @override
-  Future<Result<void>> signIn({
-    required String email,
-    required String password,
-  }) async {
+  Future<Result<void>> continueWithoutAccount() async {
+    _logger.i(_guestStartLog);
+    try {
+      await _localAuthService.setGuest(true);
+      _session.value = _toSession(_authService.currentUser);
+      _logger.i(_guestSuccessLog);
+      return Result.ok;
+    } on Exception catch (e) {
+      _logger.e('$_guestFailureLog$e');
+      return const Result.failure(_genericErrorMessage);
+    }
+  }
+
+  @override
+  Future<Result<void>> signIn({required String email, required String password}) async {
     _logger.i('$_signInStartLog$email$_closingQuoteLog');
     try {
       await _authService.signIn(email: email, password: password);
+      await _localAuthService.setGuest(false);
       _logger.i('$_signInSuccessLog$email$_closingQuoteLog');
       return Result.ok;
     } on AuthServiceException catch (e) {
@@ -101,13 +119,11 @@ final class AuthRepositoryImpl implements AuthRepository, DisposableResource {
   }
 
   @override
-  Future<Result<void>> signUp({
-    required String email,
-    required String password,
-  }) async {
+  Future<Result<void>> signUp({required String email, required String password}) async {
     _logger.i('$_signUpStartLog$email$_closingQuoteLog');
     try {
       await _authService.signUp(email: email, password: password);
+      await _localAuthService.setGuest(false);
       _logger.i('$_signUpSuccessLog$email$_closingQuoteLog');
       return Result.ok;
     } on AuthServiceException catch (e) {
@@ -123,7 +139,12 @@ final class AuthRepositoryImpl implements AuthRepository, DisposableResource {
   Future<Result<void>> signOut() async {
     _logger.i(_signOutStartLog);
     try {
-      await _authService.signOut();
+      await _localAuthService.setGuest(false);
+      if (_authService.currentUser == null) {
+        _session.value = const SignedOutAuthSession();
+      } else {
+        await _authService.signOut();
+      }
       _logger.i(_signOutSuccessLog);
       return Result.ok;
     } on AuthServiceException catch (e) {

@@ -17,12 +17,28 @@ abstract interface class SongRepository {
   ///
   /// Returns [SuccessResult] on success, or [FailureResult] with an error message
   /// when the operation fails (network error, permission denied, etc.).
-  Future<Result<void>> addSong({
-    required String author,
-    required String name,
-    String? album,
-    required String lyrics,
-  });
+  Future<Result<void>> addSong({required String author, required String name, String? album, required String lyrics});
+
+  /// Adds every song of [songs] with its speed and space, but without covers
+  /// (used by the import from a backup file).
+  ///
+  /// Returns [Result.ok] on success, or a failure with an error message.
+  Future<Result<void>> addSongs(List<Song> songs);
+
+  /// Number of songs left on the device that may be moved into the account
+  /// just signed in; `0` when there are none or the user chose to keep them.
+  ValueListenable<int> watchLocalSongsToTransfer();
+
+  /// Moves the songs on the device into the signed-in account and deletes
+  /// them from the device; songs that failed stay on the device.
+  ///
+  /// Returns [Result.ok] on success, or a failure with an error message.
+  Future<Result<void>> transferLocalSongs();
+
+  /// Keeps the songs on the device and stops offering them until they change.
+  ///
+  /// Returns [Result.ok] on success, or a failure with an error message.
+  Future<Result<void>> keepLocalSongs();
 
   /// Updates an existing song identified by [songId] with the given [author],
   /// [name], optional [album], and [lyrics].
@@ -37,24 +53,34 @@ abstract interface class SongRepository {
     required String lyrics,
   });
 
+  /// Saves the auto-scroll [speed] of the lyrics of the song identified by [songId].
+  ///
+  /// Returns [Result.ok] on success, or a failure with an error message.
+  Future<Result<void>> updateSongScrollSpeed({required String songId, required double speed});
+
+  /// Saves the space above the lyrics ([leadIn], a part of the screen height)
+  /// of the song identified by [songId].
+  ///
+  /// Returns [Result.ok] on success, or a failure with an error message.
+  Future<Result<void>> updateSongLeadIn({required String songId, required double leadIn});
+
+  /// Saves the [lyrics] of the song identified by [songId] as typed.
+  ///
+  /// Returns [Result.ok] on success, or a failure with an error message.
+  Future<Result<void>> updateSongLyrics({required String songId, required String lyrics});
+
   /// Deletes a song identified by [songId] and all its associated covers.
   ///
   /// Returns [SuccessResult] on success, or [FailureResult] with an error message
   /// when the deletion fails.
-  Future<Result<void>> deleteSong({
-    required String songId,
-  });
+  Future<Result<void>> deleteSong({required String songId});
 
   /// Adds a new cover to the song identified by [songId] with the given
   /// [audioBytes], optional [notes], and current date.
   ///
   /// Returns [SuccessResult] on success, or [FailureResult] with an error message
   /// when the operation fails.
-  Future<Result<void>> addCover({
-    required String songId,
-    required List<int> audioBytes,
-    String? notes,
-  });
+  Future<Result<void>> addCover({required String songId, required List<int> audioBytes, String? notes});
 
   /// Updates an existing cover identified by [coverId] on the song [songId]
   /// with the given [audioBytes], optional [notes], and current date.
@@ -72,8 +98,5 @@ abstract interface class SongRepository {
   ///
   /// Returns [SuccessResult] on success, or [FailureResult] with an error message
   /// when the deletion fails.
-  Future<Result<void>> deleteCover({
-    required String songId,
-    required String coverId,
-  });
+  Future<Result<void>> deleteCover({required String songId, required String coverId});
 }

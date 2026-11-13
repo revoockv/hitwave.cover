@@ -1,14 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
 
 import '../../../../core/domain/entities/disposable_resource.dart';
 import '../../../../core/domain/entities/result.dart';
-import '../../../song/data/data_sources/firebase_song_service.dart';
-import '../../../song/data/models/song_model.dart';
 import '../../../song/domain/entities/cover.dart';
 import '../../../song/domain/entities/song.dart';
 import '../../../song/domain/repositories/song_repository.dart';
@@ -16,10 +13,10 @@ import '../../domain/repositories/backup_repository.dart';
 import '../data_sources/backup_data_source.dart';
 import '../models/backup_data_model.dart';
 
-/// Firebase-based implementation of [BackupRepository].
+/// Implementation of [BackupRepository] on top of [SongRepository].
 ///
 /// Handles exporting songs to JSON files and importing songs from JSON files,
-/// persisting them to Firebase. File picker operations are encapsulated
+/// adding them where the session keeps its songs (the account or the device). File picker operations are encapsulated
 /// internally — the interface exposes no file paths.
 final class BackupRepositoryImpl implements BackupRepository, DisposableResource {
   static const String _statusIdle = 'idle';
@@ -27,8 +24,6 @@ final class BackupRepositoryImpl implements BackupRepository, DisposableResource
   static const String _statusExporting = 'exporting';
   static const String _statusImporting = 'importing';
   static const String _statusSuccess = 'success';
-  static const String _statusUnauthorizedError = 'Помилка: користувач не авторизований';
-  static const String _userNotAuthenticated = 'Користувач не авторизований.';
   static const String _pickerCancelled = 'Вибір скасовано';
   static const String _exportFailedMessage = 'Помилка при експорті.';
   static const String _importFailedMessage = 'Помилка при імпорті.';
@@ -39,38 +34,30 @@ final class BackupRepositoryImpl implements BackupRepository, DisposableResource
   static const String _albumField = 'album';
   static const String _lyricsField = 'lyrics';
   static const String _coverIdsField = 'coverIds';
+  static const String _scrollSpeedField = 'scrollSpeed';
+  static const String _leadInField = 'leadIn';
 
   static const String _exportStartLog = 'ExportSongs: starting';
-  static const String _exportNotAuthenticatedLog = 'ExportSongs: failed — user is not authenticated';
   static const String _exportCancelledLog = 'ExportSongs: cancelled by user';
   static const String _exportSuccessLog = 'ExportSongs: success — exported ';
   static const String _exportToFileLog = ' songs to "';
   static const String _exportWebLog = ' songs (web download)';
   static const String _exportFailureLog = 'ExportSongs: failure — ';
   static const String _importStartLog = 'ImportSongs: starting';
-  static const String _importNotAuthenticatedLog = 'ImportSongs: failed — user is not authenticated';
   static const String _importCancelledLog = 'ImportSongs: cancelled by user';
   static const String _importSuccessLog = 'ImportSongs: success — ';
   static const String _importedSongsLog = ' songs imported';
   static const String _importFailureLog = 'ImportSongs: failure — ';
   static const String _closingQuoteLog = '"';
 
-  final FirebaseSongService _songService;
   final SongRepository _songRepository;
   final BackupDataSource _dataSource;
-  final firebase_auth.FirebaseAuth _auth;
   final Logger _logger;
 
   final ValueNotifier<String> _status = ValueNotifier<String>(_statusIdle);
 
   /// Creates a new [BackupRepositoryImpl].
-  BackupRepositoryImpl({
-    required this._songService,
-    required this._songRepository,
-    required this._dataSource,
-    required this._auth,
-    required this._logger,
-  });
+  BackupRepositoryImpl({required this._songRepository, required this._dataSource, required this._logger});
 
   /// Releases the status state.
   @override
@@ -85,22 +72,12 @@ final class BackupRepositoryImpl implements BackupRepository, DisposableResource
   Future<Result<void>> exportSongs() async {
     _logger.i(_exportStartLog);
 
-    final String? userId = _auth.currentUser?.uid;
-    if (userId == null) {
-      _logger.w(_exportNotAuthenticatedLog);
-      _status.value = _statusUnauthorizedError;
-      return const Result.failure(_userNotAuthenticated);
-    }
-
     try {
       _status.value = _statusExporting;
 
       final List<Song> songs = _songRepository.watchSongs().value;
 
-      final BackupDataModel model = BackupDataModel(
-        exportedAt: DateTime.now(),
-        songs: songs.map(_encodeSong).toList(),
-      );
+      final BackupDataModel model = BackupDataModel(exportedAt: DateTime.now(), songs: songs.map(_encodeSong).toList());
 
       if (_dataSource.supportsDirectorySelection) {
         final String? filePath = await _dataSource.pickExportDirectory();
@@ -133,13 +110,6 @@ final class BackupRepositoryImpl implements BackupRepository, DisposableResource
   Future<Result<void>> importSongs() async {
     _logger.i(_importStartLog);
 
-    final String? userId = _auth.currentUser?.uid;
-    if (userId == null) {
-      _logger.w(_importNotAuthenticatedLog);
-      _status.value = _statusUnauthorizedError;
-      return const Result.failure(_userNotAuthenticated);
-    }
-
     try {
       _status.value = _statusImporting;
 
@@ -152,17 +122,11 @@ final class BackupRepositoryImpl implements BackupRepository, DisposableResource
 
       final BackupDataModel backupDataModel = BackupDataModel.fromJson(fileContent);
 
-      for (final Map<String, dynamic> songJson in backupDataModel.songs) {
-        final SongModel songModel = SongModel(
-          id: _newDocumentId,
-          author: songJson[_authorField] as String,
-          name: songJson[_nameField] as String,
-          album: songJson[_albumField] as String?,
-          lyrics: songJson[_lyricsField] as String,
-          coverIds: List<String>.from(songJson[_coverIdsField] as List<dynamic>),
-        );
-
-        await _songService.addSong(userId: userId, song: songModel);
+      final List<Song> songs = backupDataModel.songs.map(_decodeSong).toList();
+      final Result<void> added = await _songRepository.addSongs(songs);
+      if (added.isFailure) {
+        _status.value = _importFailedMessage;
+        return added;
       }
 
       _logger.i('$_importSuccessLog${backupDataModel.songs.length}$_importedSongsLog');
@@ -184,8 +148,24 @@ final class BackupRepositoryImpl implements BackupRepository, DisposableResource
       _albumField: song.album,
       _lyricsField: song.lyrics,
       _coverIdsField: song.covers.map(_coverId).toList(),
+      _scrollSpeedField: song.scrollSpeed,
+      _leadInField: song.leadIn,
     };
   }
 
   String _coverId(Cover cover) => cover.id;
+
+  /// Decodes a song of a backup file; its covers are not imported.
+  Song _decodeSong(Map<String, dynamic> songJson) {
+    return Song(
+      id: _newDocumentId,
+      author: songJson[_authorField] as String,
+      name: songJson[_nameField] as String,
+      album: songJson[_albumField] as String?,
+      lyrics: songJson[_lyricsField] as String,
+      covers: const <Cover>[],
+      scrollSpeed: (songJson[_scrollSpeedField] as num?)?.toDouble(),
+      leadIn: (songJson[_leadInField] as num?)?.toDouble(),
+    );
+  }
 }

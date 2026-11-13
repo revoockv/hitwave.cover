@@ -1,63 +1,51 @@
 import 'package:flutter/material.dart';
-import 'package:hitwave.cover/features/song/presentation/controllers/lyrics_page_controller.dart';
+import 'package:watch_it/watch_it.dart';
+
 import '../../../../core/presentation/theme.dart';
+import '../controllers/lyrics_page_controller.dart';
 
-/// Controls bar widget for the lyrics page.
+/// Floating control panel of the lyrics page.
 ///
-/// Displays the speed slider and play/stop button with a frosted-glass
-/// aesthetic. Auto-hides after inactivity when scrolling is active.
-/// Extracted from [LyricsPage] to satisfy the [no_build_return] rule.
-class LyricsControlsWidget extends StatelessWidget {
-  /// Panel corner radius.
-  static const double _panelRadius = 20;
+/// Shows the play/stop button, the speed slider and the slider of the space
+/// above the lyrics. Fades out (and stops taking touches) when the controller
+/// hides the controls during scrolling. Knows nothing about use cases: a
+/// released slider calls [onSpeedChosen] or [onLeadInChosen].
+final class LyricsControlsWidget extends WatchingWidget {
+  /// Elevation of the panel.
+  static const double _panelElevation = 6;
 
-  /// Panel surface alpha.
-  static const double _panelSurfaceAlpha = 0.85;
-
-  /// Shadow blur radius.
-  static const double _shadowBlurRadius = 16;
-
-  /// Shadow alpha.
-  static const double _shadowAlpha = 0.3;
-
-  /// Shadow offset Y.
-  static const double _shadowOffsetY = 2;
-
-  /// Circle avatar radius.
-  static const double _avatarRadius = 20;
-
-  /// Icon size inside play/stop button.
-  static const double _iconSize = 20;
-
-  /// Slider track height.
-  static const double _trackHeight = 4;
-
-  /// Slider thumb radius.
-  static const double _thumbRadius = 8;
-
-  /// Slider overlay radius.
-  static const double _overlayRadius = 12;
-
-  /// Inactive track alpha.
-  static const double _inactiveTrackAlpha = 0.5;
-
-  /// Slider overlay alpha.
-  static const double _overlayAlpha = 0.2;
-
-  /// Shadow color (black).
-  static const Color _shadowColor = Colors.black;
-
-  /// Lowest scroll speed of the slider.
-  static const double _minSpeed = 0.0;
-
-  /// Highest scroll speed of the slider.
-  static const double _maxSpeed = 1.0;
+  /// Fade duration of the panel.
+  static const Duration _fadeDuration = Duration(milliseconds: 250);
 
   /// Number of slider steps.
-  static const int _sliderDivisions = 100;
+  static const int _sliderDivisions = 20;
 
-  /// The lyrics page controller.
-  final LyricsPageController controller;
+  /// Number of steps of the space slider.
+  static const int _leadInDivisions = 16;
+
+  /// Width of the slider labels, so both sliders start at the same place.
+  static const double _labelWidth = 80;
+
+  /// Digits after the point in the speed value.
+  static const int _speedDigits = 1;
+
+  /// Shows the space as percent of the screen height.
+  static const int _percent = 100;
+
+  /// Percent sign after the space value.
+  static const String _percentSign = '%';
+
+  /// UI state of the lyrics page.
+  final LyricsPageController lyricsPageController;
+
+  /// Called with the speed when the user releases the slider.
+  final ValueChanged<double> onSpeedChosen;
+
+  /// Called with the space above the lyrics when the user releases its slider.
+  final ValueChanged<double> onLeadInChosen;
+
+  /// Label of the space slider.
+  final String leadInLabel;
 
   /// Speed label text.
   final String speedLabel;
@@ -68,21 +56,148 @@ class LyricsControlsWidget extends StatelessWidget {
   /// Start button label text.
   final String startLabel;
 
-  /// Toggles auto-scrolling.
-  final void Function() toggleScroll;
-
-  /// Resets the auto-hide timer.
-  final void Function() resetHideTimer;
-
   /// Creates a new [LyricsControlsWidget].
   const LyricsControlsWidget({
     super.key,
-    required this.controller,
+    required this.lyricsPageController,
+    required this.onSpeedChosen,
+    required this.onLeadInChosen,
+    required this.leadInLabel,
     required this.speedLabel,
     required this.stopLabel,
     required this.startLabel,
-    required this.toggleScroll,
-    required this.resetHideTimer,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bool visible = watch(lyricsPageController.controlsVisibilityController).value;
+    final bool isScrolling = watch(lyricsPageController.scrollingController).value;
+    final double speed = watch(lyricsPageController.speedController).value;
+    final double leadIn = watch(lyricsPageController.leadInController).value;
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+
+    return IgnorePointer(
+      ignoring: !visible,
+      child: AnimatedOpacity(
+        opacity: visible ? 1.0 : 0.0,
+        duration: _fadeDuration,
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppTheme.spacingMedium,
+              0,
+              AppTheme.spacingMedium,
+              AppTheme.spacingMedium,
+            ),
+            child: Material(
+              color: colorScheme.surfaceContainerHigh,
+              elevation: _panelElevation,
+              borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppTheme.spacingMedium,
+                  vertical: AppTheme.spacingSmall,
+                ),
+                child: Row(
+                  children: <Widget>[
+                    IconButton.filled(
+                      iconSize: AppTheme.spacingLarge,
+                      tooltip: isScrolling ? stopLabel : startLabel,
+                      onPressed: lyricsPageController.toggleScroll,
+                      icon: Icon(isScrolling ? Icons.pause : Icons.play_arrow),
+                    ),
+                    const SizedBox(width: AppTheme.spacingSmall),
+                    Expanded(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          _SliderRowWidget(
+                            label: speedLabel,
+                            labelWidth: _labelWidth,
+                            value: speed,
+                            min: LyricsPageController.minSpeed,
+                            max: LyricsPageController.maxSpeed,
+                            divisions: _sliderDivisions,
+                            valueText: speed.toStringAsFixed(_speedDigits),
+                            onChanged: _onSpeedChanged,
+                            onChangeEnd: onSpeedChosen,
+                          ),
+                          _SliderRowWidget(
+                            label: leadInLabel,
+                            labelWidth: _labelWidth,
+                            value: leadIn,
+                            min: LyricsPageController.minLeadIn,
+                            max: LyricsPageController.maxLeadIn,
+                            divisions: _leadInDivisions,
+                            valueText: '${(leadIn * _percent).round()}$_percentSign',
+                            onChanged: _onLeadInChanged,
+                            onChangeEnd: onLeadInChosen,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _onSpeedChanged(double value) {
+    lyricsPageController.speedController.value = value;
+    lyricsPageController.resetHideTimer();
+  }
+
+  void _onLeadInChanged(double value) {
+    lyricsPageController.leadInController.value = value;
+    lyricsPageController.resetHideTimer();
+  }
+}
+
+/// One labelled slider of the control panel with its value on the right.
+final class _SliderRowWidget extends StatelessWidget {
+  /// Text before the slider.
+  final String label;
+
+  /// Width of [label], the same for every row.
+  final double labelWidth;
+
+  /// Current value.
+  final double value;
+
+  /// Lowest value.
+  final double min;
+
+  /// Highest value.
+  final double max;
+
+  /// Number of slider steps.
+  final int divisions;
+
+  /// [value] as shown on the right and in the slider bubble.
+  final String valueText;
+
+  /// Called while the user drags.
+  final ValueChanged<double> onChanged;
+
+  /// Called when the user releases the slider.
+  final ValueChanged<double> onChangeEnd;
+
+  /// Creates a new [_SliderRowWidget].
+  const _SliderRowWidget({
+    required this.label,
+    required this.labelWidth,
+    required this.value,
+    required this.min,
+    required this.max,
+    required this.divisions,
+    required this.valueText,
+    required this.onChanged,
+    required this.onChangeEnd,
   });
 
   @override
@@ -90,114 +205,31 @@ class LyricsControlsWidget extends StatelessWidget {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final TextTheme textTheme = Theme.of(context).textTheme;
 
-    return AnimatedOpacity(
-      opacity: controller.controlsVisible.value ? 1.0 : 0.0,
-      duration: const Duration(milliseconds: 300),
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: colorScheme.surface.withValues(alpha: LyricsControlsWidget._panelSurfaceAlpha),
-          borderRadius: BorderRadius.circular(LyricsControlsWidget._panelRadius),
-          boxShadow: [
-            BoxShadow(
-              color: LyricsControlsWidget._shadowColor.withValues(alpha: LyricsControlsWidget._shadowAlpha),
-              blurRadius: LyricsControlsWidget._shadowBlurRadius,
-              offset: const Offset(0, -LyricsControlsWidget._shadowOffsetY),
-            ),
-          ],
+    return Row(
+      children: <Widget>[
+        SizedBox(
+          width: labelWidth,
+          child: Text(label, style: textTheme.labelLarge?.copyWith(color: colorScheme.onSurfaceVariant)),
         ),
-        child: Row(
-          children: [
-            ValueListenableBuilder<bool>(
-              valueListenable: controller.isScrolling,
-              builder: (context, isScrollingValue, child) {
-                return Padding(
-                  padding: const EdgeInsets.only(right: 12),
-                  child: CircleAvatar(
-                    radius: LyricsControlsWidget._avatarRadius,
-                    backgroundColor: isScrollingValue
-                        ? colorScheme.primary
-                        : colorScheme.primaryContainer,
-                    child: IconButton(
-                      onPressed: () {
-                        toggleScroll();
-                        if (isScrollingValue) {
-                          resetHideTimer();
-                        }
-                      },
-                      icon: Icon(
-                        isScrollingValue ? Icons.stop : Icons.play_arrow,
-                        color: isScrollingValue
-                            ? colorScheme.onPrimary
-                            : colorScheme.onPrimaryContainer,
-                        size: LyricsControlsWidget._iconSize,
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-            Expanded(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: AppTheme.spacingTiny),
-                    child: Text(
-                      speedLabel,
-                      style: textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                  ValueListenableBuilder<double>(
-                    valueListenable: controller.speed,
-                    builder: (context, speedValue, child) {
-                      return Row(
-                        children: [
-                          Expanded(
-                            child: SliderTheme(
-                              data: SliderThemeData(
-                                trackHeight: LyricsControlsWidget._trackHeight,
-                                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: LyricsControlsWidget._thumbRadius),
-                                overlayShape: const RoundSliderOverlayShape(overlayRadius: LyricsControlsWidget._overlayRadius),
-                                activeTrackColor: colorScheme.primary,
-                                inactiveTrackColor: colorScheme.surfaceContainerHighest.withValues(alpha: LyricsControlsWidget._inactiveTrackAlpha),
-                                thumbColor: colorScheme.primary,
-                                overlayColor: colorScheme.primary.withValues(alpha: LyricsControlsWidget._overlayAlpha),
-                              ),
-                              child: Slider(
-                                value: speedValue,
-                                min: _minSpeed,
-                                max: _maxSpeed,
-                                divisions: _sliderDivisions,
-                                label: speedValue.toStringAsFixed(1),
-                                onChanged: (value) {
-                                  controller.speed.value = value;
-                                },
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: AppTheme.spacingSmall),
-                          Text(
-                            speedValue.toStringAsFixed(1),
-                            style: textTheme.bodyMedium?.copyWith(
-                              color: colorScheme.primary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ],
+        Expanded(
+          child: Slider(
+            value: value,
+            min: min,
+            max: max,
+            divisions: divisions,
+            label: valueText,
+            onChanged: onChanged,
+            onChangeEnd: onChangeEnd,
+          ),
         ),
-      ),
+        Text(
+          valueText,
+          style: textTheme.labelLarge?.copyWith(
+            color: colorScheme.primary,
+            fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
+          ),
+        ),
+      ],
     );
   }
 }

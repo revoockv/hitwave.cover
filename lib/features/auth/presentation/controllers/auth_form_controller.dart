@@ -1,53 +1,73 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart' show FocusNode, TextEditingController, ValueNotifier;
 
-/// Controller for the authentication form.
+import '../../../../core/domain/entities/result_state.dart';
+
+/// UI state of the authentication form, like a Flutter controller: the fields,
+/// the mode, the password visibility and the progress of submitting.
 ///
-/// Manages all form state (email, password, loading, error, mode) with ValueNotifiers.
-/// Used by [AuthForm] to replace setState with reactive state management.
+/// Knows nothing about use cases: the form widget signs in or up and records
+/// the outcome in [submittingStateController].
 final class AuthFormController {
-  /// Controller for the email text field.
-  late final TextEditingController emailController = TextEditingController();
+  /// Text of the email field.
+  final TextEditingController emailController = TextEditingController();
 
-  /// Controller for the password text field.
-  late final TextEditingController passwordController = TextEditingController();
+  /// Text of the password field.
+  final TextEditingController passwordController = TextEditingController();
 
-  /// Focus node for the email field.
-  late final FocusNode emailFocus = FocusNode();
+  /// Focus of the email field.
+  final FocusNode emailFocusNode = FocusNode();
 
-  /// Focus node for the password field.
-  late final FocusNode passwordFocus = FocusNode();
+  /// Focus of the password field.
+  final FocusNode passwordFocusNode = FocusNode();
 
-  /// Whether the form is in sign-up mode.
-  late final ValueNotifier<bool> isSignUp = ValueNotifier(false);
+  /// Whether the form creates a new account instead of signing in.
+  final ValueNotifier<bool> signUpModeController = ValueNotifier<bool>(false);
 
-  /// Whether the form is currently submitting.
-  late final ValueNotifier<bool> isLoading = ValueNotifier(false);
+  /// Whether the password is hidden.
+  final ValueNotifier<bool> passwordHiddenController = ValueNotifier<bool>(true);
 
-  /// Error message to display, or null if no error.
-  late final ValueNotifier<String?> errorMessage = ValueNotifier(null);
+  /// Progress of the last sign-in or sign-up; its failure is shown above the fields.
+  final ValueNotifier<ResultState<void>> submittingStateController = ValueNotifier<ResultState<void>>(ResultState.idle);
 
-  /// Resets all form state to initial values.
-  ///
-  /// Clears email and password fields, resets loading/error flags,
-  /// and sets the form back to sign-in mode.
-  void reset() {
-    emailController.clear();
-    passwordController.clear();
-    isSignUp.value = false;
-    isLoading.value = false;
-    errorMessage.value = null;
+  bool _isDisposed = false;
+
+  /// Whether [dispose] was called; the owner checks it after every `await`.
+  bool get isDisposed => _isDisposed;
+
+  /// Entered email without surrounding spaces.
+  String get email => emailController.text.trim();
+
+  /// Entered password as typed.
+  String get password => passwordController.text;
+
+  /// Whether the email or the password is empty.
+  bool get hasEmptyFields => email.isEmpty || password.isEmpty;
+
+  /// Switches between sign-in and sign-up and clears the last error.
+  void toggleMode() {
+    signUpModeController.value = !signUpModeController.value;
+    submittingStateController.value = ResultState.idle;
   }
 
-  /// Disposes all controllers and notifiers.
-  ///
-  /// Must be called when the owning widget is disposed to prevent memory leaks.
+  /// Shows or hides the password.
+  void togglePasswordVisibility() {
+    passwordHiddenController.value = !passwordHiddenController.value;
+  }
+
+  /// Moves focus from the email to the password field.
+  void focusPassword() {
+    passwordFocusNode.requestFocus();
+  }
+
+  /// Releases the fields and notifiers. Called by the owner (`createOnce(..., dispose: ...)`).
   void dispose() {
+    _isDisposed = true;
     emailController.dispose();
     passwordController.dispose();
-    emailFocus.dispose();
-    passwordFocus.dispose();
-    isSignUp.dispose();
-    isLoading.dispose();
-    errorMessage.dispose();
+    emailFocusNode.dispose();
+    passwordFocusNode.dispose();
+    signUpModeController.dispose();
+    passwordHiddenController.dispose();
+    submittingStateController.dispose();
   }
 }
