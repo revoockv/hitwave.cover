@@ -6,15 +6,34 @@ import '../../../backup/domain/use_cases/watch_backup_status_use_case.dart';
 import '../../../backup/presentation/di/backup_getters.dart';
 import '../../domain/entities/song.dart';
 import '../../domain/use_cases/watch_list_of_songs_use_case.dart';
-import '../widgets/add_song_view_widget.dart';
-import '../widgets/song_list_widget.dart';
+import '../../../../core/presentation/theme.dart';
+import '../controllers/song_view_controller.dart';
+import '../widgets/songs_widget.dart';
+import 'add_song_page.dart';
 import 'lyrics_page.dart';
+
+/// View mode for the song list display.
+enum SongViewMode {
+  /// Show all songs in a vertical list sorted by name.
+  list,
+
+  /// Show songs grouped by artist in horizontal lists.
+  artist,
+}
 
 /// Main home page with song management and backup controls.
 ///
 /// Displays a list of songs with options to add, export, and import songs.
 /// Uses [WatchingWidget] to reactively watch song list and backup status changes.
-final class HomePage extends WatchingWidget {
+final class HomePage extends WatchingStatefulWidget {
+  /// Creates a new [HomePage].
+  const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
   /// Semi-transparent black color for backup status overlay.
   static const Color _overlayColor = Colors.black54;
 
@@ -26,6 +45,9 @@ final class HomePage extends WatchingWidget {
 
   /// Tooltip text for the export button.
   static const String _exportTooltip = 'Експортувати';
+
+  /// Tooltip text for the view mode toggle button.
+  static const String _viewModeTooltip = 'Змінити вигляд';
 
   /// Status string for idle backup state.
   static const String _backupStatusIdle = 'idle';
@@ -39,8 +61,26 @@ final class HomePage extends WatchingWidget {
   /// Success message shown after import completes.
   static const String _importCompletedMessage = 'Імпорт завершено';
 
-  /// Creates a new [HomePage].
-  const HomePage({super.key});
+  /// Padding for backup status overlay.
+  static const double _contentPadding = 16;
+
+  /// Alpha value for song count text opacity.
+  static const double _songCountAlpha = 0.6;
+
+  /// Manager for song view mode and selected artist state.
+  late final SongViewController _songViewController;
+
+  @override
+  void initState() {
+    super.initState();
+    _songViewController = SongViewController();
+  }
+
+  @override
+  void dispose() {
+    _songViewController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,41 +91,92 @@ final class HomePage extends WatchingWidget {
       (WatchBackupStatusUseCase watchBackupStatus) => watchBackupStatus(),
     );
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(_homePageTitle),
-        actions: <Widget>[
-          IconButton(
-            icon: const Icon(Icons.upload_file),
-            onPressed: () => _handleImport(context),
-            tooltip: _importTooltip,
-          ),
-          IconButton(
-            icon: const Icon(Icons.download),
-            onPressed: () => _handleExport(context),
-            tooltip: _exportTooltip,
-          ),
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => _showAddSongDialog(context),
-          ),
-        ],
-      ),
-      body: SongListViewWidget(
-        songs: songs,
-        onSongTap: (Song song) => _navigateToLyrics(context, song),
-      ),
-      bottomSheet: status != _backupStatusIdle && status != _backupStatusSuccess
-          ? Container(
-              padding: const EdgeInsets.all(16),
-              color: HomePage._overlayColor,
-              child: Text(
-                status,
-                style: const TextStyle(color: Colors.white),
+    return ValueListenableBuilder<SongViewMode>(
+      valueListenable: _songViewController.viewMode,
+      builder: (BuildContext buildContext, SongViewMode viewMode, Widget? child) {
+        return ValueListenableBuilder<String>(
+          valueListenable: _songViewController.selectedArtist,
+          builder: (BuildContext buildContext, String selectedArtist, Widget? child) {
+            return Scaffold(
+              appBar: AppBar(
+                title: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Text(
+                      viewMode == SongViewMode.artist && selectedArtist.isNotEmpty
+                          ? selectedArtist
+                          : _homePageTitle,
+                    ),
+                    Padding(
+                      padding: EdgeInsets.only(left: kStandardPadding),
+                      child: Text(
+                        '(${_getDisplayedSongCount(songs, viewMode, selectedArtist)})',
+                        style: TextStyle(
+                          color: Theme.of(context).textTheme.bodyLarge?.color?.withValues(alpha: _songCountAlpha),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                actions: <Widget>[
+                  IconButton(
+                    icon: Icon(
+                      viewMode == SongViewMode.artist
+                          ? Icons.view_list
+                          : Icons.view_agenda,
+                    ),
+                    onPressed: _handleToggleViewMode,
+                    tooltip: _viewModeTooltip,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.upload_file),
+                    onPressed: () => _handleImport(context),
+                    tooltip: _importTooltip,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.download),
+                    onPressed: () => _handleExport(context),
+                    tooltip: _exportTooltip,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.add),
+                    onPressed: () => _showAddSongPage(context),
+                  ),
+                ],
               ),
-            )
-          : null,
+              body: SongsWidget(
+                songs: songs,
+                viewMode: viewMode,
+                selectedArtist: selectedArtist,
+                onArtistSelected: _songViewController.selectArtist,
+                onSongTap: (Song song) => _navigateToLyrics(context, song),
+              ),
+              bottomSheet: status != _backupStatusIdle && status != _backupStatusSuccess
+                  ? Container(
+                      padding: EdgeInsets.all(_contentPadding),
+                      color: _overlayColor,
+                      child: Text(
+                        status,
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                    )
+                  : null,
+            );
+          },
+        );
+      },
     );
+  }
+
+  void _handleToggleViewMode() {
+    _songViewController.toggleViewMode();
+  }
+
+  int _getDisplayedSongCount(List<Song> songs, SongViewMode viewMode, String selectedArtist) {
+    if (viewMode == SongViewMode.artist && selectedArtist.isNotEmpty) {
+      return songs.where((Song song) => song.author == selectedArtist).length;
+    }
+    return songs.length;
   }
 
   Future<void> _handleExport(BuildContext context) async {
@@ -94,7 +185,7 @@ final class HomePage extends WatchingWidget {
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text(_exportCompletedMessage)),
+          SnackBar(content: Text(_exportCompletedMessage)),
         );
       }
     } catch (e) {
@@ -112,7 +203,7 @@ final class HomePage extends WatchingWidget {
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text(_importCompletedMessage)),
+          SnackBar(content: Text(_importCompletedMessage)),
         );
       }
     } catch (e) {
@@ -132,10 +223,11 @@ final class HomePage extends WatchingWidget {
     );
   }
 
-  void _showAddSongDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext dialogContext) => AddSongDialogWidget(),
+  void _showAddSongPage(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (BuildContext context) => const AddSongPage(),
+      ),
     );
   }
 }

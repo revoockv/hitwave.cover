@@ -92,7 +92,8 @@ final class BackupRepositoryImpl implements BackupRepository {
 
         _logger.i('ExportSongs: success — exported ${songs.length} songs to "$filePath"');
       } else {
-        final jsonString = const JsonEncoder.withIndent(_jsonIndent).convert(model.toJson());
+        final Map<String, dynamic> jsonMap = jsonDecode(model.toJson()) as Map<String, dynamic>;
+        final jsonString = const JsonEncoder.withIndent(_jsonIndent).convert(jsonMap);
         await _dataSource.triggerExportDownload(jsonString);
         _logger.i('ExportSongs: success — exported ${songs.length} songs (web download)');
       }

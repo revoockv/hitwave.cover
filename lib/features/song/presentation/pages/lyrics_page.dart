@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:hitwave.cover/features/song/domain/entities/song.dart';
 import 'package:hitwave.cover/features/song/presentation/controllers/lyrics_page_controller.dart';
 import 'package:hitwave.cover/features/song/presentation/widgets/lyrics_controls_widget.dart';
+import '../../../../core/presentation/theme.dart';
 
 /// Lyrics display page with auto-scroll functionality.
 ///
@@ -31,36 +32,6 @@ class _LyricsPageState extends State<LyricsPage> {
 
   /// Font family for lyrics text.
   static const String _robotoFontFamily = 'Roboto';
-
-  /// Semi-transparent black overlay color.
-  static const Color _overlayColor = Color(0xB3000000);
-
-  /// Solid white color.
-  static const Color _whiteColor = Colors.white;
-
-  /// Solid black color.
-  static const Color _blackColor = Colors.black;
-
-  /// Horizontal padding for controls bar.
-  static const double _controlsHorizontalPadding = 16;
-
-  /// Vertical padding for controls bar.
-  static const double _controlsVerticalPadding = 8;
-
-  /// Border radius for controls bar.
-  static const double _controlsRadius = 16;
-
-  /// Spacing between controls bar children.
-  static const double _controlsSpacing = 8;
-
-  /// Font size for labels and values.
-  static const double _labelFontSize = 16;
-
-  /// Slider track height.
-  static const double _trackHeight = 4;
-
-  /// Spacing between play button and slider value.
-  static const double _playButtonSpacing = 16;
 
   /// Font size for lyrics text.
   static const double _lyricsFontSize = 18;
@@ -125,25 +96,6 @@ class _LyricsPageState extends State<LyricsPage> {
       ),
       body: Column(
         children: [
-          LyricsControlsWidget(
-            controller: _controller,
-            speedLabel: _speedLabel,
-            stopLabel: _stopLabel,
-            startLabel: _startLabel,
-            overlayColor: _overlayColor,
-            whiteColor: _whiteColor,
-            blackColor: _blackColor,
-            controlsHorizontalPadding: _controlsHorizontalPadding,
-            controlsVerticalPadding: _controlsVerticalPadding,
-            controlsRadius: _controlsRadius,
-            controlsSpacing: _controlsSpacing,
-            labelFontSize: _labelFontSize,
-            trackHeight: _trackHeight,
-            playButtonSpacing: _playButtonSpacing,
-            toggleScroll: _toggleScroll,
-            hideKeyboard: _hideKeyboard,
-            resetHideTimer: _resetHideTimer,
-          ),
           Expanded(
             child: GestureDetector(
               onTap: () {
@@ -161,7 +113,7 @@ class _LyricsPageState extends State<LyricsPage> {
                       ? SingleChildScrollView(
                           controller: _controller.scrollController,
                           child: Padding(
-                            padding: const EdgeInsets.all(24),
+                            padding: EdgeInsets.all(kExtraLargePadding),
                             child: Align(
                               alignment: Alignment.topLeft,
                               child: Text(
@@ -183,13 +135,21 @@ class _LyricsPageState extends State<LyricsPage> {
                           minLines: 1,
                           decoration: const InputDecoration(
                             border: InputBorder.none,
-                            contentPadding: EdgeInsets.all(24),
+                            contentPadding: EdgeInsets.all(kExtraLargePadding),
                           ),
                           style: const TextStyle(fontSize: _lyricsFontSize, fontFamily: _robotoFontFamily),
                         );
                 },
               ),
             ),
+          ),
+          LyricsControlsWidget(
+            controller: _controller,
+            speedLabel: _speedLabel,
+            stopLabel: _stopLabel,
+            startLabel: _startLabel,
+            toggleScroll: _toggleScroll,
+            resetHideTimer: _resetHideTimer,
           ),
         ],
       ),

@@ -61,10 +61,19 @@ final class BackupDataModel {
   }
 
   /// Creates a [BackupDataModel] from a JSON string.
+  ///
+  /// Handles both raw JSON strings and double-encoded JSON strings
+  /// (where the file contains a JSON string wrapping another JSON string).
   factory BackupDataModel.fromJson(String json) {
-    final Map<String, dynamic> data = Map<String, dynamic>.from(
-      jsonDecode(json) as Map,
-    );
+    Map<String, dynamic> data;
+
+    try {
+      data = Map<String, dynamic>.from(jsonDecode(json) as Map);
+    } catch (_) {
+      // Try to unwrap double-encoded JSON (string containing a JSON string)
+      final String unwrapped = jsonDecode(json) as String;
+      data = Map<String, dynamic>.from(jsonDecode(unwrapped) as Map);
+    }
 
     return BackupDataModel(
       exportedAt: DateTime.parse(data[_exportedAtField] as String),

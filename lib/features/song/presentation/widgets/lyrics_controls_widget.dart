@@ -1,11 +1,55 @@
 import 'package:flutter/material.dart';
 import 'package:hitwave.cover/features/song/presentation/controllers/lyrics_page_controller.dart';
+import '../../../../core/presentation/theme.dart';
 
 /// Controls bar widget for the lyrics page.
 ///
-/// Displays the speed slider and play/stop button.
+/// Displays the speed slider and play/stop button with a frosted-glass
+/// aesthetic. Auto-hides after inactivity when scrolling is active.
 /// Extracted from [LyricsPage] to satisfy the [no_build_return] rule.
 class LyricsControlsWidget extends StatelessWidget {
+  /// Panel corner radius.
+  static const double _panelRadius = 20;
+
+  /// Panel surface alpha.
+  static const double _panelSurfaceAlpha = 0.85;
+
+  /// Shadow blur radius.
+  static const double _shadowBlurRadius = 16;
+
+  /// Shadow alpha.
+  static const double _shadowAlpha = 0.3;
+
+  /// Shadow offset Y.
+  static const double _shadowOffsetY = 2;
+
+  /// Circle avatar radius.
+  static const double _avatarRadius = 20;
+
+  /// Icon size inside play/stop button.
+  static const double _iconSize = 20;
+
+  /// Slider track height.
+  static const double _trackHeight = 4;
+
+  /// Slider thumb radius.
+  static const double _thumbRadius = 8;
+
+  /// Slider overlay radius.
+  static const double _overlayRadius = 12;
+
+  /// Inactive track alpha.
+  static const double _inactiveTrackAlpha = 0.5;
+
+  /// Slider overlay alpha.
+  static const double _overlayAlpha = 0.2;
+
+  /// Spacing between slider and value text.
+  static const double _sliderValueSpacing = 8;
+
+  /// Shadow color (black).
+  static const Color _shadowColor = Colors.black;
+
   /// The lyrics page controller.
   final LyricsPageController controller;
 
@@ -18,41 +62,8 @@ class LyricsControlsWidget extends StatelessWidget {
   /// Start button label text.
   final String startLabel;
 
-  /// Semi-transparent black overlay color.
-  final Color overlayColor;
-
-  /// Solid white color.
-  final Color whiteColor;
-
-  /// Solid black color.
-  final Color blackColor;
-
-  /// Horizontal padding for controls bar.
-  final double controlsHorizontalPadding;
-
-  /// Vertical padding for controls bar.
-  final double controlsVerticalPadding;
-
-  /// Border radius for controls bar.
-  final double controlsRadius;
-
-  /// Spacing between controls bar children.
-  final double controlsSpacing;
-
-  /// Font size for labels and values.
-  final double labelFontSize;
-
-  /// Slider track height.
-  final double trackHeight;
-
-  /// Spacing between play button and slider value.
-  final double playButtonSpacing;
-
   /// Toggles auto-scrolling.
   final void Function() toggleScroll;
-
-  /// Hides the keyboard.
-  final void Function() hideKeyboard;
 
   /// Resets the auto-hide timer.
   final void Function() resetHideTimer;
@@ -64,99 +75,120 @@ class LyricsControlsWidget extends StatelessWidget {
     required this.speedLabel,
     required this.stopLabel,
     required this.startLabel,
-    required this.overlayColor,
-    required this.whiteColor,
-    required this.blackColor,
-    required this.controlsHorizontalPadding,
-    required this.controlsVerticalPadding,
-    required this.controlsRadius,
-    required this.controlsSpacing,
-    required this.labelFontSize,
-    required this.trackHeight,
-    required this.playButtonSpacing,
     required this.toggleScroll,
-    required this.hideKeyboard,
     required this.resetHideTimer,
   });
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    final TextTheme textTheme = Theme.of(context).textTheme;
+
     return AnimatedOpacity(
       opacity: controller.controlsVisible.value ? 1.0 : 0.0,
       duration: const Duration(milliseconds: 300),
       child: Container(
-        padding: EdgeInsets.symmetric(
-          horizontal: controlsHorizontalPadding,
-          vertical: controlsVerticalPadding,
-        ),
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: overlayColor,
-          borderRadius: BorderRadius.vertical(
-            bottom: Radius.circular(controlsRadius),
-          ),
+          color: colorScheme.surface.withValues(alpha: LyricsControlsWidget._panelSurfaceAlpha),
+          borderRadius: BorderRadius.circular(LyricsControlsWidget._panelRadius),
+          boxShadow: [
+            BoxShadow(
+              color: LyricsControlsWidget._shadowColor.withValues(alpha: LyricsControlsWidget._shadowAlpha),
+              blurRadius: LyricsControlsWidget._shadowBlurRadius,
+              offset: const Offset(0, -LyricsControlsWidget._shadowOffsetY),
+            ),
+          ],
         ),
         child: Row(
           children: [
-            SizedBox(width: controlsSpacing),
-            Text(
-              speedLabel,
-              style: TextStyle(color: whiteColor, fontSize: labelFontSize),
-            ),
-            SizedBox(width: controlsSpacing),
-            Expanded(
-              child: ValueListenableBuilder<double>(
-                valueListenable: controller.speed,
-                builder: (context, speedValue, child) {
-                  return SliderTheme(
-                    data: SliderThemeData(
-                      thumbColor: whiteColor,
-                      trackHeight: trackHeight,
-                    ),
-                    child: Slider(
-                      value: speedValue,
-                      min: _minSpeed,
-                      max: _maxSpeed,
-                      divisions: _sliderDivisions,
-                      label: speedValue.toStringAsFixed(1),
-                      onChanged: (value) {
-                        controller.speed.value = value;
-                        hideKeyboard();
-                        resetHideTimer();
-                      },
-                    ),
-                  );
-                },
-              ),
-            ),
-            SizedBox(width: controlsSpacing),
-            ValueListenableBuilder<double>(
-              valueListenable: controller.speed,
-              builder: (context, speedValue, child) {
-                return Text(
-                  speedValue.toStringAsFixed(1),
-                  style: TextStyle(color: whiteColor, fontSize: labelFontSize),
-                );
-              },
-            ),
-            SizedBox(width: playButtonSpacing),
             ValueListenableBuilder<bool>(
               valueListenable: controller.isScrolling,
               builder: (context, isScrollingValue, child) {
-                return ElevatedButton.icon(
-                  onPressed: toggleScroll,
-                  icon: Icon(
-                    isScrollingValue ? Icons.stop : Icons.play_arrow,
-                    color: blackColor,
-                  ),
-                  label: Text(isScrollingValue ? stopLabel : startLabel),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: whiteColor,
-                    foregroundColor: blackColor,
+                return Padding(
+                  padding: const EdgeInsets.only(right: 12),
+                  child: CircleAvatar(
+                    radius: LyricsControlsWidget._avatarRadius,
+                    backgroundColor: isScrollingValue
+                        ? colorScheme.primary
+                        : colorScheme.primaryContainer,
+                    child: IconButton(
+                      onPressed: () {
+                        toggleScroll();
+                        if (isScrollingValue) {
+                          resetHideTimer();
+                        }
+                      },
+                      icon: Icon(
+                        isScrollingValue ? Icons.stop : Icons.play_arrow,
+                        color: isScrollingValue
+                            ? colorScheme.onPrimary
+                            : colorScheme.onPrimaryContainer,
+                        size: LyricsControlsWidget._iconSize,
+                      ),
+                    ),
                   ),
                 );
               },
             ),
-            SizedBox(width: playButtonSpacing),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: EdgeInsets.only(bottom: kSmallPadding),
+                    child: Text(
+                      speedLabel,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                  ValueListenableBuilder<double>(
+                    valueListenable: controller.speed,
+                    builder: (context, speedValue, child) {
+                      return Row(
+                        children: [
+                          Expanded(
+                            child: SliderTheme(
+                              data: SliderThemeData(
+                                trackHeight: LyricsControlsWidget._trackHeight,
+                                thumbShape: RoundSliderThumbShape(enabledThumbRadius: LyricsControlsWidget._thumbRadius),
+                                overlayShape: RoundSliderOverlayShape(overlayRadius: LyricsControlsWidget._overlayRadius),
+                                activeTrackColor: colorScheme.primary,
+                                inactiveTrackColor: colorScheme.surfaceContainerHighest.withValues(alpha: LyricsControlsWidget._inactiveTrackAlpha),
+                                thumbColor: colorScheme.primary,
+                                overlayColor: colorScheme.primary.withValues(alpha: LyricsControlsWidget._overlayAlpha),
+                              ),
+                              child: Slider(
+                                value: speedValue,
+                                min: _minSpeed,
+                                max: _maxSpeed,
+                                divisions: _sliderDivisions,
+                                label: speedValue.toStringAsFixed(1),
+                                onChanged: (value) {
+                                  controller.speed.value = value;
+                                },
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: LyricsControlsWidget._sliderValueSpacing),
+                          Text(
+                            speedValue.toStringAsFixed(1),
+                            style: textTheme.bodyMedium?.copyWith(
+                              color: colorScheme.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hitwave.cover/features/song/domain/entities/song.dart';
-
-import 'delete_song_dialog_widget.dart';
-import 'edit_song_dialog_widget.dart';
+import 'package:hitwave.cover/features/song/presentation/pages/delete_song_page.dart';
+import 'package:hitwave.cover/features/song/presentation/pages/edit_song_page.dart';
 
 /// Displays a single song with its name, author, and optional album.
 ///
@@ -31,11 +30,11 @@ final class SongTileWidget extends StatelessWidget {
         children: <Widget>[
            IconButton(
             icon: const Icon(Icons.edit, size: SongTileWidget.iconSize),
-            onPressed: () => _showEditDialog(context),
+            onPressed: () => _showEditPage(context),
           ),
           IconButton(
             icon: const Icon(Icons.delete, size: SongTileWidget.iconSize),
-            onPressed: () => _showDeleteConfirmation(context),
+            onPressed: () => _showDeletePage(context),
           ),
         ],
       ),
@@ -47,17 +46,19 @@ final class SongTileWidget extends StatelessWidget {
     onTap(song);
   }
 
-  void _showEditDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext dialogContext) => EditSongDialogWidget(song: song),
+  void _showEditPage(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (BuildContext context) => EditSongPage(song: song),
+      ),
     );
   }
 
-  void _showDeleteConfirmation(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext dialogContext) => DeleteSongDialogWidget(song: song),
+  void _showDeletePage(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (BuildContext context) => DeleteSongPage(song: song),
+      ),
     );
   }
 }
