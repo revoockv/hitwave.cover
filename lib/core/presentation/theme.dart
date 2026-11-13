@@ -226,7 +226,8 @@ final class SurfaceTheme extends ThemeExtension<SurfaceTheme> {
   static const Color _glassLightField = Color(0x99FFFFFF);
   static const Color _glassLightSolid = Color(0xFFF6F7FA);
   static const Color _glassLightBlob = Color(0xFF9AA3C9);
-  static const Color _glassLightShadow = Color(0x121F2340);
+  static const Color _glassLightBlobSoft = Color(0xFFC7CEE8);
+  static const Color _glassLightShadow = Color(0x1F2A3050);
 
   // Glass, dark.
   static const Color _glassDarkTop = Color(0xFF151821);
@@ -236,6 +237,7 @@ final class SurfaceTheme extends ThemeExtension<SurfaceTheme> {
   static const Color _glassDarkField = Color(0x1AFFFFFF);
   static const Color _glassDarkSolid = Color(0xFF1C1F28);
   static const Color _glassDarkBlob = Color(0xFF4C5BA8);
+  static const Color _glassDarkBlobSoft = Color(0xFF26305C);
   static const Color _glassDarkShadow = Color(0x66000000);
 
   // Neumorphic, light.
@@ -251,6 +253,7 @@ final class SurfaceTheme extends ThemeExtension<SurfaceTheme> {
   static const Color _neuDarkField = Color(0xFF24272B);
 
   static const double _accentBlobAlpha = 0.35;
+  static const double _accentBlobAlphaDark = 0.22;
   static const double _glassBlur = 24;
 
   /// The style.
@@ -259,7 +262,8 @@ final class SurfaceTheme extends ThemeExtension<SurfaceTheme> {
   /// Top and bottom of the background gradient (one color twice for a flat background).
   final List<Color> background;
 
-  /// Colors of the blurred spots behind glass; empty for neumorphic.
+  /// Colors of the blurred spots behind glass — the accent glow, the main and the soft spot;
+  /// empty for neumorphic.
   final List<Color> blobs;
 
   /// Fill of a panel: translucent for glass, the background color for neumorphic.
@@ -307,8 +311,9 @@ final class SurfaceTheme extends ThemeExtension<SurfaceTheme> {
             ? const <Color>[_glassDarkTop, _glassDarkBottom]
             : const <Color>[_glassLightTop, _glassLightBottom],
         blobs: <Color>[
-          accent.withValues(alpha: _accentBlobAlpha),
+          accent.withValues(alpha: isDark ? _accentBlobAlphaDark : _accentBlobAlpha),
           if (isDark) _glassDarkBlob else _glassLightBlob,
+          if (isDark) _glassDarkBlobSoft else _glassLightBlobSoft,
         ],
         panel: isDark ? _glassDarkPanel : _glassLightPanel,
         field: isDark ? _glassDarkField : _glassLightField,

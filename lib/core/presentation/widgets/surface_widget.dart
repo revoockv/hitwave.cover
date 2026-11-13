@@ -9,10 +9,11 @@ import '../theme.dart';
 ///
 /// Use it where a [Card] would go; [onTap] makes the whole panel tappable.
 final class SurfaceWidget extends StatelessWidget {
-  static const double _shadowOffset = 6;
-  static const double _shadowBlur = 16;
-  static const double _glassShadowBlur = 32;
-  static const double _glassShadowOffset = 10;
+  static const double _shadowOffset = 4;
+  static const double _shadowBlur = 10;
+  static const double _glassShadowBlur = 14;
+  static const double _glassShadowOffset = 5;
+  static const double _glassShadowSpread = -2;
   static const double _borderWidth = 1;
 
   /// The content.
@@ -58,7 +59,12 @@ final class SurfaceWidget extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: borderRadius,
           boxShadow: <BoxShadow>[
-            BoxShadow(color: surfaces.shade, blurRadius: _glassShadowBlur, offset: const Offset(0, _glassShadowOffset)),
+            BoxShadow(
+              color: surfaces.shade,
+              blurRadius: _glassShadowBlur,
+              spreadRadius: _glassShadowSpread,
+              offset: const Offset(0, _glassShadowOffset),
+            ),
           ],
         ),
         child: ClipRRect(
