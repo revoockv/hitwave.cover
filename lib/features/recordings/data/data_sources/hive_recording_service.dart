@@ -6,9 +6,10 @@ import 'package:path_provider/path_provider.dart';
 
 import '../../../../core/data/data_sources/local_storage_service.dart';
 import '../models/recording_model.dart';
+import 'mp3_encoder_service.dart';
 
-/// The recordings library on this device: one Hive map per recording plus its WAV files in
-/// `<documents>/recordings/`.
+/// The recordings library on this device: one Hive map per recording plus its WAV files (and the
+/// MP3s made from them for sharing) in `<documents>/recordings/`.
 final class HiveRecordingService {
   static const String _boxName = 'recordings';
   static const String _folderName = 'recordings';
@@ -62,7 +63,12 @@ final class HiveRecordingService {
   /// Deletes the recording [id] and its files.
   Future<void> delete(String id) async {
     await _recordings.delete(id);
-    for (final String path in <String>[rawPathOf(id), enhancedPathOf(id)]) {
+    for (final String path in <String>[
+      rawPathOf(id),
+      enhancedPathOf(id),
+      Mp3EncoderService.mp3PathOf(rawPathOf(id)),
+      Mp3EncoderService.mp3PathOf(enhancedPathOf(id)),
+    ]) {
       final File file = File(path);
       if (await file.exists()) await file.delete();
     }

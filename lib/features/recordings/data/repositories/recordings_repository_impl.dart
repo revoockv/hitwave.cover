@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
@@ -18,6 +19,7 @@ import '../../domain/entities/recording.dart';
 import '../../domain/entities/recording_status.dart';
 import '../../domain/repositories/recordings_repository.dart';
 import '../data_sources/hive_recording_service.dart';
+import '../data_sources/mp3_encoder_service.dart';
 import '../data_sources/recorder_data_source.dart';
 import '../models/recording_model.dart';
 
@@ -46,6 +48,7 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
   static const String _startLog = 'StartRecording: ';
   static const String _stopLog = 'StopRecording: ';
   static const String _enhanceLog = 'EnhanceRecording: ';
+  static const String _mp3Log = 'MakeMp3: ';
   static const String _deleteLog = 'DeleteRecording: ';
   static const String _importLog = 'ImportRecordings: ';
   static const String _songIdLog = 'SongIdChange: ';
@@ -61,6 +64,7 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
   final HiveRecordingService _store;
   final RecorderDataSource _recorder;
   final VocalEnhanceRepository _engine;
+  final Mp3EncoderService _mp3;
   final SongRepository _songs;
   final Logger _logger;
 
@@ -82,6 +86,7 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
     required this._store,
     required this._recorder,
     required this._engine,
+    required this._mp3,
     required this._songs,
     required this._logger,
   });
@@ -96,6 +101,9 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
     await Future.wait(_models.values.where(_wasInterrupted).map(_store.put));
     _publish();
     _songIdChanges = _songs.watchSongIdChanges().listen(_onSongIdChanged);
+    for (final RecordingModel model in _models.values) {
+      _enqueueMp3(model.id);
+    }
     return this;
   }
 
@@ -238,7 +246,11 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
           enhanceError: null,
         );
         await _save(RecordingModel.fromEntity(recording, trimSilence: false));
-        if (enhancedFile == null) _enqueueEnhancement(id);
+        if (enhancedFile == null) {
+          _enqueueEnhancement(id);
+        } else {
+          _enqueueMp3(id);
+        }
       }
       _logger.i('$_importLog$_successLog${recordings.length}');
       return Result.ok;
@@ -269,9 +281,38 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
     _enhanceQueue = _enhanceQueue.then((_) => _enhance(id));
   }
 
+  /// Makes the MP3s of [id] for sharing, after the enhancements waiting before it.
+  void _enqueueMp3(String id, {bool replaceEnhanced = false}) {
+    _enhanceQueue = _enhanceQueue.then((_) => _makeMp3s(id, replaceEnhanced: replaceEnhanced));
+  }
+
+  /// Makes the MP3 of the enhanced take (again, when [replaceEnhanced]) and of the raw one, unless
+  /// they exist. A failure is only logged: sharing makes a missing MP3 itself.
+  Future<void> _makeMp3s(String id, {required bool replaceEnhanced}) async {
+    final RecordingModel? model = _models[id];
+    if (model == null) return;
+    final List<String> wavs = <String>[
+      if (model.status == RecordingStatus.enhanced && model.enhancedFile != null) _store.enhancedPathOf(id),
+      _store.rawPathOf(id),
+    ];
+    for (final String wav in wavs) {
+      final File mp3 = File(Mp3EncoderService.mp3PathOf(wav));
+      try {
+        final bool replace = replaceEnhanced && wav == _store.enhancedPathOf(id);
+        if ((!replace && await mp3.exists()) || !await File(wav).exists()) continue;
+        await _mp3.encode(wavPath: wav, mp3Path: mp3.path);
+        _logger.i('$_mp3Log$_successLog${mp3.path}');
+      } on Exception catch (e) {
+        _logger.w('$_mp3Log$_failureLog$e');
+      }
+    }
+  }
+
   Future<void> _enhance(String id) async {
     final RecordingModel? model = _models[id];
     if (model == null) return;
+    final File oldMp3 = File(Mp3EncoderService.mp3PathOf(_store.enhancedPathOf(id)));
+    if (await oldMp3.exists()) await oldMp3.delete();
     final Result<EnhanceReport> result = await _engine.enhanceRecording(
       inputPath: _store.rawPathOf(id),
       outputPath: _store.enhancedPathOf(id),
@@ -299,6 +340,7 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
     try {
       await _save(updated);
       _logger.i('$_enhanceLog${updated.status.name}$_dashLog$id');
+      if (updated.status == RecordingStatus.enhanced) _enqueueMp3(id, replaceEnhanced: true);
     } on Exception catch (e) {
       _logger.e('$_enhanceLog$_failureLog$e');
     }

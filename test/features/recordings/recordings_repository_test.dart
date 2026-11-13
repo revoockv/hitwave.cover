@@ -7,6 +7,7 @@ import 'package:hitwave.cover/core/data/data_sources/local_storage_service.dart'
 import 'package:hitwave.cover/core/domain/entities/result.dart';
 import 'package:hitwave.cover/features/backup/data/data_sources/backup_archive_data_source.dart';
 import 'package:hitwave.cover/features/recordings/data/data_sources/hive_recording_service.dart';
+import 'package:hitwave.cover/features/recordings/data/data_sources/mp3_encoder_service.dart';
 import 'package:hitwave.cover/features/recordings/data/data_sources/recorder_data_source.dart';
 import 'package:hitwave.cover/features/recordings/data/models/recording_model.dart';
 import 'package:hitwave.cover/features/recordings/data/repositories/recordings_repository_impl.dart';
@@ -110,6 +111,17 @@ final class FakeEngine implements VocalEnhanceRepository {
   }
 }
 
+/// An MP3 encoder that writes a marker file.
+final class FakeMp3 extends Mp3EncoderService {
+  final List<String> made = <String>[];
+
+  @override
+  Future<void> encode({required String wavPath, required String mp3Path}) async {
+    made.add(mp3Path);
+    await File(mp3Path).writeAsBytes(<int>[0xFF, 0xFB]);
+  }
+}
+
 /// Only the song id changes of the song repository.
 final class FakeSongs implements SongRepository {
   final StreamController<SongIdChange> changes = StreamController<SongIdChange>.broadcast();
@@ -121,6 +133,14 @@ final class FakeSongs implements SongRepository {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
+/// Waits until [done] holds (the background queue got there), at most 5 s.
+Future<void> waitFor(bool Function() done) async {
+  final Stopwatch waited = Stopwatch()..start();
+  while (!done() && waited.elapsed < const Duration(seconds: 5)) {
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+  }
+}
+
 /// Lets Hive writes and the background enhancement finish.
 Future<void> settle() => Future<void>.delayed(const Duration(milliseconds: 50));
 
@@ -129,6 +149,7 @@ void main() {
   late HiveRecordingService store;
   late FakeRecorder recorder;
   late FakeEngine engine;
+  late FakeMp3 mp3;
   late FakeSongs songs;
   late RecordingsRepositoryImpl repository;
 
@@ -136,6 +157,7 @@ void main() {
     store: store,
     recorder: recorder,
     engine: engine,
+    mp3: mp3,
     songs: songs,
     logger: Logger(level: Level.off),
   ).init();
@@ -146,11 +168,14 @@ void main() {
     store = await HiveRecordingService(storage: LocalStorageService(), documentsFolder: () async => directory).init();
     recorder = FakeRecorder();
     engine = FakeEngine();
+    mp3 = FakeMp3();
     songs = FakeSongs();
     repository = await open();
   });
 
   tearDown(() async {
+    await settle(); // the MP3s made in the background
+    await settle();
     await Hive.close();
     await directory.delete(recursive: true);
   });
@@ -181,6 +206,16 @@ void main() {
     expect(File(recording.rawPath).existsSync(), isTrue);
     expect(File(recording.enhancedPath!).existsSync(), isTrue);
     expect(engine.trims, <bool>[true]);
+    // The MP3s for sharing are made right away, beside the WAVs.
+    await waitFor(() => mp3.made.length == 2);
+    expect(File(Mp3EncoderService.mp3PathOf(recording.enhancedPath!)).existsSync(), isTrue);
+    expect(File(Mp3EncoderService.mp3PathOf(recording.rawPath)).existsSync(), isTrue);
+    expect(mp3.made.length, 2);
+
+    // A restart does not make them again.
+    repository = await open();
+    await settle();
+    expect(mp3.made.length, 2);
   });
 
   test('a take is recorded from the chosen microphone; one without any sound is marked', () async {

@@ -8,11 +8,16 @@ import '../models/wav_pcm_model.dart';
 
 /// Turns a WAV file into an MP3 file (192 kbit/s) with a pure-Dart encoder, in a background
 /// isolate so the interface keeps moving. Works the same on every platform.
-final class Mp3EncoderService {
+class Mp3EncoderService {
   static const int _bitrate = 192;
   static const String _rateError = 'MP3 не підтримує частоту ';
   static const String _hertz = ' Гц';
   static const String _partSuffix = '.part';
+  static const String _wavSuffix = '.wav';
+  static const String _mp3Suffix = '.mp3';
+
+  /// Where the MP3 of the WAV file at [wavPath] is kept: beside it, `.mp3` for `.wav`.
+  static String mp3PathOf(String wavPath) => '${wavPath.substring(0, wavPath.length - _wavSuffix.length)}$_mp3Suffix';
 
   /// Writes the MP3 of the WAV file at [wavPath] to [mp3Path].
   Future<void> encode({required String wavPath, required String mp3Path}) =>

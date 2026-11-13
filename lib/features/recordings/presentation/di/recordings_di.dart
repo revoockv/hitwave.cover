@@ -60,6 +60,7 @@ void registerAndInitRecordings() {
       store: di<HiveRecordingService>(),
       recorder: di<RecorderDataSource>(),
       engine: di<VocalEnhanceRepository>(),
+      mp3: di<Mp3EncoderService>(),
       songs: di<SongRepository>(),
       logger: di<Logger>(),
     ).init(),
