@@ -1,11 +1,12 @@
 import '../../../../core/domain/entities/result.dart';
 
 import '../repositories/song_repository.dart';
+import '../entities/song_failure.dart';
 
 /// Use case for adding a new song.
 ///
 /// Wraps the repository [addSong] method as a single-responsibility use case.
-/// Returns [Result<void>] indicating success or failure.
+/// Returns [Result<void, SongFailure>] indicating success or failure.
 final class AddSongUseCase {
   final SongRepository _repository;
 
@@ -16,7 +17,7 @@ final class AddSongUseCase {
   ///
   /// Returns [SuccessResult] when the song is created, or [FailureResult]
   /// with an error message when the operation fails.
-  Future<Result<void>> call({
+  Future<Result<void, SongFailure>> call({
     required String author,
     required String name,
     String? album,

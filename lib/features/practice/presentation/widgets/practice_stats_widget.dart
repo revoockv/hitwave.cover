@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:watch_it/watch_it.dart';
 
+import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../../core/presentation/theme.dart';
 import '../../../recordings/domain/entities/recording.dart';
 import '../../../recordings/presentation/di/recordings_getters.dart';
@@ -20,10 +21,6 @@ import 'song_practice_list_widget.dart';
 /// Practice statistics: totals and streaks, a calendar with the days of practice, the songs of
 /// the chosen day and the most practised songs.
 final class PracticeStatsWidget extends WatchingWidget {
-  static const String _topSongsTitle = 'Найчастіше';
-  static const String _noPractice = 'Цього дня тренувань не було.';
-  static const String _noSongs = 'Ще немає тренувань. Відкрийте пісню й натисніть «Старт».';
-  static const String _unknownSong = 'Пісню видалено';
   static const String _titleSeparator = ' — ';
   static const String _dayTitleSeparator = ': ';
   static const String _dateSeparator = '.';
@@ -34,6 +31,7 @@ final class PracticeStatsWidget extends WatchingWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Translations t = context.t;
     final PracticePageController practicePageController = createOnce(
       _createPracticePageController,
       dispose: _disposePracticePageController,
@@ -71,20 +69,20 @@ final class PracticeStatsWidget extends WatchingWidget {
             ),
             const SizedBox(height: AppTheme.spacingMedium),
             Text(
-              '${_formatDate(selectedDay)}$_dayTitleSeparator${PracticeTimeTextWidget.format(day?.time ?? Duration.zero)}',
+              '${_formatDate(selectedDay)}$_dayTitleSeparator${PracticeTimeTextWidget.format(t, day?.time ?? Duration.zero)}',
               style: theme.textTheme.titleMedium,
             ),
             SongPracticeListWidget(
               songs: day?.songs ?? const <SongPractice>[],
-              titleOf: (String songId) => titles[songId] ?? _unknownSong,
-              emptyText: _noPractice,
+              titleOf: (String songId) => titles[songId] ?? t.common.songDeleted,
+              emptyText: t.practice.noPracticeThisDay,
             ),
             const SizedBox(height: AppTheme.spacingMedium),
-            Text(_topSongsTitle, style: theme.textTheme.titleMedium),
+            Text(t.practice.topSongs, style: theme.textTheme.titleMedium),
             SongPracticeListWidget(
               songs: stats.topSongs,
-              titleOf: (String songId) => titles[songId] ?? _unknownSong,
-              emptyText: _noSongs,
+              titleOf: (String songId) => titles[songId] ?? t.common.songDeleted,
+              emptyText: t.practice.noPracticeYet,
             ),
           ],
         ),

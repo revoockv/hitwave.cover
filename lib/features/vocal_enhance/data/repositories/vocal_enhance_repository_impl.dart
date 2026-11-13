@@ -12,14 +12,13 @@ import '../data_sources/vocal_enhance_data_source.dart';
 import '../models/enhance_progress_model.dart';
 import '../models/enhance_report_model.dart';
 import '../models/recording_analysis_model.dart';
+import '../../domain/entities/vocal_enhance_failure.dart';
 
 /// [VocalEnhanceRepository] on top of the audio engine; converts engine errors to failures.
 final class VocalEnhanceRepositoryImpl implements VocalEnhanceRepository, DisposableResource {
   static const String _noiseProfileSetting = 'noise_profile_seconds';
   static const String _trimSilenceSetting = 'trim_silence';
   static const double _on = 1;
-  static const String _analyzeFailed = 'Не вдалося виміряти запис: ';
-  static const String _enhanceFailed = 'Не вдалося покращити запис: ';
   static const String _analyzeSuccessLog = 'AnalyzeRecording: success — ';
   static const String _analyzeFailureLog = 'AnalyzeRecording: failure — ';
   static const String _enhanceStartLog = 'EnhanceRecording: starting — ';
@@ -48,19 +47,19 @@ final class VocalEnhanceRepositoryImpl implements VocalEnhanceRepository, Dispos
   ValueListenable<EnhanceProgress?> watchProgress() => _progress;
 
   @override
-  Future<Result<RecordingAnalysis>> analyzeRecording(String path) async {
+  Future<Result<RecordingAnalysis, VocalEnhanceFailure>> analyzeRecording(String path) async {
     try {
       final RecordingAnalysisModel model = await _dataSource.analyze(path);
       _logger.i('$_analyzeSuccessLog$path$_colonLog${model.integratedLufs}$_lufsLog');
       return Result.success(model.toEntity());
     } on Exception catch (e) {
       _logger.e('$_analyzeFailureLog$path$_colonLog$e');
-      return Result.failure('$_analyzeFailed${_describe(e)}');
+      return Result.failure(_failureOf(e, VocalEnhanceFailure.analyze));
     }
   }
 
   @override
-  Future<Result<EnhanceReport>> enhanceRecording({
+  Future<Result<EnhanceReport, VocalEnhanceFailure>> enhanceRecording({
     required String inputPath,
     required String outputPath,
     required EnhancePreset preset,
@@ -88,14 +87,15 @@ final class VocalEnhanceRepositoryImpl implements VocalEnhanceRepository, Dispos
       return Result.success(model.toEntity());
     } on Exception catch (e) {
       _logger.e('$_enhanceFailureLog$inputPath$_colonLog$e');
-      return Result.failure('$_enhanceFailed${_describe(e)}');
+      return Result.failure(_failureOf(e, VocalEnhanceFailure.enhance));
     } finally {
       _progress.value = null;
     }
   }
 
-  /// The engine's own explanation, or the exception text for anything else.
-  String _describe(Exception error) => error is VocalEnhanceEngineException ? error.message : '$error';
+  /// [unavailable] when the engine does not run here, [otherwise] for anything else.
+  static VocalEnhanceFailure _failureOf(Exception error, VocalEnhanceFailure otherwise) =>
+      error is VocalEnhanceEngineException && error.isUnavailable ? VocalEnhanceFailure.unavailable : otherwise;
 
   void _onProgress(EnhanceProgressModel progress) {
     _progress.value = progress.toEntity();

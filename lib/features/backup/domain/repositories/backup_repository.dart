@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart' show ValueListenable;
 
 import '../../../../core/domain/entities/result.dart';
+import '../entities/backup_failure.dart';
 
 /// Defines the contract for backup and restore operations via files.
 ///
@@ -24,7 +25,7 @@ abstract interface class BackupRepository {
   ///
   /// With [includeRecordings], the recordings of the songs are added and the file becomes a
   /// `backup.zip` with their WAV files (only where the device has a file system).
-  Future<Result<void>> exportSongs({required bool includeRecordings});
+  Future<Result<void, BackupFailure>> exportSongs({required bool includeRecordings, required String pickerTitle});
 
   /// Imports songs from a user-selected JSON file.
   ///
@@ -34,5 +35,5 @@ abstract interface class BackupRepository {
   /// message when the import fails.
   ///
   /// A `backup.zip` may hold recordings; they are added only with [includeRecordings].
-  Future<Result<void>> importSongs({required bool includeRecordings});
+  Future<Result<void, BackupFailure>> importSongs({required bool includeRecordings});
 }

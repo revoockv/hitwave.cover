@@ -32,6 +32,13 @@ import '../widgets/transfer_local_songs_dialog_widget.dart';
 import 'add_song_page.dart';
 import 'edit_song_page.dart';
 import 'lyrics_page.dart';
+import '../../../../core/presentation/l10n/app_translations.dart';
+import '../../../auth/domain/entities/auth_failure.dart';
+import '../../../auth/presentation/l10n/auth_texts.dart';
+import '../../../backup/domain/entities/backup_failure.dart';
+import '../../../backup/presentation/l10n/backup_texts.dart';
+import '../../domain/entities/song_failure.dart';
+import '../l10n/song_texts.dart';
 
 /// Actions of the overflow menu on the home page.
 enum _HomeMenuAction { importSongs, exportSongs, sync, signOut }
@@ -46,27 +53,6 @@ final class HomePage extends WatchingWidget {
   /// Title of the home tab.
   static const String _homeTitle = 'hitwave.cover';
 
-  /// Title of the songs tab.
-  static const String _songsTitle = 'Мої пісні';
-
-  /// Title of the covers tab.
-  static const String _coversTitle = 'Мої кавери';
-
-  /// Title of the statistics tab.
-  static const String _statsTitle = 'Статистика';
-
-  /// Labels of the bottom navigation.
-  static const String _homeTab = 'Дім';
-  static const String _songsTab = 'Пісні';
-  static const String _coversTab = 'Кавери';
-  static const String _statsTab = 'Статистика';
-
-  /// Hint of the covers search.
-  static const String _coverSearchHint = 'Пошук кавера за піснею';
-
-  /// Title of a cover whose song is gone.
-  static const String _unknownSong = 'Пісню видалено';
-
   /// Separator between a song and its artist.
   static const String _titleSeparator = ' — ';
 
@@ -76,59 +62,11 @@ final class HomePage extends WatchingWidget {
   /// Separator between the title and the song count.
   static const String _countSeparator = '  ';
 
-  /// Tooltip of the back button to the artist list.
-  static const String _allArtistsTooltip = 'Усі виконавці';
-
-  /// Tooltip of the overflow menu.
-  static const String _menuTooltip = 'Ще';
-
-  /// Label of the import menu item.
-  static const String _importLabel = 'Імпортувати';
-
-  /// Label of the export menu item.
-  static const String _exportLabel = 'Експортувати';
-
-  /// Text of the export question.
-  static const String _exportQuestion = 'Пісні буде збережено у файл у вибраній папці.';
-
-  /// Text of the import question.
-  static const String _importQuestion = 'Пісні з файлу буде додано до ваших. Записи беруться лише з ZIP-архіву.';
-
-  /// Label of the sync menu item.
-  static const String _syncLabel = 'Синхронізація';
-
-  /// Label of the sign-out menu item.
-  static const String _signOutLabel = 'Вийти';
-
-  /// Label of the menu item that leaves the guest mode for the sign-in screen.
-  static const String _signInLabel = 'Увійти в акаунт';
-
-  /// Message shown after the songs on the device moved into the account.
-  static const String _transferredMessage = 'Пісні перенесено в акаунт';
-
-  /// Label of the add button.
-  static const String _addLabel = 'Додати';
-
   /// Backup status while songs are exported.
   static const String _backupStatusExporting = 'exporting';
 
   /// Backup status while songs are imported.
   static const String _backupStatusImporting = 'importing';
-
-  /// Success message shown after export completes.
-  static const String _exportCompletedMessage = 'Експорт завершено';
-
-  /// Success message shown after import completes.
-  static const String _importCompletedMessage = 'Імпорт завершено';
-
-  /// Prefix of the message shown when the export fails.
-  static const String _exportErrorPrefix = 'Помилка експорту: ';
-
-  /// Prefix of the message shown when the import fails.
-  static const String _importErrorPrefix = 'Помилка імпорту: ';
-
-  /// Message shown after a song is deleted.
-  static const String _deletedMessage = 'Пісню видалено';
 
   /// Height of the backup progress bar under the app bar.
   static const double _progressHeight = 4;
@@ -142,6 +80,7 @@ final class HomePage extends WatchingWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Translations t = context.t;
     final SongViewController songViewController = createOnce(
       _createSongViewController,
       dispose: _disposeSongViewController,
@@ -183,7 +122,7 @@ final class HomePage extends WatchingWidget {
 
     final Widget titleText = Text.rich(
       TextSpan(
-        text: hasSelectedArtist ? selectedArtist : _titleOf(tab),
+        text: hasSelectedArtist ? selectedArtist : _titleOf(t, tab),
         children: <InlineSpan>[
           if (isSongsTab)
             TextSpan(
@@ -203,7 +142,7 @@ final class HomePage extends WatchingWidget {
         appBar: AppBar(
           leading: hasSelectedArtist
               ? IconButton(
-                  tooltip: _allArtistsTooltip,
+                  tooltip: t.song.allArtists,
                   icon: const Icon(Icons.arrow_back),
                   onPressed: songViewController.clearArtist,
                 )
@@ -218,7 +157,7 @@ final class HomePage extends WatchingWidget {
               : titleText,
           actions: <Widget>[
             PopupMenuButton<_HomeMenuAction>(
-              tooltip: _menuTooltip,
+              tooltip: t.song.more,
               enabled: !isBackupRunning,
               onSelected: (_HomeMenuAction action) => _onMenuSelected(context, action),
               itemBuilder: (BuildContext context) => _buildMenuItems(context, isGuest),
@@ -238,7 +177,7 @@ final class HomePage extends WatchingWidget {
             recentSongs: _recentSongs(songsById, history),
             recentCovers: _recentCovers(recordings, history),
             coverCounts: coverCounts,
-            coverTitleOf: (Recording recording) => _songTitle(songsById[recording.songId]),
+            coverTitleOf: (Recording recording) => _songTitle(t, songsById[recording.songId]),
             coverSongOf: (Recording recording) => _sharedSong(songsById[recording.songId]),
             onStatsPressed: () => _selectTab(songViewController, HomeTab.stats),
             onAllSongsPressed: () => _selectTab(songViewController, HomeTab.songs),
@@ -276,7 +215,7 @@ final class HomePage extends WatchingWidget {
                     ),
                     child: SearchFieldWidget(
                       searchController: songViewController.coverSearchController,
-                      hint: _coverSearchHint,
+                      hint: t.song.coverSearch,
                     ),
                   ),
                 ),
@@ -289,22 +228,26 @@ final class HomePage extends WatchingWidget {
         bottomNavigationBar: NavigationBar(
           selectedIndex: tab.index,
           onDestinationSelected: (int index) => _selectTab(songViewController, HomeTab.values[index]),
-          destinations: const <NavigationDestination>[
-            NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: _homeTab),
+          destinations: <NavigationDestination>[
             NavigationDestination(
-              icon: Icon(Icons.queue_music_outlined),
-              selectedIcon: Icon(Icons.queue_music),
-              label: _songsTab,
+              icon: const Icon(Icons.home_outlined),
+              selectedIcon: const Icon(Icons.home),
+              label: t.song.tabHome,
             ),
             NavigationDestination(
-              icon: Icon(Icons.mic_none_outlined),
-              selectedIcon: Icon(Icons.mic),
-              label: _coversTab,
+              icon: const Icon(Icons.queue_music_outlined),
+              selectedIcon: const Icon(Icons.queue_music),
+              label: t.song.tabSongs,
             ),
             NavigationDestination(
-              icon: Icon(Icons.insights_outlined),
-              selectedIcon: Icon(Icons.insights),
-              label: _statsTab,
+              icon: const Icon(Icons.mic_none_outlined),
+              selectedIcon: const Icon(Icons.mic),
+              label: t.song.tabCovers,
+            ),
+            NavigationDestination(
+              icon: const Icon(Icons.insights_outlined),
+              selectedIcon: const Icon(Icons.insights),
+              label: t.song.statistics,
             ),
           ],
         ),
@@ -313,24 +256,25 @@ final class HomePage extends WatchingWidget {
             : FloatingActionButton.extended(
                 onPressed: () => _showAddSongPage(context, newSongAuthor),
                 icon: const Icon(Icons.add),
-                label: const Text(_addLabel),
+                label: Text(t.song.add),
               ),
       ),
     );
   }
 
-  static String _titleOf(HomeTab tab) => switch (tab) {
+  static String _titleOf(Translations t, HomeTab tab) => switch (tab) {
     HomeTab.home => _homeTitle,
-    HomeTab.songs => _songsTitle,
-    HomeTab.covers => _coversTitle,
-    HomeTab.stats => _statsTitle,
+    HomeTab.songs => t.song.mySongs,
+    HomeTab.covers => t.song.myCovers,
+    HomeTab.stats => t.song.statistics,
   };
 
   static int _countOf(List<Song> songs, String artist) => songs.where((Song song) => song.author == artist).length;
 
   static SharedSong? _sharedSong(Song? song) => song == null ? null : SharedSong(author: song.author, name: song.name);
 
-  static String _songTitle(Song? song) => song == null ? _unknownSong : '${song.name}$_titleSeparator${song.author}';
+  static String _songTitle(Translations t, Song? song) =>
+      song == null ? t.common.songDeleted : '${song.name}$_titleSeparator${song.author}';
 
   /// The songs whose name, artist or album contain [query].
   static List<Song> _findSongs(List<Song> songs, String query) {
@@ -392,26 +336,27 @@ final class HomePage extends WatchingWidget {
   }
 
   List<PopupMenuEntry<_HomeMenuAction>> _buildMenuItems(BuildContext context, bool isGuest) {
+    final Translations t = context.t;
     return <PopupMenuEntry<_HomeMenuAction>>[
-      const PopupMenuItem<_HomeMenuAction>(
+      PopupMenuItem<_HomeMenuAction>(
         value: _HomeMenuAction.importSongs,
-        child: ListTile(leading: Icon(Icons.file_upload_outlined), title: Text(_importLabel)),
+        child: ListTile(leading: const Icon(Icons.file_upload_outlined), title: Text(t.song.importSongs)),
       ),
-      const PopupMenuItem<_HomeMenuAction>(
+      PopupMenuItem<_HomeMenuAction>(
         value: _HomeMenuAction.exportSongs,
-        child: ListTile(leading: Icon(Icons.file_download_outlined), title: Text(_exportLabel)),
+        child: ListTile(leading: const Icon(Icons.file_download_outlined), title: Text(t.song.exportSongs)),
       ),
       if (isSyncSupportedUseCase())
-        const PopupMenuItem<_HomeMenuAction>(
+        PopupMenuItem<_HomeMenuAction>(
           value: _HomeMenuAction.sync,
-          child: ListTile(leading: Icon(Icons.sync), title: Text(_syncLabel)),
+          child: ListTile(leading: const Icon(Icons.sync), title: Text(t.song.sync)),
         ),
       const PopupMenuDivider(),
       PopupMenuItem<_HomeMenuAction>(
         value: _HomeMenuAction.signOut,
         child: ListTile(
           leading: Icon(isGuest ? Icons.login : Icons.logout),
-          title: Text(isGuest ? _signInLabel : _signOutLabel),
+          title: Text(isGuest ? t.song.signInAccount : t.auth.signOut),
         ),
       ),
     ];
@@ -443,22 +388,33 @@ final class HomePage extends WatchingWidget {
       case _HomeMenuAction.sync:
         _openSync(context);
       case _HomeMenuAction.signOut:
-        _handleSignOut(messenger);
+        _handleSignOut(messenger, context.t);
     }
   }
 
   Future<void> _handleExport(BuildContext context, ScaffoldMessengerState messenger) async {
-    final bool? includeRecordings = await _askIncludeRecordings(context, _exportLabel, _exportQuestion);
+    final Translations t = context.t;
+    final bool? includeRecordings = await _askIncludeRecordings(context, t.song.exportSongs, t.song.exportQuestion);
     if (includeRecordings == null) return;
-    final Result<void> result = await exportSongsUseCase(includeRecordings: includeRecordings);
-    _showMessage(messenger, result.when(success: _exportCompleted, failure: _exportFailed));
+    final Result<void, BackupFailure> result = await exportSongsUseCase(
+      includeRecordings: includeRecordings,
+      pickerTitle: t.backup.exportDialogTitle,
+    );
+    _showMessage(
+      messenger,
+      result.when(success: (void _) => t.song.exportDone, failure: (BackupFailure failure) => failure.text(t)),
+    );
   }
 
   Future<void> _handleImport(BuildContext context, ScaffoldMessengerState messenger) async {
-    final bool? includeRecordings = await _askIncludeRecordings(context, _importLabel, _importQuestion);
+    final Translations t = context.t;
+    final bool? includeRecordings = await _askIncludeRecordings(context, t.song.importSongs, t.song.importQuestion);
     if (includeRecordings == null) return;
-    final Result<void> result = await importSongsUseCase(includeRecordings: includeRecordings);
-    _showMessage(messenger, result.when(success: _importCompleted, failure: _importFailed));
+    final Result<void, BackupFailure> result = await importSongsUseCase(includeRecordings: includeRecordings);
+    _showMessage(
+      messenger,
+      result.when(success: (void _) => t.song.importDone, failure: (BackupFailure failure) => failure.text(t)),
+    );
   }
 
   /// Asks whether the recordings go too; `null` when cancelled. The web keeps no recordings.
@@ -470,9 +426,9 @@ final class HomePage extends WatchingWidget {
     );
   }
 
-  Future<void> _handleSignOut(ScaffoldMessengerState messenger) async {
-    final Result<void> result = await signOutUseCase();
-    result.when(success: _ignore, failure: (String error) => _showMessage(messenger, error));
+  Future<void> _handleSignOut(ScaffoldMessengerState messenger, Translations t) async {
+    final Result<void, AuthFailure> result = await signOutUseCase();
+    result.when(success: _ignore, failure: (AuthFailure failure) => _showMessage(messenger, failure.text(t)));
   }
 
   /// Shows the question after the current frame (the handler may run during a build).
@@ -480,6 +436,7 @@ final class HomePage extends WatchingWidget {
     await WidgetsBinding.instance.endOfFrame;
     if (!context.mounted) return;
     final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+    final Translations t = context.t;
 
     final bool? transfer = await showDialog<bool>(
       context: context,
@@ -487,12 +444,15 @@ final class HomePage extends WatchingWidget {
       builder: (BuildContext context) => TransferLocalSongsDialogWidget(songCount: songCount),
     );
 
-    final Result<void> result = transfer == true ? await transferLocalSongsUseCase() : await keepLocalSongsUseCase();
-    if (transfer == true && result.isSuccess) _showMessage(messenger, _transferredMessage);
-    result.when(success: _ignore, failure: (String error) => _showMessage(messenger, error));
+    final Result<void, SongFailure> result = transfer == true
+        ? await transferLocalSongsUseCase()
+        : await keepLocalSongsUseCase();
+    if (transfer == true && result.isSuccess) _showMessage(messenger, t.song.transferred);
+    result.when(success: _ignore, failure: (SongFailure failure) => _showMessage(messenger, failure.text(t)));
   }
 
   Future<void> _confirmDelete(BuildContext context, ScaffoldMessengerState messenger, Song song) async {
+    final Translations t = context.t;
     final bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) => DeleteSongDialogWidget(songName: song.name),
@@ -501,8 +461,11 @@ final class HomePage extends WatchingWidget {
       return;
     }
 
-    final Result<void> result = await deleteSongUseCase(songId: song.id);
-    _showMessage(messenger, result.when(success: _deleted, failure: _identity));
+    final Result<void, SongFailure> result = await deleteSongUseCase(songId: song.id);
+    _showMessage(
+      messenger,
+      result.when(success: (void _) => t.common.songDeleted, failure: (SongFailure failure) => failure.text(t)),
+    );
   }
 
   static void _showMessage(ScaffoldMessengerState messenger, String message) {
@@ -512,18 +475,6 @@ final class HomePage extends WatchingWidget {
   }
 
   static void _ignore(void _) {}
-
-  static String _identity(String error) => error;
-
-  static String _deleted(void _) => _deletedMessage;
-
-  static String _exportCompleted(void _) => _exportCompletedMessage;
-
-  static String _exportFailed(String error) => '$_exportErrorPrefix$error';
-
-  static String _importCompleted(void _) => _importCompletedMessage;
-
-  static String _importFailed(String error) => '$_importErrorPrefix$error';
 
   void _openSync(BuildContext context) {
     Navigator.of(context).push(MaterialPageRoute<void>(builder: (BuildContext context) => const SyncPage()));

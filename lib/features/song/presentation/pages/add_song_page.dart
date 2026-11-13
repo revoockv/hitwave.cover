@@ -3,10 +3,13 @@ import 'package:watch_it/watch_it.dart';
 
 import '../../../../core/domain/entities/result.dart';
 import '../../../../core/domain/entities/result_state.dart';
+import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../../core/presentation/theme.dart';
 import '../controllers/song_form_controller.dart';
 import '../di/song_getters.dart';
 import '../widgets/song_form_widget.dart';
+import '../../domain/entities/song_failure.dart';
+import '../l10n/song_texts.dart';
 
 /// A full page for adding a new song.
 ///
@@ -15,12 +18,6 @@ import '../widgets/song_form_widget.dart';
 /// Saves the song itself; closes after a successful save, on failure stays
 /// open and shows the error.
 final class AddSongPage extends WatchingWidget {
-  /// Title of the page.
-  static const String _pageTitle = 'Нова пісня';
-
-  /// Label of the save button.
-  static const String _saveButtonText = 'Додати пісню';
-
   /// The author the form starts with, or `null` for an empty field.
   final String? author;
 
@@ -29,6 +26,7 @@ final class AddSongPage extends WatchingWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Translations t = context.t;
     final SongFormController songFormController = createOnce(
       _createSongFormController,
       dispose: _disposeSongFormController,
@@ -36,13 +34,13 @@ final class AddSongPage extends WatchingWidget {
     registerHandler(target: songFormController.savingStateController, handler: _onSavingChanged);
 
     return Scaffold(
-      appBar: AppBar(title: const Text(_pageTitle)),
+      appBar: AppBar(title: Text(t.song.newSong)),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: AppTheme.maxContentWidth),
           child: SongFormWidget(
             songFormController: songFormController,
-            submitLabel: _saveButtonText,
+            submitLabel: t.song.addSong,
             onSubmit: () => _onSavePressed(songFormController),
           ),
         ),
@@ -55,13 +53,13 @@ final class AddSongPage extends WatchingWidget {
   static void _disposeSongFormController(SongFormController songFormController) => songFormController.dispose();
 
   /// Closes the page after a save; shows the error of a failed one.
-  void _onSavingChanged(BuildContext context, ResultState<void> state, void Function() cancel) {
+  void _onSavingChanged(BuildContext context, ResultState<void, SongFailure> state, void Function() cancel) {
     switch (state) {
-      case SuccessResultState<void>():
+      case SuccessResultState<void, SongFailure>():
         Navigator.of(context).pop();
-      case FailureResultState<void>(:final String message):
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-      case IdleResultState<void>() || LoadingResultState<void>():
+      case FailureResultState<void, SongFailure>(:final SongFailure failure):
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(failure.text(context.t))));
+      case IdleResultState<void, SongFailure>() || LoadingResultState<void, SongFailure>():
         break;
     }
   }
@@ -69,10 +67,11 @@ final class AddSongPage extends WatchingWidget {
   /// Adds the entered song; ignored while a save runs or the form is invalid.
   Future<void> _onSavePressed(SongFormController songFormController) async {
     if (!songFormController.canSave()) return;
-    final ValueNotifier<ResultState<void>> savingStateController = songFormController.savingStateController;
+    final ValueNotifier<ResultState<void, SongFailure>> savingStateController =
+        songFormController.savingStateController;
     savingStateController.value = ResultState.loading;
 
-    final Result<void> result = await addSongUseCase(
+    final Result<void, SongFailure> result = await addSongUseCase(
       author: songFormController.author,
       name: songFormController.name,
       album: songFormController.album,

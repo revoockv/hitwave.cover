@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart' show ValueListenable;
 
 import '../../../../core/domain/entities/result.dart';
 import '../entities/recording_preferences.dart';
+import '../entities/recordings_failure.dart';
 
 /// Keeps the recording options of the lyrics page on this device.
 abstract interface class RecordingPreferencesRepository {
@@ -9,5 +10,5 @@ abstract interface class RecordingPreferencesRepository {
   ValueListenable<RecordingPreferences> watchRecordingPreferences();
 
   /// Remembers [preferences].
-  Future<Result<void>> updateRecordingPreferences(RecordingPreferences preferences);
+  Future<Result<void, RecordingsFailure>> updateRecordingPreferences(RecordingPreferences preferences);
 }

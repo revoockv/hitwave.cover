@@ -14,6 +14,7 @@ import '../data_sources/hive_song_service.dart';
 import '../data_sources/song_data_source.dart';
 import '../models/cover_model.dart';
 import '../models/song_model.dart';
+import '../../domain/entities/song_failure.dart';
 
 /// Implementation of [SongRepository] that follows the session.
 ///
@@ -23,20 +24,6 @@ import '../models/song_model.dart';
 /// songs and keeps them in a private [ValueNotifier], exposed as [ValueListenable].
 /// After a sign-in it offers the songs left on the device for the account.
 final class SongRepositoryImpl implements SongRepository, DisposableResource {
-  static const String _userNotAuthenticated = 'Спершу увійдіть або продовжте без акаунта.';
-  static const String _addSongFailedMessage = 'Помилка при додаванні пісні.';
-  static const String _updateSongFailedMessage = 'Помилка при оновленні пісні.';
-  static const String _deleteSongFailedMessage = 'Помилка при видаленні пісні.';
-  static const String _updateSpeedFailedMessage = 'Не вдалося зберегти швидкість.';
-  static const String _updateLeadInFailedMessage = 'Не вдалося зберегти відступ.';
-  static const String _updateLyricsFailedMessage = 'Не вдалося зберегти текст.';
-  static const String _addSongsFailedMessage = 'Не вдалося додати пісні.';
-  static const String _transferFailedMessage = 'Не вдалося перенести всі пісні в акаунт. Решта лишилась на пристрої.';
-  static const String _keepFailedMessage = 'Не вдалося запамʼятати вибір.';
-  static const String _addCoverFailedMessage = 'Помилка при додаванні обкладинки.';
-  static const String _updateCoverFailedMessage = 'Помилка при оновленні обкладинки.';
-  static const String _deleteCoverFailedMessage = 'Помилка при видаленні обкладинки.';
-
   static const String _newDocumentId = '';
 
   static const String _signedOutLog = 'Song repository: signed out, no songs';
@@ -186,10 +173,10 @@ final class SongRepositoryImpl implements SongRepository, DisposableResource {
   Cover _toCover(CoverModel model) => model.toEntity();
 
   /// Runs [operation] on the data source of the session and logs it as [logName].
-  Future<Result<void>> _run(
+  Future<Result<void, SongFailure>> _run(
     String logName,
     String startDetails,
-    String failureMessage,
+    SongFailure failure,
     Future<void> Function(SongDataSource dataSource) operation,
   ) async {
     _logger.i('$logName$startDetails');
@@ -197,7 +184,7 @@ final class SongRepositoryImpl implements SongRepository, DisposableResource {
     final SongDataSource? dataSource = _dataSource;
     if (dataSource == null) {
       _logger.w('$logName$_notAuthenticatedLog');
-      return const Result.failure(_userNotAuthenticated);
+      return const Result.failure(SongFailure.notAuthenticated);
     }
 
     try {
@@ -206,12 +193,17 @@ final class SongRepositoryImpl implements SongRepository, DisposableResource {
       return Result.ok;
     } on Exception catch (e) {
       _logger.e('$logName$_failureLog$e');
-      return Result.failure(failureMessage);
+      return Result.failure(failure);
     }
   }
 
   @override
-  Future<Result<void>> addSong({required String author, required String name, String? album, required String lyrics}) {
+  Future<Result<void, SongFailure>> addSong({
+    required String author,
+    required String name,
+    String? album,
+    required String lyrics,
+  }) {
     final SongModel song = SongModel(
       id: _newDocumentId,
       author: author,
@@ -223,29 +215,32 @@ final class SongRepositoryImpl implements SongRepository, DisposableResource {
     return _run(
       _addSongLog,
       '$_startingNameLog$name$_closingQuoteLog',
-      _addSongFailedMessage,
+      SongFailure.addSong,
       (SongDataSource dataSource) => dataSource.addSong(song),
     );
   }
 
   @override
-  Future<Result<List<String>>> addSongs(List<Song> songs) async {
+  Future<Result<List<String>, SongFailure>> addSongs(List<Song> songs) async {
     final List<String> ids = <String>[];
-    final Result<void> result = await _run(_addSongsLog, '$_startingCountLog${songs.length}', _addSongsFailedMessage, (
-      SongDataSource dataSource,
-    ) async {
-      for (final Song song in songs) {
-        ids.add(await dataSource.addSong(SongModel.fromEntity(song)));
-      }
-    });
-    return result.when(success: (_) => Result.success(ids), failure: Result<List<String>>.failure);
+    final Result<void, SongFailure> result = await _run(
+      _addSongsLog,
+      '$_startingCountLog${songs.length}',
+      SongFailure.addSongs,
+      (SongDataSource dataSource) async {
+        for (final Song song in songs) {
+          ids.add(await dataSource.addSong(SongModel.fromEntity(song)));
+        }
+      },
+    );
+    return result.when(success: (_) => Result.success(ids), failure: Result<List<String>, SongFailure>.failure);
   }
 
   @override
   Stream<SongIdChange> watchSongIdChanges() => _songIdChanges.stream;
 
   @override
-  Future<Result<void>> updateSong({
+  Future<Result<void, SongFailure>> updateSong({
     required String songId,
     required String author,
     required String name,
@@ -263,51 +258,51 @@ final class SongRepositoryImpl implements SongRepository, DisposableResource {
     return _run(
       _updateSongLog,
       '$_startingLog$songId$_closingQuoteLog',
-      _updateSongFailedMessage,
+      SongFailure.updateSong,
       (SongDataSource dataSource) => dataSource.updateSong(song),
     );
   }
 
   @override
-  Future<Result<void>> updateSongScrollSpeed({required String songId, required double speed}) {
+  Future<Result<void, SongFailure>> updateSongScrollSpeed({required String songId, required double speed}) {
     return _run(
       _updateSpeedLog,
       '$_startingLog$songId$_speedLog$speed',
-      _updateSpeedFailedMessage,
+      SongFailure.updateSpeed,
       (SongDataSource dataSource) => dataSource.updateSongScrollSpeed(songId: songId, speed: speed),
     );
   }
 
   @override
-  Future<Result<void>> updateSongLeadIn({required String songId, required double leadIn}) {
+  Future<Result<void, SongFailure>> updateSongLeadIn({required String songId, required double leadIn}) {
     return _run(
       _updateLeadInLog,
       '$_startingLog$songId$_leadInLog$leadIn',
-      _updateLeadInFailedMessage,
+      SongFailure.updateLeadIn,
       (SongDataSource dataSource) => dataSource.updateSongLeadIn(songId: songId, leadIn: leadIn),
     );
   }
 
   @override
-  Future<Result<void>> updateSongLyrics({required String songId, required String lyrics}) {
+  Future<Result<void, SongFailure>> updateSongLyrics({required String songId, required String lyrics}) {
     return _run(
       _updateLyricsLog,
       '$_startingLog$songId$_closingQuoteLog',
-      _updateLyricsFailedMessage,
+      SongFailure.updateLyrics,
       (SongDataSource dataSource) => dataSource.updateSongLyrics(songId: songId, lyrics: lyrics),
     );
   }
 
   @override
-  Future<Result<void>> deleteSong({required String songId}) async {
+  Future<Result<void, SongFailure>> deleteSong({required String songId}) async {
     Song? deleted;
     for (final Song song in _songs.value) {
       if (song.id == songId) deleted = song;
     }
-    final Result<void> result = await _run(
+    final Result<void, SongFailure> result = await _run(
       _deleteSongLog,
       '$_startingLog$songId$_closingQuoteLog',
-      _deleteSongFailedMessage,
+      SongFailure.deleteSong,
       (SongDataSource dataSource) => dataSource.deleteSong(songId),
     );
     if (result.isSuccess) {
@@ -317,14 +312,14 @@ final class SongRepositoryImpl implements SongRepository, DisposableResource {
   }
 
   @override
-  Future<Result<void>> transferLocalSongs() async {
+  Future<Result<void, SongFailure>> transferLocalSongs() async {
     final List<SongModel> localSongs = _localSongService.readSongs();
     _logger.i('$_transferLog$_startingCountLog${localSongs.length}');
 
     final SongDataSource? account = _dataSource;
     if (_session.value is! SignedInAuthSession || account == null) {
       _logger.w('$_transferLog$_notAuthenticatedLog');
-      return const Result.failure(_userNotAuthenticated);
+      return const Result.failure(SongFailure.notAuthenticated);
     }
 
     try {
@@ -344,12 +339,12 @@ final class SongRepositoryImpl implements SongRepository, DisposableResource {
     } on Exception catch (e) {
       _logger.e('$_transferLog$_failureLog$e');
       _updateLocalSongsToTransfer();
-      return const Result.failure(_transferFailedMessage);
+      return const Result.failure(SongFailure.transfer);
     }
   }
 
   @override
-  Future<Result<void>> keepLocalSongs() async {
+  Future<Result<void, SongFailure>> keepLocalSongs() async {
     _logger.i(_keepLog);
     try {
       await _localSongService.setTransferDeclined(true);
@@ -357,12 +352,12 @@ final class SongRepositoryImpl implements SongRepository, DisposableResource {
       return Result.ok;
     } on Exception catch (e) {
       _logger.e('$_keepLog$_failureLog$e');
-      return const Result.failure(_keepFailedMessage);
+      return const Result.failure(SongFailure.keepLocal);
     }
   }
 
   @override
-  Future<Result<void>> addCover({required String songId, required List<int> audioBytes, String? notes}) {
+  Future<Result<void, SongFailure>> addCover({required String songId, required List<int> audioBytes, String? notes}) {
     final CoverModel cover = CoverModel(
       id: _newDocumentId,
       timestamp: DateTime.now().millisecondsSinceEpoch,
@@ -372,13 +367,13 @@ final class SongRepositoryImpl implements SongRepository, DisposableResource {
     return _run(
       _addCoverLog,
       '$_startingLog$songId$_closingQuoteLog',
-      _addCoverFailedMessage,
+      SongFailure.addCover,
       (SongDataSource dataSource) => dataSource.addCover(songId: songId, cover: cover),
     );
   }
 
   @override
-  Future<Result<void>> updateCover({
+  Future<Result<void, SongFailure>> updateCover({
     required String songId,
     required String coverId,
     required List<int> audioBytes,
@@ -393,17 +388,17 @@ final class SongRepositoryImpl implements SongRepository, DisposableResource {
     return _run(
       _updateCoverLog,
       '$_startingLog$songId$_coverIdLog$coverId$_closingQuoteLog',
-      _updateCoverFailedMessage,
+      SongFailure.updateCover,
       (SongDataSource dataSource) => dataSource.updateCover(songId: songId, cover: cover),
     );
   }
 
   @override
-  Future<Result<void>> deleteCover({required String songId, required String coverId}) {
+  Future<Result<void, SongFailure>> deleteCover({required String songId, required String coverId}) {
     return _run(
       _deleteCoverLog,
       '$_startingLog$songId$_coverIdLog$coverId$_closingQuoteLog',
-      _deleteCoverFailedMessage,
+      SongFailure.deleteCover,
       (SongDataSource dataSource) => dataSource.deleteCover(songId: songId, coverId: coverId),
     );
   }

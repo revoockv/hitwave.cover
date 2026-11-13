@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../../core/presentation/theme.dart';
 
 /// Search field with a clear button.
 final class SearchFieldWidget extends StatelessWidget {
-  static const String _clearLabel = 'Очистити';
-
   /// Text of the field.
   final TextEditingController searchController;
 
@@ -17,6 +16,7 @@ final class SearchFieldWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Translations t = context.t;
     return TextField(
       controller: searchController,
       textInputAction: TextInputAction.search,
@@ -27,7 +27,7 @@ final class SearchFieldWidget extends StatelessWidget {
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppTheme.radiusLarge)),
         suffixIcon: searchController.text.isEmpty
             ? null
-            : IconButton(tooltip: _clearLabel, onPressed: searchController.clear, icon: const Icon(Icons.close)),
+            : IconButton(tooltip: t.common.clear, onPressed: searchController.clear, icon: const Icon(Icons.close)),
       ),
     );
   }

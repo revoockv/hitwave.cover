@@ -22,6 +22,9 @@ import '../data_sources/hive_recording_service.dart';
 import '../data_sources/mp3_encoder_service.dart';
 import '../data_sources/recorder_data_source.dart';
 import '../models/recording_model.dart';
+import '../../../vocal_enhance/domain/entities/vocal_enhance_failure.dart';
+import '../../domain/entities/enhance_failure.dart';
+import '../../domain/entities/recordings_failure.dart';
 
 /// [RecordingsRepository] on the microphone, the Hive library and the audio engine.
 ///
@@ -31,19 +34,8 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
   static const Duration _tick = Duration(milliseconds: 200);
   static const int _millisecondsPerSecond = 1000;
 
-  static const String _busyError = 'Запис уже йде';
-  static const String _notRecordingError = 'Запис не йде';
-  static const String _permissionError = 'Немає доступу до мікрофона. Дозвольте його в налаштуваннях.';
-  static const String _startError = 'Не вдалося почати запис';
-  static const String _microphonesError = 'Не вдалося отримати список мікрофонів';
-
   /// Highest input level that still counts as no sound at all.
   static const double _silentLevel = 0.01;
-  static const String _stopError = 'Не вдалося зберегти запис';
-  static const String _notFoundError = 'Запис не знайдено';
-  static const String _deleteError = 'Не вдалося видалити запис';
-  static const String _importError = 'Не вдалося додати записи з архіву';
-  static const String _interruptedError = 'Покращення перервалося — запустіть його ще раз';
 
   static const String _startLog = 'StartRecording: ';
   static const String _stopLog = 'StopRecording: ';
@@ -95,7 +87,7 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
   Future<RecordingsRepositoryImpl> init() async {
     for (final RecordingModel model in _store.readAll()) {
       _models[model.id] = model.status == RecordingStatus.enhancing
-          ? model.copyWith(status: RecordingStatus.enhanceFailed, enhanceError: _interruptedError)
+          ? model.copyWith(status: RecordingStatus.enhanceFailed, enhanceFailure: EnhanceFailure.interrupted.name)
           : model;
     }
     await Future.wait(_models.values.where(_wasInterrupted).map(_store.put));
@@ -125,22 +117,22 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
   ValueListenable<RecorderState> watchRecorder() => _recorderState;
 
   @override
-  Future<Result<List<Microphone>>> listMicrophones() async {
+  Future<Result<List<Microphone>, RecordingsFailure>> listMicrophones() async {
     try {
       return Result.success(await _recorder.microphones());
     } on Exception catch (e) {
       _logger.e('$_startLog$_failureLog$e');
-      return const Result.failure(_microphonesError);
+      return const Result.failure(RecordingsFailure.listMicrophones);
     }
   }
 
   @override
-  Future<Result<void>> startRecording(String songId, {String? microphoneId}) async {
-    if (_activeId != null) return const Result.failure(_busyError);
+  Future<Result<void, RecordingsFailure>> startRecording(String songId, {String? microphoneId}) async {
+    if (_activeId != null) return const Result.failure(RecordingsFailure.busy);
     try {
       if (!await _recorder.hasPermission()) {
-        _logger.w('$_startLog$_failureLog$_permissionError');
-        return const Result.failure(_permissionError);
+        _logger.w('$_startLog$_failureLog${RecordingsFailure.microphonePermission.name}');
+        return const Result.failure(RecordingsFailure.microphonePermission);
       }
       final String id = _uuid.v4();
       await _recorder.start(_store.rawPathOf(id), microphoneId: microphoneId);
@@ -154,15 +146,15 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
       return Result.ok;
     } on Exception catch (e) {
       _logger.e('$_startLog$_failureLog$e');
-      return const Result.failure(_startError);
+      return const Result.failure(RecordingsFailure.start);
     }
   }
 
   @override
-  Future<Result<Recording>> stopRecording({required bool trimSilence}) async {
+  Future<Result<Recording, RecordingsFailure>> stopRecording({required bool trimSilence}) async {
     final String? id = _activeId;
     final RecorderState state = _recorderState.value;
-    if (id == null || state is! RecordingRecorderState) return const Result.failure(_notRecordingError);
+    if (id == null || state is! RecordingRecorderState) return const Result.failure(RecordingsFailure.notRecording);
     _ticker?.cancel();
     _ticker = null;
     final double seconds = (_stopwatch?.elapsedMilliseconds ?? 0) / _millisecondsPerSecond;
@@ -170,7 +162,7 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
     _recorderState.value = RecorderState.idle;
     try {
       final String? path = await _recorder.stop();
-      if (path == null) return const Result.failure(_stopError);
+      if (path == null) return const Result.failure(RecordingsFailure.save);
       final RecordingModel model = RecordingModel(
         id: id,
         songId: state.songId,
@@ -181,7 +173,7 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
         keptFromSeconds: 0,
         keptToSeconds: null,
         status: RecordingStatus.enhancing,
-        enhanceError: null,
+        enhanceFailure: null,
         trimSilence: trimSilence,
         isSilent: _peakLevel <= _silentLevel,
       );
@@ -191,15 +183,15 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
       return Result.success(_entity(model));
     } on Exception catch (e) {
       _logger.e('$_stopLog$_failureLog$e');
-      return const Result.failure(_stopError);
+      return const Result.failure(RecordingsFailure.save);
     }
   }
 
   @override
-  Future<Result<void>> enhanceAgain({required String recordingId, required bool trimSilence}) async {
+  Future<Result<void, RecordingsFailure>> enhanceAgain({required String recordingId, required bool trimSilence}) async {
     final RecordingModel? model = _models[recordingId];
-    if (model == null) return const Result.failure(_notFoundError);
-    await _save(model.copyWith(status: RecordingStatus.enhancing, clearEnhanceError: true, trimSilence: trimSilence));
+    if (model == null) return const Result.failure(RecordingsFailure.notFound);
+    await _save(model.copyWith(status: RecordingStatus.enhancing, clearEnhanceFailure: true, trimSilence: trimSilence));
     _enqueueEnhancement(recordingId);
     return Result.ok;
   }
@@ -208,7 +200,7 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
   Stream<String> watchRecordingDeletions() => _deletions.stream;
 
   @override
-  Future<Result<void>> deleteRecording(String recordingId) async {
+  Future<Result<void, RecordingsFailure>> deleteRecording(String recordingId) async {
     try {
       await _store.delete(recordingId);
       _models.remove(recordingId);
@@ -218,12 +210,12 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
       return Result.ok;
     } on Exception catch (e) {
       _logger.e('$_deleteLog$_failureLog$e');
-      return const Result.failure(_deleteError);
+      return const Result.failure(RecordingsFailure.delete);
     }
   }
 
   @override
-  Future<Result<void>> importRecordings(List<ImportedRecording> recordings) async {
+  Future<Result<void, RecordingsFailure>> importRecordings(List<ImportedRecording> recordings) async {
     try {
       for (final ImportedRecording imported in recordings) {
         if (_models.containsKey(imported.id)) continue;
@@ -243,7 +235,7 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
           keptFromSeconds: imported.keptFromSeconds,
           keptToSeconds: imported.keptToSeconds,
           status: enhancedFile == null ? RecordingStatus.enhancing : RecordingStatus.enhanced,
-          enhanceError: null,
+          enhanceFailure: null,
         );
         await _save(RecordingModel.fromEntity(recording, trimSilence: false));
         if (enhancedFile == null) {
@@ -256,7 +248,7 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
       return Result.ok;
     } on Exception catch (e) {
       _logger.e('$_importLog$_failureLog$e');
-      return const Result.failure(_importError);
+      return const Result.failure(RecordingsFailure.importRecordings);
     }
   }
 
@@ -313,7 +305,7 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
     if (model == null) return;
     final File oldMp3 = File(Mp3EncoderService.mp3PathOf(_store.enhancedPathOf(id)));
     if (await oldMp3.exists()) await oldMp3.delete();
-    final Result<EnhanceReport> result = await _engine.enhanceRecording(
+    final Result<EnhanceReport, VocalEnhanceFailure> result = await _engine.enhanceRecording(
       inputPath: _store.rawPathOf(id),
       outputPath: _store.enhancedPathOf(id),
       preset: EnhancePreset.natural,
@@ -324,17 +316,18 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
     final RecordingModel? current = _models[id];
     if (current == null) return; // deleted meanwhile
     final RecordingModel updated = switch (result) {
-      SuccessResult<EnhanceReport>(:final EnhanceReport value) => current.copyWith(
+      SuccessResult<EnhanceReport, VocalEnhanceFailure>(:final EnhanceReport value) => current.copyWith(
         durationSeconds: value.before.durationSeconds,
         enhancedFile: _store.enhancedFileOf(id),
         keptFromSeconds: value.keptFromSeconds,
         keptToSeconds: value.keptToSeconds,
         status: RecordingStatus.enhanced,
-        clearEnhanceError: true,
+        clearEnhanceFailure: true,
       ),
-      FailureResult<EnhanceReport>(:final String error) => current.copyWith(
+      FailureResult<EnhanceReport, VocalEnhanceFailure>(:final VocalEnhanceFailure failure) => current.copyWith(
         status: RecordingStatus.enhanceFailed,
-        enhanceError: error,
+        enhanceFailure:
+            (failure == VocalEnhanceFailure.unavailable ? EnhanceFailure.unavailable : EnhanceFailure.failed).name,
       ),
     };
     try {
@@ -381,5 +374,5 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
 
   Recording _entity(RecordingModel model) => model.toEntity(folder: _store.folder);
 
-  bool _wasInterrupted(RecordingModel model) => model.enhanceError == _interruptedError;
+  bool _wasInterrupted(RecordingModel model) => model.enhanceFailure == EnhanceFailure.interrupted.name;
 }

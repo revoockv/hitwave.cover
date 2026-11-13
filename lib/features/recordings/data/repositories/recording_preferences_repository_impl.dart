@@ -7,10 +7,10 @@ import '../../domain/entities/recording_preferences.dart';
 import '../../domain/repositories/recording_preferences_repository.dart';
 import '../data_sources/hive_recording_preferences_service.dart';
 import '../models/recording_preferences_model.dart';
+import '../../domain/entities/recordings_failure.dart';
 
 /// [RecordingPreferencesRepository] on a Hive box.
 final class RecordingPreferencesRepositoryImpl implements RecordingPreferencesRepository, DisposableResource {
-  static const String _saveError = 'Не вдалося запам’ятати налаштування запису';
   static const String _saveLog = 'UpdateRecordingPreferences: failure — ';
 
   final HiveRecordingPreferencesService _store;
@@ -39,14 +39,14 @@ final class RecordingPreferencesRepositoryImpl implements RecordingPreferencesRe
   ValueListenable<RecordingPreferences> watchRecordingPreferences() => _preferences;
 
   @override
-  Future<Result<void>> updateRecordingPreferences(RecordingPreferences preferences) async {
+  Future<Result<void, RecordingsFailure>> updateRecordingPreferences(RecordingPreferences preferences) async {
     _preferences.value = preferences;
     try {
       await _store.write(RecordingPreferencesModel.fromEntity(preferences));
       return Result.ok;
     } on Exception catch (e) {
       _logger.e('$_saveLog$e');
-      return const Result.failure(_saveError);
+      return const Result.failure(RecordingsFailure.savePreferences);
     }
   }
 }

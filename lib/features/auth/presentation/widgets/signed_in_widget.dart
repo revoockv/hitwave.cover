@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:watch_it/watch_it.dart';
 
+import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../../core/presentation/theme.dart';
 
 import '../di/auth_getters.dart';
@@ -16,15 +17,12 @@ final class SignedInWidget extends WatchingWidget {
   /// Red color extracted as static const for error snackbar.
   static const Color _errorColor = Colors.red;
 
-  /// Error message text for sign-out failure.
-  static const String _errorMessage = 'Помилка виходу з системи.';
-
   /// Creates a new [SignedInWidget].
   const SignedInWidget({super.key});
 
   /// Handles the sign-out action.
   ///
-  /// Calls [signOutUseCase] and shows a snackbar with [_errorMessage] on failure.
+  /// Calls [signOutUseCase] and shows a snackbar with [t.auth.signOutFailed] on failure.
   Future<void> _handleSignOut(BuildContext context) async {
     final result = await signOutUseCase();
 
@@ -33,7 +31,7 @@ final class SignedInWidget extends WatchingWidget {
     if (result.isFailure) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text(_errorMessage), backgroundColor: _errorColor));
+      ).showSnackBar(SnackBar(content: Text(context.t.auth.signOutFailed), backgroundColor: _errorColor));
     }
   }
 
@@ -88,17 +86,15 @@ class _SignedIconWidget extends StatelessWidget {
 
 /// Welcome title displayed on the signed-in screen.
 class _SignedTitleWidget extends StatelessWidget {
-  /// Title text shown to the signed-in user.
-  static const String _titleText = 'Вітаємо!';
-
   /// Creates a new [_SignedTitleWidget].
   const _SignedTitleWidget();
 
   /// Builds the welcome title text.
   @override
   Widget build(BuildContext context) {
+    final Translations t = context.t;
     return Text(
-      _titleText,
+      t.auth.welcome,
       style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
       textAlign: TextAlign.center,
     );
@@ -140,8 +136,6 @@ class _SignedOutButtonWidget extends StatelessWidget {
   /// Font size for the sign-out button text.
   static const double _fontSize = 16;
 
-  /// Text shown on the sign-out button.
-  static const String _buttonText = 'Вийти';
   static const Color _errorColor = Colors.red;
   static const Color _buttonForegroundColor = Colors.white;
 
@@ -154,6 +148,7 @@ class _SignedOutButtonWidget extends StatelessWidget {
   /// Builds the sign-out button.
   @override
   Widget build(BuildContext context) {
+    final Translations t = context.t;
     return SizedBox(
       width: double.infinity,
       height: _buttonHeight,
@@ -164,9 +159,9 @@ class _SignedOutButtonWidget extends StatelessWidget {
           foregroundColor: _buttonForegroundColor,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(_buttonRadius)),
         ),
-        child: const Text(
-          _buttonText,
-          style: TextStyle(fontSize: _fontSize, fontWeight: FontWeight.w600),
+        child: Text(
+          t.auth.signOut,
+          style: const TextStyle(fontSize: _fontSize, fontWeight: FontWeight.w600),
         ),
       ),
     );

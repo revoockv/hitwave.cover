@@ -16,6 +16,9 @@ import '../data_sources/backup_archive_data_source.dart';
 import '../data_sources/backup_data_source.dart';
 import '../models/backup_data_model.dart';
 import '../models/backup_recording_model.dart';
+import '../../../recordings/domain/entities/recordings_failure.dart';
+import '../../../song/domain/entities/song_failure.dart';
+import '../../domain/entities/backup_failure.dart';
 
 /// Implementation of [BackupRepository] on top of [SongRepository] and [RecordingsRepository].
 ///
@@ -29,9 +32,8 @@ final class BackupRepositoryImpl implements BackupRepository, DisposableResource
   static const String _statusExporting = 'exporting';
   static const String _statusImporting = 'importing';
   static const String _statusSuccess = 'success';
-  static const String _pickerCancelled = 'Вибір скасовано';
-  static const String _exportFailedMessage = 'Помилка при експорті.';
-  static const String _importFailedMessage = 'Помилка при імпорті.';
+  static const String _statusCancelled = 'cancelled';
+  static const String _statusFailed = 'failed';
   static const String _newDocumentId = '';
   static const String _idField = 'id';
   static const String _authorField = 'author';
@@ -86,7 +88,10 @@ final class BackupRepositoryImpl implements BackupRepository, DisposableResource
   ValueListenable<String> watchStatus() => _status;
 
   @override
-  Future<Result<void>> exportSongs({required bool includeRecordings}) async {
+  Future<Result<void, BackupFailure>> exportSongs({
+    required bool includeRecordings,
+    required String pickerTitle,
+  }) async {
     _logger.i(_exportStartLog);
 
     try {
@@ -110,10 +115,10 @@ final class BackupRepositoryImpl implements BackupRepository, DisposableResource
       );
 
       if (_dataSource.supportsDirectorySelection) {
-        final String? folder = await _dataSource.pickExportDirectory();
+        final String? folder = await _dataSource.pickExportDirectory(pickerTitle);
         if (folder == null) {
           _logger.i(_exportCancelledLog);
-          _status.value = _pickerCancelled;
+          _status.value = _statusCancelled;
           return Result.ok;
         }
 
@@ -141,13 +146,13 @@ final class BackupRepositoryImpl implements BackupRepository, DisposableResource
       return Result.ok;
     } on Exception catch (e) {
       _logger.e('$_exportFailureLog$e');
-      _status.value = _exportFailedMessage;
-      return const Result.failure(_exportFailedMessage);
+      _status.value = _statusFailed;
+      return const Result.failure(BackupFailure.exportSongs);
     }
   }
 
   @override
-  Future<Result<void>> importSongs({required bool includeRecordings}) async {
+  Future<Result<void, BackupFailure>> importSongs({required bool includeRecordings}) async {
     _logger.i(_importStartLog);
     String? extractedFolder;
 
@@ -157,7 +162,7 @@ final class BackupRepositoryImpl implements BackupRepository, DisposableResource
       final PickedBackupFile? file = await _dataSource.pickBackupFile();
       if (file == null) {
         _logger.i(_importCancelledLog);
-        _status.value = _pickerCancelled;
+        _status.value = _statusCancelled;
         return Result.ok;
       }
 
@@ -170,14 +175,14 @@ final class BackupRepositoryImpl implements BackupRepository, DisposableResource
       final BackupDataModel backupDataModel = BackupDataModel.fromJson(backup.json);
 
       final List<Song> songs = backupDataModel.songs.map(_decodeSong).toList();
-      final Result<List<String>> added = await _songRepository.addSongs(songs);
+      final Result<List<String>, SongFailure> added = await _songRepository.addSongs(songs);
       final List<String> newIds;
       switch (added) {
-        case SuccessResult<List<String>>(:final List<String> value):
+        case SuccessResult<List<String>, SongFailure>(:final List<String> value):
           newIds = value;
-        case FailureResult<List<String>>(:final String error):
-          _status.value = _importFailedMessage;
-          return Result.failure(error);
+        case FailureResult<List<String>, SongFailure>():
+          _status.value = _statusFailed;
+          return const Result.failure(BackupFailure.importSongs);
       }
 
       final List<ImportedRecording> recordings = <ImportedRecording>[];
@@ -194,10 +199,10 @@ final class BackupRepositoryImpl implements BackupRepository, DisposableResource
         }
       }
       if (recordings.isNotEmpty) {
-        final Result<void> imported = await _recordingsRepository.importRecordings(recordings);
+        final Result<void, RecordingsFailure> imported = await _recordingsRepository.importRecordings(recordings);
         if (imported.isFailure) {
-          _status.value = _importFailedMessage;
-          return imported;
+          _status.value = _statusFailed;
+          return const Result.failure(BackupFailure.importSongs);
         }
       }
 
@@ -206,8 +211,8 @@ final class BackupRepositoryImpl implements BackupRepository, DisposableResource
       return Result.ok;
     } on Exception catch (e) {
       _logger.e('$_importFailureLog$e');
-      _status.value = _importFailedMessage;
-      return const Result.failure(_importFailedMessage);
+      _status.value = _statusFailed;
+      return const Result.failure(BackupFailure.importSongs);
     } finally {
       final String? folder = extractedFolder;
       if (folder != null) {

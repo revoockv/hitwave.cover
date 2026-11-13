@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../../core/presentation/theme.dart';
 import '../../domain/entities/practice_stats.dart';
 import 'practice_time_text_widget.dart';
@@ -7,13 +8,6 @@ import 'practice_time_text_widget.dart';
 /// Short practice overview for the top of the home page: today, this week, the streak and the
 /// covers, plus the days of this week marked. A tap opens the full statistics.
 final class PracticeOverviewWidget extends StatelessWidget {
-  static const String _today = 'Сьогодні';
-  static const String _week = 'Тиждень';
-  static const String _streak = 'Серія';
-  static const String _covers = 'Кавери';
-  static const String _daysSuffix = ' дн.';
-  static const String _openLabel = 'Уся статистика';
-  static const List<String> _weekdayLetters = <String>['П', 'В', 'С', 'Ч', 'П', 'С', 'Н'];
   static const double _dayMarkSize = 26;
 
   /// The stats.
@@ -30,6 +24,7 @@ final class PracticeOverviewWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Translations t = context.t;
     final ThemeData theme = Theme.of(context);
     final ColorScheme colors = theme.colorScheme;
     final DateTime monday = DateTime(today.year, today.month, today.day - (today.weekday - DateTime.monday));
@@ -47,22 +42,25 @@ final class PracticeOverviewWidget extends StatelessWidget {
               Row(
                 children: <Widget>[
                   _StatWidget(
-                    label: _today,
-                    value: PracticeTimeTextWidget.format(stats.days[today]?.time ?? Duration.zero),
+                    label: t.practice.today,
+                    value: PracticeTimeTextWidget.format(t, stats.days[today]?.time ?? Duration.zero),
                   ),
-                  _StatWidget(label: _week, value: PracticeTimeTextWidget.format(stats.weekTime)),
-                  _StatWidget(label: _streak, value: '${stats.currentStreak}$_daysSuffix'),
-                  _StatWidget(label: _covers, value: '${stats.totalTakes}'),
+                  _StatWidget(label: t.practice.week, value: PracticeTimeTextWidget.format(t, stats.weekTime)),
+                  _StatWidget(
+                    label: t.practice.streak,
+                    value: t.practice.days(n: stats.currentStreak),
+                  ),
+                  _StatWidget(label: t.practice.covers, value: '${stats.totalTakes}'),
                 ],
               ),
               const SizedBox(height: AppTheme.spacingSmall),
               Row(
                 children: <Widget>[
-                  for (int index = 0; index < _weekdayLetters.length; index++)
+                  for (int index = 0; index < t.practice.weekdayLetters.length; index++)
                     Padding(
                       padding: const EdgeInsets.only(right: AppTheme.spacingTiny),
                       child: _DayMarkWidget(
-                        letter: _weekdayLetters[index],
+                        letter: t.practice.weekdayLetters[index],
                         practised: stats.days.containsKey(DateTime(monday.year, monday.month, monday.day + index)),
                         isToday: index == today.weekday - DateTime.monday,
                         size: _dayMarkSize,
@@ -71,7 +69,7 @@ final class PracticeOverviewWidget extends StatelessWidget {
                       ),
                     ),
                   const Spacer(),
-                  Text(_openLabel, style: theme.textTheme.labelMedium?.copyWith(color: colors.primary)),
+                  Text(t.practice.allStats, style: theme.textTheme.labelMedium?.copyWith(color: colors.primary)),
                   Icon(Icons.chevron_right, color: colors.primary),
                 ],
               ),

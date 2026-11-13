@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:watch_it/watch_it.dart';
 
+import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../../core/presentation/theme.dart';
 import '../../domain/entities/song.dart';
 import 'artist_tile_widget.dart';
@@ -17,15 +18,6 @@ final class ArtistPickerWidget extends WatchingWidget {
   /// Bottom padding so the last tile is not hidden by the floating button.
   static const double _fabClearance = 96;
 
-  /// Hint of the search field.
-  static const String _searchHint = 'Пошук виконавця';
-
-  /// Tooltip of the clear button of the search field.
-  static const String _clearTooltip = 'Очистити';
-
-  /// Shown when no artist matches the search.
-  static const String _nothingFound = 'Нічого не знайдено';
-
   /// Songs whose artists are listed.
   final List<Song> songs;
 
@@ -40,6 +32,7 @@ final class ArtistPickerWidget extends WatchingWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Translations t = context.t;
     final TextEditingController searchController = createOnce(
       _createSearchController,
       dispose: _disposeSearchController,
@@ -64,12 +57,12 @@ final class ArtistPickerWidget extends WatchingWidget {
               controller: searchController,
               textInputAction: TextInputAction.search,
               decoration: InputDecoration(
-                hintText: _searchHint,
+                hintText: t.song.artistSearch,
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: query.isEmpty
                     ? null
                     : IconButton(
-                        tooltip: _clearTooltip,
+                        tooltip: t.common.clear,
                         icon: const Icon(Icons.close),
                         onPressed: searchController.clear,
                       ),
@@ -78,7 +71,7 @@ final class ArtistPickerWidget extends WatchingWidget {
           ),
         Expanded(
           child: artists.isEmpty
-              ? const Center(child: Text(_nothingFound))
+              ? Center(child: Text(t.common.nothingFound))
               : ListView.builder(
                   keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                   padding: const EdgeInsets.only(bottom: _fabClearance),

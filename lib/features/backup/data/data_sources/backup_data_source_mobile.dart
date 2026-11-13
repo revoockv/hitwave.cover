@@ -10,7 +10,6 @@ import 'backup_data_source.dart';
 /// directory for export.
 final class BackupDataSourceMobile implements BackupDataSource {
   static const List<String> _allowedExtensions = <String>['json', 'zip'];
-  static const String _exportDialogTitle = 'Оберіть папку для експорту';
   static const String _tempPrefix = 'hitwave_picked_';
   static const String _separator = '/';
 
@@ -34,7 +33,7 @@ final class BackupDataSourceMobile implements BackupDataSource {
   }
 
   @override
-  Future<String?> pickExportDirectory() => FilePicker.getDirectoryPath(dialogTitle: _exportDialogTitle);
+  Future<String?> pickExportDirectory(String title) => FilePicker.getDirectoryPath(dialogTitle: title);
 
   @override
   Future<void> triggerExportDownload(String jsonString) async {

@@ -41,10 +41,10 @@ final class PythonVocalEnhanceDataSource implements VocalEnhanceDataSource, Disp
   static const String _doneEvent = 'done';
   static const String _errorEvent = 'error';
 
-  static const String _unavailableError = 'Покращення звуку недоступне на цій платформі';
-  static const String _notStartedError = 'Аудіорушій не запустився';
-  static const String _protocolError = 'Аудіорушій має іншу версію протоколу';
-  static const String _closedError = 'Аудіорушій зупинено';
+  static const String _unavailableError = 'Vocal enhancement is not available on this platform';
+  static const String _notStartedError = 'The audio engine did not start';
+  static const String _protocolError = 'The audio engine speaks another protocol version';
+  static const String _closedError = 'The audio engine stopped';
   static const String _separator = ': ';
 
   final PythonEngineChannel? _channel;
@@ -98,7 +98,8 @@ final class PythonVocalEnhanceDataSource implements VocalEnhanceDataSource, Disp
     Map<String, dynamic> message, {
     required void Function(EnhanceProgressModel progress)? onProgress,
   }) async {
-    final PythonEngineChannel channel = _channel ?? (throw const VocalEnhanceEngineException(_unavailableError));
+    final PythonEngineChannel channel =
+        _channel ?? (throw const VocalEnhanceEngineException(_unavailableError, isUnavailable: true));
     await _start(channel);
     final String id = '$_idPrefix${_nextId++}';
     final _PendingRequest pending = _PendingRequest(onProgress);

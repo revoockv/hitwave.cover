@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:watch_it/watch_it.dart';
 
+import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../../core/presentation/theme.dart';
 import '../../../song/domain/entities/song.dart';
 import '../../../song/presentation/di/song_getters.dart';
@@ -12,10 +13,7 @@ import 'recordings_list_widget.dart';
 /// Every cover recorded on this device, grouped by song (songs by name, the newest take first);
 /// with a [query], only the covers of the songs whose name or artist contain it.
 final class CoversListWidget extends WatchingWidget {
-  static const String _empty = 'Ще немає каверів. Відкрийте пісню, позначте «Запис» і натисніть «Старт».';
-  static const String _unknownSong = 'Пісню видалено';
   static const String _titleSeparator = ' — ';
-  static const String _nothingFound = 'Нічого не знайдено.';
 
   /// Search text; empty shows every cover.
   final String query;
@@ -25,6 +23,7 @@ final class CoversListWidget extends WatchingWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Translations t = context.t;
     final List<Recording> recordings = watch(watchRecordingsUseCase()).value;
     final List<Song> songs = watch(watchListOfSongsUseCase()).value;
     final Map<String, String> titles = <String, String>{
@@ -36,17 +35,20 @@ final class CoversListWidget extends WatchingWidget {
     final String needle = query.trim().toLowerCase();
     final List<Recording> grouped =
         recordings
-            .where((Recording recording) => (titles[recording.songId] ?? _unknownSong).toLowerCase().contains(needle))
+            .where(
+              (Recording recording) =>
+                  (titles[recording.songId] ?? t.common.songDeleted).toLowerCase().contains(needle),
+            )
             .toList()
-          ..sort((Recording a, Recording b) => _compare(a, b, titles));
+          ..sort((Recording a, Recording b) => _compare(t, a, b, titles));
 
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: AppTheme.maxContentWidth),
         child: RecordingsListWidget(
           recordings: grouped,
-          emptyText: needle.isEmpty ? _empty : _nothingFound,
-          headerOf: (Recording recording) => titles[recording.songId] ?? _unknownSong,
+          emptyText: needle.isEmpty ? t.recordings.noCovers : t.common.nothingFound,
+          headerOf: (Recording recording) => titles[recording.songId] ?? t.common.songDeleted,
           songOf: (Recording recording) => sharedSongs[recording.songId],
           padding: const EdgeInsets.all(AppTheme.spacingMedium),
         ),
@@ -55,9 +57,9 @@ final class CoversListWidget extends WatchingWidget {
   }
 
   /// Songs by title, then the newest take first.
-  static int _compare(Recording a, Recording b, Map<String, String> titles) {
-    final int bySong = (titles[a.songId] ?? _unknownSong).toLowerCase().compareTo(
-      (titles[b.songId] ?? _unknownSong).toLowerCase(),
+  static int _compare(Translations t, Recording a, Recording b, Map<String, String> titles) {
+    final int bySong = (titles[a.songId] ?? t.common.songDeleted).toLowerCase().compareTo(
+      (titles[b.songId] ?? t.common.songDeleted).toLowerCase(),
     );
     return bySong != 0 ? bySong : b.recordedAt.compareTo(a.recordedAt);
   }

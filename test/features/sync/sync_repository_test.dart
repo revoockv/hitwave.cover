@@ -25,6 +25,13 @@ import 'package:hitwave.cover/features/sync/domain/entities/sync_conflict.dart';
 import 'package:hitwave.cover/features/sync/domain/entities/sync_state.dart';
 import 'package:hive_ce/hive_ce.dart';
 import 'package:logger/logger.dart';
+import 'package:hitwave.cover/features/song/domain/entities/song_failure.dart';
+import 'package:hitwave.cover/features/recordings/domain/entities/recordings_failure.dart';
+import 'package:hitwave.cover/features/practice/domain/entities/practice_failure.dart';
+import 'package:hitwave.cover/features/history/domain/entities/history_failure.dart';
+import 'package:hitwave.cover/features/sync/domain/entities/sync_failure.dart';
+import 'package:hitwave.cover/features/sync/domain/entities/song_difference.dart';
+import 'package:hitwave.cover/features/sync/domain/entities/sync_step.dart';
 
 Song song(String id, String author, String name, {String lyrics = 'la la', double? speed}) =>
     Song(id: id, author: author, name: name, lyrics: lyrics, covers: const <Cover>[], scrollSpeed: speed);
@@ -44,7 +51,7 @@ final class FakeSongs implements SongRepository {
   Stream<SongIdChange> watchSongIdChanges() => changes.stream;
 
   @override
-  Future<Result<List<String>>> addSongs(List<Song> added) async {
+  Future<Result<List<String>, SongFailure>> addSongs(List<Song> added) async {
     final List<String> ids = <String>[for (final Song _ in added) 'new-${++_next}'];
     songs.value = <Song>[
       ...songs.value,
@@ -54,7 +61,7 @@ final class FakeSongs implements SongRepository {
   }
 
   @override
-  Future<Result<void>> deleteSong({required String songId}) async {
+  Future<Result<void, SongFailure>> deleteSong({required String songId}) async {
     final Song deleted = songs.value.singleWhere((Song s) => s.id == songId);
     songs.value = songs.value.where((Song s) => s.id != songId).toList();
     changes.add(SongDeletedIdChange(songId, author: deleted.author, name: deleted.name));
@@ -62,7 +69,7 @@ final class FakeSongs implements SongRepository {
   }
 
   @override
-  Future<Result<void>> updateSong({
+  Future<Result<void, SongFailure>> updateSong({
     required String songId,
     required String author,
     required String name,
@@ -76,10 +83,12 @@ final class FakeSongs implements SongRepository {
   }
 
   @override
-  Future<Result<void>> updateSongScrollSpeed({required String songId, required double speed}) async => Result.ok;
+  Future<Result<void, SongFailure>> updateSongScrollSpeed({required String songId, required double speed}) async =>
+      Result.ok;
 
   @override
-  Future<Result<void>> updateSongLeadIn({required String songId, required double leadIn}) async => Result.ok;
+  Future<Result<void, SongFailure>> updateSongLeadIn({required String songId, required double leadIn}) async =>
+      Result.ok;
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -106,7 +115,7 @@ final class FakeRecordings implements RecordingsRepository {
       keptFromSeconds: 1,
       keptToSeconds: 29,
       status: enhanced ? RecordingStatus.enhanced : RecordingStatus.enhanceFailed,
-      enhanceError: null,
+      enhanceFailure: null,
     );
     recordings.value = <Recording>[...recordings.value, recording];
     return recording;
@@ -119,14 +128,14 @@ final class FakeRecordings implements RecordingsRepository {
   Stream<String> watchRecordingDeletions() => deletions.stream;
 
   @override
-  Future<Result<void>> deleteRecording(String recordingId) async {
+  Future<Result<void, RecordingsFailure>> deleteRecording(String recordingId) async {
     recordings.value = recordings.value.where((Recording r) => r.id != recordingId).toList();
     deletions.add(recordingId);
     return Result.ok;
   }
 
   @override
-  Future<Result<void>> importRecordings(List<ImportedRecording> imported) async {
+  Future<Result<void, RecordingsFailure>> importRecordings(List<ImportedRecording> imported) async {
     for (final ImportedRecording recording in imported) {
       final String id = recording.id!;
       final String raw = '${folder.path}/${id}_raw.wav';
@@ -146,7 +155,7 @@ final class FakeRecordings implements RecordingsRepository {
           keptFromSeconds: recording.keptFromSeconds,
           keptToSeconds: recording.keptToSeconds,
           status: enhanced == null ? RecordingStatus.enhancing : RecordingStatus.enhanced,
-          enhanceError: null,
+          enhanceFailure: null,
         ),
       ];
     }
@@ -167,7 +176,7 @@ final class FakePractice implements PracticeRepository {
   ValueListenable<List<PracticeSession>> watchSessions() => sessions;
 
   @override
-  Future<Result<void>> importSessions(List<PracticeSession> added) async {
+  Future<Result<void, PracticeFailure>> importSessions(List<PracticeSession> added) async {
     sessions.value = <PracticeSession>[...sessions.value, ...added];
     return Result.ok;
   }
@@ -186,7 +195,7 @@ final class FakeHistory implements HistoryRepository {
   ValueListenable<UsageHistory> watchHistory() => history;
 
   @override
-  Future<Result<void>> importHistory(UsageHistory added) async {
+  Future<Result<void, HistoryFailure>> importHistory(UsageHistory added) async {
     history.value = UsageHistory(
       songsOpenedAt: <String, DateTime>{...history.value.songsOpenedAt, ...added.songsOpenedAt},
       coversPlayedAt: <String, DateTime>{...history.value.coversPlayedAt, ...added.coversPlayedAt},
@@ -391,7 +400,7 @@ void main() {
     final SyncConflict changed = waiting.conflicts.singleWhere(
       (SyncConflict c) => c.kind == SyncConflictKind.songChanged,
     );
-    expect(changed.detail, contains('текст'));
+    expect(changed.differences, contains(SongDifference.lyrics));
 
     await guest.sync.resolveConflicts(<String, SyncChoice>{
       deleted.id: SyncChoice.restore,
@@ -418,12 +427,13 @@ void main() {
     expect(guest.sync.watchSyncState().value, isA<ConflictsSyncState>());
     await settle();
     final SyncingSyncState waiting = host.sync.watchSyncState().value as SyncingSyncState;
-    expect(waiting.step, contains('«pixel»'));
-    expect(waiting.step, contains('розбіжност'));
+    expect(waiting.peerName, '«pixel»');
+    expect(waiting.step, SyncStep.choosing);
 
     await guest.sync.stopSync();
     final FailedSyncState failed = host.sync.watchSyncState().value as FailedSyncState;
-    expect(failed.message, contains('Скасовано'));
+    expect(failed.failure, SyncFailure.peerStopped);
+    expect(failed.peerFailure, SyncFailure.cancelled);
     expect(guest.songNames, <String>['Gone']);
   });
 

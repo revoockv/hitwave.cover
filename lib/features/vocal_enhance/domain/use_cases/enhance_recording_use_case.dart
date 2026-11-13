@@ -2,13 +2,11 @@ import '../../../../core/domain/entities/result.dart';
 import '../entities/enhance_preset.dart';
 import '../entities/enhance_report.dart';
 import '../repositories/vocal_enhance_repository.dart';
+import '../entities/vocal_enhance_failure.dart';
 
 /// Use case that turns a raw vocal take into a cleaned, mastered WAV file.
 final class EnhanceRecordingUseCase {
   static const String _wavExtension = '.wav';
-  static const String _samePathError = 'Покращений запис має бути окремим файлом';
-  static const String _notWavError = 'Покращений запис має бути файлом .wav';
-  static const String _negativeLeadInError = 'Тиша на початку не може бути від’ємною';
 
   final VocalEnhanceRepository _repository;
 
@@ -21,7 +19,7 @@ final class EnhanceRecordingUseCase {
   /// singing); the engine learns the noise from it. Leave it `null` to let the engine find the
   /// quietest parts. [trimSilence] cuts the silence before and after the singing in the enhanced
   /// file. [settings] change single engine settings on top of the preset.
-  Future<Result<EnhanceReport>> call({
+  Future<Result<EnhanceReport, VocalEnhanceFailure>> call({
     required String inputPath,
     required String outputPath,
     EnhancePreset preset = EnhancePreset.natural,
@@ -30,13 +28,13 @@ final class EnhanceRecordingUseCase {
     Map<String, double> settings = const <String, double>{},
   }) async {
     if (inputPath == outputPath) {
-      return const Result.failure(_samePathError);
+      return const Result.failure(VocalEnhanceFailure.samePath);
     }
     if (!outputPath.toLowerCase().endsWith(_wavExtension)) {
-      return const Result.failure(_notWavError);
+      return const Result.failure(VocalEnhanceFailure.notWav);
     }
     if (roomToneSeconds != null && roomToneSeconds < 0) {
-      return const Result.failure(_negativeLeadInError);
+      return const Result.failure(VocalEnhanceFailure.negativeLeadIn);
     }
     return _repository.enhanceRecording(
       inputPath: inputPath,

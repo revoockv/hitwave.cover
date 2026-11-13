@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart' show ValueListenable;
 
 import '../../../../core/domain/entities/result.dart';
 import '../entities/practice_session.dart';
+import '../entities/practice_failure.dart';
 
 /// Measures how long the songs are practised and keeps the sessions on this device.
 ///
@@ -12,11 +13,11 @@ abstract interface class PracticeRepository {
 
   /// Starts measuring the practice of [songId]; nothing happens while that song is already
   /// measured, and the session of another song ends first.
-  Future<Result<void>> startPractice(String songId);
+  Future<Result<void, PracticeFailure>> startPractice(String songId);
 
   /// Ends the session being measured and keeps it when it lasted long enough to count.
-  Future<Result<void>> stopPractice();
+  Future<Result<void, PracticeFailure>> stopPractice();
 
   /// Adds [sessions] from another device; a session whose id is already here is skipped.
-  Future<Result<void>> importSessions(List<PracticeSession> sessions);
+  Future<Result<void, PracticeFailure>> importSessions(List<PracticeSession> sessions);
 }

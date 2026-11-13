@@ -4,24 +4,14 @@ import '../../../../core/presentation/theme.dart';
 import '../../domain/entities/recording.dart';
 import '../../domain/entities/recording_status.dart';
 import '../../domain/entities/recording_version.dart';
+import '../../../../core/presentation/l10n/app_translations.dart';
+import '../l10n/recordings_texts.dart';
 
 /// One recording in the list: date, length, state, the original/enhanced switch, play, share,
 /// show in folder (desktop) and delete.
 ///
 /// Knows nothing about use cases; every action is a callback.
 final class RecordingTileWidget extends StatelessWidget {
-  static const String _originalLabel = 'Оригінал';
-  static const String _enhancedLabel = 'Покращений';
-  static const String _enhancingLabel = 'Покращую…';
-  static const String _failedLabel = 'Не покращено';
-  static const String _silentLabel = 'Без звуку — перевірте мікрофон';
-  static const String _retryLabel = 'Покращити ще раз';
-  static const String _playLabel = 'Слухати';
-  static const String _pauseLabel = 'Пауза';
-  static const String _deleteLabel = 'Видалити';
-  static const String _shareLabel = 'Надіслати';
-  static const String _preparingLabel = 'Готую MP3…';
-  static const String _folderLabel = 'Показати в папці';
   static const String _dateSeparator = '.';
   static const String _timeSeparator = ':';
   static const String _dateTimeSeparator = ' · ';
@@ -87,6 +77,7 @@ final class RecordingTileWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Translations t = context.t;
     final ThemeData theme = Theme.of(context);
     final bool isEnhanced = recording.status == RecordingStatus.enhanced && recording.enhancedPath != null;
 
@@ -105,7 +96,7 @@ final class RecordingTileWidget extends StatelessWidget {
                     children: <Widget>[
                       Text(_formatDate(recording.recordedAt), style: theme.textTheme.titleSmall),
                       Text(
-                        '${_formatLength(recording)}$_dateTimeSeparator${_statusText(recording)}',
+                        '${_formatLength(recording)}$_dateTimeSeparator${_statusText(context.t, recording)}',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: recording.status == RecordingStatus.enhanceFailed || recording.isSilent
                               ? theme.colorScheme.error
@@ -116,12 +107,12 @@ final class RecordingTileWidget extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  tooltip: isLoaded && isPlaying ? _pauseLabel : _playLabel,
+                  tooltip: isLoaded && isPlaying ? t.recordings.pause : t.recordings.play,
                   onPressed: onPlayPressed,
                   icon: Icon(isLoaded && isPlaying ? Icons.pause_circle : Icons.play_circle),
                 ),
                 IconButton(
-                  tooltip: isSharing ? _preparingLabel : _shareLabel,
+                  tooltip: isSharing ? t.recordings.preparingMp3 : t.recordings.share,
                   onPressed: isSharing ? null : onSharePressed,
                   icon: isSharing
                       ? const SizedBox.square(
@@ -132,20 +123,24 @@ final class RecordingTileWidget extends StatelessWidget {
                 ),
                 if (onShowInFolderPressed != null)
                   IconButton(
-                    tooltip: _folderLabel,
+                    tooltip: t.recordings.showInFolder,
                     onPressed: onShowInFolderPressed,
                     icon: const Icon(Icons.folder_open_outlined),
                   ),
-                IconButton(tooltip: _deleteLabel, onPressed: onDeletePressed, icon: const Icon(Icons.delete_outline)),
+                IconButton(
+                  tooltip: t.common.delete,
+                  onPressed: onDeletePressed,
+                  icon: const Icon(Icons.delete_outline),
+                ),
               ],
             ),
             const SizedBox(height: AppTheme.spacingSmall),
             SegmentedButton<RecordingVersion>(
               segments: <ButtonSegment<RecordingVersion>>[
-                const ButtonSegment<RecordingVersion>(value: RecordingVersion.original, label: Text(_originalLabel)),
+                ButtonSegment<RecordingVersion>(value: RecordingVersion.original, label: Text(t.recordings.original)),
                 ButtonSegment<RecordingVersion>(
                   value: RecordingVersion.enhanced,
-                  label: const Text(_enhancedLabel),
+                  label: Text(t.recordings.enhanced),
                   enabled: isEnhanced,
                 ),
               ],
@@ -162,7 +157,7 @@ final class RecordingTileWidget extends StatelessWidget {
                 child: TextButton.icon(
                   onPressed: onRetryPressed,
                   icon: const Icon(Icons.auto_fix_high),
-                  label: const Text(_retryLabel),
+                  label: Text(t.recordings.retry),
                 ),
               ),
             if (isLoaded) ...<Widget>[
@@ -177,12 +172,12 @@ final class RecordingTileWidget extends StatelessWidget {
 
   void _onSelectionChanged(Set<RecordingVersion> selection) => onVersionChanged(selection.first);
 
-  static String _statusText(Recording recording) => recording.isSilent
-      ? _silentLabel
+  static String _statusText(Translations t, Recording recording) => recording.isSilent
+      ? t.recordings.silent
       : switch (recording.status) {
-          RecordingStatus.enhancing => _enhancingLabel,
-          RecordingStatus.enhanced => _enhancedLabel,
-          RecordingStatus.enhanceFailed => recording.enhanceError ?? _failedLabel,
+          RecordingStatus.enhancing => t.recordings.enhancing,
+          RecordingStatus.enhanced => t.recordings.enhanced,
+          RecordingStatus.enhanceFailed => recording.enhanceFailure?.text(t) ?? t.recordings.notEnhanced,
         };
 
   /// `dd.mm.yyyy · hh:mm`.

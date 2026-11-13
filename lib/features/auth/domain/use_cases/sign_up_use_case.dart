@@ -1,11 +1,12 @@
 import '../../../../core/domain/entities/result.dart';
 
 import '../repositories/auth_repository.dart';
+import '../entities/auth_failure.dart';
 
 /// Use case for registering a new user.
 ///
 /// Wraps the repository [signUp] method as a single-responsibility use case.
-/// Returns [Result<void>] indicating success or failure.
+/// Returns [Result<void, AuthFailure>] indicating success or failure.
 final class SignUpUseCase {
   final AuthRepository _repository;
 
@@ -16,10 +17,7 @@ final class SignUpUseCase {
   ///
   /// Returns [SuccessResult] when registration succeeds, or [FailureResult]
   /// with an error message when registration fails.
-  Future<Result<void>> call({
-    required String email,
-    required String password,
-  }) async {
+  Future<Result<void, AuthFailure>> call({required String email, required String password}) async {
     return _repository.signUp(email: email, password: password);
   }
 }

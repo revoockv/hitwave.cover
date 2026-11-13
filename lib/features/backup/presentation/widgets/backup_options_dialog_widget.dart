@@ -1,20 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:watch_it/watch_it.dart';
 
+import '../../../../core/presentation/l10n/app_translations.dart';
+
 /// Asks whether the recordings go with the export or the import.
 ///
 /// Pops `true` (with recordings) or `false` (songs only) when confirmed, and `null` when cancelled.
 final class BackupOptionsDialogWidget extends WatchingWidget {
-  /// Label of the checkbox.
-  static const String _includeRecordingsLabel = 'Включити записи';
-
-  /// Explanation under the checkbox.
-  static const String _includeRecordingsHint =
-      'Записи зберігаються лише на цьому пристрої; з ними файл стає ZIP-архівом.';
-
-  /// Label of the cancel button.
-  static const String _cancelLabel = 'Скасувати';
-
   /// Dialog title.
   final String title;
 
@@ -29,6 +21,7 @@ final class BackupOptionsDialogWidget extends WatchingWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Translations t = context.t;
     final ValueNotifier<bool> includeRecordingsController = createOnce(
       _createIncludeRecordingsController,
       dispose: _disposeIncludeRecordingsController,
@@ -46,13 +39,13 @@ final class BackupOptionsDialogWidget extends WatchingWidget {
             contentPadding: EdgeInsets.zero,
             value: includeRecordings,
             onChanged: (bool? value) => _onIncludeRecordingsChanged(includeRecordingsController, value),
-            title: const Text(_includeRecordingsLabel),
-            subtitle: const Text(_includeRecordingsHint),
+            title: Text(t.backup.includeRecordings),
+            subtitle: Text(t.backup.recordingsNote),
           ),
         ],
       ),
       actions: <Widget>[
-        TextButton(onPressed: () => _onCancelPressed(context), child: const Text(_cancelLabel)),
+        TextButton(onPressed: () => _onCancelPressed(context), child: Text(t.common.cancel)),
         FilledButton(
           onPressed: () => _onConfirmPressed(context, includeRecordingsController),
           child: Text(confirmLabel),

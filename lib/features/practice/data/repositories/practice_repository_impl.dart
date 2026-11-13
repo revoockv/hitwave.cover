@@ -12,6 +12,7 @@ import '../../domain/entities/practice_session.dart';
 import '../../domain/repositories/practice_repository.dart';
 import '../data_sources/hive_practice_service.dart';
 import '../models/practice_session_model.dart';
+import '../../domain/entities/practice_failure.dart';
 
 /// [PracticeRepository] on a Hive box and a clock.
 ///
@@ -19,8 +20,6 @@ import '../models/practice_session_model.dart';
 final class PracticeRepositoryImpl implements PracticeRepository, DisposableResource {
   static const Duration _minimumLength = Duration(seconds: 10);
 
-  static const String _saveError = 'Не вдалося зберегти тренування';
-  static const String _importError = 'Не вдалося додати тренування';
   static const String _importLog = 'ImportPracticeSessions: ';
   static const String _stopLog = 'StopPractice: ';
   static const String _songIdLog = 'PracticeSongIdChange: ';
@@ -71,16 +70,16 @@ final class PracticeRepositoryImpl implements PracticeRepository, DisposableReso
   ValueListenable<List<PracticeSession>> watchSessions() => _sessions;
 
   @override
-  Future<Result<void>> startPractice(String songId) async {
+  Future<Result<void, PracticeFailure>> startPractice(String songId) async {
     if (_activeSongId == songId) return Result.ok;
-    final Result<void> stopped = await stopPractice();
+    final Result<void, PracticeFailure> stopped = await stopPractice();
     _activeSongId = songId;
     _activeSince = _now();
     return stopped;
   }
 
   @override
-  Future<Result<void>> stopPractice() async {
+  Future<Result<void, PracticeFailure>> stopPractice() async {
     final String? songId = _activeSongId;
     final DateTime? since = _activeSince;
     _activeSongId = null;
@@ -103,12 +102,12 @@ final class PracticeRepositoryImpl implements PracticeRepository, DisposableReso
       return Result.ok;
     } on Exception catch (e) {
       _logger.e('$_stopLog$_failureLog$e');
-      return const Result.failure(_saveError);
+      return const Result.failure(PracticeFailure.saveSession);
     }
   }
 
   @override
-  Future<Result<void>> importSessions(List<PracticeSession> sessions) async {
+  Future<Result<void, PracticeFailure>> importSessions(List<PracticeSession> sessions) async {
     try {
       for (final PracticeSession session in sessions) {
         if (_models.containsKey(session.id)) continue;
@@ -120,7 +119,7 @@ final class PracticeRepositoryImpl implements PracticeRepository, DisposableReso
       return Result.ok;
     } on Exception catch (e) {
       _logger.e('$_importLog$_failureLog$e');
-      return const Result.failure(_importError);
+      return const Result.failure(PracticeFailure.importSessions);
     }
   }
 

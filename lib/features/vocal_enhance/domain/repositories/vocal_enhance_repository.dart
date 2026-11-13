@@ -5,6 +5,7 @@ import '../entities/enhance_preset.dart';
 import '../entities/enhance_progress.dart';
 import '../entities/enhance_report.dart';
 import '../entities/recording_analysis.dart';
+import '../entities/vocal_enhance_failure.dart';
 
 /// Measures recordings and turns raw vocal takes into cleaned, mastered WAV files.
 ///
@@ -14,7 +15,7 @@ abstract interface class VocalEnhanceRepository {
   ValueListenable<EnhanceProgress?> watchProgress();
 
   /// Measures the WAV file at [path].
-  Future<Result<RecordingAnalysis>> analyzeRecording(String path);
+  Future<Result<RecordingAnalysis, VocalEnhanceFailure>> analyzeRecording(String path);
 
   /// Processes [inputPath] with [preset] plus [settings] (engine setting name → value) and
   /// writes a 24-bit WAV file to [outputPath].
@@ -22,7 +23,7 @@ abstract interface class VocalEnhanceRepository {
   /// [roomToneSeconds] is how long the take starts with room tone only; `null` lets the engine
   /// learn the noise from the quietest parts. [trimSilence] cuts the silence before the first
   /// and after the last sung note of the enhanced file (the raw take stays whole).
-  Future<Result<EnhanceReport>> enhanceRecording({
+  Future<Result<EnhanceReport, VocalEnhanceFailure>> enhanceRecording({
     required String inputPath,
     required String outputPath,
     required EnhancePreset preset,

@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart' show FormState, GlobalKey, TextEditingCont
 
 import '../../../../core/domain/entities/result_state.dart';
 import '../../domain/entities/song.dart';
+import '../../domain/entities/song_failure.dart';
 
 /// UI state of the add and edit song pages, like a Flutter controller: the form
 /// fields and the progress of saving.
@@ -25,7 +26,8 @@ final class SongFormController {
   final TextEditingController lyricsController;
 
   /// Progress of saving the song; the save button is disabled while it runs.
-  final ValueNotifier<ResultState<void>> savingStateController = ValueNotifier<ResultState<void>>(ResultState.idle);
+  final ValueNotifier<ResultState<void, SongFailure>> savingStateController =
+      ValueNotifier<ResultState<void, SongFailure>>(ResultState.idle);
 
   bool _isDisposed = false;
 

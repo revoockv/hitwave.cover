@@ -10,8 +10,8 @@ import '../models/wav_pcm_model.dart';
 /// isolate so the interface keeps moving. Works the same on every platform.
 class Mp3EncoderService {
   static const int _bitrate = 192;
-  static const String _rateError = 'MP3 не підтримує частоту ';
-  static const String _hertz = ' Гц';
+  static const String _rateError = 'MP3 does not support the sample rate ';
+  static const String _hertz = ' Hz';
   static const String _partSuffix = '.part';
   static const String _wavSuffix = '.wav';
   static const String _mp3Suffix = '.mp3';

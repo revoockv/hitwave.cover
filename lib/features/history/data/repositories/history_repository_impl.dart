@@ -11,10 +11,10 @@ import '../../domain/entities/usage_history.dart';
 import '../../domain/repositories/history_repository.dart';
 import '../data_sources/hive_history_service.dart';
 import '../models/usage_history_model.dart';
+import '../../domain/entities/history_failure.dart';
 
 /// [HistoryRepository] on Hive and a clock.
 final class HistoryRepositoryImpl implements HistoryRepository, DisposableResource {
-  static const String _saveError = 'Не вдалося запам’ятати історію';
   static const String _saveLog = 'History: failure — ';
 
   final HiveHistoryService _store;
@@ -53,15 +53,15 @@ final class HistoryRepositoryImpl implements HistoryRepository, DisposableResour
   ValueListenable<UsageHistory> watchHistory() => _history;
 
   @override
-  Future<Result<void>> markSongOpened(String songId) =>
+  Future<Result<void, HistoryFailure>> markSongOpened(String songId) =>
       _save(() => _store.putSongOpened(songId, _songsOpenedAt[songId] = _now()));
 
   @override
-  Future<Result<void>> markCoverPlayed(String recordingId) =>
+  Future<Result<void, HistoryFailure>> markCoverPlayed(String recordingId) =>
       _save(() => _store.putCoverPlayed(recordingId, _coversPlayedAt[recordingId] = _now()));
 
   @override
-  Future<Result<void>> importHistory(UsageHistory history) async {
+  Future<Result<void, HistoryFailure>> importHistory(UsageHistory history) async {
     try {
       for (final MapEntry<String, DateTime> entry in history.songsOpenedAt.entries) {
         final DateTime? current = _songsOpenedAt[entry.key];
@@ -79,11 +79,11 @@ final class HistoryRepositoryImpl implements HistoryRepository, DisposableResour
       return Result.ok;
     } on Exception catch (e) {
       _logger.e('$_saveLog$e');
-      return const Result.failure(_saveError);
+      return const Result.failure(HistoryFailure.save);
     }
   }
 
-  Future<Result<void>> _save(Future<void> Function() write) async {
+  Future<Result<void, HistoryFailure>> _save(Future<void> Function() write) async {
     try {
       final Future<void> written = write();
       _publish();
@@ -91,7 +91,7 @@ final class HistoryRepositoryImpl implements HistoryRepository, DisposableResour
       return Result.ok;
     } on Exception catch (e) {
       _logger.e('$_saveLog$e');
-      return const Result.failure(_saveError);
+      return const Result.failure(HistoryFailure.save);
     }
   }
 

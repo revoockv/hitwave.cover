@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
+import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../../core/presentation/theme.dart';
 
 /// The QR code of this device with the code as text (to copy to a device that cannot scan).
 final class SyncQrWidget extends StatelessWidget {
-  static const String _hint =
-      'На іншому пристрої відкрийте «Синхронізація» → «Сканувати QR-код». Обидва пристрої мають бути в одній мережі Wi‑Fi.';
-  static const String _waiting = 'Чекаю, поки інший пристрій відсканує код…';
-  static const String _copyLabel = 'Скопіювати код';
-  static const String _cancelLabel = 'Скасувати';
   static const double _qrSize = 240;
   static const Color _qrBackground = Color(0xFFFFFFFF);
 
@@ -27,6 +23,7 @@ final class SyncQrWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Translations t = context.t;
     final ThemeData theme = Theme.of(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -41,9 +38,9 @@ final class SyncQrWidget extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppTheme.spacingMedium),
-        Text(_hint, textAlign: TextAlign.center, style: theme.textTheme.bodyMedium),
+        Text(t.sync.qrHint, textAlign: TextAlign.center, style: theme.textTheme.bodyMedium),
         const SizedBox(height: AppTheme.spacingMedium),
-        Text(_waiting, textAlign: TextAlign.center, style: theme.textTheme.titleSmall),
+        Text(t.sync.waiting, textAlign: TextAlign.center, style: theme.textTheme.titleSmall),
         const SizedBox(height: AppTheme.spacingSmall),
         const LinearProgressIndicator(),
         const SizedBox(height: AppTheme.spacingMedium),
@@ -51,8 +48,8 @@ final class SyncQrWidget extends StatelessWidget {
           spacing: AppTheme.spacingSmall,
           alignment: WrapAlignment.center,
           children: <Widget>[
-            OutlinedButton.icon(onPressed: onCopyPressed, icon: const Icon(Icons.copy), label: const Text(_copyLabel)),
-            TextButton(onPressed: onCancelPressed, child: const Text(_cancelLabel)),
+            OutlinedButton.icon(onPressed: onCopyPressed, icon: const Icon(Icons.copy), label: Text(t.sync.copyCode)),
+            TextButton(onPressed: onCancelPressed, child: Text(t.common.cancel)),
           ],
         ),
       ],

@@ -26,8 +26,8 @@ final class WavPcmModel {
   static const int _wrap24 = 0x1000000;
   static const int _subFormatOffset = 24;
   static const int _bitsOffset = 14;
-  static const String _notWavError = 'Це не WAV-файл';
-  static const String _formatError = 'Непідтримуваний формат WAV';
+  static const String _notWavError = 'Not a WAV file';
+  static const String _formatError = 'Unsupported WAV format';
 
   /// Samples per second.
   final int sampleRate;

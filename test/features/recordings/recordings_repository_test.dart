@@ -25,6 +25,9 @@ import 'package:hitwave.cover/features/vocal_enhance/domain/entities/recording_a
 import 'package:hitwave.cover/features/vocal_enhance/domain/repositories/vocal_enhance_repository.dart';
 import 'package:hive_ce/hive_ce.dart';
 import 'package:logger/logger.dart';
+import 'package:hitwave.cover/features/vocal_enhance/domain/entities/vocal_enhance_failure.dart';
+import 'package:hitwave.cover/features/recordings/domain/entities/enhance_failure.dart';
+import 'package:hitwave.cover/features/recordings/domain/entities/recordings_failure.dart';
 
 /// A microphone that writes a few bytes when stopped.
 final class FakeRecorder implements RecorderDataSource {
@@ -82,10 +85,11 @@ final class FakeEngine implements VocalEnhanceRepository {
   ValueListenable<EnhanceProgress?> watchProgress() => throw UnimplementedError();
 
   @override
-  Future<Result<RecordingAnalysis>> analyzeRecording(String path) async => const Result.success(analysis);
+  Future<Result<RecordingAnalysis, VocalEnhanceFailure>> analyzeRecording(String path) async =>
+      const Result.success(analysis);
 
   @override
-  Future<Result<EnhanceReport>> enhanceRecording({
+  Future<Result<EnhanceReport, VocalEnhanceFailure>> enhanceRecording({
     required String inputPath,
     required String outputPath,
     required EnhancePreset preset,
@@ -94,7 +98,7 @@ final class FakeEngine implements VocalEnhanceRepository {
     required Map<String, double> settings,
   }) async {
     trims.add(trimSilence);
-    if (failing) return const Result.failure('engine is down');
+    if (failing) return const Result.failure(VocalEnhanceFailure.enhance);
     await File(inputPath).copy(outputPath);
     return Result.success(
       EnhanceReport(
@@ -182,9 +186,9 @@ void main() {
 
   Future<Recording> record(String songId, {bool trimSilence = true}) async {
     expect((await repository.startRecording(songId)).isSuccess, isTrue);
-    final Result<Recording> stopped = await repository.stopRecording(trimSilence: trimSilence);
+    final Result<Recording, RecordingsFailure> stopped = await repository.stopRecording(trimSilence: trimSilence);
     await settle();
-    return (stopped as SuccessResult<Recording>).value;
+    return (stopped as SuccessResult<Recording, RecordingsFailure>).value;
   }
 
   test('a take is kept on the device and enhanced automatically', () async {
@@ -192,9 +196,9 @@ void main() {
     expect(repository.watchRecorder().value, isA<RecordingRecorderState>());
     expect((await repository.startRecording('song-1')).isFailure, isTrue);
 
-    final Result<Recording> stopped = await repository.stopRecording(trimSilence: true);
+    final Result<Recording, RecordingsFailure> stopped = await repository.stopRecording(trimSilence: true);
     expect(repository.watchRecorder().value, isA<IdleRecorderState>());
-    expect((stopped as SuccessResult<Recording>).value.status, RecordingStatus.enhancing);
+    expect((stopped as SuccessResult<Recording, RecordingsFailure>).value.status, RecordingStatus.enhancing);
     await settle();
 
     final Recording recording = repository.watchRecordings().value.single;
@@ -219,18 +223,23 @@ void main() {
   });
 
   test('a take is recorded from the chosen microphone; one without any sound is marked', () async {
-    expect((await repository.listMicrophones() as SuccessResult<List<Microphone>>).value.single.label, 'USB mic');
+    expect(
+      (await repository.listMicrophones() as SuccessResult<List<Microphone>, RecordingsFailure>).value.single.label,
+      'USB mic',
+    );
 
     expect((await repository.startRecording('song-1', microphoneId: 'usb')).isSuccess, isTrue);
     expect(recorder.microphoneId, 'usb');
     await Future<void>.delayed(const Duration(milliseconds: 450));
-    final Recording heard = (await repository.stopRecording(trimSilence: true) as SuccessResult<Recording>).value;
+    final Recording heard =
+        (await repository.stopRecording(trimSilence: true) as SuccessResult<Recording, RecordingsFailure>).value;
     expect(heard.isSilent, isFalse);
 
     recorder.inputLevel = 0;
     await repository.startRecording('song-1');
     await Future<void>.delayed(const Duration(milliseconds: 450));
-    final Recording silent = (await repository.stopRecording(trimSilence: true) as SuccessResult<Recording>).value;
+    final Recording silent =
+        (await repository.stopRecording(trimSilence: true) as SuccessResult<Recording, RecordingsFailure>).value;
     expect(silent.isSilent, isTrue);
     await settle();
     expect(repository.watchRecordings().value.firstWhere((Recording r) => r.id == silent.id).isSilent, isTrue);
@@ -240,7 +249,7 @@ void main() {
     engine.failing = true;
     final Recording recording = await record('song-1', trimSilence: false);
     expect(repository.watchRecordings().value.single.status, RecordingStatus.enhanceFailed);
-    expect(repository.watchRecordings().value.single.enhanceError, 'engine is down');
+    expect(repository.watchRecordings().value.single.enhanceFailure, EnhanceFailure.failed);
 
     engine.failing = false;
     expect((await repository.enhanceAgain(recordingId: recording.id, trimSilence: true)).isSuccess, isTrue);
@@ -288,7 +297,7 @@ void main() {
     final File raw = File('${directory.path}/in_raw.wav')..writeAsBytesSync(<int>[1]);
     final File enhanced = File('${directory.path}/in_enhanced.wav')..writeAsBytesSync(<int>[2]);
 
-    final Result<void> result = await repository.importRecordings(<ImportedRecording>[
+    final Result<void, RecordingsFailure> result = await repository.importRecordings(<ImportedRecording>[
       ImportedRecording(
         songId: 'song-9',
         recordedAt: DateTime(2026, 11, 12),

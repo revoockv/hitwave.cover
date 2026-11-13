@@ -1,5 +1,6 @@
 import '../../domain/entities/recording.dart';
 import '../../domain/entities/recording_status.dart';
+import '../../domain/entities/enhance_failure.dart';
 
 /// A recording as stored in Hive and in a backup archive.
 ///
@@ -15,7 +16,13 @@ final class RecordingModel {
   static const String _keptFromField = 'keptFromSeconds';
   static const String _keptToField = 'keptToSeconds';
   static const String _statusField = 'status';
-  static const String _errorField = 'enhanceError';
+  static const String _failureField = 'enhanceFailure';
+
+  /// The field of the app versions before 2.0, a Ukrainian text; only read.
+  static const String _legacyErrorField = 'enhanceError';
+
+  /// The legacy text of an interrupted enhancement.
+  static const String _legacyInterruptedError = 'Покращення перервалося — запустіть його ще раз';
   static const String _trimSilenceField = 'trimSilence';
   static const String _silentField = 'silent';
   static const String _separator = '/';
@@ -47,8 +54,8 @@ final class RecordingModel {
   /// State of the enhancement.
   final RecordingStatus status;
 
-  /// Why the enhancement failed.
-  final String? enhanceError;
+  /// Name of the [EnhanceFailure] when the enhancement failed.
+  final String? enhanceFailure;
 
   /// Whether the silence around the singing is cut from the enhanced file.
   final bool trimSilence;
@@ -67,7 +74,7 @@ final class RecordingModel {
     required this.keptFromSeconds,
     required this.keptToSeconds,
     required this.status,
-    required this.enhanceError,
+    required this.enhanceFailure,
     required this.trimSilence,
     this.isSilent = false,
   });
@@ -84,7 +91,7 @@ final class RecordingModel {
       keptFromSeconds: (map[_keptFromField] as num?)?.toDouble() ?? 0,
       keptToSeconds: (map[_keptToField] as num?)?.toDouble(),
       status: RecordingStatus.values.byName(map[_statusField] as String),
-      enhanceError: map[_errorField] as String?,
+      enhanceFailure: map[_failureField] as String? ?? _legacyFailure(map[_legacyErrorField] as String?),
       trimSilence: map[_trimSilenceField] as bool? ?? false,
       isSilent: map[_silentField] as bool? ?? false,
     );
@@ -102,7 +109,7 @@ final class RecordingModel {
       keptFromSeconds: entity.keptFromSeconds,
       keptToSeconds: entity.keptToSeconds,
       status: entity.status,
-      enhanceError: entity.enhanceError,
+      enhanceFailure: entity.enhanceFailure?.name,
       trimSilence: trimSilence,
       isSilent: entity.isSilent,
     );
@@ -120,7 +127,7 @@ final class RecordingModel {
       _keptFromField: keptFromSeconds,
       _keptToField: keptToSeconds,
       _statusField: status.name,
-      _errorField: enhanceError,
+      _failureField: enhanceFailure,
       _trimSilenceField: trimSilence,
       _silentField: isSilent,
     };
@@ -138,7 +145,7 @@ final class RecordingModel {
       keptFromSeconds: keptFromSeconds,
       keptToSeconds: keptToSeconds,
       status: status,
-      enhanceError: enhanceError,
+      enhanceFailure: EnhanceFailure.values.asNameMap()[enhanceFailure],
       isSilent: isSilent,
     );
   }
@@ -151,8 +158,8 @@ final class RecordingModel {
     double? keptFromSeconds,
     double? keptToSeconds,
     RecordingStatus? status,
-    String? enhanceError,
-    bool clearEnhanceError = false,
+    String? enhanceFailure,
+    bool clearEnhanceFailure = false,
     bool? trimSilence,
   }) {
     return RecordingModel(
@@ -165,11 +172,18 @@ final class RecordingModel {
       keptFromSeconds: keptFromSeconds ?? this.keptFromSeconds,
       keptToSeconds: keptToSeconds ?? this.keptToSeconds,
       status: status ?? this.status,
-      enhanceError: clearEnhanceError ? null : enhanceError ?? this.enhanceError,
+      enhanceFailure: clearEnhanceFailure ? null : enhanceFailure ?? this.enhanceFailure,
       trimSilence: trimSilence ?? this.trimSilence,
       isSilent: isSilent,
     );
   }
 
   static String _fileName(String path) => path.split(_separator).last;
+
+  /// The failure of a legacy [error] text: the interrupted one or any other.
+  static String? _legacyFailure(String? error) => switch (error) {
+    null => null,
+    _legacyInterruptedError => EnhanceFailure.interrupted.name,
+    _ => EnhanceFailure.failed.name,
+  };
 }

@@ -4,6 +4,7 @@ import 'package:hitwave.cover/features/song/domain/entities/cover.dart';
 import 'package:hitwave.cover/features/song/domain/entities/song.dart';
 import 'package:hitwave.cover/features/song/presentation/controllers/song_form_controller.dart';
 import 'package:hitwave.cover/features/song/presentation/widgets/song_form_widget.dart';
+import 'package:hitwave.cover/core/presentation/l10n/app_translations.dart';
 
 void main() {
   late int submits;
@@ -13,6 +14,7 @@ void main() {
     addTearDown(songFormController.dispose);
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: const <LocalizationsDelegate<Object>>[TranslationsDelegate()],
         home: Scaffold(
           body: SongFormWidget(songFormController: songFormController, submitLabel: 'Save', onSubmit: () => submits++),
         ),
@@ -29,7 +31,7 @@ void main() {
     expect(songFormController.canSave(), isFalse);
     await tester.pump();
 
-    expect(find.text('Заповніть це поле'), findsNWidgets(3));
+    expect(find.text('Fill in this field'), findsNWidgets(3));
   });
 
   testWidgets('a filled form may be saved with trimmed values and an empty album as null', (WidgetTester tester) async {
