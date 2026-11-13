@@ -1,3 +1,4 @@
+import '../../../../core/presentation/widgets/surface_widget.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/presentation/l10n/app_translations.dart';
@@ -52,7 +53,7 @@ final class PracticeCalendarWidget extends StatelessWidget {
     final int length = DateTime(month.year, month.month + 1, 0).day;
     final int cells = ((leading + length) / _daysPerWeek).ceil() * _daysPerWeek;
 
-    return Card(
+    return SurfaceWidget(
       margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(AppTheme.spacingSmall),

@@ -1,3 +1,4 @@
+import '../../../../core/presentation/widgets/accent_action_button_widget.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:watch_it/watch_it.dart';
@@ -259,10 +260,10 @@ final class HomePage extends WatchingWidget {
         ),
         floatingActionButton: songs.isEmpty || !isSongsTab
             ? null
-            : FloatingActionButton.extended(
+            : AccentActionButtonWidget(
                 onPressed: () => _showAddSongPage(context, newSongAuthor),
-                icon: const Icon(Icons.add),
-                label: Text(t.song.add),
+                icon: Icons.add,
+                label: t.song.add,
               ),
       ),
     );

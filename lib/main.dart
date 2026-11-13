@@ -4,7 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:watch_it/watch_it.dart';
 
 import 'core/presentation/l10n/app_translations.dart';
-import 'core/presentation/theme.dart';
+import 'core/presentation/widgets/app_background_widget.dart';
 import 'di.dart';
 import 'features/auth/domain/entities/auth_session.dart';
 import 'features/auth/presentation/di/auth_getters.dart';
@@ -55,8 +55,8 @@ final class HitwaveCoverAppWidget extends WatchingWidget {
       locale: settings.language.appLocale.flutterLocale,
       supportedLocales: AppLocaleUtils.supportedLocales,
       localizationsDelegates: _localizationsDelegates,
-      theme: AppTheme.light(),
-      darkTheme: AppTheme.dark(),
+      theme: settings.themeStyle.theme(settings.accentColor),
+      builder: AppBackgroundWidget.wrap,
       home: switch (session) {
         SignedOutAuthSession() => const AuthPage(),
         GuestAuthSession() => const HomePage(key: ValueKey<String>(_guestHomeKey)),

@@ -372,6 +372,11 @@ class Translations$settings$en {
 
 	// Translations
 
+	/// en: 'Accent color'
+	String get accentColor => 'Accent color';
+
+	late final Translations$settings$colors$en colors = Translations$settings$colors$en.internal(_root);
+
 	/// en: 'Language'
 	String get language => 'Language';
 
@@ -380,6 +385,11 @@ class Translations$settings$en {
 
 	/// en: 'Could not save the settings'
 	String get saveFailed => 'Could not save the settings';
+
+	/// en: 'Theme'
+	String get theme => 'Theme';
+
+	late final Translations$settings$themes$en themes = Translations$settings$themes$en.internal(_root);
 
 	/// en: 'Settings'
 	String get title => 'Settings';
@@ -856,6 +866,60 @@ class Translations$recordings$failure$en {
 	String get start => 'Could not start recording';
 }
 
+// Path: settings.colors
+class Translations$settings$colors$en {
+	Translations$settings$colors$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Blue'
+	String get blue => 'Blue';
+
+	/// en: 'Green'
+	String get green => 'Green';
+
+	/// en: 'Indigo'
+	String get indigo => 'Indigo';
+
+	/// en: 'Orange'
+	String get orange => 'Orange';
+
+	/// en: 'Pink'
+	String get pink => 'Pink';
+
+	/// en: 'Red'
+	String get red => 'Red';
+
+	/// en: 'Teal'
+	String get teal => 'Teal';
+
+	/// en: 'Violet'
+	String get violet => 'Violet';
+}
+
+// Path: settings.themes
+class Translations$settings$themes$en {
+	Translations$settings$themes$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Dark glass'
+	String get glassDark => 'Dark glass';
+
+	/// en: 'Light glass'
+	String get glassLight => 'Light glass';
+
+	/// en: 'Dark neumorphism'
+	String get neumorphicDark => 'Dark neumorphism';
+
+	/// en: 'Light neumorphism'
+	String get neumorphicLight => 'Light neumorphism';
+}
+
 // Path: song.failure
 class Translations$song$failure$en {
 	Translations$song$failure$en.internal(this._root);
@@ -1217,9 +1281,23 @@ extension on Translations {
 			'recordings.silent' => 'No sound — check the microphone',
 			'recordings.systemMicrophone' => 'System default',
 			'recordings.title' => 'Takes',
+			'settings.accentColor' => 'Accent color',
+			'settings.colors.blue' => 'Blue',
+			'settings.colors.green' => 'Green',
+			'settings.colors.indigo' => 'Indigo',
+			'settings.colors.orange' => 'Orange',
+			'settings.colors.pink' => 'Pink',
+			'settings.colors.red' => 'Red',
+			'settings.colors.teal' => 'Teal',
+			'settings.colors.violet' => 'Violet',
 			'settings.language' => 'Language',
 			'settings.open' => 'Settings',
 			'settings.saveFailed' => 'Could not save the settings',
+			'settings.theme' => 'Theme',
+			'settings.themes.glassDark' => 'Dark glass',
+			'settings.themes.glassLight' => 'Light glass',
+			'settings.themes.neumorphicDark' => 'Dark neumorphism',
+			'settings.themes.neumorphicLight' => 'Light neumorphism',
 			'settings.title' => 'Settings',
 			'song.actions' => 'Actions',
 			'song.add' => 'Add',

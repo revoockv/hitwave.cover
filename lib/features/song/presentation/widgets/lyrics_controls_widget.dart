@@ -1,3 +1,4 @@
+import '../../../../core/presentation/widgets/surface_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:watch_it/watch_it.dart';
 
@@ -13,9 +14,6 @@ import '../controllers/lyrics_page_controller.dart';
 /// Knows nothing about use cases: the button calls [onPlayPressed], a released
 /// slider calls [onSpeedChosen] or [onLeadInChosen].
 final class LyricsControlsWidget extends WatchingWidget {
-  /// Elevation of the panel.
-  static const double _panelElevation = 6;
-
   /// Fade duration of the panel.
   static const Duration _fadeDuration = Duration(milliseconds: 250);
 
@@ -144,10 +142,7 @@ final class LyricsControlsWidget extends WatchingWidget {
               AppTheme.spacingMedium,
               AppTheme.spacingMedium,
             ),
-            child: Material(
-              color: colorScheme.surfaceContainerHigh,
-              elevation: _panelElevation,
-              borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+            child: SurfaceWidget(
               child: Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppTheme.spacingMedium,

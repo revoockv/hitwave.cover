@@ -1,3 +1,4 @@
+import '../../../../core/presentation/widgets/surface_widget.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/presentation/l10n/app_translations.dart';
@@ -29,7 +30,7 @@ final class PracticeOverviewWidget extends StatelessWidget {
     final ColorScheme colors = theme.colorScheme;
     final DateTime monday = DateTime(today.year, today.month, today.day - (today.weekday - DateTime.monday));
 
-    return Card(
+    return SurfaceWidget(
       margin: EdgeInsets.zero,
       child: InkWell(
         borderRadius: BorderRadius.circular(AppTheme.radius),

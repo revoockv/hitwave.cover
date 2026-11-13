@@ -168,9 +168,27 @@
     "title": "Записы"
   },
   "settings": {
+    "accentColor": "Акцентна барва",
+    "colors": {
+      "blue": "Сиња",
+      "green": "Зелена",
+      "indigo": "Индиго",
+      "orange": "Оранжева",
+      "pink": "Ружова",
+      "red": "Чрвена",
+      "teal": "Морска",
+      "violet": "Фиолетова"
+    },
     "language": "Језык",
     "open": "Наставјења",
     "saveFailed": "Не удало се сохранити наставјења",
+    "theme": "Тема",
+    "themes": {
+      "glassDark": "Темно стекло",
+      "glassLight": "Свєтло стекло",
+      "neumorphicDark": "Темны неуморфизм",
+      "neumorphicLight": "Свєтлы неуморфизм"
+    },
     "title": "Наставјења"
   },
   "song": {

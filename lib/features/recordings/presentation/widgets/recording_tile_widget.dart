@@ -1,3 +1,4 @@
+import '../../../../core/presentation/widgets/surface_widget.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/presentation/theme.dart';
@@ -81,7 +82,7 @@ final class RecordingTileWidget extends StatelessWidget {
     final ThemeData theme = Theme.of(context);
     final bool isEnhanced = recording.status == RecordingStatus.enhanced && recording.enhancedPath != null;
 
-    return Card(
+    return SurfaceWidget(
       margin: const EdgeInsets.only(bottom: AppTheme.spacingSmall),
       child: Padding(
         padding: const EdgeInsets.all(AppTheme.spacingMedium),
