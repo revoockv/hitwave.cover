@@ -124,18 +124,26 @@ final class FakeEngine implements VocalEnhanceRepository {
   }
 }
 
-/// An MP3 encoder that writes a marker file.
 /// A stereo check that crashes.
 final class CrashingStereo extends StereoTakeService {
   @override
   Future<bool> collapseFakeStereo(String path) async => throw StateError('stereo check crashed');
 }
 
+/// An MP3 encoder that writes a marker file.
 final class FakeMp3 extends Mp3EncoderService {
   final List<String> made = <String>[];
 
+  /// How long one MP3 takes.
+  Duration delay = Duration.zero;
+
+  /// Called when an MP3 is done.
+  void Function()? onMade;
+
   @override
   Future<void> encode({required String wavPath, required String mp3Path}) async {
+    await Future<void>.delayed(delay);
+    onMade?.call();
     made.add(mp3Path);
     await File(mp3Path).writeAsBytes(<int>[0xFF, 0xFB]);
   }
@@ -165,12 +173,10 @@ RecordingsRepositoryImpl? _opened;
 
 /// Lets Hive writes and every background job (stereo check, enhancement, MP3s) finish.
 Future<void> settle() async {
-  Future<void>? idle;
-  do {
-    idle = _opened?.whenIdle;
-    await idle;
+  for (int i = 0; i < 3; i++) {
+    await _opened?.whenIdle;
     await Future<void>.delayed(const Duration(milliseconds: 20));
-  } while (_opened?.whenIdle != idle);
+  }
 }
 
 void main() {
@@ -270,6 +276,31 @@ void main() {
     await repository.enhanceAgain(recordingId: first.id, trimSilence: false);
     await settle();
     expect(byId(first.id).status, RecordingStatus.enhanced);
+  });
+
+  test('a new take is enhanced before the waiting MP3s of older takes', () async {
+    for (final String songId in <String>['song-1', 'song-2', 'song-3']) {
+      await repository.startRecording(songId);
+      await repository.stopRecording(trimSilence: false);
+    }
+    await settle();
+    // The MP3s are missing again (as after a sync): the next start queues one job per take.
+    for (final FileSystemEntity file in directory.listSync(recursive: true)) {
+      if (file.path.endsWith('.mp3')) file.deleteSync();
+    }
+    final List<String> events = <String>[];
+    mp3.delay = const Duration(milliseconds: 100);
+    mp3.onMade = () => events.add('mp3');
+    engine.onEnhance = () => events.add('enhance');
+    repository = await open();
+
+    await repository.startRecording('song-4');
+    await repository.stopRecording(trimSilence: false);
+    await settle();
+
+    // Only the MP3 job already running (two files of one take) may finish before the enhancement.
+    expect(events.indexOf('enhance'), lessThanOrEqualTo(2));
+    expect(events.where((String e) => e == 'mp3').length, greaterThanOrEqualTo(6));
   });
 
   test('a crashing stereo check keeps the take and enhances it', () async {
