@@ -76,7 +76,11 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
   String? _activeId;
   DateTime? _activeStartedAt;
   double _peakLevel = 0;
-  Future<void> _enhanceQueue = Future<void>.value();
+
+  /// Background jobs, run one at a time: the enhancements first, then the MP3s for sharing.
+  final List<_Job> _jobs = <_Job>[];
+  bool _working = false;
+  Completer<void>? _idle;
 
   /// Creates a [RecordingsRepositoryImpl].
   RecordingsRepositoryImpl({
@@ -109,6 +113,7 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
   @override
   Future<void> dispose() async {
     _ticker?.cancel();
+    _jobs.clear();
     await _songIdChanges?.cancel();
     await _recorder.dispose();
     await _deletions.close();
@@ -189,7 +194,7 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
       );
       await _save(model);
       // The take is in the library now; the rest runs in the background, whatever page is open.
-      _enqueue(_enhanceLog, () async {
+      _enqueue(_enhanceLog, urgent: true, () async {
         await _keepStereoOnlyWhenReal(path);
         await _enhance(id);
       });
@@ -302,18 +307,41 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
     );
   }
 
-  /// Completes when the background jobs queued so far are done (for tests).
+  /// Completes when every background job is done (for tests).
   @visibleForTesting
-  Future<void> get whenIdle => _enhanceQueue;
+  Future<void> get whenIdle => !_working && _jobs.isEmpty ? Future<void>.value() : (_idle ??= Completer<void>()).future;
 
-  void _enqueueEnhancement(String id) => _enqueue(_enhanceLog, () => _enhance(id));
+  void _enqueueEnhancement(String id) => _enqueue(_enhanceLog, urgent: true, () => _enhance(id));
 
-  /// Runs [job] after the jobs before it. A failing job is logged and never stops the queue, so
-  /// one broken take cannot leave the takes after it waiting forever.
-  void _enqueue(String label, Future<void> Function() job) {
-    _enhanceQueue = _enhanceQueue
-        .then((_) => job())
-        .catchError((Object e, StackTrace stack) => _logger.e('$label$_failureLog$e', stackTrace: stack));
+  /// Queues [job]. An [urgent] job (an enhancement) goes before every job that is not (the MP3s,
+  /// which only sharing needs and which sharing can also make itself), so a new take is enhanced
+  /// at once even when the MP3s of many older takes are waiting. A failing job is logged and never
+  /// stops the queue.
+  void _enqueue(String label, Future<void> Function() job, {bool urgent = false}) {
+    final _Job entry = _Job(label, job, urgent: urgent);
+    if (urgent) {
+      final int firstLater = _jobs.indexWhere((_Job queued) => !queued.urgent);
+      _jobs.insert(firstLater < 0 ? _jobs.length : firstLater, entry);
+    } else {
+      _jobs.add(entry);
+    }
+    unawaited(_work());
+  }
+
+  Future<void> _work() async {
+    if (_working) return;
+    _working = true;
+    while (_jobs.isNotEmpty) {
+      final _Job job = _jobs.removeAt(0);
+      try {
+        await job.run();
+      } on Object catch (e, stack) {
+        _logger.e('${job.label}$_failureLog$e', stackTrace: stack);
+      }
+    }
+    _working = false;
+    _idle?.complete();
+    _idle = null;
   }
 
   /// Makes the MP3s of [id] for sharing, after the enhancements waiting before it.
@@ -436,4 +464,13 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
   Recording _entity(RecordingModel model) => model.toEntity(folder: _store.folder);
 
   bool _wasInterrupted(RecordingModel model) => model.enhanceFailure == EnhanceFailure.interrupted.name;
+}
+
+/// A background job of the recordings.
+final class _Job {
+  final String label;
+  final Future<void> Function() run;
+  final bool urgent;
+
+  _Job(this.label, this.run, {required this.urgent});
 }
