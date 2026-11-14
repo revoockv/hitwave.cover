@@ -11,7 +11,10 @@ import 'recorder_data_source.dart';
 /// Bluetooth hands-free microphone (8–16 kHz) is not allowed; Bluetooth stays only for output.
 final class RecordRecorderDataSource implements RecorderDataSource {
   static const int _sampleRate = 48000;
-  static const int _channels = 1;
+
+  /// Stereo where the microphone has it; a mono microphone gives two equal channels, which
+  /// StereoTakeService turns back into mono.
+  static const int _channels = 2;
   static const double _silenceDb = -60;
 
   static const RecordConfig _config = RecordConfig(

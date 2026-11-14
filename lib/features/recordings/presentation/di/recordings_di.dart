@@ -11,6 +11,7 @@ import '../../data/data_sources/hive_recording_preferences_service.dart';
 import '../../data/data_sources/hive_recording_service.dart';
 import '../../data/data_sources/just_audio_player_data_source.dart';
 import '../../data/data_sources/mp3_encoder_service.dart';
+import '../../data/data_sources/stereo_take_service.dart';
 import '../../data/data_sources/record_recorder_data_source.dart';
 import '../../data/data_sources/recorder_data_source.dart';
 import '../../data/repositories/playback_repository_impl.dart';
@@ -53,6 +54,7 @@ void registerAndInitRecordings() {
   di.registerLazySingleton<RecorderDataSource>(RecordRecorderDataSource.new);
   di.registerLazySingleton<AudioPlayerDataSource>(JustAudioPlayerDataSource.new);
   di.registerLazySingleton<Mp3EncoderService>(Mp3EncoderService.new);
+  di.registerLazySingleton<StereoTakeService>(StereoTakeService.new);
 
   // 2. repositories
   di.registerSingletonAsync<RecordingsRepository>(
@@ -61,6 +63,7 @@ void registerAndInitRecordings() {
       recorder: di<RecorderDataSource>(),
       engine: di<VocalEnhanceRepository>(),
       mp3: di<Mp3EncoderService>(),
+      stereo: di<StereoTakeService>(),
       songs: di<SongRepository>(),
       logger: di<Logger>(),
     ).init(),

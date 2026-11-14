@@ -8,6 +8,7 @@ import 'package:hitwave.cover/core/domain/entities/result.dart';
 import 'package:hitwave.cover/features/backup/data/data_sources/backup_archive_data_source.dart';
 import 'package:hitwave.cover/features/recordings/data/data_sources/hive_recording_service.dart';
 import 'package:hitwave.cover/features/recordings/data/data_sources/mp3_encoder_service.dart';
+import 'package:hitwave.cover/features/recordings/data/data_sources/stereo_take_service.dart';
 import 'package:hitwave.cover/features/recordings/data/data_sources/recorder_data_source.dart';
 import 'package:hitwave.cover/features/recordings/data/models/recording_model.dart';
 import 'package:hitwave.cover/features/recordings/data/repositories/recordings_repository_impl.dart';
@@ -162,6 +163,7 @@ void main() {
     recorder: recorder,
     engine: engine,
     mp3: mp3,
+    stereo: StereoTakeService(),
     songs: songs,
     logger: Logger(level: Level.off),
   ).init();
