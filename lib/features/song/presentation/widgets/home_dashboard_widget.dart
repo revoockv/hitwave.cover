@@ -75,36 +75,74 @@ final class HomeDashboardWidget extends StatelessWidget {
     final ThemeData theme = Theme.of(context);
     final TextStyle? hintStyle = theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant);
 
-    return ListView(
-      padding: const EdgeInsets.all(AppTheme.spacingMedium),
-      children: <Widget>[
-        PracticeOverviewWidget(stats: stats, today: today, onOpenPressed: onStatsPressed),
-        const SizedBox(height: AppTheme.spacingMedium),
-        _SectionTitleWidget(title: t.song.recentlyOpened, actionLabel: t.song.all, onActionPressed: onAllSongsPressed),
-        if (recentSongs.isEmpty)
-          Text(t.song.noRecentSongs, style: hintStyle)
-        else
-          for (final Song song in recentSongs)
-            SongTileWidget(
-              song: song,
-              onTap: onSongTap,
-              onEdit: onSongEdit,
-              onDelete: onSongDelete,
-              coverCount: coverCounts[song.id] ?? 0,
-            ),
-        const SizedBox(height: AppTheme.spacingMedium),
-        _SectionTitleWidget(title: t.song.recentlyPlayed, actionLabel: t.song.all, onActionPressed: onAllCoversPressed),
-        if (recentCovers.isEmpty)
-          Text(t.song.noRecentCovers, style: hintStyle)
-        else
-          RecordingsListWidget(
-            recordings: recentCovers,
-            emptyText: t.song.noRecentCovers,
-            headerOf: coverTitleOf,
-            songOf: coverSongOf,
-            shrinkWrap: true,
+    final Widget overview = PracticeOverviewWidget(stats: stats, today: today, onOpenPressed: onStatsPressed);
+    final List<Widget> songsSection = <Widget>[
+      _SectionTitleWidget(title: t.song.recentlyOpened, actionLabel: t.song.all, onActionPressed: onAllSongsPressed),
+      if (recentSongs.isEmpty)
+        Text(t.song.noRecentSongs, style: hintStyle)
+      else
+        for (final Song song in recentSongs)
+          SongTileWidget(
+            song: song,
+            onTap: onSongTap,
+            onEdit: onSongEdit,
+            onDelete: onSongDelete,
+            coverCount: coverCounts[song.id] ?? 0,
           ),
-      ],
+    ];
+    final List<Widget> coversSection = <Widget>[
+      _SectionTitleWidget(title: t.song.recentlyPlayed, actionLabel: t.song.all, onActionPressed: onAllCoversPressed),
+      if (recentCovers.isEmpty)
+        Text(t.song.noRecentCovers, style: hintStyle)
+      else
+        RecordingsListWidget(
+          recordings: recentCovers,
+          emptyText: t.song.noRecentCovers,
+          headerOf: coverTitleOf,
+          songOf: coverSongOf,
+          shrinkWrap: true,
+        ),
+    ];
+
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final double width = constraints.maxWidth;
+        // A desktop window: the overview and the songs on the left, the covers on the right.
+        if (width >= AppTheme.twoColumnBreakpoint) {
+          return SingleChildScrollView(
+            padding: AppTheme.centeredPadding(width, AppTheme.maxPageWidth, minimum: AppTheme.spacingLarge),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: <Widget>[
+                      overview,
+                      const SizedBox(height: AppTheme.spacingLarge),
+                      ...songsSection,
+                    ],
+                  ),
+                ),
+                const SizedBox(width: AppTheme.spacingLarge),
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: coversSection),
+                ),
+              ],
+            ),
+          );
+        }
+        return ListView(
+          padding: AppTheme.centeredPadding(width, AppTheme.maxContentWidth),
+          children: <Widget>[
+            overview,
+            const SizedBox(height: AppTheme.spacingMedium),
+            ...songsSection,
+            const SizedBox(height: AppTheme.spacingMedium),
+            ...coversSection,
+          ],
+        );
+      },
     );
   }
 }
