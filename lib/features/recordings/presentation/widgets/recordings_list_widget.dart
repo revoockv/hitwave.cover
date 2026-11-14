@@ -9,7 +9,6 @@ import '../../../vocal_enhance/domain/entities/enhance_progress.dart';
 import '../../../vocal_enhance/presentation/di/vocal_enhance_getters.dart';
 import '../../domain/entities/playback_state.dart';
 import '../../domain/entities/recording.dart';
-import '../../domain/entities/recording_status.dart';
 import '../../domain/entities/recording_version.dart';
 import '../../domain/entities/shared_song.dart';
 import '../controllers/recording_versions_controller.dart';
