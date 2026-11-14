@@ -82,6 +82,9 @@ final class FakeEngine implements VocalEnhanceRepository {
   bool failing = false;
   final List<bool> trims = <bool>[];
 
+  /// Ids of the takes whose enhancement crashes (throws an Error instead of failing).
+  final Set<String> crashing = <String>{};
+
   /// Called when an enhancement starts, before it is done.
   void Function()? onEnhance;
 
@@ -103,6 +106,7 @@ final class FakeEngine implements VocalEnhanceRepository {
   }) async {
     trims.add(trimSilence);
     onEnhance?.call();
+    if (crashing.any(inputPath.contains)) throw StateError('engine crashed');
     if (failing) return const Result.failure(VocalEnhanceFailure.enhance);
     await File(inputPath).copy(outputPath);
     return Result.success(
@@ -121,6 +125,12 @@ final class FakeEngine implements VocalEnhanceRepository {
 }
 
 /// An MP3 encoder that writes a marker file.
+/// A stereo check that crashes.
+final class CrashingStereo extends StereoTakeService {
+  @override
+  Future<bool> collapseFakeStereo(String path) async => throw StateError('stereo check crashed');
+}
+
 final class FakeMp3 extends Mp3EncoderService {
   final List<String> made = <String>[];
 
@@ -150,8 +160,18 @@ Future<void> waitFor(bool Function() done) async {
   }
 }
 
-/// Lets Hive writes and the background enhancement finish.
-Future<void> settle() => Future<void>.delayed(const Duration(milliseconds: 50));
+/// The repository opened last, whose background jobs [settle] waits for.
+RecordingsRepositoryImpl? _opened;
+
+/// Lets Hive writes and every background job (stereo check, enhancement, MP3s) finish.
+Future<void> settle() async {
+  Future<void>? idle;
+  do {
+    idle = _opened?.whenIdle;
+    await idle;
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+  } while (_opened?.whenIdle != idle);
+}
 
 void main() {
   late Directory directory;
@@ -159,15 +179,16 @@ void main() {
   late FakeRecorder recorder;
   late FakeEngine engine;
   late FakeMp3 mp3;
+  late StereoTakeService stereo;
   late FakeSongs songs;
   late RecordingsRepositoryImpl repository;
 
-  Future<RecordingsRepositoryImpl> open() => RecordingsRepositoryImpl(
+  Future<RecordingsRepositoryImpl> open() async => _opened = await RecordingsRepositoryImpl(
     store: store,
     recorder: recorder,
     engine: engine,
     mp3: mp3,
-    stereo: StereoTakeService(),
+    stereo: stereo,
     songs: songs,
     logger: Logger(level: Level.off),
   ).init();
@@ -179,6 +200,7 @@ void main() {
     recorder = FakeRecorder();
     engine = FakeEngine();
     mp3 = FakeMp3();
+    stereo = StereoTakeService();
     songs = FakeSongs();
     repository = await open();
   });
@@ -226,6 +248,38 @@ void main() {
     repository = await open();
     await settle();
     expect(mp3.made.length, 2);
+  });
+
+  test('a crashing enhancement marks its take as failed and the next takes still get enhanced', () async {
+    await repository.startRecording('song-1');
+    final Recording first =
+        ((await repository.stopRecording(trimSilence: false)) as SuccessResult<Recording, RecordingsFailure>).value;
+    engine.crashing.add(first.id);
+    await repository.startRecording('song-2');
+    final Recording second =
+        ((await repository.stopRecording(trimSilence: false)) as SuccessResult<Recording, RecordingsFailure>).value;
+    await settle();
+
+    Recording byId(String id) => repository.watchRecordings().value.firstWhere((Recording r) => r.id == id);
+    expect(byId(first.id).status, RecordingStatus.enhanceFailed);
+    expect(byId(second.id).status, RecordingStatus.enhanced);
+    expect(repository.watchEnhancingRecording().value, isNull);
+
+    // Retried without the crash, it gets enhanced.
+    engine.crashing.clear();
+    await repository.enhanceAgain(recordingId: first.id, trimSilence: false);
+    await settle();
+    expect(byId(first.id).status, RecordingStatus.enhanced);
+  });
+
+  test('a crashing stereo check keeps the take and enhances it', () async {
+    stereo = CrashingStereo();
+    repository = await open();
+    await repository.startRecording('song-1');
+    final Result<Recording, RecordingsFailure> stopped = await repository.stopRecording(trimSilence: false);
+    expect(stopped.isSuccess, isTrue);
+    await settle();
+    expect(repository.watchRecordings().value.single.status, RecordingStatus.enhanced);
   });
 
   test('the take being enhanced is named while the engine works on it', () async {
