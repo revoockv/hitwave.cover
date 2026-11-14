@@ -288,6 +288,7 @@ final class LyricsPage extends WatchingWidget {
     Translations t,
     LyricsPageController lyricsPageController,
   ) async {
+    if (lyricsPageController.isStartingTake) return;
     final RecorderState recorder = watchRecorderUseCase().value;
     if (recorder is RecordingRecorderState && recorder.songId == song.id) {
       lyricsPageController.stopScrolling();
@@ -300,11 +301,13 @@ final class LyricsPage extends WatchingWidget {
     }
     if (!lyricsPageController.canStartScrolling) return;
     if (lyricsPageController.recordController.value) {
+      lyricsPageController.isStartingTake = true;
       final Result<void, RecordingsFailure> result = await startRecordingUseCase(
         song.id,
         microphoneId: watchRecordingPreferencesUseCase().value.microphoneId,
       );
       if (lyricsPageController.isDisposed) return;
+      lyricsPageController.isStartingTake = false;
       if (result case FailureResult<void, RecordingsFailure>(:final RecordingsFailure failure)) {
         messenger.showSnackBar(SnackBar(content: Text(failure.text(t))));
         return;
