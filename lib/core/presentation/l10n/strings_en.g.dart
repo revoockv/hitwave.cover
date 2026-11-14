@@ -262,6 +262,9 @@ class Translations$recordings$en {
 
 	late final Translations$recordings$enhanceFailure$en enhanceFailure = Translations$recordings$enhanceFailure$en.internal(_root);
 
+	/// en: 'Enhance'
+	String get enhanceNow => 'Enhance';
+
 	/// en: 'Enhanced'
 	String get enhanced => 'Enhanced';
 
@@ -1153,6 +1156,7 @@ extension on Translations {
 			'recordings.enhanceFailure.failed' => 'Could not enhance the take',
 			'recordings.enhanceFailure.interrupted' => 'The enhancement was interrupted — start it again',
 			'recordings.enhanceFailure.unavailable' => 'Sound enhancement is not available on this platform',
+			'recordings.enhanceNow' => 'Enhance',
 			'recordings.enhanced' => 'Enhanced',
 			'recordings.enhancing' => 'Enhancing…',
 			'recordings.failure.busy' => 'Already recording',

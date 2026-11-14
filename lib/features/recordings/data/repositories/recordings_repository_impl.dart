@@ -187,17 +187,15 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
         enhancedFile: null,
         keptFromSeconds: 0,
         keptToSeconds: null,
-        status: RecordingStatus.enhancing,
+        status: RecordingStatus.recorded,
         enhanceFailure: null,
         trimSilence: trimSilence,
         isSilent: _peakLevel <= _silentLevel,
       );
       await _save(model);
-      // The take is in the library now; the rest runs in the background, whatever page is open.
-      _enqueue(_enhanceLog, urgent: true, () async {
-        await _keepStereoOnlyWhenReal(path);
-        await _enhance(id);
-      });
+      // The take is in the library now; it is enhanced when the user asks for it on its card.
+      _enqueue(_stereoLog, urgent: true, () => _keepStereoOnlyWhenReal(path));
+      _enqueueMp3(id);
       _logger.i('$_stopLog$_successLog$id$_commaLog$seconds$_secondsLog');
       return Result.success(_entity(model));
     } on Object catch (e) {
@@ -272,15 +270,11 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
           enhancedPath: enhancedFile == null ? null : _store.enhancedPathOf(id),
           keptFromSeconds: imported.keptFromSeconds,
           keptToSeconds: imported.keptToSeconds,
-          status: enhancedFile == null ? RecordingStatus.enhancing : RecordingStatus.enhanced,
+          status: enhancedFile == null ? RecordingStatus.recorded : RecordingStatus.enhanced,
           enhanceFailure: null,
         );
         await _save(RecordingModel.fromEntity(recording, trimSilence: false));
-        if (enhancedFile == null) {
-          _enqueueEnhancement(id);
-        } else {
-          _enqueueMp3(id);
-        }
+        _enqueueMp3(id);
       }
       _logger.i('$_importLog$_successLog${recordings.length}');
       return Result.ok;
