@@ -198,6 +198,8 @@ final class HomePage extends WatchingWidget {
         ),
         body: useRail
             ? Row(
+                // Full height: a scroll view shorter than the window would sit in the middle.
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
                   NavigationRail(
                     selectedIndex: tab.index,
