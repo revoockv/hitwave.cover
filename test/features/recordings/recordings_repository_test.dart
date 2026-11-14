@@ -43,8 +43,16 @@ final class FakeRecorder implements RecorderDataSource {
   @override
   Future<bool> hasPermission() async => allowed;
 
+  /// How long opening the microphone takes.
+  Duration startDelay = Duration.zero;
+
+  /// Number of starts.
+  int starts = 0;
+
   @override
   Future<void> start(String path, {String? microphoneId}) async {
+    starts++;
+    await Future<void>.delayed(startDelay);
     this.path = path;
     this.microphoneId = microphoneId;
   }
@@ -313,6 +321,18 @@ void main() {
     // Only the MP3 job already running may finish before the enhancement.
     expect(events.indexOf('enhance'), lessThanOrEqualTo(1));
     expect(events.where((String e) => e == 'mp3').length, greaterThanOrEqualTo(4));
+  });
+
+  test('a second start while the microphone opens is refused, not run over the first', () async {
+    recorder.startDelay = const Duration(milliseconds: 100);
+    final Future<Result<void, RecordingsFailure>> first = repository.startRecording('song-1');
+    final Result<void, RecordingsFailure> second = await repository.startRecording('song-1');
+    expect((second as FailureResult<void, RecordingsFailure>).failure, RecordingsFailure.busy);
+    expect((await first).isSuccess, isTrue);
+    expect(recorder.starts, 1);
+    expect((await repository.stopRecording(trimSilence: false)).isSuccess, isTrue);
+    await settle();
+    expect(repository.watchRecordings().value, hasLength(1));
   });
 
   test('a crashing stereo check keeps the take, which can still be enhanced', () async {

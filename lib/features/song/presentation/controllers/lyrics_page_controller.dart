@@ -113,6 +113,10 @@ final class LyricsPageController {
       _savedLeadIn = startLeadIn,
       _savedLyrics = lyrics;
 
+  /// Whether a take is being started (the microphone opens): presses of the play button are
+  /// ignored meanwhile, so a second press cannot stop or double the take being started.
+  bool isStartingTake = false;
+
   /// Whether [dispose] was called; the owner checks it after every `await`.
   bool get isDisposed => _isDisposed;
 

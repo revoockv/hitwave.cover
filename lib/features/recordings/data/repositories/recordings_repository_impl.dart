@@ -74,6 +74,7 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
   Timer? _ticker;
   Stopwatch? _stopwatch;
   String? _activeId;
+  bool _starting = false;
   DateTime? _activeStartedAt;
   double _peakLevel = 0;
 
@@ -143,7 +144,10 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
 
   @override
   Future<Result<void, RecordingsFailure>> startRecording(String songId, {String? microphoneId}) async {
-    if (_activeId != null) return const Result.failure(RecordingsFailure.busy);
+    // Starting the microphone takes a while on some phones; a second start meanwhile would run a
+    // second recorder over the first one.
+    if (_activeId != null || _starting) return const Result.failure(RecordingsFailure.busy);
+    _starting = true;
     try {
       if (!await _recorder.hasPermission()) {
         _logger.w('$_startLog$_failureLog${RecordingsFailure.microphonePermission.name}');
@@ -162,6 +166,8 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
     } on Exception catch (e) {
       _logger.e('$_startLog$_failureLog$e');
       return const Result.failure(RecordingsFailure.start);
+    } finally {
+      _starting = false;
     }
   }
 
