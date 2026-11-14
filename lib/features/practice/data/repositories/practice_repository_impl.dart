@@ -6,6 +6,8 @@ import 'package:uuid/uuid.dart';
 
 import '../../../../core/domain/entities/disposable_resource.dart';
 import '../../../../core/domain/entities/result.dart';
+import '../../../recordings/domain/entities/recording.dart';
+import '../../../recordings/domain/repositories/recordings_repository.dart';
 import '../../../song/domain/entities/song_id_change.dart';
 import '../../../song/domain/repositories/song_repository.dart';
 import '../../domain/entities/practice_session.dart';
@@ -16,9 +18,15 @@ import '../../domain/entities/practice_failure.dart';
 
 /// [PracticeRepository] on a Hive box and a clock.
 ///
-/// A session shorter than [_minimumLength] (a start pressed by mistake) is not kept.
+/// A session shorter than [_minimumLength] (a start pressed by mistake) is not kept. A session
+/// during which a cover was recorded goes away with that cover, so a deleted cover leaves nothing
+/// in the statistics.
 final class PracticeRepositoryImpl implements PracticeRepository, DisposableResource {
   static const Duration _minimumLength = Duration(seconds: 10);
+
+  /// A take starts a moment before its session and is stopped just before it ends.
+  static const Duration _takeSlack = Duration(seconds: 5);
+  static const String _coverLog = 'PracticeCoverDeleted: ';
 
   static const String _importLog = 'ImportPracticeSessions: ';
   static const String _clearLog = 'ClearPractice: ';
@@ -34,6 +42,7 @@ final class PracticeRepositoryImpl implements PracticeRepository, DisposableReso
 
   final HivePracticeService _store;
   final SongRepository _songs;
+  final RecordingsRepository _recordings;
   final Logger _logger;
   final DateTime Function() _now;
 
@@ -43,12 +52,23 @@ final class PracticeRepositoryImpl implements PracticeRepository, DisposableReso
   final Map<String, PracticeSessionModel> _models = <String, PracticeSessionModel>{};
 
   StreamSubscription<SongIdChange>? _songIdChanges;
+  StreamSubscription<String>? _coverDeletions;
+
+  /// Song and start of every cover seen, by id: a deleted cover is gone from the list by the time
+  /// its deletion arrives.
+  final Map<String, ({String songId, DateTime recordedAt})> _covers =
+      <String, ({String songId, DateTime recordedAt})>{};
   String? _activeSongId;
   DateTime? _activeSince;
 
   /// Creates a [PracticeRepositoryImpl]; [now] is replaced in tests.
-  PracticeRepositoryImpl({required this._store, required this._songs, required this._logger, DateTime Function()? now})
-    : _now = now ?? DateTime.now;
+  PracticeRepositoryImpl({
+    required this._store,
+    required this._songs,
+    required this._recordings,
+    required this._logger,
+    DateTime Function()? now,
+  }) : _now = now ?? DateTime.now;
 
   /// Loads the sessions and follows the song ids; returns this for `registerSingletonAsync`.
   PracticeRepositoryImpl init() {
@@ -57,6 +77,9 @@ final class PracticeRepositoryImpl implements PracticeRepository, DisposableReso
     }
     _publish();
     _songIdChanges = _songs.watchSongIdChanges().listen(_onSongIdChanged);
+    _rememberCovers();
+    _recordings.watchRecordings().addListener(_rememberCovers);
+    _coverDeletions = _recordings.watchRecordingDeletions().listen(_onCoverDeleted);
     return this;
   }
 
@@ -64,6 +87,8 @@ final class PracticeRepositoryImpl implements PracticeRepository, DisposableReso
   @override
   Future<void> dispose() async {
     await _songIdChanges?.cancel();
+    await _coverDeletions?.cancel();
+    _recordings.watchRecordings().removeListener(_rememberCovers);
     _sessions.dispose();
   }
 
@@ -161,6 +186,33 @@ final class PracticeRepositoryImpl implements PracticeRepository, DisposableReso
       _publish();
     } on Exception catch (e) {
       _logger.e('$_songIdLog$_failureLog$e');
+    }
+  }
+
+  void _rememberCovers() {
+    for (final Recording recording in _recordings.watchRecordings().value) {
+      _covers[recording.id] = (songId: recording.songId, recordedAt: recording.recordedAt);
+    }
+  }
+
+  /// Forgets the session of the song during which the deleted cover was recorded.
+  Future<void> _onCoverDeleted(String recordingId) async {
+    final ({String songId, DateTime recordedAt})? cover = _covers.remove(recordingId);
+    if (cover == null) return;
+    try {
+      final List<String> ids = <String>[
+        for (final PracticeSessionModel model in _sessionsOf(cover.songId))
+          if (!cover.recordedAt.isBefore(model.startedAt.subtract(_takeSlack)) &&
+              !cover.recordedAt.isAfter(model.startedAt.add(Duration(seconds: model.seconds) + _takeSlack)))
+            model.id,
+      ];
+      if (ids.isEmpty) return;
+      await _store.deleteAll(ids);
+      ids.forEach(_models.remove);
+      _publish();
+      _logger.i('$_coverLog$_successLog$recordingId$_arrowLog${ids.length}');
+    } on Exception catch (e) {
+      _logger.e('$_coverLog$_failureLog$e');
     }
   }
 

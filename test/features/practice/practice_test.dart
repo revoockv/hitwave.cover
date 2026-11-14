@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hitwave.cover/core/data/data_sources/local_storage_service.dart';
 import 'package:hitwave.cover/features/practice/data/data_sources/hive_practice_service.dart';
@@ -12,12 +13,44 @@ import 'package:hitwave.cover/features/recordings/data/repositories/recording_pr
 import 'package:hitwave.cover/features/recordings/domain/entities/recording.dart';
 import 'package:hitwave.cover/features/recordings/domain/entities/recording_preferences.dart';
 import 'package:hitwave.cover/features/recordings/domain/entities/recording_status.dart';
+import 'package:hitwave.cover/features/recordings/domain/repositories/recordings_repository.dart';
 import 'package:hitwave.cover/features/song/domain/entities/song_id_change.dart';
 import 'package:hitwave.cover/features/song/domain/repositories/song_repository.dart';
 import 'package:hive_ce/hive_ce.dart';
 import 'package:logger/logger.dart';
 
 /// Only the song id changes of the song repository.
+/// The covers the practice repository follows: a list and the deletions.
+final class FakeRecordings extends Fake implements RecordingsRepository {
+  final ValueNotifier<List<Recording>> recordings = ValueNotifier<List<Recording>>(const <Recording>[]);
+  final StreamController<String> deletions = StreamController<String>.broadcast();
+
+  @override
+  ValueListenable<List<Recording>> watchRecordings() => recordings;
+
+  @override
+  Stream<String> watchRecordingDeletions() => deletions.stream;
+
+  /// Removes the cover from the list first, as the real repository does, then reports it.
+  void delete(String id) {
+    recordings.value = recordings.value.where((Recording r) => r.id != id).toList();
+    deletions.add(id);
+  }
+}
+
+Recording cover(String id, String songId, DateTime recordedAt) => Recording(
+  id: id,
+  songId: songId,
+  recordedAt: recordedAt,
+  durationSeconds: 60,
+  rawPath: '',
+  enhancedPath: null,
+  keptFromSeconds: 0,
+  keptToSeconds: null,
+  status: RecordingStatus.enhanced,
+  enhanceFailure: null,
+);
+
 final class FakeSongs implements SongRepository {
   final StreamController<SongIdChange> changes = StreamController<SongIdChange>.broadcast();
 
@@ -110,12 +143,14 @@ void main() {
   group('storage', () {
     late Directory directory;
     late FakeSongs songs;
+    late FakeRecordings recordings;
     late DateTime clock;
 
     setUp(() async {
       directory = await Directory.systemTemp.createTemp('hitwave_practice_test');
       Hive.init(directory.path);
       songs = FakeSongs();
+      recordings = FakeRecordings();
       clock = DateTime(2026, 11, 12, 10);
     });
 
@@ -127,6 +162,7 @@ void main() {
     Future<PracticeRepositoryImpl> open() async => PracticeRepositoryImpl(
       store: await HivePracticeService(storage: LocalStorageService()).init(),
       songs: songs,
+      recordings: recordings,
       logger: Logger(level: Level.off),
       now: () => clock,
     ).init();
@@ -181,6 +217,38 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 50));
 
       expect(repository.watchSessions().value.single.songId, 'account-1');
+    });
+
+    test('deleting a cover deletes the session it was recorded in, and nothing else', () async {
+      final PracticeRepositoryImpl repository = await open();
+      // song-1: a session with a take (the take starts a moment before the session), then one
+      // without; song-2: a session at the same time as nothing.
+      final DateTime takeStart = clock.subtract(const Duration(milliseconds: 400));
+      await repository.startPractice('song-1');
+      clock = clock.add(const Duration(minutes: 3));
+      await repository.stopPractice();
+      recordings.recordings.value = <Recording>[cover('take-1', 'song-1', takeStart)];
+      clock = clock.add(const Duration(minutes: 10));
+      await repository.startPractice('song-1');
+      clock = clock.add(const Duration(minutes: 2));
+      await repository.startPractice('song-2');
+      clock = clock.add(const Duration(minutes: 1));
+      await repository.stopPractice();
+      expect(repository.watchSessions().value, hasLength(3));
+
+      recordings.delete('take-1');
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      final List<PracticeSession> left = repository.watchSessions().value;
+      expect(left, hasLength(2));
+      expect(left.map((PracticeSession s) => s.duration).toSet(), <Duration>{
+        const Duration(minutes: 2),
+        const Duration(minutes: 1),
+      });
+      // Gone after a restart too.
+      await Hive.close();
+      Hive.init(directory.path);
+      expect((await open()).watchSessions().value, hasLength(2));
     });
 
     test('the recording checkboxes are remembered', () async {
