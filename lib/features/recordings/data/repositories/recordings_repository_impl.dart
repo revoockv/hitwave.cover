@@ -62,6 +62,7 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
 
   final ValueNotifier<List<Recording>> _recordings = ValueNotifier<List<Recording>>(const <Recording>[]);
   final ValueNotifier<RecorderState> _recorderState = ValueNotifier<RecorderState>(RecorderState.idle);
+  final ValueNotifier<String?> _enhancingId = ValueNotifier<String?>(null);
   final Map<String, RecordingModel> _models = <String, RecordingModel>{};
 
   StreamSubscription<SongIdChange>? _songIdChanges;
@@ -108,6 +109,7 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
     await _deletions.close();
     _recordings.dispose();
     _recorderState.dispose();
+    _enhancingId.dispose();
   }
 
   @override
@@ -115,6 +117,9 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
 
   @override
   ValueListenable<RecorderState> watchRecorder() => _recorderState;
+
+  @override
+  ValueListenable<String?> watchEnhancingRecording() => _enhancingId;
 
   @override
   Future<Result<List<Microphone>, RecordingsFailure>> listMicrophones() async {
@@ -314,14 +319,20 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
     if (model == null) return;
     final File oldMp3 = File(Mp3EncoderService.mp3PathOf(_store.enhancedPathOf(id)));
     if (await oldMp3.exists()) await oldMp3.delete();
-    final Result<EnhanceReport, VocalEnhanceFailure> result = await _engine.enhanceRecording(
-      inputPath: _store.rawPathOf(id),
-      outputPath: _store.enhancedPathOf(id),
-      preset: EnhancePreset.natural,
-      roomToneSeconds: null,
-      trimSilence: model.trimSilence,
-      settings: const <String, double>{},
-    );
+    final Result<EnhanceReport, VocalEnhanceFailure> result;
+    _enhancingId.value = id;
+    try {
+      result = await _engine.enhanceRecording(
+        inputPath: _store.rawPathOf(id),
+        outputPath: _store.enhancedPathOf(id),
+        preset: EnhancePreset.natural,
+        roomToneSeconds: null,
+        trimSilence: model.trimSilence,
+        settings: const <String, double>{},
+      );
+    } finally {
+      _enhancingId.value = null;
+    }
     final RecordingModel? current = _models[id];
     if (current == null) return; // deleted meanwhile
     final RecordingModel updated = switch (result) {

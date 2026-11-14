@@ -35,6 +35,7 @@ import '../../domain/use_cases/stop_recording_use_case.dart';
 import '../../domain/use_cases/toggle_playback_pause_use_case.dart';
 import '../../domain/use_cases/update_recording_preferences_use_case.dart';
 import '../../domain/use_cases/watch_playback_use_case.dart';
+import '../../domain/use_cases/watch_enhancing_recording_use_case.dart';
 import '../../domain/use_cases/watch_recorder_use_case.dart';
 import '../../domain/use_cases/watch_recording_preferences_use_case.dart';
 import '../../domain/use_cases/watch_recordings_use_case.dart';
@@ -96,6 +97,9 @@ void registerAndInitRecordings() {
   di.registerLazySingleton<DeleteAllRecordingsUseCase>(() => DeleteAllRecordingsUseCase(di<RecordingsRepository>()));
   di.registerLazySingleton<WatchRecordingsUseCase>(() => WatchRecordingsUseCase(di<RecordingsRepository>()));
   di.registerLazySingleton<WatchRecorderUseCase>(() => WatchRecorderUseCase(di<RecordingsRepository>()));
+  di.registerLazySingleton<WatchEnhancingRecordingUseCase>(
+    () => WatchEnhancingRecordingUseCase(di<RecordingsRepository>()),
+  );
   di.registerLazySingleton<PlayRecordingUseCase>(() => PlayRecordingUseCase(di<PlaybackRepository>()));
   di.registerLazySingleton<TogglePlaybackPauseUseCase>(() => TogglePlaybackPauseUseCase(di<PlaybackRepository>()));
   di.registerLazySingleton<StopPlaybackUseCase>(() => StopPlaybackUseCase(di<PlaybackRepository>()));
