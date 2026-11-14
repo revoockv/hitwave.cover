@@ -64,7 +64,7 @@ final class RecordingsListWidget extends WatchingWidget {
     final PlaybackState playback = watch(watchPlaybackUseCase()).value;
     final EnhanceProgress? progress = watch(watchEnhanceProgressUseCase()).value;
     final bool trimSilence = watch(watchRecordingPreferencesUseCase()).value.trimSilence;
-    final String? firstEnhancing = _firstEnhancing(recordings);
+    final String? enhancingId = watch(watchEnhancingRecordingUseCase()).value;
     final bool canShowInFolder = canShowRecordingInFolderUseCase();
     final ThemeData theme = Theme.of(context);
 
@@ -98,7 +98,8 @@ final class RecordingsListWidget extends WatchingWidget {
           isLoaded: isLoaded,
           isPlaying: isLoaded && playback.isPlaying,
           playedFraction: isLoaded ? _fraction(playback) : 0,
-          enhanceFraction: recording.id == firstEnhancing ? progress?.fraction : null,
+          // The take being enhanced shows how far it is; the ones waiting in the queue show 0.
+          enhanceFraction: recording.id == enhancingId ? progress?.fraction ?? 0 : 0,
           onVersionChanged: (RecordingVersion chosen) =>
               _onVersionChanged(context, recordingVersionsController, recording, chosen, isLoaded: isLoaded),
           onPlayPressed: () => _onPlayPressed(context, recording, playback, version),
@@ -121,14 +122,6 @@ final class RecordingsListWidget extends WatchingWidget {
         );
       },
     );
-  }
-
-  /// The oldest take still waiting for its enhancement: the one the engine works on.
-  static String? _firstEnhancing(List<Recording> recordings) {
-    for (final Recording recording in recordings.reversed) {
-      if (recording.status == RecordingStatus.enhancing) return recording.id;
-    }
-    return null;
   }
 
   static double _fraction(PlaybackState playback) {

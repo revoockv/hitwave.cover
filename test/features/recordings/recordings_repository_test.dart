@@ -82,6 +82,9 @@ final class FakeEngine implements VocalEnhanceRepository {
   bool failing = false;
   final List<bool> trims = <bool>[];
 
+  /// Called when an enhancement starts, before it is done.
+  void Function()? onEnhance;
+
   @override
   ValueListenable<EnhanceProgress?> watchProgress() => throw UnimplementedError();
 
@@ -99,6 +102,7 @@ final class FakeEngine implements VocalEnhanceRepository {
     required Map<String, double> settings,
   }) async {
     trims.add(trimSilence);
+    onEnhance?.call();
     if (failing) return const Result.failure(VocalEnhanceFailure.enhance);
     await File(inputPath).copy(outputPath);
     return Result.success(
@@ -222,6 +226,21 @@ void main() {
     repository = await open();
     await settle();
     expect(mp3.made.length, 2);
+  });
+
+  test('the take being enhanced is named while the engine works on it', () async {
+    final List<String?> during = <String?>[];
+    engine.onEnhance = () => during.add(repository.watchEnhancingRecording().value);
+    expect(repository.watchEnhancingRecording().value, isNull);
+    await repository.startRecording('song-1');
+    final Recording first =
+        ((await repository.stopRecording(trimSilence: false)) as SuccessResult<Recording, RecordingsFailure>).value;
+    await repository.startRecording('song-2');
+    final Recording second =
+        ((await repository.stopRecording(trimSilence: false)) as SuccessResult<Recording, RecordingsFailure>).value;
+    await settle();
+    expect(during, <String>[first.id, second.id]);
+    expect(repository.watchEnhancingRecording().value, isNull);
   });
 
   test('a take is recorded from the chosen microphone; one without any sound is marked', () async {

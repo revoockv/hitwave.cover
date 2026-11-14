@@ -18,6 +18,10 @@ abstract interface class RecordingsRepository {
   /// The recorder: idle, or recording a song with the elapsed time and the input level.
   ValueListenable<RecorderState> watchRecorder();
 
+  /// The id of the take the audio engine is enhancing now; `null` when it is idle. Other takes
+  /// whose status is enhancing wait in the queue.
+  ValueListenable<String?> watchEnhancingRecording();
+
   /// The sound inputs of the device.
   Future<Result<List<Microphone>, RecordingsFailure>> listMicrophones();
 

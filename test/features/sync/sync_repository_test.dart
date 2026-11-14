@@ -128,6 +128,9 @@ final class FakeRecordings implements RecordingsRepository {
   Stream<String> watchRecordingDeletions() => deletions.stream;
 
   @override
+  ValueListenable<String?> watchEnhancingRecording() => ValueNotifier<String?>(null);
+
+  @override
   Future<Result<void, RecordingsFailure>> deleteRecording(String recordingId) async {
     recordings.value = recordings.value.where((Recording r) => r.id != recordingId).toList();
     deletions.add(recordingId);

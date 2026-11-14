@@ -14,6 +14,7 @@ import '../../domain/use_cases/stop_recording_use_case.dart';
 import '../../domain/use_cases/toggle_playback_pause_use_case.dart';
 import '../../domain/use_cases/update_recording_preferences_use_case.dart';
 import '../../domain/use_cases/watch_playback_use_case.dart';
+import '../../domain/use_cases/watch_enhancing_recording_use_case.dart';
 import '../../domain/use_cases/watch_recorder_use_case.dart';
 import '../../domain/use_cases/watch_recording_preferences_use_case.dart';
 import '../../domain/use_cases/watch_recordings_use_case.dart';
@@ -35,6 +36,9 @@ WatchRecordingsUseCase get watchRecordingsUseCase => di<WatchRecordingsUseCase>(
 
 /// The use case that watches the recorder; call it to get the [ValueListenable].
 WatchRecorderUseCase get watchRecorderUseCase => di<WatchRecorderUseCase>();
+
+/// The use case that tells which take the audio engine is enhancing now.
+WatchEnhancingRecordingUseCase get watchEnhancingRecordingUseCase => di<WatchEnhancingRecordingUseCase>();
 
 /// The use case that plays a recording.
 PlayRecordingUseCase get playRecordingUseCase => di<PlayRecordingUseCase>();
