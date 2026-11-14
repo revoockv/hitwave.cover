@@ -17,7 +17,7 @@ final class VocalEnhanceEngineException implements Exception {
   String toString() => message;
 }
 
-/// The audio engine (the vocal_enhance Python package) seen as requests and answers.
+/// The audio engine (the revoockv_audio_enhance package) seen as requests and answers.
 ///
 /// May throw [VocalEnhanceEngineException]; the repository converts it to a failure.
 abstract interface class VocalEnhanceDataSource {

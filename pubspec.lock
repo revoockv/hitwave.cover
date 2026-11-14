@@ -177,6 +177,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.1.2"
+  fftea:
+    dependency: transitive
+    description:
+      name: fftea
+      sha256: fede501db039de9737d527a28b1f5ede8f68342f2c4e53459dfa372bd271ed6c
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.5.0+1"
   file:
     dependency: transitive
     description:
@@ -295,14 +303,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.7.0"
-  glob:
-    dependency: transitive
-    description:
-      name: glob
-      sha256: "218aeb56050c714f62a3182775320dfa04602b55074873e24e31bbd39bda96fb"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.2.0"
   hive_ce:
     dependency: "direct main"
     description:
@@ -335,22 +335,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.15.6"
-  http:
-    dependency: transitive
-    description:
-      name: http
-      sha256: "87721a4a50b19c7f1d49001e51409bddc46303966ce89a65af4f4e6004896412"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.6.0"
-  http_parser:
-    dependency: transitive
-    description:
-      name: http_parser
-      sha256: "178d74305e7866013777bab2c3d8726205dc5a4dd935297175b19a23a2e66571"
-      url: "https://pub.dev"
-    source: hosted
-    version: "4.1.2"
   image:
     dependency: transitive
     description:
@@ -740,6 +724,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.4.0"
+  revoockv_audio_enhance:
+    dependency: "direct main"
+    description:
+      name: revoockv_audio_enhance
+      sha256: a63f819c0bfea9ae38566edc1b7cfc2dc2e32b92ef59f78d9a835fc592d4ef23
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.0"
   rxdart:
     dependency: transitive
     description:
@@ -756,54 +748,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.5.2"
-  serious_python:
-    dependency: "direct main"
-    description:
-      name: serious_python
-      sha256: "24c2c0c0fb10b35f49e75ce3e86a0315bee8b8e490e933df589cfb6afd0a367e"
-      url: "https://pub.dev"
-    source: hosted
-    version: "6.1.3"
-  serious_python_android:
-    dependency: transitive
-    description:
-      name: serious_python_android
-      sha256: "8fa652a57b719391bc9217f0c919e877972b51470d483bf83c9153bde1e413d3"
-      url: "https://pub.dev"
-    source: hosted
-    version: "6.1.3"
-  serious_python_darwin:
-    dependency: transitive
-    description:
-      name: serious_python_darwin
-      sha256: "7b9f41044e4023e0c9521af24c53fc4858a211da0e86cd9e60ada87602cd16ee"
-      url: "https://pub.dev"
-    source: hosted
-    version: "6.1.3"
-  serious_python_linux:
-    dependency: transitive
-    description:
-      name: serious_python_linux
-      sha256: "07deef3850b64934f6433c2fe64c26c3f1961bd87f90e6455162d4a096264637"
-      url: "https://pub.dev"
-    source: hosted
-    version: "6.1.3"
-  serious_python_platform_interface:
-    dependency: transitive
-    description:
-      name: serious_python_platform_interface
-      sha256: a678a633a4441a4050d245bad8f992437c2ccc6c66a35308d2e5f3541ef51844
-      url: "https://pub.dev"
-    source: hosted
-    version: "6.1.3"
-  serious_python_windows:
-    dependency: transitive
-    description:
-      name: serious_python_windows
-      sha256: "8f34d8b6334ba4d3158bdc60cafcdb4ef75180cc7ff98907de684644ae14b5ea"
-      url: "https://pub.dev"
-    source: hosted
-    version: "6.1.3"
   share_plus:
     dependency: "direct main"
     description:
@@ -820,14 +764,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "7.2.0"
-  shelf:
-    dependency: transitive
-    description:
-      name: shelf
-      sha256: e75e9cf311d7fd712048038cc17c25199c38536c20330d53e7db058b543d5a48
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.4.3"
   sky_engine:
     dependency: transitive
     description: flutter

@@ -9,7 +9,7 @@ import '../entities/vocal_enhance_failure.dart';
 
 /// Measures recordings and turns raw vocal takes into cleaned, mastered WAV files.
 ///
-/// The work runs in the audio engine on the device (embedded Python); one request runs at a time.
+/// The work runs in the audio engine on the device, off the UI thread.
 abstract interface class VocalEnhanceRepository {
   /// The step of the running enhancement, or `null` when nothing runs.
   ValueListenable<EnhanceProgress?> watchProgress();
