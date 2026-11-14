@@ -3,6 +3,7 @@ import 'package:watch_it/watch_it.dart';
 
 import '../../../../core/data/data_sources/local_storage_service.dart';
 import '../../../../core/presentation/di/core_di.dart';
+import '../../../recordings/domain/repositories/recordings_repository.dart';
 import '../../../song/domain/repositories/song_repository.dart';
 import '../../data/data_sources/hive_practice_service.dart';
 import '../../data/repositories/practice_repository_impl.dart';
@@ -26,9 +27,10 @@ void registerAndInitPractice() {
     () => PracticeRepositoryImpl(
       store: di<HivePracticeService>(),
       songs: di<SongRepository>(),
+      recordings: di<RecordingsRepository>(),
       logger: di<Logger>(),
     ).init(),
-    dependsOn: <Type>[HivePracticeService, SongRepository],
+    dependsOn: <Type>[HivePracticeService, SongRepository, RecordingsRepository],
     dispose: disposeResource,
   );
 
