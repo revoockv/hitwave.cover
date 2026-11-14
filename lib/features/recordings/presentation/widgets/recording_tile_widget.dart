@@ -55,7 +55,8 @@ final class RecordingTileWidget extends StatelessWidget {
   /// Called by the folder button; `null` hides it (no file manager on this platform).
   final VoidCallback? onShowInFolderPressed;
 
-  /// Called by the "enhance again" button of a failed enhancement.
+  /// Called by the "enhance again" button (of a failed enhancement, and in the actions of an
+  /// enhanced take, to run the current chain again).
   final VoidCallback onRetryPressed;
 
   /// Creates a new [RecordingTileWidget].
@@ -127,6 +128,12 @@ final class RecordingTileWidget extends StatelessWidget {
                     tooltip: t.recordings.showInFolder,
                     onPressed: onShowInFolderPressed,
                     icon: const Icon(Icons.folder_open_outlined),
+                  ),
+                if (recording.status == RecordingStatus.enhanced)
+                  IconButton(
+                    tooltip: t.recordings.retry,
+                    onPressed: onRetryPressed,
+                    icon: const Icon(Icons.auto_fix_high),
                   ),
                 IconButton(
                   tooltip: t.common.delete,

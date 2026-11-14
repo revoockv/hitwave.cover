@@ -140,11 +140,15 @@ final class PackageVocalEnhanceDataSource implements VocalEnhanceDataSource, Dis
     final audio.EnhanceSettings base = switch (preset) {
       'studio' => audio.EnhancePreset.studio.settings,
       'loudness' => audio.EnhancePreset.loudnessOnly.settings,
+      'classic' => audio.EnhancePreset.classic.settings,
       _ => audio.EnhancePreset.natural.settings,
     };
     final Map<String, double> current = _settingsMap(base)..addAll(overrides);
     double value(String key) => current[key]!;
     return audio.EnhanceSettings(
+      alignStereo: value('align_stereo') > 0,
+      toneMaxBoostDb: value('tone_max_boost_db'),
+      toneMaxCutDb: value('tone_max_cut_db'),
       highPassHz: value('high_pass_hz'),
       noiseReductionDb: value('noise_reduction_db'),
       noiseSensitivity: value('noise_sensitivity'),
@@ -160,7 +164,13 @@ final class PackageVocalEnhanceDataSource implements VocalEnhanceDataSource, Dis
       compressionThresholdDb: value('compression_threshold_db'),
       compressionAttackSeconds: value('compression_attack_s'),
       compressionReleaseSeconds: value('compression_release_s'),
+      expanderRatio: value('expander_ratio'),
+      expanderBelowDb: value('expander_below_db'),
+      expanderFloorDb: value('expander_floor_db'),
+      widenMono: value('widen_mono') > 0,
+      monoWidthDb: value('mono_width_db'),
       targetLufs: value('target_lufs'),
+      maxGainDb: value('max_gain_db'),
       truePeakDb: value('true_peak_db'),
       limiterReleaseSeconds: value('limiter_release_s'),
       trimSilence: value('trim_silence') > 0,
@@ -170,6 +180,9 @@ final class PackageVocalEnhanceDataSource implements VocalEnhanceDataSource, Dis
 
   /// [settings] under the engine's names, as the report lists them.
   static Map<String, double> _settingsMap(audio.EnhanceSettings settings) => <String, double>{
+    'align_stereo': settings.alignStereo ? 1 : 0,
+    'tone_max_boost_db': settings.toneMaxBoostDb,
+    'tone_max_cut_db': settings.toneMaxCutDb,
     'high_pass_hz': settings.highPassHz,
     'noise_reduction_db': settings.noiseReductionDb,
     'noise_sensitivity': settings.noiseSensitivity,
@@ -185,7 +198,13 @@ final class PackageVocalEnhanceDataSource implements VocalEnhanceDataSource, Dis
     'compression_threshold_db': settings.compressionThresholdDb,
     'compression_attack_s': settings.compressionAttackSeconds,
     'compression_release_s': settings.compressionReleaseSeconds,
+    'expander_ratio': settings.expanderRatio,
+    'expander_below_db': settings.expanderBelowDb,
+    'expander_floor_db': settings.expanderFloorDb,
+    'widen_mono': settings.widenMono ? 1 : 0,
+    'mono_width_db': settings.monoWidthDb,
     'target_lufs': settings.targetLufs,
+    'max_gain_db': settings.maxGainDb,
     'true_peak_db': settings.truePeakDb,
     'limiter_release_s': settings.limiterReleaseSeconds,
     'trim_silence': settings.trimSilence ? 1 : 0,
