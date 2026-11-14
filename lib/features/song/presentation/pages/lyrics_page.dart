@@ -63,7 +63,9 @@ final class LyricsPage extends WatchingWidget {
       _createLyricsPageController,
       dispose: _disposeLyricsPageController,
     );
-    callOnce(_onOpened);
+    // After the first frame: marking the song changes the history the home page watches, and
+    // no other widget may be rebuilt while this one builds.
+    callOnceAfterThisBuild(_onOpened);
     final bool isScrolling = watch(lyricsPageController.scrollingController).value;
     final double leadInFactor = watch(lyricsPageController.leadInController).value;
     registerHandler(target: lyricsPageController.speedSavingStateController, handler: _onSavingChanged);
