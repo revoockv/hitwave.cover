@@ -105,6 +105,69 @@ final class HomePage extends WatchingWidget {
       overflow: TextOverflow.ellipsis,
     );
 
+    final bool useRail = MediaQuery.sizeOf(context).width >= AppTheme.railBreakpoint;
+    final List<_Tab> tabs = <_Tab>[
+      _Tab(Icons.home_outlined, Icons.home, t.song.tabHome),
+      _Tab(Icons.queue_music_outlined, Icons.queue_music, t.song.tabSongs),
+      _Tab(Icons.mic_none_outlined, Icons.mic, t.song.tabCovers),
+      _Tab(Icons.insights_outlined, Icons.insights, t.song.statistics),
+    ];
+    final Widget body = switch (tab) {
+      HomeTab.home => HomeDashboardWidget(
+        stats: stats,
+        today: PracticeStats.dayOf(now),
+        recentSongs: _recentSongs(songsById, history),
+        recentCovers: _recentCovers(recordings, history),
+        coverCounts: coverCounts,
+        coverTitleOf: (Recording recording) => _songTitle(t, songsById[recording.songId]),
+        coverSongOf: (Recording recording) => _sharedSong(songsById[recording.songId]),
+        onStatsPressed: () => _selectTab(songViewController, HomeTab.stats),
+        onAllSongsPressed: () => _selectTab(songViewController, HomeTab.songs),
+        onAllCoversPressed: () => _selectTab(songViewController, HomeTab.covers),
+        onSongTap: (Song song) => _navigateToLyrics(context, song),
+        onSongEdit: (Song song) => _showEditSongPage(context, song),
+        onSongDelete: (Song song) => _onSongDeletePressed(context, song),
+      ),
+      HomeTab.songs => SongsTabWidget(
+        isLibraryEmpty: songs.isEmpty,
+        songs: foundSongs,
+        coverCounts: coverCounts,
+        searchController: songViewController.songSearchController,
+        sort: sort,
+        selectedArtist: selectedArtist,
+        onSortSelected: songViewController.selectSort,
+        onArtistSelected: songViewController.selectArtist,
+        onSongTap: (Song song) => _navigateToLyrics(context, song),
+        onSongEdit: (Song song) => _showEditSongPage(context, song),
+        onSongDelete: (Song song) => _onSongDeletePressed(context, song),
+        onAddPressed: () => _showAddSongPage(context, newSongAuthor),
+      ),
+      HomeTab.covers => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: AppTheme.maxContentWidth),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppTheme.spacingMedium,
+                  AppTheme.spacingSmall,
+                  AppTheme.spacingMedium,
+                  0,
+                ),
+                child: SearchFieldWidget(
+                  searchController: songViewController.coverSearchController,
+                  hint: t.song.coverSearch,
+                ),
+              ),
+            ),
+          ),
+          Expanded(child: CoversListWidget(query: coverQuery)),
+        ],
+      ),
+      HomeTab.stats => const PracticeStatsWidget(),
+    };
+
     return PopScope(
       canPop: !hasSelectedArtist,
       onPopInvokedWithResult: (bool didPop, Object? result) => _onBackInvoked(songViewController, didPop),
@@ -133,87 +196,39 @@ final class HomePage extends WatchingWidget {
             ),
           ],
         ),
-        body: switch (tab) {
-          HomeTab.home => HomeDashboardWidget(
-            stats: stats,
-            today: PracticeStats.dayOf(now),
-            recentSongs: _recentSongs(songsById, history),
-            recentCovers: _recentCovers(recordings, history),
-            coverCounts: coverCounts,
-            coverTitleOf: (Recording recording) => _songTitle(t, songsById[recording.songId]),
-            coverSongOf: (Recording recording) => _sharedSong(songsById[recording.songId]),
-            onStatsPressed: () => _selectTab(songViewController, HomeTab.stats),
-            onAllSongsPressed: () => _selectTab(songViewController, HomeTab.songs),
-            onAllCoversPressed: () => _selectTab(songViewController, HomeTab.covers),
-            onSongTap: (Song song) => _navigateToLyrics(context, song),
-            onSongEdit: (Song song) => _showEditSongPage(context, song),
-            onSongDelete: (Song song) => _onSongDeletePressed(context, song),
-          ),
-          HomeTab.songs => SongsTabWidget(
-            isLibraryEmpty: songs.isEmpty,
-            songs: foundSongs,
-            coverCounts: coverCounts,
-            searchController: songViewController.songSearchController,
-            sort: sort,
-            selectedArtist: selectedArtist,
-            onSortSelected: songViewController.selectSort,
-            onArtistSelected: songViewController.selectArtist,
-            onSongTap: (Song song) => _navigateToLyrics(context, song),
-            onSongEdit: (Song song) => _showEditSongPage(context, song),
-            onSongDelete: (Song song) => _onSongDeletePressed(context, song),
-            onAddPressed: () => _showAddSongPage(context, newSongAuthor),
-          ),
-          HomeTab.covers => Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: AppTheme.maxContentWidth),
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      AppTheme.spacingMedium,
-                      AppTheme.spacingSmall,
-                      AppTheme.spacingMedium,
-                      0,
-                    ),
-                    child: SearchFieldWidget(
-                      searchController: songViewController.coverSearchController,
-                      hint: t.song.coverSearch,
-                    ),
+        body: useRail
+            ? Row(
+                children: <Widget>[
+                  NavigationRail(
+                    selectedIndex: tab.index,
+                    onDestinationSelected: (int index) => _selectTab(songViewController, HomeTab.values[index]),
+                    destinations: <NavigationRailDestination>[
+                      for (final _Tab destination in tabs)
+                        NavigationRailDestination(
+                          icon: Icon(destination.icon),
+                          selectedIcon: Icon(destination.selectedIcon),
+                          label: Text(destination.label),
+                        ),
+                    ],
                   ),
-                ),
+                  Expanded(child: body),
+                ],
+              )
+            : body,
+        bottomNavigationBar: useRail
+            ? null
+            : NavigationBar(
+                selectedIndex: tab.index,
+                onDestinationSelected: (int index) => _selectTab(songViewController, HomeTab.values[index]),
+                destinations: <NavigationDestination>[
+                  for (final _Tab destination in tabs)
+                    NavigationDestination(
+                      icon: Icon(destination.icon),
+                      selectedIcon: Icon(destination.selectedIcon),
+                      label: destination.label,
+                    ),
+                ],
               ),
-              Expanded(child: CoversListWidget(query: coverQuery)),
-            ],
-          ),
-          HomeTab.stats => const PracticeStatsWidget(),
-        },
-        bottomNavigationBar: NavigationBar(
-          selectedIndex: tab.index,
-          onDestinationSelected: (int index) => _selectTab(songViewController, HomeTab.values[index]),
-          destinations: <NavigationDestination>[
-            NavigationDestination(
-              icon: const Icon(Icons.home_outlined),
-              selectedIcon: const Icon(Icons.home),
-              label: t.song.tabHome,
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.queue_music_outlined),
-              selectedIcon: const Icon(Icons.queue_music),
-              label: t.song.tabSongs,
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.mic_none_outlined),
-              selectedIcon: const Icon(Icons.mic),
-              label: t.song.tabCovers,
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.insights_outlined),
-              selectedIcon: const Icon(Icons.insights),
-              label: t.song.statistics,
-            ),
-          ],
-        ),
         floatingActionButton: songs.isEmpty || !isSongsTab
             ? null
             : AccentActionButtonWidget(
@@ -354,4 +369,13 @@ final class HomePage extends WatchingWidget {
   void _showEditSongPage(BuildContext context, Song song) {
     Navigator.of(context).push(MaterialPageRoute<void>(builder: (BuildContext context) => EditSongPage(song: song)));
   }
+}
+
+/// A destination of the home tabs, shown in the bottom bar or in the rail.
+final class _Tab {
+  final IconData icon;
+  final IconData selectedIcon;
+  final String label;
+
+  const _Tab(this.icon, this.selectedIcon, this.label);
 }

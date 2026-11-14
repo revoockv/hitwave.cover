@@ -38,6 +38,21 @@ final class AppTheme {
   /// Largest width of forms and reading content on wide screens.
   static const double maxContentWidth = 560;
 
+  /// Widest a page of several columns grows (the home dashboard on a desktop).
+  static const double maxPageWidth = 1080;
+
+  /// From this window width on the tabs are a rail on the left instead of a bar at the bottom.
+  static const double railBreakpoint = 840;
+
+  /// From this content width on the home dashboard has two columns.
+  static const double twoColumnBreakpoint = 900;
+
+  /// Padding that keeps content of [maxWidth] in the middle of [width], at least [minimum] wide.
+  static EdgeInsets centeredPadding(double width, double maxWidth, {double minimum = spacingMedium}) {
+    final double side = width > maxWidth + 2 * minimum ? (width - maxWidth) / 2 : minimum;
+    return EdgeInsets.symmetric(horizontal: side, vertical: minimum);
+  }
+
   /// Line height of lyrics and other long text.
   static const double readingLineHeight = 1.5;
 
@@ -119,6 +134,13 @@ final class AppTheme {
         surfaceTintColor: _transparent,
         elevation: 0,
         indicatorColor: accent.withValues(alpha: _indicatorAlpha),
+      ),
+      navigationRailTheme: NavigationRailThemeData(
+        backgroundColor: surfaces.panel,
+        elevation: 0,
+        indicatorColor: accent.withValues(alpha: _indicatorAlpha),
+        labelType: NavigationRailLabelType.all,
+        groupAlignment: -1,
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
