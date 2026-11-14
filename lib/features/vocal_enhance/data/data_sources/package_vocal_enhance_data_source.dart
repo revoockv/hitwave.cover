@@ -15,8 +15,7 @@ import 'vocal_enhance_data_source.dart';
 /// Every request runs in its own background isolate, which reads the WAV file, processes it and
 /// writes the result itself, so the audio never crosses into the UI isolate. Settings use the
 /// engine's snake_case names (`noise_reduction_db`, `trim_silence`, …).
-final class PackageVocalEnhanceDataSource
-    implements VocalEnhanceDataSource, DisposableResource {
+final class PackageVocalEnhanceDataSource implements VocalEnhanceDataSource, DisposableResource {
   static const String _closedError = 'The audio engine stopped';
   static const String _temporarySuffix = '.part';
 
@@ -45,17 +44,10 @@ final class PackageVocalEnhanceDataSource
     final audio.AudioTask<_Outcome> task = audio.AudioTask<_Outcome>.start(
       _enhanceWork(inputPath, outputPath, applied),
     );
-    final StreamSubscription<audio.AudioProgress> progress = task.progress
-        .listen(
-          (audio.AudioProgress p) => onProgress(
-            EnhanceProgressModel(
-              step: p.step,
-              steps: p.steps,
-              label: p.label,
-              fraction: p.fraction,
-            ),
-          ),
-        );
+    final StreamSubscription<audio.AudioProgress> progress = task.progress.listen(
+      (audio.AudioProgress p) =>
+          onProgress(EnhanceProgressModel(step: p.step, steps: p.steps, label: p.label, fraction: p.fraction)),
+    );
     try {
       final _Outcome outcome = await _run(task);
       return EnhanceReportModel(
@@ -100,19 +92,11 @@ final class PackageVocalEnhanceDataSource
   // The work is built in static functions, so the closure sent to the background isolate holds
   // only these values (a closure made inside an instance method could drag along the progress
   // callback and everything it holds).
-  static audio.AudioWork<audio.RecordingAnalysis> _analyzeWork(
-    String inputPath,
-  ) =>
-      (audio.AudioProgressListener report) =>
-          audio.VocalEnhancer().analyze(_read(inputPath));
+  static audio.AudioWork<audio.RecordingAnalysis> _analyzeWork(String inputPath) =>
+      (audio.AudioProgressListener report) => audio.VocalEnhancer().analyze(_read(inputPath));
 
-  static audio.AudioWork<_Outcome> _enhanceWork(
-    String inputPath,
-    String outputPath,
-    audio.EnhanceSettings settings,
-  ) =>
-      (audio.AudioProgressListener report) =>
-          _enhanceFile(inputPath, outputPath, settings, report);
+  static audio.AudioWork<_Outcome> _enhanceWork(String inputPath, String outputPath, audio.EnhanceSettings settings) =>
+      (audio.AudioProgressListener report) => _enhanceFile(inputPath, outputPath, settings, report);
 
   /// Runs in the background isolate: read, enhance, write atomically, report the levels.
   static _Outcome _enhanceFile(
@@ -123,18 +107,11 @@ final class PackageVocalEnhanceDataSource
   ) {
     final Stopwatch watch = Stopwatch()..start();
     final audio.PcmAudio take = _read(inputPath);
-    final audio.EnhanceResult result = audio.VocalEnhancer().enhance(
-      take,
-      settings: settings,
-      onProgress: report,
-    );
+    final audio.EnhanceResult result = audio.VocalEnhancer().enhance(take, settings: settings, onProgress: report);
     final File output = File(outputPath);
     output.parent.createSync(recursive: true);
     final File temporary = File('$outputPath$_temporarySuffix');
-    temporary.writeAsBytesSync(
-      audio.WavCodec.encode24(result.audio),
-      flush: true,
-    );
+    temporary.writeAsBytesSync(audio.WavCodec.encode24(result.audio), flush: true);
     temporary.renameSync(output.path);
     return _Outcome(
       before: result.before,
@@ -159,10 +136,7 @@ final class PackageVocalEnhanceDataSource
   }
 
   /// The preset by its engine name, then the [overrides] on top.
-  static audio.EnhanceSettings _settingsOf(
-    String preset,
-    Map<String, double> overrides,
-  ) {
+  static audio.EnhanceSettings _settingsOf(String preset, Map<String, double> overrides) {
     final audio.EnhanceSettings base = switch (preset) {
       'studio' => audio.EnhancePreset.studio.settings,
       'loudness' => audio.EnhancePreset.loudnessOnly.settings,
@@ -195,33 +169,30 @@ final class PackageVocalEnhanceDataSource
   }
 
   /// [settings] under the engine's names, as the report lists them.
-  static Map<String, double> _settingsMap(audio.EnhanceSettings settings) =>
-      <String, double>{
-        'high_pass_hz': settings.highPassHz,
-        'noise_reduction_db': settings.noiseReductionDb,
-        'noise_sensitivity': settings.noiseSensitivity,
-        'noise_profile_seconds': settings.noiseProfileSeconds,
-        'mud_cut_db': settings.mudCutDb,
-        'mud_hz': settings.mudHz,
-        'presence_db': settings.presenceDb,
-        'presence_hz': settings.presenceHz,
-        'air_db': settings.airDb,
-        'air_hz': settings.airHz,
-        'de_ess_db': settings.deEssDb,
-        'compression_ratio': settings.compressionRatio,
-        'compression_threshold_db': settings.compressionThresholdDb,
-        'compression_attack_s': settings.compressionAttackSeconds,
-        'compression_release_s': settings.compressionReleaseSeconds,
-        'target_lufs': settings.targetLufs,
-        'true_peak_db': settings.truePeakDb,
-        'limiter_release_s': settings.limiterReleaseSeconds,
-        'trim_silence': settings.trimSilence ? 1 : 0,
-        'trim_padding_s': settings.trimPaddingSeconds,
-      };
+  static Map<String, double> _settingsMap(audio.EnhanceSettings settings) => <String, double>{
+    'high_pass_hz': settings.highPassHz,
+    'noise_reduction_db': settings.noiseReductionDb,
+    'noise_sensitivity': settings.noiseSensitivity,
+    'noise_profile_seconds': settings.noiseProfileSeconds,
+    'mud_cut_db': settings.mudCutDb,
+    'mud_hz': settings.mudHz,
+    'presence_db': settings.presenceDb,
+    'presence_hz': settings.presenceHz,
+    'air_db': settings.airDb,
+    'air_hz': settings.airHz,
+    'de_ess_db': settings.deEssDb,
+    'compression_ratio': settings.compressionRatio,
+    'compression_threshold_db': settings.compressionThresholdDb,
+    'compression_attack_s': settings.compressionAttackSeconds,
+    'compression_release_s': settings.compressionReleaseSeconds,
+    'target_lufs': settings.targetLufs,
+    'true_peak_db': settings.truePeakDb,
+    'limiter_release_s': settings.limiterReleaseSeconds,
+    'trim_silence': settings.trimSilence ? 1 : 0,
+    'trim_padding_s': settings.trimPaddingSeconds,
+  };
 
-  static RecordingAnalysisModel _analysisModel(
-    audio.RecordingAnalysis analysis,
-  ) {
+  static RecordingAnalysisModel _analysisModel(audio.RecordingAnalysis analysis) {
     double? finite(double value) => value.isFinite ? value : null;
     return RecordingAnalysisModel(
       durationSeconds: analysis.durationSeconds,
