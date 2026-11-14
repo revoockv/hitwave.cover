@@ -173,7 +173,6 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
     try {
       final String? path = await _recorder.stop();
       if (path == null) return const Result.failure(RecordingsFailure.save);
-      await _keepStereoOnlyWhenReal(path);
       final RecordingModel model = RecordingModel(
         id: id,
         songId: state.songId,
@@ -189,10 +188,14 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
         isSilent: _peakLevel <= _silentLevel,
       );
       await _save(model);
-      _enqueueEnhancement(id);
+      // The take is in the library now; the rest runs in the background, whatever page is open.
+      _enqueue(_enhanceLog, () async {
+        await _keepStereoOnlyWhenReal(path);
+        await _enhance(id);
+      });
       _logger.i('$_stopLog$_successLog$id$_commaLog$seconds$_secondsLog');
       return Result.success(_entity(model));
-    } on Exception catch (e) {
+    } on Object catch (e) {
       _logger.e('$_stopLog$_failureLog$e');
       return const Result.failure(RecordingsFailure.save);
     }
@@ -203,7 +206,7 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
   Future<void> _keepStereoOnlyWhenReal(String path) async {
     try {
       if (await _stereo.collapseFakeStereo(path)) _logger.i('$_stereoLog$_monoLog$path');
-    } on Exception catch (e) {
+    } on Object catch (e) {
       _logger.w('$_stereoLog$_failureLog$e');
     }
   }
@@ -299,13 +302,23 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
     );
   }
 
-  void _enqueueEnhancement(String id) {
-    _enhanceQueue = _enhanceQueue.then((_) => _enhance(id));
+  /// Completes when the background jobs queued so far are done (for tests).
+  @visibleForTesting
+  Future<void> get whenIdle => _enhanceQueue;
+
+  void _enqueueEnhancement(String id) => _enqueue(_enhanceLog, () => _enhance(id));
+
+  /// Runs [job] after the jobs before it. A failing job is logged and never stops the queue, so
+  /// one broken take cannot leave the takes after it waiting forever.
+  void _enqueue(String label, Future<void> Function() job) {
+    _enhanceQueue = _enhanceQueue
+        .then((_) => job())
+        .catchError((Object e, StackTrace stack) => _logger.e('$label$_failureLog$e', stackTrace: stack));
   }
 
   /// Makes the MP3s of [id] for sharing, after the enhancements waiting before it.
   void _enqueueMp3(String id, {bool replaceEnhanced = false}) {
-    _enhanceQueue = _enhanceQueue.then((_) => _makeMp3s(id, replaceEnhanced: replaceEnhanced));
+    _enqueue(_mp3Log, () => _makeMp3s(id, replaceEnhanced: replaceEnhanced));
   }
 
   /// Makes the MP3 of the enhanced take (again, when [replaceEnhanced]) and of the raw one, unless
@@ -324,13 +337,25 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
         if ((!replace && await mp3.exists()) || !await File(wav).exists()) continue;
         await _mp3.encode(wavPath: wav, mp3Path: mp3.path);
         _logger.i('$_mp3Log$_successLog${mp3.path}');
-      } on Exception catch (e) {
+      } on Object catch (e) {
         _logger.w('$_mp3Log$_failureLog$e');
       }
     }
   }
 
+  /// Enhances [id]; anything going wrong marks the take as not enhanced (it can be retried).
   Future<void> _enhance(String id) async {
+    try {
+      await _enhanceOrThrow(id);
+    } on Object catch (e) {
+      _logger.e('$_enhanceLog$_failureLog$id$_dashLog$e');
+      final RecordingModel? current = _models[id];
+      if (current == null || current.status != RecordingStatus.enhancing) return;
+      await _save(current.copyWith(status: RecordingStatus.enhanceFailed, enhanceFailure: EnhanceFailure.failed.name));
+    }
+  }
+
+  Future<void> _enhanceOrThrow(String id) async {
     final RecordingModel? model = _models[id];
     if (model == null) return;
     final File oldMp3 = File(Mp3EncoderService.mp3PathOf(_store.enhancedPathOf(id)));
