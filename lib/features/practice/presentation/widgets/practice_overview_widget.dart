@@ -21,14 +21,23 @@ final class PracticeOverviewWidget extends StatelessWidget {
   final VoidCallback onOpenPressed;
 
   /// Creates a new [PracticeOverviewWidget].
-  const PracticeOverviewWidget({super.key, required this.stats, required this.today, required this.onOpenPressed});
+  const PracticeOverviewWidget({
+    super.key,
+    required this.stats,
+    required this.today,
+    required this.onOpenPressed,
+  });
 
   @override
   Widget build(BuildContext context) {
     final Translations t = context.t;
     final ThemeData theme = Theme.of(context);
     final ColorScheme colors = theme.colorScheme;
-    final DateTime monday = DateTime(today.year, today.month, today.day - (today.weekday - DateTime.monday));
+    final DateTime monday = DateTime(
+      today.year,
+      today.month,
+      today.day - (today.weekday - DateTime.monday),
+    );
 
     return SurfaceWidget(
       margin: EdgeInsets.zero,
@@ -44,33 +53,63 @@ final class PracticeOverviewWidget extends StatelessWidget {
                 children: <Widget>[
                   _StatWidget(
                     label: t.practice.today,
-                    value: PracticeTimeTextWidget.format(t, stats.days[today]?.time ?? Duration.zero),
+                    value: PracticeTimeTextWidget.format(
+                      t,
+                      stats.days[today]?.time ?? Duration.zero,
+                    ),
                   ),
-                  _StatWidget(label: t.practice.week, value: PracticeTimeTextWidget.format(t, stats.weekTime)),
+                  _StatWidget(
+                    label: t.practice.week,
+                    value: PracticeTimeTextWidget.format(t, stats.weekTime),
+                  ),
                   _StatWidget(
                     label: t.practice.streak,
                     value: t.practice.days(n: stats.currentStreak),
                   ),
-                  _StatWidget(label: t.practice.covers, value: '${stats.totalTakes}'),
+                  _StatWidget(
+                    label: t.practice.covers,
+                    value: '${stats.totalTakes}',
+                  ),
                 ],
               ),
               const SizedBox(height: AppTheme.spacingSmall),
               Row(
                 children: <Widget>[
-                  for (int index = 0; index < t.practice.weekdayLetters.length; index++)
+                  for (
+                    int index = 0;
+                    index < t.practice.weekdayLetters.length;
+                    index++
+                  )
                     Padding(
-                      padding: const EdgeInsets.only(right: AppTheme.spacingTiny),
+                      padding: const EdgeInsets.only(
+                        right: AppTheme.spacingTiny,
+                      ),
                       child: _DayMarkWidget(
                         letter: t.practice.weekdayLetters[index],
-                        practised: stats.days.containsKey(DateTime(monday.year, monday.month, monday.day + index)),
+                        practised: stats.days.containsKey(
+                          DateTime(
+                            monday.year,
+                            monday.month,
+                            monday.day + index,
+                          ),
+                        ),
                         isToday: index == today.weekday - DateTime.monday,
                         size: _dayMarkSize,
                         colors: colors,
                         style: theme.textTheme.labelSmall,
                       ),
                     ),
-                  const Spacer(),
-                  Text(t.practice.allStats, style: theme.textTheme.labelMedium?.copyWith(color: colors.primary)),
+                  Expanded(
+                    child: Text(
+                      t.practice.allStats,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.end,
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: colors.primary,
+                      ),
+                    ),
+                  ),
                   Icon(Icons.chevron_right, color: colors.primary),
                 ],
               ),
@@ -96,8 +135,18 @@ final class _StatWidget extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text(label, style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-          Text(value, maxLines: 1, overflow: TextOverflow.ellipsis, style: theme.textTheme.titleMedium),
+          Text(
+            label,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.titleMedium,
+          ),
         ],
       ),
     );
@@ -133,7 +182,12 @@ final class _DayMarkWidget extends StatelessWidget {
         color: practised ? colors.primary : colors.surfaceContainerHighest,
         border: isToday ? Border.all(color: colors.tertiary, width: 2) : null,
       ),
-      child: Text(letter, style: style?.copyWith(color: practised ? colors.onPrimary : colors.onSurfaceVariant)),
+      child: Text(
+        letter,
+        style: style?.copyWith(
+          color: practised ? colors.onPrimary : colors.onSurfaceVariant,
+        ),
+      ),
     );
   }
 }
