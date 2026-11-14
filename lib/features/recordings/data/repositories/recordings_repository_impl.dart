@@ -20,6 +20,7 @@ import '../../domain/entities/recording_status.dart';
 import '../../domain/repositories/recordings_repository.dart';
 import '../data_sources/hive_recording_service.dart';
 import '../data_sources/mp3_encoder_service.dart';
+import '../data_sources/stereo_take_service.dart';
 import '../data_sources/recorder_data_source.dart';
 import '../models/recording_model.dart';
 import '../../../vocal_enhance/domain/entities/vocal_enhance_failure.dart';
@@ -41,6 +42,8 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
   static const String _stopLog = 'StopRecording: ';
   static const String _enhanceLog = 'EnhanceRecording: ';
   static const String _mp3Log = 'MakeMp3: ';
+  static const String _stereoLog = 'StereoTake: ';
+  static const String _monoLog = 'the channels are the same, kept as mono — ';
   static const String _deleteLog = 'DeleteRecording: ';
   static const String _importLog = 'ImportRecordings: ';
   static const String _songIdLog = 'SongIdChange: ';
@@ -57,6 +60,7 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
   final RecorderDataSource _recorder;
   final VocalEnhanceRepository _engine;
   final Mp3EncoderService _mp3;
+  final StereoTakeService _stereo;
   final SongRepository _songs;
   final Logger _logger;
 
@@ -79,6 +83,7 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
     required this._recorder,
     required this._engine,
     required this._mp3,
+    required this._stereo,
     required this._songs,
     required this._logger,
   });
@@ -163,6 +168,7 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
     try {
       final String? path = await _recorder.stop();
       if (path == null) return const Result.failure(RecordingsFailure.save);
+      await _keepStereoOnlyWhenReal(path);
       final RecordingModel model = RecordingModel(
         id: id,
         songId: state.songId,
@@ -184,6 +190,16 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
     } on Exception catch (e) {
       _logger.e('$_stopLog$_failureLog$e');
       return const Result.failure(RecordingsFailure.save);
+    }
+  }
+
+  /// A take whose two channels are the same (a mono microphone) becomes mono; a failure here
+  /// only keeps the file as it was.
+  Future<void> _keepStereoOnlyWhenReal(String path) async {
+    try {
+      if (await _stereo.collapseFakeStereo(path)) _logger.i('$_stereoLog$_monoLog$path');
+    } on Exception catch (e) {
+      _logger.w('$_stereoLog$_failureLog$e');
     }
   }
 
