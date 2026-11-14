@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="24"/></filter>
+    <filter id="softer" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="34"/></filter>
+    <filter id="inner" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="14"/></filter>
+    <linearGradient id="raised" gradientUnits="userSpaceOnUse" x1="324" y1="96" x2="700" y2="836"><stop offset="0" stop-color="#EEF1F6"/><stop offset="1" stop-color="#DCE1E8"/></linearGradient>
+    <linearGradient id="pressed" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#EEE"/><stop offset="1" stop-color="#E6EAF0"/></linearGradient>
+    <linearGradient id="wave" gradientUnits="userSpaceOnUse" x1="440" y1="0" x2="584" y2="0"><stop offset="0" stop-color="#7DBDFF"/><stop offset="1" stop-color="#3B9EFF"/></linearGradient>
+    <filter id="neon" x="-50%" y="-80%" width="200%" height="260%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="blur"/>
+      <feComponentTransfer in="blur" result="faint"><feFuncA type="linear" slope="0.75"/></feComponentTransfer>
+      <feMerge><feMergeNode in="faint"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <clipPath id="tile"><rect width="1024" height="1024" rx="228"/></clipPath>
+    <clipPath id="hole"><circle cx="512" cy="560" r="74"/></clipPath>
+    <clipPath id="guitarClip"><path d="M482 170 H542 V264 C542 296 550 312 576 318 L542 370 H482 L448 318 C474 312 482 296 482 264 Z"/><rect x="466" y="96" width="92" height="84" rx="22"/><path d="M512 300 C604 300 652 358 650 428 C648 482 612 500 614 528 C616 560 702 584 700 664 C698 764 612 836 512 836 C412 836 326 764 324 664 C322 584 408 560 410 528 C412 500 376 482 374 428 C372 358 420 300 512 300 Z"/></clipPath>
+    <g id="guitar"><path d="M482 170 H542 V264 C542 296 550 312 576 318 L542 370 H482 L448 318 C474 312 482 296 482 264 Z"/><rect x="466" y="96" width="92" height="84" rx="22"/><path d="M512 300 C604 300 652 358 650 428 C648 482 612 500 614 528 C616 560 702 584 700 664 C698 764 612 836 512 836 C412 836 326 764 324 664 C322 584 408 560 410 528 C412 500 376 482 374 428 C372 358 420 300 512 300 Z"/></g>
+  </defs>
+  <g clip-path="url(#tile)">
+    <rect width="1024" height="1024" fill="#E4E8EE"/>
+<g transform="translate(512 466) scale(1.12) translate(-512 -466)">
+<use href="#guitar" transform="translate(-20 -20)" fill="#FFFFFF" filter="url(#soft)"/>
+<use href="#guitar" transform="translate(22 22)" fill="#9AA6BA" filter="url(#soft)"/>
+<use href="#guitar" fill="url(#raised)"/>
+<circle cx="512" cy="560" r="74" fill="url(#pressed)"/>
+<path d="M444 534 A74 74 0 0 1 538 490" fill="none" stroke="#B7C0CD" stroke-width="6" stroke-linecap="round"/>
+<path d="M580 586 A74 74 0 0 1 486 630" fill="none" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round"/>
+<g clip-path="url(#hole)" filter="url(#neon)">
+  <path d="M438 560 H458 L470 532 L484 590 L500 514 L516 604 L530 528 L544 580 L556 548 L566 560 H586" fill="none" stroke="url(#wave)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+</g>
+  </g>
+</svg>
