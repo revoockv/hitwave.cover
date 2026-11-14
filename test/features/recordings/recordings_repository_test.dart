@@ -218,23 +218,39 @@ void main() {
     await directory.delete(recursive: true);
   });
 
-  Future<Recording> record(String songId, {bool trimSilence = true}) async {
+  /// Records a take of [songId] and stops: it is saved, not enhanced.
+  Future<Recording> stop(String songId, {bool trimSilence = false}) async {
     expect((await repository.startRecording(songId)).isSuccess, isTrue);
     final Result<Recording, RecordingsFailure> stopped = await repository.stopRecording(trimSilence: trimSilence);
-    await settle();
     return (stopped as SuccessResult<Recording, RecordingsFailure>).value;
   }
 
-  test('a take is kept on the device and enhanced automatically', () async {
+  /// Records a take of [songId] and, like the user does on its card, enhances it.
+  Future<Recording> record(String songId, {bool trimSilence = true}) async {
+    final Recording take = await stop(songId, trimSilence: trimSilence);
+    await repository.enhanceAgain(recordingId: take.id, trimSilence: trimSilence);
+    await settle();
+    return take;
+  }
+
+  test('a take is kept as recorded and enhanced only when asked', () async {
     expect((await repository.startRecording('song-1')).isSuccess, isTrue);
     expect(repository.watchRecorder().value, isA<RecordingRecorderState>());
     expect((await repository.startRecording('song-1')).isFailure, isTrue);
 
     final Result<Recording, RecordingsFailure> stopped = await repository.stopRecording(trimSilence: true);
     expect(repository.watchRecorder().value, isA<IdleRecorderState>());
-    expect((stopped as SuccessResult<Recording, RecordingsFailure>).value.status, RecordingStatus.enhancing);
+    final Recording saved = (stopped as SuccessResult<Recording, RecordingsFailure>).value;
+    expect(saved.status, RecordingStatus.recorded);
     await settle();
+    expect(repository.watchRecordings().value.single.status, RecordingStatus.recorded);
+    expect(engine.trims, isEmpty);
+    // The MP3 of the raw take is made for sharing.
+    await waitFor(() => mp3.made.length == 1);
+    expect(File(Mp3EncoderService.mp3PathOf(saved.rawPath)).existsSync(), isTrue);
 
+    expect((await repository.enhanceAgain(recordingId: saved.id, trimSilence: true)).isSuccess, isTrue);
+    await settle();
     final Recording recording = repository.watchRecordings().value.single;
     expect(recording.songId, 'song-1');
     expect(recording.status, RecordingStatus.enhanced);
@@ -244,26 +260,23 @@ void main() {
     expect(File(recording.rawPath).existsSync(), isTrue);
     expect(File(recording.enhancedPath!).existsSync(), isTrue);
     expect(engine.trims, <bool>[true]);
-    // The MP3s for sharing are made right away, beside the WAVs.
     await waitFor(() => mp3.made.length == 2);
     expect(File(Mp3EncoderService.mp3PathOf(recording.enhancedPath!)).existsSync(), isTrue);
-    expect(File(Mp3EncoderService.mp3PathOf(recording.rawPath)).existsSync(), isTrue);
     expect(mp3.made.length, 2);
 
-    // A restart does not make them again.
+    // A restart neither enhances nor makes the MP3s again.
     repository = await open();
     await settle();
     expect(mp3.made.length, 2);
+    expect(engine.trims, <bool>[true]);
   });
 
   test('a crashing enhancement marks its take as failed and the next takes still get enhanced', () async {
-    await repository.startRecording('song-1');
-    final Recording first =
-        ((await repository.stopRecording(trimSilence: false)) as SuccessResult<Recording, RecordingsFailure>).value;
+    final Recording first = await stop('song-1');
+    final Recording second = await stop('song-2');
     engine.crashing.add(first.id);
-    await repository.startRecording('song-2');
-    final Recording second =
-        ((await repository.stopRecording(trimSilence: false)) as SuccessResult<Recording, RecordingsFailure>).value;
+    await repository.enhanceAgain(recordingId: first.id, trimSilence: false);
+    await repository.enhanceAgain(recordingId: second.id, trimSilence: false);
     await settle();
 
     Recording byId(String id) => repository.watchRecordings().value.firstWhere((Recording r) => r.id == id);
@@ -278,10 +291,9 @@ void main() {
     expect(byId(first.id).status, RecordingStatus.enhanced);
   });
 
-  test('a new take is enhanced before the waiting MP3s of older takes', () async {
+  test('an enhancement goes before the waiting MP3s of older takes', () async {
     for (final String songId in <String>['song-1', 'song-2', 'song-3']) {
-      await repository.startRecording(songId);
-      await repository.stopRecording(trimSilence: false);
+      await stop(songId);
     }
     await settle();
     // The MP3s are missing again (as after a sync): the next start queues one job per take.
@@ -294,21 +306,22 @@ void main() {
     engine.onEnhance = () => events.add('enhance');
     repository = await open();
 
-    await repository.startRecording('song-4');
-    await repository.stopRecording(trimSilence: false);
+    final Recording take = await stop('song-4');
+    await repository.enhanceAgain(recordingId: take.id, trimSilence: false);
     await settle();
 
-    // Only the MP3 job already running (two files of one take) may finish before the enhancement.
-    expect(events.indexOf('enhance'), lessThanOrEqualTo(2));
-    expect(events.where((String e) => e == 'mp3').length, greaterThanOrEqualTo(6));
+    // Only the MP3 job already running may finish before the enhancement.
+    expect(events.indexOf('enhance'), lessThanOrEqualTo(1));
+    expect(events.where((String e) => e == 'mp3').length, greaterThanOrEqualTo(4));
   });
 
-  test('a crashing stereo check keeps the take and enhances it', () async {
+  test('a crashing stereo check keeps the take, which can still be enhanced', () async {
     stereo = CrashingStereo();
     repository = await open();
-    await repository.startRecording('song-1');
-    final Result<Recording, RecordingsFailure> stopped = await repository.stopRecording(trimSilence: false);
-    expect(stopped.isSuccess, isTrue);
+    final Recording take = await stop('song-1');
+    await settle();
+    expect(repository.watchRecordings().value.single.status, RecordingStatus.recorded);
+    await repository.enhanceAgain(recordingId: take.id, trimSilence: false);
     await settle();
     expect(repository.watchRecordings().value.single.status, RecordingStatus.enhanced);
   });
@@ -317,12 +330,10 @@ void main() {
     final List<String?> during = <String?>[];
     engine.onEnhance = () => during.add(repository.watchEnhancingRecording().value);
     expect(repository.watchEnhancingRecording().value, isNull);
-    await repository.startRecording('song-1');
-    final Recording first =
-        ((await repository.stopRecording(trimSilence: false)) as SuccessResult<Recording, RecordingsFailure>).value;
-    await repository.startRecording('song-2');
-    final Recording second =
-        ((await repository.stopRecording(trimSilence: false)) as SuccessResult<Recording, RecordingsFailure>).value;
+    final Recording first = await stop('song-1');
+    final Recording second = await stop('song-2');
+    await repository.enhanceAgain(recordingId: first.id, trimSilence: false);
+    await repository.enhanceAgain(recordingId: second.id, trimSilence: false);
     await settle();
     expect(during, <String>[first.id, second.id]);
     expect(repository.watchEnhancingRecording().value, isNull);

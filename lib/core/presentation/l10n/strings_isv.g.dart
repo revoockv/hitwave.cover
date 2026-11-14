@@ -184,6 +184,7 @@ class _Translations$recordings$isv extends Translations$recordings$en {
 	@override String get deleteMessage => 'Оригинал и улєпшены фајл будут избрисане с устројства.';
 	@override String get deleteTitle => 'Избрисати запис?';
 	@override late final _Translations$recordings$enhanceFailure$isv enhanceFailure = _Translations$recordings$enhanceFailure$isv._(_root);
+	@override String get enhanceNow => 'Улєпшити';
 	@override String get enhanced => 'Улєпшены';
 	@override String get enhancing => 'Улєпшају…';
 	@override late final _Translations$recordings$failure$isv failure = _Translations$recordings$failure$isv._(_root);
@@ -654,6 +655,7 @@ extension on TranslationsIsv {
 			'recordings.enhanceFailure.failed' => 'Не удало се улєпшити запис',
 			'recordings.enhanceFailure.interrupted' => 'Улєпшење было прєрвано — пустите его јешче раз',
 			'recordings.enhanceFailure.unavailable' => 'Улєпшење звука не јест доступно на тој платформє',
+			'recordings.enhanceNow' => 'Улєпшити',
 			'recordings.enhanced' => 'Улєпшены',
 			'recordings.enhancing' => 'Улєпшају…',
 			'recordings.failure.busy' => 'Запис уже иде',

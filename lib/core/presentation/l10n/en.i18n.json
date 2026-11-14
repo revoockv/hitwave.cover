@@ -104,6 +104,7 @@
       "interrupted": "The enhancement was interrupted — start it again",
       "unavailable": "Sound enhancement is not available on this platform"
     },
+    "enhanceNow": "Enhance",
     "enhanced": "Enhanced",
     "enhancing": "Enhancing…",
     "failure": {

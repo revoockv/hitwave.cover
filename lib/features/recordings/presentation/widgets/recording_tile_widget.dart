@@ -55,8 +55,8 @@ final class RecordingTileWidget extends StatelessWidget {
   /// Called by the folder button; `null` hides it (no file manager on this platform).
   final VoidCallback? onShowInFolderPressed;
 
-  /// Called by the "enhance again" button (of a failed enhancement, and in the actions of an
-  /// enhanced take, to run the current chain again).
+  /// Called by the "enhance" button of a take not enhanced yet, the "enhance again" button of a
+  /// failed enhancement, and the one in the actions of an enhanced take.
   final VoidCallback onRetryPressed;
 
   /// Creates a new [RecordingTileWidget].
@@ -159,13 +159,15 @@ final class RecordingTileWidget extends StatelessWidget {
               const SizedBox(height: AppTheme.spacingSmall),
               LinearProgressIndicator(value: enhanceFraction),
             ],
-            if (recording.status == RecordingStatus.enhanceFailed)
+            if (recording.status == RecordingStatus.recorded || recording.status == RecordingStatus.enhanceFailed)
               Align(
                 alignment: Alignment.centerLeft,
                 child: TextButton.icon(
                   onPressed: onRetryPressed,
                   icon: const Icon(Icons.auto_fix_high),
-                  label: Text(t.recordings.retry),
+                  label: Text(
+                    recording.status == RecordingStatus.recorded ? t.recordings.enhanceNow : t.recordings.retry,
+                  ),
                 ),
               ),
             if (isLoaded) ...<Widget>[
@@ -183,6 +185,7 @@ final class RecordingTileWidget extends StatelessWidget {
   static String _statusText(Translations t, Recording recording) => recording.isSilent
       ? t.recordings.silent
       : switch (recording.status) {
+          RecordingStatus.recorded => t.recordings.notEnhanced,
           RecordingStatus.enhancing => t.recordings.enhancing,
           RecordingStatus.enhanced => t.recordings.enhanced,
           RecordingStatus.enhanceFailed => recording.enhanceFailure?.text(t) ?? t.recordings.notEnhanced,
