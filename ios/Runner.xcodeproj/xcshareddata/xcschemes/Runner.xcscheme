@@ -5,24 +5,6 @@
    <BuildAction
       parallelizeBuildables = "YES"
       buildImplicitDependencies = "YES">
-      <PreActions>
-         <ExecutionAction
-            ActionType = "Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction">
-            <ActionContent
-               title = "Package the embedded Python app"
-               scriptText = "mkdir -p &quot;$SRCROOT/../build/python&quot;&#10;&quot;$SRCROOT/../tool/package_python.sh&quot; ios &gt; &quot;$SRCROOT/../build/python/package_ios.log&quot; 2&gt;&amp;1 || true&#10;">
-               <EnvironmentBuildable>
-                  <BuildableReference
-                     BuildableIdentifier = "primary"
-                     BlueprintIdentifier = "97C146ED1CF9000F007C117D"
-                     BuildableName = "Runner.app"
-                     BlueprintName = "Runner"
-                     ReferencedContainer = "container:Runner.xcodeproj">
-                  </BuildableReference>
-               </EnvironmentBuildable>
-            </ActionContent>
-         </ExecutionAction>
-      </PreActions>
       <BuildActionEntries>
          <BuildActionEntry
             buildForTesting = "YES"

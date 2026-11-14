@@ -19,7 +19,8 @@ Built with Flutter for Android, iOS, macOS, Windows, Linux and the web.
 ### Recording covers
 - Tick **Record** and press **Start**: the take is recorded while the lyrics scroll.
 - Choose the microphone; the app warns about a silent take.
-- **Vocal enhancement** runs on the device in embedded Python: it removes rumble and steady noise,
+- **Vocal enhancement** runs on the device in pure Dart
+  ([revoockv_audio_enhance](https://pub.dev/packages/revoockv_audio_enhance)): it removes rumble and steady noise,
   evens out the loudness and, optionally, trims the silence before and after the singing. The
   original and the enhanced take are both kept.
 - Listen to the takes, share one as MP3 (with a ready caption) or show it in its folder.
@@ -51,13 +52,11 @@ Requirements: Flutter (Dart `^3.12`); Xcode for iOS and macOS, Android Studio fo
 
 ```bash
 flutter pub get
-flutter run                          # Android, iOS, macOS: the build packages Python itself
-tool/flutter_python.sh windows run   # Windows and Linux: package Python, then run
+flutter run
 ```
 
-Vocal enhancement needs the embedded Python of `python/` (see [python/README.md](python/README.md)).
-The web build has no embedded Python and no sync between devices: there the app keeps the
-songs and the lyrics without vocal enhancement.
+The web build has no file system and no sync between devices: there the app keeps the songs and
+the lyrics without recording and vocal enhancement.
 
 ## Development
 
