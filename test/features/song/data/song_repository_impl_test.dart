@@ -6,6 +6,7 @@ import 'package:hitwave.cover/core/domain/entities/result.dart';
 import 'package:hitwave.cover/features/song/data/data_sources/hive_song_service.dart';
 import 'package:hitwave.cover/features/song/data/repositories/song_repository_impl.dart';
 import 'package:hitwave.cover/features/song/domain/entities/cover.dart';
+import 'package:hitwave.cover/features/song/domain/entities/lyrics_layout.dart';
 import 'package:hitwave.cover/features/song/domain/entities/song.dart';
 import 'package:hitwave.cover/features/song/domain/entities/song_failure.dart';
 import 'package:hitwave.cover/features/song/domain/entities/song_id_change.dart';
@@ -45,12 +46,32 @@ void main() {
     await _settle();
     final String id = repository.watchSongs().value.single.id;
 
-    await repository.updateSongLeadIn(songId: id, leadIn: 0.1);
+    await repository.updateSongLeadIn(songId: id, layout: LyricsLayout.compact, leadIn: 0.1);
     await repository.updateSongLyrics(songId: id, lyrics: 'la la');
     await _settle();
 
     expect(repository.watchSongs().value.single.leadIn, 0.1);
     expect(localSongs.readSongs().single.lyrics, 'la la');
+  });
+
+  test('a big screen takes the phone speed and space until it has its own', () async {
+    await repository.addSong(author: 'A', name: 'B', lyrics: 'c');
+    await _settle();
+    final String id = repository.watchSongs().value.single.id;
+    await repository.updateSongScrollSpeed(songId: id, layout: LyricsLayout.compact, speed: 0.3);
+    await repository.updateSongLeadIn(songId: id, layout: LyricsLayout.compact, leadIn: 0.2);
+    await _settle();
+
+    Song song = repository.watchSongs().value.single;
+    expect((song.scrollSpeedOn(LyricsLayout.wide), song.leadInOn(LyricsLayout.wide)), (0.3, 0.2));
+
+    await repository.updateSongScrollSpeed(songId: id, layout: LyricsLayout.wide, speed: 0.6);
+    await repository.updateSongLeadIn(songId: id, layout: LyricsLayout.wide, leadIn: 0.5);
+    await _settle();
+
+    song = repository.watchSongs().value.single;
+    expect((song.scrollSpeedOn(LyricsLayout.wide), song.leadInOn(LyricsLayout.wide)), (0.6, 0.5));
+    expect((song.scrollSpeedOn(LyricsLayout.compact), song.leadInOn(LyricsLayout.compact)), (0.3, 0.2));
   });
 
   test('the songs survive a restart', () async {

@@ -112,6 +112,8 @@ final class SyncSnapshotModel {
   static const String _lyricsField = 'lyrics';
   static const String _scrollSpeedField = 'scrollSpeed';
   static const String _leadInField = 'leadIn';
+  static const String _wideScrollSpeedField = 'wideScrollSpeed';
+  static const String _wideLeadInField = 'wideLeadIn';
   static const String _songIdField = 'songId';
   static const String _startedAtField = 'startedAt';
   static const String _secondsField = 'seconds';
@@ -210,6 +212,8 @@ final class SyncSnapshotModel {
     _lyricsField: song.lyrics,
     _scrollSpeedField: song.scrollSpeed,
     _leadInField: song.leadIn,
+    _wideScrollSpeedField: song.wideScrollSpeed,
+    _wideLeadInField: song.wideLeadIn,
   };
 
   /// A song of another device; it keeps its id there only to match its recordings and is added
@@ -223,6 +227,8 @@ final class SyncSnapshotModel {
     covers: const <Cover>[],
     scrollSpeed: (json[_scrollSpeedField] as num?)?.toDouble(),
     leadIn: (json[_leadInField] as num?)?.toDouble(),
+    wideScrollSpeed: (json[_wideScrollSpeedField] as num?)?.toDouble(),
+    wideLeadIn: (json[_wideLeadInField] as num?)?.toDouble(),
   );
 
   static PracticeSession _session(Map<String, dynamic> json) => PracticeSession(

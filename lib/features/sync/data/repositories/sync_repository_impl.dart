@@ -16,6 +16,7 @@ import '../../../recordings/domain/entities/imported_recording.dart';
 import '../../../recordings/domain/entities/recording.dart';
 import '../../../recordings/domain/repositories/recordings_repository.dart';
 import '../../../song/domain/entities/cover.dart';
+import '../../../song/domain/entities/lyrics_layout.dart';
 import '../../../song/domain/entities/song.dart';
 import '../../../song/domain/entities/song_id_change.dart';
 import '../../../song/domain/repositories/song_repository.dart';
@@ -592,10 +593,22 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
         lyrics: source.lyrics,
       ),
     );
-    final double? speed = source.scrollSpeed;
-    if (speed != null) _throwOnFailure(await _songs.updateSongScrollSpeed(songId: songId, speed: speed));
-    final double? leadIn = source.leadIn;
-    if (leadIn != null) _throwOnFailure(await _songs.updateSongLeadIn(songId: songId, leadIn: leadIn));
+    for (final LyricsLayout layout in LyricsLayout.values) {
+      final double? speed = switch (layout) {
+        LyricsLayout.compact => source.scrollSpeed,
+        LyricsLayout.wide => source.wideScrollSpeed,
+      };
+      if (speed != null) {
+        _throwOnFailure(await _songs.updateSongScrollSpeed(songId: songId, layout: layout, speed: speed));
+      }
+      final double? leadIn = switch (layout) {
+        LyricsLayout.compact => source.leadIn,
+        LyricsLayout.wide => source.wideLeadIn,
+      };
+      if (leadIn != null) {
+        _throwOnFailure(await _songs.updateSongLeadIn(songId: songId, layout: layout, leadIn: leadIn));
+      }
+    }
   }
 
   /// Everything of this device to send; covers and sessions of songs that are gone are left out.
@@ -655,6 +668,8 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
             covers: const <Cover>[],
             scrollSpeed: song.scrollSpeed,
             leadIn: song.leadIn,
+            wideScrollSpeed: song.wideScrollSpeed,
+            wideLeadIn: song.wideLeadIn,
           ),
         );
         return newSongs.length - 1;

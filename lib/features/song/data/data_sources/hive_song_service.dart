@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:hive_ce/hive_ce.dart';
 
 import '../../../../core/data/data_sources/local_storage_service.dart';
+import '../../domain/entities/lyrics_layout.dart';
 import '../models/cover_model.dart';
 import '../models/song_model.dart';
 import 'song_data_source.dart';
@@ -19,6 +20,8 @@ final class HiveSongService implements SongDataSource {
   static const String _lyricsField = 'lyrics';
   static const String _scrollSpeedField = 'scrollSpeed';
   static const String _leadInField = 'leadIn';
+  static const String _wideScrollSpeedField = 'wideScrollSpeed';
+  static const String _wideLeadInField = 'wideLeadIn';
   static const String _coversField = 'covers';
   static const String _timestampField = 'timestamp';
   static const String _notesField = 'notes';
@@ -93,6 +96,8 @@ final class HiveSongService implements SongDataSource {
       _lyricsField: song.lyrics,
       _scrollSpeedField: song.scrollSpeed,
       _leadInField: song.leadIn,
+      _wideScrollSpeedField: song.wideScrollSpeed,
+      _wideLeadInField: song.wideLeadIn,
       _coversField: <Map<String, dynamic>>[],
     });
     return id;
@@ -107,12 +112,22 @@ final class HiveSongService implements SongDataSource {
   });
 
   @override
-  Future<void> updateSongScrollSpeed({required String songId, required double speed}) =>
-      _updateFields(songId, <String, dynamic>{_scrollSpeedField: speed});
+  Future<void> updateSongScrollSpeed({required String songId, required LyricsLayout layout, required double speed}) =>
+      _updateFields(songId, <String, dynamic>{
+        switch (layout) {
+          LyricsLayout.compact => _scrollSpeedField,
+          LyricsLayout.wide => _wideScrollSpeedField,
+        }: speed,
+      });
 
   @override
-  Future<void> updateSongLeadIn({required String songId, required double leadIn}) =>
-      _updateFields(songId, <String, dynamic>{_leadInField: leadIn});
+  Future<void> updateSongLeadIn({required String songId, required LyricsLayout layout, required double leadIn}) =>
+      _updateFields(songId, <String, dynamic>{
+        switch (layout) {
+          LyricsLayout.compact => _leadInField,
+          LyricsLayout.wide => _wideLeadInField,
+        }: leadIn,
+      });
 
   @override
   Future<void> updateSongLyrics({required String songId, required String lyrics}) =>
@@ -188,6 +203,8 @@ final class HiveSongService implements SongDataSource {
       coverIds: _coverMaps(song).map(_coverId).toList(),
       scrollSpeed: (song[_scrollSpeedField] as num?)?.toDouble(),
       leadIn: (song[_leadInField] as num?)?.toDouble(),
+      wideScrollSpeed: (song[_wideScrollSpeedField] as num?)?.toDouble(),
+      wideLeadIn: (song[_wideLeadInField] as num?)?.toDouble(),
     );
   }
 

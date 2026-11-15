@@ -6,6 +6,7 @@ import 'package:logger/logger.dart';
 import '../../../../core/domain/entities/disposable_resource.dart';
 import '../../../../core/domain/entities/result.dart';
 import '../../domain/entities/cover.dart';
+import '../../domain/entities/lyrics_layout.dart';
 import '../../domain/entities/song.dart';
 import '../../domain/entities/song_id_change.dart';
 import '../../domain/repositories/song_repository.dart';
@@ -31,6 +32,7 @@ final class SongRepositoryImpl implements SongRepository, DisposableResource {
   static const String _speedLog = '", speed=';
   static const String _updateLeadInLog = 'UpdateSongLeadIn';
   static const String _leadInLog = '", leadIn=';
+  static const String _layoutLog = ', layout=';
   static const String _updateLyricsLog = 'UpdateSongLyrics';
   static const String _addSongsLog = 'AddSongs';
   static const String _addCoverLog = 'AddCover';
@@ -185,22 +187,30 @@ final class SongRepositoryImpl implements SongRepository, DisposableResource {
   }
 
   @override
-  Future<Result<void, SongFailure>> updateSongScrollSpeed({required String songId, required double speed}) {
+  Future<Result<void, SongFailure>> updateSongScrollSpeed({
+    required String songId,
+    required LyricsLayout layout,
+    required double speed,
+  }) {
     return _run(
       _updateSpeedLog,
-      '$_startingLog$songId$_speedLog$speed',
+      '$_startingLog$songId$_speedLog$speed$_layoutLog${layout.name}',
       SongFailure.updateSpeed,
-      (SongDataSource dataSource) => dataSource.updateSongScrollSpeed(songId: songId, speed: speed),
+      (SongDataSource dataSource) => dataSource.updateSongScrollSpeed(songId: songId, layout: layout, speed: speed),
     );
   }
 
   @override
-  Future<Result<void, SongFailure>> updateSongLeadIn({required String songId, required double leadIn}) {
+  Future<Result<void, SongFailure>> updateSongLeadIn({
+    required String songId,
+    required LyricsLayout layout,
+    required double leadIn,
+  }) {
     return _run(
       _updateLeadInLog,
-      '$_startingLog$songId$_leadInLog$leadIn',
+      '$_startingLog$songId$_leadInLog$leadIn$_layoutLog${layout.name}',
       SongFailure.updateLeadIn,
-      (SongDataSource dataSource) => dataSource.updateSongLeadIn(songId: songId, leadIn: leadIn),
+      (SongDataSource dataSource) => dataSource.updateSongLeadIn(songId: songId, layout: layout, leadIn: leadIn),
     );
   }
 

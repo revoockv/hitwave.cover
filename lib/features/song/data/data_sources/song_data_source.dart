@@ -1,3 +1,4 @@
+import '../../domain/entities/lyrics_layout.dart';
 import '../models/cover_model.dart';
 import '../models/song_model.dart';
 
@@ -18,11 +19,11 @@ abstract interface class SongDataSource {
   /// Updates the author, name, album and lyrics of [song].
   Future<void> updateSong(SongModel song);
 
-  /// Saves the auto-scroll [speed] of the song [songId].
-  Future<void> updateSongScrollSpeed({required String songId, required double speed});
+  /// Saves the auto-scroll [speed] of the song [songId] on [layout].
+  Future<void> updateSongScrollSpeed({required String songId, required LyricsLayout layout, required double speed});
 
-  /// Saves the space above the lyrics ([leadIn]) of the song [songId].
-  Future<void> updateSongLeadIn({required String songId, required double leadIn});
+  /// Saves the space above the lyrics ([leadIn]) of the song [songId] on [layout].
+  Future<void> updateSongLeadIn({required String songId, required LyricsLayout layout, required double leadIn});
 
   /// Saves the [lyrics] of the song [songId].
   Future<void> updateSongLyrics({required String songId, required String lyrics});

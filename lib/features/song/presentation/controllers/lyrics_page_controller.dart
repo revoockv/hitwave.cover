@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../../core/domain/entities/result_state.dart';
+import '../../domain/entities/lyrics_layout.dart';
 import '../../domain/entities/song_failure.dart';
 
 /// UI state of the lyrics page, like a Flutter controller: auto-scroll, the
@@ -85,12 +86,16 @@ final class LyricsPageController {
   /// Focus of the lyrics text field.
   final FocusNode lyricsFocusNode = FocusNode();
 
-  /// Creates the controller with the [lyrics] to show.
+  /// The screen the page was opened on: the speed and the space are saved for it.
+  final LyricsLayout layout;
+
+  /// Creates the controller with the [lyrics] to show on [layout].
   ///
   /// Starts at [initialSpeed] and [initialLeadIn] (saved with the song) or the defaults, with the
   /// checkboxes as they were last chosen ([record], [trimSilence]).
   LyricsPageController({
     required String lyrics,
+    LyricsLayout layout = LyricsLayout.compact,
     double? initialSpeed,
     double? initialLeadIn,
     bool record = false,
@@ -101,10 +106,17 @@ final class LyricsPageController {
          (initialLeadIn ?? _defaultLeadIn).clamp(minLeadIn, maxLeadIn),
          record,
          trimSilence,
+         layout,
        );
 
-  LyricsPageController._(String lyrics, double startSpeed, double startLeadIn, bool record, bool trimSilence)
-    : recordController = ValueNotifier<bool>(record),
+  LyricsPageController._(
+    String lyrics,
+    double startSpeed,
+    double startLeadIn,
+    bool record,
+    bool trimSilence,
+    this.layout,
+  ) : recordController = ValueNotifier<bool>(record),
       trimSilenceController = ValueNotifier<bool>(trimSilence),
       lyricsTextController = TextEditingController(text: lyrics),
       speedController = ValueNotifier<double>(startSpeed),

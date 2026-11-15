@@ -1,4 +1,5 @@
 import 'cover.dart';
+import 'lyrics_layout.dart';
 
 /// Represents a song in the application.
 ///
@@ -22,12 +23,18 @@ final class Song {
   /// The list of covers associated with this song.
   final List<Cover> covers;
 
-  /// Saved auto-scroll speed of the lyrics (0.0–1.0), or `null` when never set.
+  /// Saved auto-scroll speed of the lyrics (0.0–1.0) on a phone, or `null` when never set.
   final double? scrollSpeed;
 
-  /// Saved space above the lyrics before they scroll, as a part of the screen
+  /// Saved space above the lyrics before they scroll on a phone, as a part of the screen
   /// height (0.0–0.8), or `null` when never set.
   final double? leadIn;
+
+  /// [scrollSpeed] on a big screen, or `null` when never set there.
+  final double? wideScrollSpeed;
+
+  /// [leadIn] on a big screen, or `null` when never set there.
+  final double? wideLeadIn;
 
   /// Creates a new [Song] instance.
   const Song({
@@ -39,5 +46,20 @@ final class Song {
     required this.covers,
     this.scrollSpeed,
     this.leadIn,
+    this.wideScrollSpeed,
+    this.wideLeadIn,
   });
+
+  /// The saved scroll speed on [layout]; a big screen takes the phone one until it has its own.
+  double? scrollSpeedOn(LyricsLayout layout) => switch (layout) {
+    LyricsLayout.compact => scrollSpeed,
+    LyricsLayout.wide => wideScrollSpeed ?? scrollSpeed,
+  };
+
+  /// The saved space above the lyrics on [layout]; a big screen takes the phone one until it has
+  /// its own.
+  double? leadInOn(LyricsLayout layout) => switch (layout) {
+    LyricsLayout.compact => leadIn,
+    LyricsLayout.wide => wideLeadIn ?? leadIn,
+  };
 }

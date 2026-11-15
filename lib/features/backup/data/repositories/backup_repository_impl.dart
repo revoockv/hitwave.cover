@@ -45,6 +45,8 @@ final class BackupRepositoryImpl implements BackupRepository, DisposableResource
   static const String _coverIdsField = 'coverIds';
   static const String _scrollSpeedField = 'scrollSpeed';
   static const String _leadInField = 'leadIn';
+  static const String _wideScrollSpeedField = 'wideScrollSpeed';
+  static const String _wideLeadInField = 'wideLeadIn';
   static const String _jsonFileName = 'backup.json';
   static const String _zipFileName = 'backup.zip';
   static const String _separator = '/';
@@ -314,6 +316,8 @@ final class BackupRepositoryImpl implements BackupRepository, DisposableResource
       _coverIdsField: song.covers.map(_coverId).toList(),
       _scrollSpeedField: song.scrollSpeed,
       _leadInField: song.leadIn,
+      _wideScrollSpeedField: song.wideScrollSpeed,
+      _wideLeadInField: song.wideLeadIn,
     };
   }
 
@@ -330,6 +334,8 @@ final class BackupRepositoryImpl implements BackupRepository, DisposableResource
       covers: const <Cover>[],
       scrollSpeed: (songJson[_scrollSpeedField] as num?)?.toDouble(),
       leadIn: (songJson[_leadInField] as num?)?.toDouble(),
+      wideScrollSpeed: (songJson[_wideScrollSpeedField] as num?)?.toDouble(),
+      wideLeadIn: (songJson[_wideLeadInField] as num?)?.toDouble(),
     );
   }
 }
