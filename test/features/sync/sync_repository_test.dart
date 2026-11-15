@@ -278,6 +278,13 @@ PracticeSession session(String id, String songId) =>
 /// Lets the deletion listeners write their tombstones.
 Future<void> settle() => Future<void>.delayed(const Duration(milliseconds: 50));
 
+/// Waits (up to 5 s) until [condition] holds; a busy machine may need more than [settle].
+Future<void> until(bool Function() condition) async {
+  for (int i = 0; i < 100 && !condition(); i++) {
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+  }
+}
+
 void main() {
   late Directory root;
 
@@ -450,7 +457,12 @@ void main() {
     await host.hostFor(guest);
     expect(guest.sync.watchSyncState().value, isA<ReviewSyncState>());
     expect((guest.sync.watchSyncState().value as ReviewSyncState).peerName, 'mac');
-    await settle();
+    await until(
+      () => switch (host.sync.watchSyncState().value) {
+        SyncingSyncState(:final SyncStep step) => step == SyncStep.choosing,
+        _ => false,
+      },
+    );
     final SyncingSyncState waiting = host.sync.watchSyncState().value as SyncingSyncState;
     expect(waiting.peerName, '«pixel»');
     expect(waiting.step, SyncStep.choosing);
