@@ -18,6 +18,7 @@ import 'vocal_enhance_data_source.dart';
 final class PackageVocalEnhanceDataSource implements VocalEnhanceDataSource, DisposableResource {
   static const String _closedError = 'The audio engine stopped';
   static const String _temporarySuffix = '.part';
+  static const String _widenMonoKey = 'widen_mono';
 
   final Set<audio.AudioTask<Object?>> _running = <audio.AudioTask<Object?>>{};
 
@@ -136,6 +137,9 @@ final class PackageVocalEnhanceDataSource implements VocalEnhanceDataSource, Dis
   }
 
   /// The preset by its engine name, then the [overrides] on top.
+  ///
+  /// Whatever the preset, a one-channel take always comes out as mono-compatible pseudo-stereo:
+  /// most microphones (laptops, most phones) give a single channel.
   static audio.EnhanceSettings _settingsOf(String preset, Map<String, double> overrides) {
     final audio.EnhanceSettings base = switch (preset) {
       'studio' => audio.EnhancePreset.studio.settings,
@@ -143,7 +147,9 @@ final class PackageVocalEnhanceDataSource implements VocalEnhanceDataSource, Dis
       'classic' => audio.EnhancePreset.classic.settings,
       _ => audio.EnhancePreset.natural.settings,
     };
-    final Map<String, double> current = _settingsMap(base)..addAll(overrides);
+    final Map<String, double> current = _settingsMap(base)
+      ..addAll(overrides)
+      ..[_widenMonoKey] = 1;
     double value(String key) => current[key]!;
     return audio.EnhanceSettings(
       alignStereo: value('align_stereo') > 0,
@@ -167,7 +173,7 @@ final class PackageVocalEnhanceDataSource implements VocalEnhanceDataSource, Dis
       expanderRatio: value('expander_ratio'),
       expanderBelowDb: value('expander_below_db'),
       expanderFloorDb: value('expander_floor_db'),
-      widenMono: value('widen_mono') > 0,
+      widenMono: value(_widenMonoKey) > 0,
       monoWidthDb: value('mono_width_db'),
       targetLufs: value('target_lufs'),
       maxGainDb: value('max_gain_db'),
@@ -201,7 +207,7 @@ final class PackageVocalEnhanceDataSource implements VocalEnhanceDataSource, Dis
     'expander_ratio': settings.expanderRatio,
     'expander_below_db': settings.expanderBelowDb,
     'expander_floor_db': settings.expanderFloorDb,
-    'widen_mono': settings.widenMono ? 1 : 0,
+    _widenMonoKey: settings.widenMono ? 1 : 0,
     'mono_width_db': settings.monoWidthDb,
     'target_lufs': settings.targetLufs,
     'max_gain_db': settings.maxGainDb,
