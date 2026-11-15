@@ -325,7 +325,7 @@ class _Translations$sync$isv extends Translations$sync$en {
 	@override String get done => 'Готово';
 	@override late final _Translations$sync$failure$isv failure = _Translations$sync$failure$isv._(_root);
 	@override String get goneSong => 'пєсња, кторој уж нема';
-	@override String get intro => 'Пренесите пєсни, каверы, тренингы и историју меџу устројствами. Ничто не јест избрисано: каждо устројство достаје то, чего ему недостаје.';
+	@override String get intro => 'Пренесите пєсни, каверы, тренингы и историју меџу устројствами. Прєд каждой измєной видите все измєны за оба устројства, додавања и избрисања, и означајете те, ктоже треба внести.';
 	@override String get orPaste => 'или вставите код из другого устројства';
 	@override String peerStep({required Object device, required Object step}) => '${device}: ${step}';
 	@override String peerStopped({required Object device, required Object reason}) => '${device} зауставил синхронизацију: ${reason}';
@@ -800,7 +800,7 @@ extension on TranslationsIsv {
 			'sync.failure.nothingWaits' => 'Нема синхронизације, ктора чака на рєшења',
 			'sync.failure.peerStopped' => 'Друго устројство зауставило синхронизацију',
 			'sync.goneSong' => 'пєсња, кторој уж нема',
-			'sync.intro' => 'Пренесите пєсни, каверы, тренингы и историју меџу устројствами. Ничто не јест избрисано: каждо устројство достаје то, чего ему недостаје.',
+			'sync.intro' => 'Пренесите пєсни, каверы, тренингы и историју меџу устројствами. Прєд каждой измєной видите все измєны за оба устројства, додавања и избрисања, и означајете те, ктоже треба внести.',
 			'sync.orPaste' => 'или вставите код из другого устројства',
 			'sync.peerStep' => ({required Object device, required Object step}) => '${device}: ${step}',
 			'sync.peerStopped' => ({required Object device, required Object reason}) => '${device} зауставил синхронизацију: ${reason}',

@@ -286,7 +286,7 @@
       "peerStopped": "The other device stopped syncing"
     },
     "goneSong": "a song that is gone",
-    "intro": "Move songs, covers, practice and history between devices. Nothing is deleted: each device gets what it misses.",
+    "intro": "Move songs, covers, practice and history between devices. Before anything changes, you see every change for both devices, additions and deletions, and tick the ones to make.",
     "orPaste": "or paste the code from another device",
     "peerStep": "{device}: {step}",
     "peerStopped": "{device} stopped syncing: {reason}",

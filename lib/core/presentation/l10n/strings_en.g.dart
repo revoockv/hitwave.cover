@@ -611,8 +611,8 @@ class Translations$sync$en {
 	/// en: 'a song that is gone'
 	String get goneSong => 'a song that is gone';
 
-	/// en: 'Move songs, covers, practice and history between devices. Nothing is deleted: each device gets what it misses.'
-	String get intro => 'Move songs, covers, practice and history between devices. Nothing is deleted: each device gets what it misses.';
+	/// en: 'Move songs, covers, practice and history between devices. Before anything changes, you see every change for both devices, additions and deletions, and tick the ones to make.'
+	String get intro => 'Move songs, covers, practice and history between devices. Before anything changes, you see every change for both devices, additions and deletions, and tick the ones to make.';
 
 	/// en: 'or paste the code from another device'
 	String get orPaste => 'or paste the code from another device';
@@ -1296,7 +1296,7 @@ extension on Translations {
 			'sync.failure.nothingWaits' => 'No sync is waiting for decisions',
 			'sync.failure.peerStopped' => 'The other device stopped syncing',
 			'sync.goneSong' => 'a song that is gone',
-			'sync.intro' => 'Move songs, covers, practice and history between devices. Nothing is deleted: each device gets what it misses.',
+			'sync.intro' => 'Move songs, covers, practice and history between devices. Before anything changes, you see every change for both devices, additions and deletions, and tick the ones to make.',
 			'sync.orPaste' => 'or paste the code from another device',
 			'sync.peerStep' => ({required Object device, required Object step}) => '${device}: ${step}',
 			'sync.peerStopped' => ({required Object device, required Object reason}) => '${device} stopped syncing: ${reason}',
