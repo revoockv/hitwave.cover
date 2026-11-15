@@ -307,50 +307,52 @@ class _Translations$sync$isv extends Translations$sync$en {
 	final TranslationsIsv _root; // ignore: unused_field
 
 	// Translations
-	@override String get allChanges => 'Все измєны:';
-	@override String get allDeletions => 'Все избрисања:';
+	@override String get all => 'Все';
 	@override String get anotherDevice => 'Друго устројство';
-	@override late final _Translations$sync$bulk$isv bulk = _Translations$sync$bulk$isv._(_root);
+	@override String applyChosen({required Object n}) => 'Синхронизовати означене (${n})';
+	@override late final _Translations$sync$badge$isv badge = _Translations$sync$badge$isv._(_root);
 	@override String get codeCopied => 'Код скопированы';
-	@override String get conflictsMessage => 'Те пєсни и каверы были избрисане или измєњене само на једном из устројств. Изберите за кажды, что дєлати на обох.';
-	@override String get conflictsTitle => 'Что дєлати с различијами?';
 	@override String get connect => 'Подкључити се';
-	@override String get continueSync => 'Продолжити';
 	@override String get copyCode => 'Копировати код';
 	@override String coverTitle({required Object song, required Object date}) => 'Кавер «${song}» од ${date}';
 	@override String coversCount({required Object n}) => 'каверы: ${n}';
-	@override String get deleteHere => 'Избрисати и ту';
-	@override String get deleteThere => 'Избрисати и там';
 	@override String deletedCount({required Object n}) => 'избрисано: ${n}';
 	@override String deletedHereAt({required Object date, required Object time}) => 'Избрисано ту ${date} в ${time}';
 	@override String deletedThereAt({required Object date, required Object time}) => 'Избрисано на другом устројству ${date} в ${time}';
+	@override String deletedThereAtDevice({required Object device, required Object date, required Object time}) => 'Избрисано на «${device}» ${date} в ${time}';
 	@override late final _Translations$sync$difference$isv difference = _Translations$sync$difference$isv._(_root);
 	@override String differs({required Object list}) => 'Различаје се: ${list}';
 	@override String get done => 'Готово';
 	@override late final _Translations$sync$failure$isv failure = _Translations$sync$failure$isv._(_root);
 	@override String get goneSong => 'пєсња, кторој уж нема';
 	@override String get intro => 'Пренесите пєсни, каверы, тренингы и историју меџу устројствами. Ничто не јест избрисано: каждо устројство достаје то, чего ему недостаје.';
-	@override String get keepThis => 'Оставити туто';
-	@override late final _Translations$sync$kind$isv kind = _Translations$sync$kind$isv._(_root);
 	@override String get orPaste => 'или вставите код из другого устројства';
 	@override String peerStep({required Object device, required Object step}) => '${device}: ${step}';
 	@override String peerStopped({required Object device, required Object reason}) => '${device} зауставил синхронизацију: ${reason}';
+	@override String practiceItem({required Object n}) => 'Тренингы: ${n}';
 	@override String get qrHint => 'На другом устројству отворите «Синхронизација» → «Скановати QR-код». Оба устројства мора быти в једној сети Wi‑Fi.';
 	@override String get received => 'Додано ту';
-	@override String get restoreHere => 'Обновити ту';
-	@override String get restoreThere => 'Обновити там';
+	@override String get restoredHere => 'Было избрисано на том устројству';
+	@override String restoredThere({required Object device}) => 'Было избрисано на «${device}»';
+	@override String get reviewMessage => 'Внесене будут само означене измєны. Неозначене остају, как сут, на обох устројствах и будут понуђене опет в следујучи раз.';
+	@override String get reviewTitle => 'Изберите, что синхронизовати';
 	@override String get scanQr => 'Скановати QR-код';
 	@override String get scanTitle => 'Сканујте QR-код';
 	@override String get sent => 'Додано на друго устројство';
 	@override String sessionsCount({required Object n}) => 'тренингы: ${n}';
 	@override String get showQr => 'Показати QR-код';
+	@override String songItem({required Object song}) => 'Пєсња «${song}»';
 	@override String songsCount({required Object n}) => 'пєсни: ${n}';
 	@override late final _Translations$sync$step$isv step = _Translations$sync$step$isv._(_root);
 	@override String get synced => 'Синхронизовано';
-	@override String get takeOther => 'Взети друго';
 	@override String get title => 'Синхронизација';
+	@override String toHere({required Object device}) => 'Из «${device}» на то устројство';
+	@override String toThere({required Object device}) => 'Из того устројства на «${device}»';
+	@override String updateHere({required Object list, required Object device}) => 'Береје ${list} из «${device}»';
+	@override String updateThere({required Object device, required Object list}) => '«${device}» береје ${list} из того устројства';
 	@override String updatedCount({required Object n}) => 'обновјено: ${n}';
 	@override String get waiting => 'Чакају, докле друго устројство сканује код…';
+	@override String withCovers({required Object n}) => 'с каверами: ${n}';
 }
 
 // Path: vocalEnhance
@@ -483,17 +485,17 @@ class _Translations$song$sort$isv extends Translations$song$sort$en {
 	@override String get recent => 'Недавне';
 }
 
-// Path: sync.bulk
-class _Translations$sync$bulk$isv extends Translations$sync$bulk$en {
-	_Translations$sync$bulk$isv._(TranslationsIsv root) : this._root = root, super.internal(root);
+// Path: sync.badge
+class _Translations$sync$badge$isv extends Translations$sync$badge$en {
+	_Translations$sync$badge$isv._(TranslationsIsv root) : this._root = root, super.internal(root);
 
 	final TranslationsIsv _root; // ignore: unused_field
 
 	// Translations
-	@override String get delete => 'избрисати';
-	@override String get keepThis => 'оставити те';
-	@override String get restore => 'обновити';
-	@override String get takeOther => 'взети друго';
+	@override String get add => 'Додати';
+	@override String get restore => 'Вернути';
+	@override String get delete => 'Избрисати';
+	@override String get update => 'Измєнити';
 }
 
 // Path: sync.difference
@@ -524,20 +526,6 @@ class _Translations$sync$failure$isv extends Translations$sync$failure$en {
 	@override String get notACode => 'То не јест код синхронизације hitwave.cover';
 	@override String get nothingWaits => 'Нема синхронизације, ктора чака на рєшења';
 	@override String get peerStopped => 'Друго устројство зауставило синхронизацију';
-}
-
-// Path: sync.kind
-class _Translations$sync$kind$isv extends Translations$sync$kind$en {
-	_Translations$sync$kind$isv._(TranslationsIsv root) : this._root = root, super.internal(root);
-
-	final TranslationsIsv _root; // ignore: unused_field
-
-	// Translations
-	@override String get coverDeletedHere => 'Кавер избрисаны на том устројству';
-	@override String get coverDeletedThere => 'Кавер избрисаны на другом устројству';
-	@override String get songChanged => 'Пєсња се различаје';
-	@override String get songDeletedHere => 'Пєсња избрисана на том устројству';
-	@override String get songDeletedThere => 'Пєсња избрисана на другом устројству';
 }
 
 // Path: sync.step
@@ -781,26 +769,22 @@ extension on TranslationsIsv {
 			'song.tabSongs' => 'Пєсни',
 			'song.takeSaved' => 'Запис сохрањены, улєпшају звук…',
 			'song.trimSilence' => 'Обрєзати тишину',
-			'sync.allChanges' => 'Все измєны:',
-			'sync.allDeletions' => 'Все избрисања:',
+			'sync.all' => 'Все',
 			'sync.anotherDevice' => 'Друго устројство',
-			'sync.bulk.delete' => 'избрисати',
-			'sync.bulk.keepThis' => 'оставити те',
-			'sync.bulk.restore' => 'обновити',
-			'sync.bulk.takeOther' => 'взети друго',
+			'sync.applyChosen' => ({required Object n}) => 'Синхронизовати означене (${n})',
+			'sync.badge.add' => 'Додати',
+			'sync.badge.restore' => 'Вернути',
+			'sync.badge.delete' => 'Избрисати',
+			'sync.badge.update' => 'Измєнити',
 			'sync.codeCopied' => 'Код скопированы',
-			'sync.conflictsMessage' => 'Те пєсни и каверы были избрисане или измєњене само на једном из устројств. Изберите за кажды, что дєлати на обох.',
-			'sync.conflictsTitle' => 'Что дєлати с различијами?',
 			'sync.connect' => 'Подкључити се',
-			'sync.continueSync' => 'Продолжити',
 			'sync.copyCode' => 'Копировати код',
 			'sync.coverTitle' => ({required Object song, required Object date}) => 'Кавер «${song}» од ${date}',
 			'sync.coversCount' => ({required Object n}) => 'каверы: ${n}',
-			'sync.deleteHere' => 'Избрисати и ту',
-			'sync.deleteThere' => 'Избрисати и там',
 			'sync.deletedCount' => ({required Object n}) => 'избрисано: ${n}',
 			'sync.deletedHereAt' => ({required Object date, required Object time}) => 'Избрисано ту ${date} в ${time}',
 			'sync.deletedThereAt' => ({required Object date, required Object time}) => 'Избрисано на другом устројству ${date} в ${time}',
+			'sync.deletedThereAtDevice' => ({required Object device, required Object date, required Object time}) => 'Избрисано на «${device}» ${date} в ${time}',
 			'sync.difference.album' => 'албум',
 			'sync.difference.lyrics' => 'текст',
 			'sync.differs' => ({required Object list}) => 'Различаје се: ${list}',
@@ -817,24 +801,22 @@ extension on TranslationsIsv {
 			'sync.failure.peerStopped' => 'Друго устројство зауставило синхронизацију',
 			'sync.goneSong' => 'пєсња, кторој уж нема',
 			'sync.intro' => 'Пренесите пєсни, каверы, тренингы и историју меџу устројствами. Ничто не јест избрисано: каждо устројство достаје то, чего ему недостаје.',
-			'sync.keepThis' => 'Оставити туто',
-			'sync.kind.coverDeletedHere' => 'Кавер избрисаны на том устројству',
-			'sync.kind.coverDeletedThere' => 'Кавер избрисаны на другом устројству',
-			'sync.kind.songChanged' => 'Пєсња се различаје',
-			'sync.kind.songDeletedHere' => 'Пєсња избрисана на том устројству',
-			'sync.kind.songDeletedThere' => 'Пєсња избрисана на другом устројству',
 			'sync.orPaste' => 'или вставите код из другого устројства',
 			'sync.peerStep' => ({required Object device, required Object step}) => '${device}: ${step}',
 			'sync.peerStopped' => ({required Object device, required Object reason}) => '${device} зауставил синхронизацију: ${reason}',
+			'sync.practiceItem' => ({required Object n}) => 'Тренингы: ${n}',
 			'sync.qrHint' => 'На другом устројству отворите «Синхронизација» → «Скановати QR-код». Оба устројства мора быти в једној сети Wi‑Fi.',
 			'sync.received' => 'Додано ту',
-			'sync.restoreHere' => 'Обновити ту',
-			'sync.restoreThere' => 'Обновити там',
+			'sync.restoredHere' => 'Было избрисано на том устројству',
+			'sync.restoredThere' => ({required Object device}) => 'Было избрисано на «${device}»',
+			'sync.reviewMessage' => 'Внесене будут само означене измєны. Неозначене остају, как сут, на обох устројствах и будут понуђене опет в следујучи раз.',
+			'sync.reviewTitle' => 'Изберите, что синхронизовати',
 			'sync.scanQr' => 'Скановати QR-код',
 			'sync.scanTitle' => 'Сканујте QR-код',
 			'sync.sent' => 'Додано на друго устројство',
 			'sync.sessionsCount' => ({required Object n}) => 'тренингы: ${n}',
 			'sync.showQr' => 'Показати QR-код',
+			'sync.songItem' => ({required Object song}) => 'Пєсња «${song}»',
 			'sync.songsCount' => ({required Object n}) => 'пєсни: ${n}',
 			'sync.step.applying' => 'Примењају рєшења…',
 			'sync.step.choosing' => 'избира, что дєлати с различијами…',
@@ -845,10 +827,14 @@ extension on TranslationsIsv {
 			'sync.step.reading' => 'Достају спис пєснеј и каверов…',
 			'sync.step.uploading' => ({required Object done, required Object total}) => 'Посылају каверы ${done} из ${total}',
 			'sync.synced' => 'Синхронизовано',
-			'sync.takeOther' => 'Взети друго',
 			'sync.title' => 'Синхронизација',
+			'sync.toHere' => ({required Object device}) => 'Из «${device}» на то устројство',
+			'sync.toThere' => ({required Object device}) => 'Из того устројства на «${device}»',
+			'sync.updateHere' => ({required Object list, required Object device}) => 'Береје ${list} из «${device}»',
+			'sync.updateThere' => ({required Object device, required Object list}) => '«${device}» береје ${list} из того устројства',
 			'sync.updatedCount' => ({required Object n}) => 'обновјено: ${n}',
 			'sync.waiting' => 'Чакају, докле друго устројство сканује код…',
+			'sync.withCovers' => ({required Object n}) => 'с каверами: ${n}',
 			'vocalEnhance.failure.analyze' => 'Не удало се измєрити запис',
 			'vocalEnhance.failure.enhance' => 'Не удало се улєпшити запис',
 			'vocalEnhance.failure.negativeLeadIn' => 'Тишина на початку не може быти негативна',

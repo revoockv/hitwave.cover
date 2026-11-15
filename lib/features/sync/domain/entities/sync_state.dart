@@ -1,4 +1,4 @@
-import 'sync_conflict.dart';
+import 'sync_change.dart';
 import 'sync_failure.dart';
 import 'sync_step.dart';
 import 'sync_summary.dart';
@@ -57,13 +57,16 @@ final class SyncingSyncState extends SyncState {
   });
 }
 
-/// The devices differ in ways only the user can decide; the exchange waits for the choices.
-final class ConflictsSyncState extends SyncState {
-  /// What differs.
-  final List<SyncConflict> conflicts;
+/// The changes of both devices are known; the exchange waits for the user to choose which to make.
+final class ReviewSyncState extends SyncState {
+  /// Every change, those made on this device first.
+  final List<SyncChange> changes;
 
-  /// Creates a [ConflictsSyncState].
-  const ConflictsSyncState(this.conflicts);
+  /// Name of the other device, as it calls itself.
+  final String peerName;
+
+  /// Creates a [ReviewSyncState].
+  const ReviewSyncState({required this.changes, required this.peerName});
 }
 
 /// The synchronisation finished.

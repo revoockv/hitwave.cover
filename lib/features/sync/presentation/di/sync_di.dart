@@ -16,7 +16,7 @@ import '../../data/data_sources/sync_server_data_source.dart';
 import '../../data/repositories/sync_repository_impl.dart';
 import '../../domain/repositories/sync_repository.dart';
 import '../../domain/use_cases/is_sync_supported_use_case.dart';
-import '../../domain/use_cases/resolve_sync_conflicts_use_case.dart';
+import '../../domain/use_cases/apply_sync_changes_use_case.dart';
 import '../../domain/use_cases/start_sync_hosting_use_case.dart';
 import '../../domain/use_cases/stop_sync_use_case.dart';
 import '../../domain/use_cases/sync_with_device_use_case.dart';
@@ -64,5 +64,5 @@ void registerAndInitSync() {
   di.registerLazySingleton<StartSyncHostingUseCase>(() => StartSyncHostingUseCase(di<SyncRepository>()));
   di.registerLazySingleton<SyncWithDeviceUseCase>(() => SyncWithDeviceUseCase(di<SyncRepository>()));
   di.registerLazySingleton<StopSyncUseCase>(() => StopSyncUseCase(di<SyncRepository>()));
-  di.registerLazySingleton<ResolveSyncConflictsUseCase>(() => ResolveSyncConflictsUseCase(di<SyncRepository>()));
+  di.registerLazySingleton<ApplySyncChangesUseCase>(() => ApplySyncChangesUseCase(di<SyncRepository>()));
 }

@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart' show ValueListenable;
 
 import '../../../../core/domain/entities/result.dart';
-import '../entities/sync_conflict.dart';
 import '../entities/sync_state.dart';
 import '../entities/sync_failure.dart';
 
@@ -22,12 +21,12 @@ abstract interface class SyncRepository {
   /// Starts waiting for another device; the state gets the code to show.
   Future<Result<void, SyncFailure>> startHosting();
 
-  /// Synchronises with the device that shows [code]. When the devices conflict, the state turns
-  /// to [ConflictsSyncState] and the exchange waits for [resolveConflicts].
+  /// Synchronises with the device that shows [code]. When anything would change, the state turns
+  /// to [ReviewSyncState] and the exchange waits for [applyChanges].
   Future<Result<void, SyncFailure>> syncWith(String code);
 
-  /// Goes on with the exchange that waits, doing for every conflict (by id) what [choices] says.
-  Future<Result<void, SyncFailure>> resolveConflicts(Map<String, SyncChoice> choices);
+  /// Goes on with the exchange that waits, making the changes whose ids are in [chosen].
+  Future<Result<void, SyncFailure>> applyChanges(Set<String> chosen);
 
   /// Stops waiting or forgets the result; back to idle.
   Future<Result<void, SyncFailure>> stopSync();

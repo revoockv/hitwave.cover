@@ -22,7 +22,7 @@ import 'package:hitwave.cover/features/sync/data/data_sources/hive_sync_tombston
 import 'package:hitwave.cover/features/sync/data/data_sources/sync_client_data_source.dart';
 import 'package:hitwave.cover/features/sync/data/data_sources/sync_server_data_source.dart';
 import 'package:hitwave.cover/features/sync/data/repositories/sync_repository_impl.dart';
-import 'package:hitwave.cover/features/sync/domain/entities/sync_conflict.dart';
+import 'package:hitwave.cover/features/sync/domain/entities/sync_change.dart';
 import 'package:hitwave.cover/features/sync/domain/entities/sync_state.dart';
 import 'package:hive_ce/hive_ce.dart';
 import 'package:logger/logger.dart';
@@ -264,6 +264,9 @@ final class Device {
     expect((await guest.sync.syncWith((sync.watchSyncState().value as HostingSyncState).code)).isSuccess, isTrue);
   }
 
+  /// The changes [guest] waits to be chosen.
+  static List<SyncChange> changesOf(Device guest) => (guest.sync.watchSyncState().value as ReviewSyncState).changes;
+
   List<String> get songNames => songs.songs.value.map((Song s) => s.name).toList();
 
   List<String> get coverIds => recordings.recordings.value.map((Recording r) => r.id).toList();
@@ -309,6 +312,18 @@ void main() {
     guest.recordings.add('rb', 'b2', enhanced: false);
 
     await host.hostFor(guest);
+    final List<SyncChange> changes = Device.changesOf(guest);
+    expect(
+      changes.map((SyncChange c) => (c.direction, c.kind, c.subject, c.count)),
+      <(SyncDirection, SyncChangeKind, SyncSubject, int)>[
+        (SyncDirection.toHere, SyncChangeKind.add, SyncSubject.cover, 0),
+        (SyncDirection.toHere, SyncChangeKind.add, SyncSubject.practice, 1),
+        (SyncDirection.toThere, SyncChangeKind.add, SyncSubject.song, 1),
+        (SyncDirection.toThere, SyncChangeKind.add, SyncSubject.practice, 1),
+      ],
+    );
+    expect(changes.every((SyncChange c) => c.chosenFirst), isTrue);
+    await guest.sync.applyChanges(changes.map((SyncChange c) => c.id).toSet());
 
     // The guest got the cover and the session of the host's song, which it already had.
     expect(guest.songs.songs.value.length, 2);
@@ -342,7 +357,7 @@ void main() {
     await host.sync.stopSync();
   });
 
-  test('deletions are conflicts the user decides; "delete" removes them on the other device too', () async {
+  test('a deletion on one device is offered to the other, ticked; it removes it there too', () async {
     List<Song> both() => <Song>[song('s', 'A', 'Kept'), song('t', 'B', 'Doomed')];
     final Device host = await Device.create(name: 'host', root: root, songs: both());
     final Device guest = await Device.create(name: 'guest', root: root, songs: both());
@@ -354,19 +369,21 @@ void main() {
     await settle();
 
     await host.hostFor(guest);
-    final ConflictsSyncState waiting = guest.sync.watchSyncState().value as ConflictsSyncState;
-    expect(waiting.conflicts.map((SyncConflict c) => c.kind), <SyncConflictKind>[
-      SyncConflictKind.songDeletedThere,
-      SyncConflictKind.coverDeletedHere,
-    ]);
+    final List<SyncChange> changes = Device.changesOf(guest);
+    expect(
+      changes.map((SyncChange c) => (c.direction, c.kind, c.subject, c.restores, c.chosenFirst)),
+      <(SyncDirection, SyncChangeKind, SyncSubject, bool, bool)>[
+        (SyncDirection.toHere, SyncChangeKind.delete, SyncSubject.song, false, true),
+        (SyncDirection.toHere, SyncChangeKind.add, SyncSubject.cover, true, false),
+        (SyncDirection.toThere, SyncChangeKind.add, SyncSubject.song, true, false),
+        (SyncDirection.toThere, SyncChangeKind.delete, SyncSubject.cover, false, true),
+      ],
+    );
+    expect(changes[0].excludes, changes[2].id);
+    expect(changes[3].excludes, changes[1].id);
     expect(host.sync.watchSyncState().value, isNot(isA<DoneSyncState>()));
 
-    expect(
-      (await guest.sync.resolveConflicts(<String, SyncChoice>{
-        for (final SyncConflict conflict in waiting.conflicts) conflict.id: SyncChoice.delete,
-      })).isSuccess,
-      isTrue,
-    );
+    expect((await guest.sync.applyChanges(<String>{changes[0].id, changes[3].id})).isSuccess, isTrue);
 
     expect(guest.songNames, <String>['Kept']);
     expect(host.coverIds, isEmpty);
@@ -381,7 +398,7 @@ void main() {
     await host.sync.stopSync();
   });
 
-  test('"restore" brings a deleted song back and a changed song can take the other version', () async {
+  test('"bring back" restores a deleted song and a changed song can take the other version', () async {
     final Device host = await Device.create(
       name: 'host',
       root: root,
@@ -403,19 +420,16 @@ void main() {
     await settle();
 
     await host.hostFor(guest);
-    final ConflictsSyncState waiting = guest.sync.watchSyncState().value as ConflictsSyncState;
-    final SyncConflict deleted = waiting.conflicts.singleWhere(
-      (SyncConflict c) => c.kind == SyncConflictKind.songDeletedThere,
+    final List<SyncChange> changes = Device.changesOf(guest);
+    final SyncChange restore = changes.singleWhere((SyncChange c) => c.restores);
+    expect((restore.direction, restore.count), (SyncDirection.toThere, 1));
+    final SyncChange take = changes.singleWhere(
+      (SyncChange c) => c.kind == SyncChangeKind.update && c.direction == SyncDirection.toHere,
     );
-    final SyncConflict changed = waiting.conflicts.singleWhere(
-      (SyncConflict c) => c.kind == SyncConflictKind.songChanged,
-    );
-    expect(changed.differences, contains(SongDifference.lyrics));
+    expect(take.differences, contains(SongDifference.lyrics));
+    expect(take.chosenFirst, isFalse);
 
-    await guest.sync.resolveConflicts(<String, SyncChoice>{
-      deleted.id: SyncChoice.restore,
-      changed.id: SyncChoice.takeOther,
-    });
+    await guest.sync.applyChanges(<String>{restore.id, take.id});
 
     expect(host.songNames, containsAll(<String>['Lost', 'Edited']));
     expect(host.coverIds, <String>['cu']);
@@ -434,7 +448,8 @@ void main() {
     await settle();
 
     await host.hostFor(guest);
-    expect(guest.sync.watchSyncState().value, isA<ConflictsSyncState>());
+    expect(guest.sync.watchSyncState().value, isA<ReviewSyncState>());
+    expect((guest.sync.watchSyncState().value as ReviewSyncState).peerName, 'mac');
     await settle();
     final SyncingSyncState waiting = host.sync.watchSyncState().value as SyncingSyncState;
     expect(waiting.peerName, '«pixel»');
@@ -447,7 +462,35 @@ void main() {
     expect(guest.songNames, <String>['Gone']);
   });
 
-  test('a song differing only in speed or line endings is no conflict', () async {
+  test('changes left unticked are not made, and are offered again the next time', () async {
+    final Device host = await Device.create(
+      name: 'host',
+      root: root,
+      songs: <Song>[song('h', 'A', 'Shared')],
+      sessions: <PracticeSession>[session('sh', 'h')],
+    );
+    host.recordings.add('ch', 'h', enhanced: true);
+    final Device guest = await Device.create(
+      name: 'guest',
+      root: root,
+      songs: <Song>[song('g', 'A', 'Shared'), song('n', 'B', 'Only here')],
+    );
+
+    await host.hostFor(guest);
+    expect(Device.changesOf(guest), hasLength(3)); // the cover and the session here, the song there
+    await guest.sync.applyChanges(const <String>{});
+
+    expect(guest.coverIds, isEmpty);
+    expect(guest.practice.sessions.value, isEmpty);
+    expect(host.songNames, <String>['Shared']);
+
+    await host.hostFor(guest);
+    expect(Device.changesOf(guest), hasLength(3));
+    await guest.sync.stopSync();
+    await host.sync.stopSync();
+  });
+
+  test('a song differing only in speed or line endings is no change', () async {
     final Device host = await Device.create(
       name: 'host',
       root: root,

@@ -560,31 +560,22 @@ class Translations$sync$en {
 
 	// Translations
 
-	/// en: 'All changes:'
-	String get allChanges => 'All changes:';
-
-	/// en: 'All deletions:'
-	String get allDeletions => 'All deletions:';
+	/// en: 'All'
+	String get all => 'All';
 
 	/// en: 'Another device'
 	String get anotherDevice => 'Another device';
 
-	late final Translations$sync$bulk$en bulk = Translations$sync$bulk$en.internal(_root);
+	/// en: 'Sync the ticked ({n})'
+	String applyChosen({required Object n}) => 'Sync the ticked (${n})';
+
+	late final Translations$sync$badge$en badge = Translations$sync$badge$en.internal(_root);
 
 	/// en: 'Code copied'
 	String get codeCopied => 'Code copied';
 
-	/// en: 'These songs and covers were deleted or changed on only one of the devices. Choose for each what to do on both.'
-	String get conflictsMessage => 'These songs and covers were deleted or changed on only one of the devices. Choose for each what to do on both.';
-
-	/// en: 'What to do with the differences?'
-	String get conflictsTitle => 'What to do with the differences?';
-
 	/// en: 'Connect'
 	String get connect => 'Connect';
-
-	/// en: 'Continue'
-	String get continueSync => 'Continue';
 
 	/// en: 'Copy code'
 	String get copyCode => 'Copy code';
@@ -595,12 +586,6 @@ class Translations$sync$en {
 	/// en: 'covers: {n}'
 	String coversCount({required Object n}) => 'covers: ${n}';
 
-	/// en: 'Delete here too'
-	String get deleteHere => 'Delete here too';
-
-	/// en: 'Delete there too'
-	String get deleteThere => 'Delete there too';
-
 	/// en: 'deleted: {n}'
 	String deletedCount({required Object n}) => 'deleted: ${n}';
 
@@ -609,6 +594,9 @@ class Translations$sync$en {
 
 	/// en: 'Deleted on the other device {date} at {time}'
 	String deletedThereAt({required Object date, required Object time}) => 'Deleted on the other device ${date} at ${time}';
+
+	/// en: 'Deleted on «{device}» {date} at {time}'
+	String deletedThereAtDevice({required Object device, required Object date, required Object time}) => 'Deleted on «${device}» ${date} at ${time}';
 
 	late final Translations$sync$difference$en difference = Translations$sync$difference$en.internal(_root);
 
@@ -626,11 +614,6 @@ class Translations$sync$en {
 	/// en: 'Move songs, covers, practice and history between devices. Nothing is deleted: each device gets what it misses.'
 	String get intro => 'Move songs, covers, practice and history between devices. Nothing is deleted: each device gets what it misses.';
 
-	/// en: 'Keep this one'
-	String get keepThis => 'Keep this one';
-
-	late final Translations$sync$kind$en kind = Translations$sync$kind$en.internal(_root);
-
 	/// en: 'or paste the code from another device'
 	String get orPaste => 'or paste the code from another device';
 
@@ -640,17 +623,26 @@ class Translations$sync$en {
 	/// en: '{device} stopped syncing: {reason}'
 	String peerStopped({required Object device, required Object reason}) => '${device} stopped syncing: ${reason}';
 
+	/// en: 'Practice sessions: {n}'
+	String practiceItem({required Object n}) => 'Practice sessions: ${n}';
+
 	/// en: 'On the other device open “Sync” → “Scan QR code”. Both devices must be on the same Wi‑Fi network.'
 	String get qrHint => 'On the other device open “Sync” → “Scan QR code”. Both devices must be on the same Wi‑Fi network.';
 
 	/// en: 'Added here'
 	String get received => 'Added here';
 
-	/// en: 'Restore here'
-	String get restoreHere => 'Restore here';
+	/// en: 'Was deleted on this device'
+	String get restoredHere => 'Was deleted on this device';
 
-	/// en: 'Restore there'
-	String get restoreThere => 'Restore there';
+	/// en: 'Was deleted on «{device}»'
+	String restoredThere({required Object device}) => 'Was deleted on «${device}»';
+
+	/// en: 'Only the ticked changes are made. The others stay as they are on both devices and are offered again the next time.'
+	String get reviewMessage => 'Only the ticked changes are made. The others stay as they are on both devices and are offered again the next time.';
+
+	/// en: 'Choose what to sync'
+	String get reviewTitle => 'Choose what to sync';
 
 	/// en: 'Scan QR code'
 	String get scanQr => 'Scan QR code';
@@ -667,6 +659,9 @@ class Translations$sync$en {
 	/// en: 'Show QR code'
 	String get showQr => 'Show QR code';
 
+	/// en: 'Song «{song}»'
+	String songItem({required Object song}) => 'Song «${song}»';
+
 	/// en: 'songs: {n}'
 	String songsCount({required Object n}) => 'songs: ${n}';
 
@@ -675,17 +670,29 @@ class Translations$sync$en {
 	/// en: 'Synced'
 	String get synced => 'Synced';
 
-	/// en: 'Take the other one'
-	String get takeOther => 'Take the other one';
-
 	/// en: 'Sync'
 	String get title => 'Sync';
+
+	/// en: 'From «{device}» to this device'
+	String toHere({required Object device}) => 'From «${device}» to this device';
+
+	/// en: 'From this device to «{device}»'
+	String toThere({required Object device}) => 'From this device to «${device}»';
+
+	/// en: 'Takes the {list} of «{device}»'
+	String updateHere({required Object list, required Object device}) => 'Takes the ${list} of «${device}»';
+
+	/// en: '«{device}» takes the {list} of this device'
+	String updateThere({required Object device, required Object list}) => '«${device}» takes the ${list} of this device';
 
 	/// en: 'updated: {n}'
 	String updatedCount({required Object n}) => 'updated: ${n}';
 
 	/// en: 'Waiting for the other device to scan the code…'
 	String get waiting => 'Waiting for the other device to scan the code…';
+
+	/// en: 'with covers: {n}'
+	String withCovers({required Object n}) => 'with covers: ${n}';
 }
 
 // Path: vocalEnhance
@@ -914,25 +921,25 @@ class Translations$song$sort$en {
 	String get recent => 'Recent';
 }
 
-// Path: sync.bulk
-class Translations$sync$bulk$en {
-	Translations$sync$bulk$en.internal(this._root);
+// Path: sync.badge
+class Translations$sync$badge$en {
+	Translations$sync$badge$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
 	// Translations
 
-	/// en: 'delete'
-	String get delete => 'delete';
+	/// en: 'Add'
+	String get add => 'Add';
 
-	/// en: 'keep these'
-	String get keepThis => 'keep these';
+	/// en: 'Bring back'
+	String get restore => 'Bring back';
 
-	/// en: 'restore'
-	String get restore => 'restore';
+	/// en: 'Delete'
+	String get delete => 'Delete';
 
-	/// en: 'take the other'
-	String get takeOther => 'take the other';
+	/// en: 'Change'
+	String get update => 'Change';
 }
 
 // Path: sync.difference
@@ -987,30 +994,6 @@ class Translations$sync$failure$en {
 
 	/// en: 'The other device stopped syncing'
 	String get peerStopped => 'The other device stopped syncing';
-}
-
-// Path: sync.kind
-class Translations$sync$kind$en {
-	Translations$sync$kind$en.internal(this._root);
-
-	final Translations _root; // ignore: unused_field
-
-	// Translations
-
-	/// en: 'Cover deleted on this device'
-	String get coverDeletedHere => 'Cover deleted on this device';
-
-	/// en: 'Cover deleted on the other device'
-	String get coverDeletedThere => 'Cover deleted on the other device';
-
-	/// en: 'The song differs'
-	String get songChanged => 'The song differs';
-
-	/// en: 'Song deleted on this device'
-	String get songDeletedHere => 'Song deleted on this device';
-
-	/// en: 'Song deleted on the other device'
-	String get songDeletedThere => 'Song deleted on the other device';
 }
 
 // Path: sync.step
@@ -1282,26 +1265,22 @@ extension on Translations {
 			'song.tabSongs' => 'Songs',
 			'song.takeSaved' => 'Take saved, enhancing the sound…',
 			'song.trimSilence' => 'Trim silence',
-			'sync.allChanges' => 'All changes:',
-			'sync.allDeletions' => 'All deletions:',
+			'sync.all' => 'All',
 			'sync.anotherDevice' => 'Another device',
-			'sync.bulk.delete' => 'delete',
-			'sync.bulk.keepThis' => 'keep these',
-			'sync.bulk.restore' => 'restore',
-			'sync.bulk.takeOther' => 'take the other',
+			'sync.applyChosen' => ({required Object n}) => 'Sync the ticked (${n})',
+			'sync.badge.add' => 'Add',
+			'sync.badge.restore' => 'Bring back',
+			'sync.badge.delete' => 'Delete',
+			'sync.badge.update' => 'Change',
 			'sync.codeCopied' => 'Code copied',
-			'sync.conflictsMessage' => 'These songs and covers were deleted or changed on only one of the devices. Choose for each what to do on both.',
-			'sync.conflictsTitle' => 'What to do with the differences?',
 			'sync.connect' => 'Connect',
-			'sync.continueSync' => 'Continue',
 			'sync.copyCode' => 'Copy code',
 			'sync.coverTitle' => ({required Object song, required Object date}) => 'Cover of “${song}” from ${date}',
 			'sync.coversCount' => ({required Object n}) => 'covers: ${n}',
-			'sync.deleteHere' => 'Delete here too',
-			'sync.deleteThere' => 'Delete there too',
 			'sync.deletedCount' => ({required Object n}) => 'deleted: ${n}',
 			'sync.deletedHereAt' => ({required Object date, required Object time}) => 'Deleted here ${date} at ${time}',
 			'sync.deletedThereAt' => ({required Object date, required Object time}) => 'Deleted on the other device ${date} at ${time}',
+			'sync.deletedThereAtDevice' => ({required Object device, required Object date, required Object time}) => 'Deleted on «${device}» ${date} at ${time}',
 			'sync.difference.album' => 'album',
 			'sync.difference.lyrics' => 'lyrics',
 			'sync.differs' => ({required Object list}) => 'Differs: ${list}',
@@ -1318,24 +1297,22 @@ extension on Translations {
 			'sync.failure.peerStopped' => 'The other device stopped syncing',
 			'sync.goneSong' => 'a song that is gone',
 			'sync.intro' => 'Move songs, covers, practice and history between devices. Nothing is deleted: each device gets what it misses.',
-			'sync.keepThis' => 'Keep this one',
-			'sync.kind.coverDeletedHere' => 'Cover deleted on this device',
-			'sync.kind.coverDeletedThere' => 'Cover deleted on the other device',
-			'sync.kind.songChanged' => 'The song differs',
-			'sync.kind.songDeletedHere' => 'Song deleted on this device',
-			'sync.kind.songDeletedThere' => 'Song deleted on the other device',
 			'sync.orPaste' => 'or paste the code from another device',
 			'sync.peerStep' => ({required Object device, required Object step}) => '${device}: ${step}',
 			'sync.peerStopped' => ({required Object device, required Object reason}) => '${device} stopped syncing: ${reason}',
+			'sync.practiceItem' => ({required Object n}) => 'Practice sessions: ${n}',
 			'sync.qrHint' => 'On the other device open “Sync” → “Scan QR code”. Both devices must be on the same Wi‑Fi network.',
 			'sync.received' => 'Added here',
-			'sync.restoreHere' => 'Restore here',
-			'sync.restoreThere' => 'Restore there',
+			'sync.restoredHere' => 'Was deleted on this device',
+			'sync.restoredThere' => ({required Object device}) => 'Was deleted on «${device}»',
+			'sync.reviewMessage' => 'Only the ticked changes are made. The others stay as they are on both devices and are offered again the next time.',
+			'sync.reviewTitle' => 'Choose what to sync',
 			'sync.scanQr' => 'Scan QR code',
 			'sync.scanTitle' => 'Scan the QR code',
 			'sync.sent' => 'Added to the other device',
 			'sync.sessionsCount' => ({required Object n}) => 'practice: ${n}',
 			'sync.showQr' => 'Show QR code',
+			'sync.songItem' => ({required Object song}) => 'Song «${song}»',
 			'sync.songsCount' => ({required Object n}) => 'songs: ${n}',
 			'sync.step.applying' => 'Applying the decisions…',
 			'sync.step.choosing' => 'is choosing what to do with the differences…',
@@ -1346,10 +1323,14 @@ extension on Translations {
 			'sync.step.reading' => 'Getting the list of songs and covers…',
 			'sync.step.uploading' => ({required Object done, required Object total}) => 'Sending covers ${done} of ${total}',
 			'sync.synced' => 'Synced',
-			'sync.takeOther' => 'Take the other one',
 			'sync.title' => 'Sync',
+			'sync.toHere' => ({required Object device}) => 'From «${device}» to this device',
+			'sync.toThere' => ({required Object device}) => 'From this device to «${device}»',
+			'sync.updateHere' => ({required Object list, required Object device}) => 'Takes the ${list} of «${device}»',
+			'sync.updateThere' => ({required Object device, required Object list}) => '«${device}» takes the ${list} of this device',
 			'sync.updatedCount' => ({required Object n}) => 'updated: ${n}',
 			'sync.waiting' => 'Waiting for the other device to scan the code…',
+			'sync.withCovers' => ({required Object n}) => 'with covers: ${n}',
 			'vocalEnhance.failure.analyze' => 'Could not measure the take',
 			'vocalEnhance.failure.enhance' => 'Could not enhance the take',
 			'vocalEnhance.failure.negativeLeadIn' => 'The silence at the start cannot be negative',

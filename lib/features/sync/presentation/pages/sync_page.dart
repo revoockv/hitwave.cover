@@ -9,8 +9,8 @@ import '../../../../core/presentation/theme.dart';
 import '../../domain/entities/sync_state.dart';
 import '../controllers/sync_page_controller.dart';
 import '../di/sync_getters.dart';
-import '../../domain/entities/sync_conflict.dart';
-import '../widgets/sync_conflicts_widget.dart';
+import '../../domain/entities/sync_change.dart';
+import '../widgets/sync_changes_widget.dart';
 import '../widgets/sync_qr_widget.dart';
 import '../widgets/sync_summary_widget.dart';
 import 'sync_scanner_page.dart';
@@ -34,7 +34,7 @@ final class SyncPage extends WatchingWidget {
       dispose: _disposeSyncPageController,
     );
     final SyncState state = watch(watchSyncStateUseCase()).value;
-    final Map<String, SyncChoice> choices = watch(syncPageController.choicesController).value;
+    final Set<String> chosen = watch(syncPageController.chosenController).value;
     registerHandler(
       target: watchSyncStateUseCase(),
       handler: (BuildContext context, SyncState state, void Function() cancel) =>
@@ -65,13 +65,13 @@ final class SyncPage extends WatchingWidget {
                     Text(syncing.text(t), textAlign: TextAlign.center, style: theme.textTheme.bodyLarge),
                   ],
                 ),
-                ConflictsSyncState(:final List<SyncConflict> conflicts) => SyncConflictsWidget(
-                  conflicts: conflicts,
-                  choices: choices,
-                  onChoiceChanged: syncPageController.choose,
-                  onAllDeletionsChosen: (SyncChoice choice) => syncPageController.chooseForAll(conflicts, choice),
-                  onAllChangesChosen: (SyncChoice choice) => syncPageController.chooseForAll(conflicts, choice),
-                  onContinuePressed: () => _resolve(syncPageController),
+                ReviewSyncState(:final List<SyncChange> changes, :final String peerName) => SyncChangesWidget(
+                  changes: changes,
+                  chosen: chosen,
+                  peerName: peerName.isEmpty ? t.sync.anotherDevice : peerName,
+                  onChosenChanged: syncPageController.setChosen,
+                  onAllChosenChanged: syncPageController.setAllChosen,
+                  onApplyPressed: () => _apply(syncPageController),
                   onCancelPressed: stopSyncUseCase.call,
                 ),
                 DoneSyncState(:final summary) => SyncSummaryWidget(
@@ -136,13 +136,13 @@ final class SyncPage extends WatchingWidget {
 
   static SyncPageController _createSyncPageController() => SyncPageController();
 
-  /// New conflicts start with the safe choices.
+  /// New changes start with the ones chosen first ticked.
   static void _onStateChanged(SyncPageController syncPageController, SyncState state) {
-    if (state case ConflictsSyncState(:final List<SyncConflict> conflicts)) syncPageController.resetChoices(conflicts);
+    if (state case ReviewSyncState(:final List<SyncChange> changes)) syncPageController.resetChosen(changes);
   }
 
-  static Future<void> _resolve(SyncPageController syncPageController) async {
-    await resolveSyncConflictsUseCase(syncPageController.choicesController.value);
+  static Future<void> _apply(SyncPageController syncPageController) async {
+    await applySyncChangesUseCase(syncPageController.chosenController.value);
   }
 
   static void _disposeSyncPageController(SyncPageController syncPageController) => syncPageController.dispose();

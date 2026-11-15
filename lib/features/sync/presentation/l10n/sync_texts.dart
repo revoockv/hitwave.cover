@@ -1,7 +1,7 @@
 import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../../core/presentation/theme.dart';
 import '../../domain/entities/song_difference.dart';
-import '../../domain/entities/sync_conflict.dart';
+import '../../domain/entities/sync_change.dart';
 import '../../domain/entities/sync_failure.dart';
 import '../../domain/entities/sync_state.dart';
 import '../../domain/entities/sync_step.dart';
@@ -51,41 +51,64 @@ extension SyncingSyncStateText on SyncingSyncState {
   }
 }
 
-/// The title and the detail of a [SyncConflict] shown to the user.
-extension SyncConflictText on SyncConflict {
+/// The title, the detail and the badge of a [SyncChange] shown to the user.
+extension SyncChangeText on SyncChange {
   static const String _dateSeparator = '.';
   static const String _timeSeparator = ':';
   static const String _listSeparator = ', ';
   static const String _zero = '0';
 
-  /// The song, or the cover with its song and date, in the language of [t].
+  /// What is added, deleted or changed, in the language of [t].
   String title(Translations t) {
+    final String song = songTitle ?? t.sync.goneSong;
     final DateTime? recordedAt = coverRecordedAt;
-    if (recordedAt == null) return songTitle ?? t.sync.goneSong;
-    return t.sync.coverTitle(song: songTitle ?? t.sync.goneSong, date: _date(recordedAt));
+    return switch (subject) {
+      SyncSubject.practice => t.sync.practiceItem(n: count),
+      SyncSubject.cover when recordedAt != null => t.sync.coverTitle(song: song, date: _date(recordedAt)),
+      SyncSubject.song when kind == SyncChangeKind.add && count > 0 =>
+        '${t.sync.songItem(song: song)}, ${t.sync.withCovers(n: count)}',
+      SyncSubject.song || SyncSubject.cover => t.sync.songItem(song: song),
+    };
   }
 
-  /// When it was deleted, or what differs; `null` when there is nothing to tell.
-  String? detail(Translations t) {
+  /// When it was deleted, what differs or that it was deleted, with the other device named
+  /// [peer]; `null` when there is nothing to tell.
+  String? detail(Translations t, String peer) {
     final DateTime? at = deletedAt;
-    if (at != null) {
+    if (kind == SyncChangeKind.delete && at != null) {
       final String time = '${_two(at.hour)}$_timeSeparator${_two(at.minute)}';
-      return switch (kind) {
-        SyncConflictKind.songDeletedHere ||
-        SyncConflictKind.coverDeletedHere => t.sync.deletedHereAt(date: _date(at), time: time),
-        _ => t.sync.deletedThereAt(date: _date(at), time: time),
+      return switch (direction) {
+        SyncDirection.toThere => t.sync.deletedHereAt(date: _date(at), time: time),
+        SyncDirection.toHere => t.sync.deletedThereAtDevice(device: peer, date: _date(at), time: time),
       };
     }
-    if (differences.isEmpty) return null;
-    final List<String> names = <String>[
+    if (restores) {
+      return switch (direction) {
+        SyncDirection.toHere => t.sync.restoredHere,
+        SyncDirection.toThere => t.sync.restoredThere(device: peer),
+      };
+    }
+    if (kind != SyncChangeKind.update || differences.isEmpty) return null;
+    final String list = <String>[
       for (final SongDifference difference in differences)
         switch (difference) {
           SongDifference.lyrics => t.sync.difference.lyrics,
           SongDifference.album => t.sync.difference.album,
         },
-    ];
-    return t.sync.differs(list: names.join(_listSeparator));
+    ].join(_listSeparator);
+    return switch (direction) {
+      SyncDirection.toHere => t.sync.updateHere(list: list, device: peer),
+      SyncDirection.toThere => t.sync.updateThere(list: list, device: peer),
+    };
   }
+
+  /// The word on the coloured badge: add, bring back, delete or change.
+  String badge(Translations t) => switch (kind) {
+    SyncChangeKind.add when restores => t.sync.badge.restore,
+    SyncChangeKind.add => t.sync.badge.add,
+    SyncChangeKind.delete => t.sync.badge.delete,
+    SyncChangeKind.update => t.sync.badge.update,
+  };
 
   static String _date(DateTime time) =>
       '${_two(time.day)}$_dateSeparator${_two(time.month)}$_dateSeparator${time.year}';
