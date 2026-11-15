@@ -249,28 +249,24 @@
     "trimSilence": "Trim silence"
   },
   "sync": {
-    "allChanges": "All changes:",
-    "allDeletions": "All deletions:",
+    "all": "All",
     "anotherDevice": "Another device",
-    "bulk": {
-      "delete": "delete",
-      "keepThis": "keep these",
-      "restore": "restore",
-      "takeOther": "take the other"
+    "applyChosen": "Sync the ticked ({n})",
+    "badge": {
+      "add": "Add",
+      "restore": "Bring back",
+      "delete": "Delete",
+      "update": "Change"
     },
     "codeCopied": "Code copied",
-    "conflictsMessage": "These songs and covers were deleted or changed on only one of the devices. Choose for each what to do on both.",
-    "conflictsTitle": "What to do with the differences?",
     "connect": "Connect",
-    "continueSync": "Continue",
     "copyCode": "Copy code",
     "coverTitle": "Cover of “{song}” from {date}",
     "coversCount": "covers: {n}",
-    "deleteHere": "Delete here too",
-    "deleteThere": "Delete there too",
     "deletedCount": "deleted: {n}",
     "deletedHereAt": "Deleted here {date} at {time}",
     "deletedThereAt": "Deleted on the other device {date} at {time}",
+    "deletedThereAtDevice": "Deleted on «{device}» {date} at {time}",
     "difference": {
       "album": "album",
       "lyrics": "lyrics"
@@ -291,26 +287,22 @@
     },
     "goneSong": "a song that is gone",
     "intro": "Move songs, covers, practice and history between devices. Nothing is deleted: each device gets what it misses.",
-    "keepThis": "Keep this one",
-    "kind": {
-      "coverDeletedHere": "Cover deleted on this device",
-      "coverDeletedThere": "Cover deleted on the other device",
-      "songChanged": "The song differs",
-      "songDeletedHere": "Song deleted on this device",
-      "songDeletedThere": "Song deleted on the other device"
-    },
     "orPaste": "or paste the code from another device",
     "peerStep": "{device}: {step}",
     "peerStopped": "{device} stopped syncing: {reason}",
+    "practiceItem": "Practice sessions: {n}",
     "qrHint": "On the other device open “Sync” → “Scan QR code”. Both devices must be on the same Wi‑Fi network.",
     "received": "Added here",
-    "restoreHere": "Restore here",
-    "restoreThere": "Restore there",
+    "restoredHere": "Was deleted on this device",
+    "restoredThere": "Was deleted on «{device}»",
+    "reviewMessage": "Only the ticked changes are made. The others stay as they are on both devices and are offered again the next time.",
+    "reviewTitle": "Choose what to sync",
     "scanQr": "Scan QR code",
     "scanTitle": "Scan the QR code",
     "sent": "Added to the other device",
     "sessionsCount": "practice: {n}",
     "showQr": "Show QR code",
+    "songItem": "Song «{song}»",
     "songsCount": "songs: {n}",
     "step": {
       "applying": "Applying the decisions…",
@@ -323,10 +315,14 @@
       "uploading": "Sending covers {done} of {total}"
     },
     "synced": "Synced",
-    "takeOther": "Take the other one",
     "title": "Sync",
+    "toHere": "From «{device}» to this device",
+    "toThere": "From this device to «{device}»",
+    "updateHere": "Takes the {list} of «{device}»",
+    "updateThere": "«{device}» takes the {list} of this device",
     "updatedCount": "updated: {n}",
-    "waiting": "Waiting for the other device to scan the code…"
+    "waiting": "Waiting for the other device to scan the code…",
+    "withCovers": "with covers: {n}"
   },
   "vocalEnhance": {
     "failure": {

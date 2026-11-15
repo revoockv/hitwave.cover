@@ -20,7 +20,7 @@ import '../../../song/domain/entities/lyrics_layout.dart';
 import '../../../song/domain/entities/song.dart';
 import '../../../song/domain/entities/song_id_change.dart';
 import '../../../song/domain/repositories/song_repository.dart';
-import '../../domain/entities/sync_conflict.dart';
+import '../../domain/entities/sync_change.dart';
 import '../../domain/entities/sync_state.dart';
 import '../../domain/entities/sync_summary.dart';
 import '../../domain/repositories/sync_repository.dart';
@@ -41,10 +41,11 @@ import '../models/sync_step_model.dart';
 /// [SyncRepository] over HTTP on the local network.
 ///
 /// The device that scans the code drives the exchange: it takes the snapshot of the host and
-/// finds the conflicts (deleted on one side and still on the other, songs that differ). When
-/// there are any, it waits for the user's choices. Then it applies its own side of them,
-/// downloads the covers it misses and merges, uploads the covers the host misses and sends its
-/// snapshot with a plan of what the host must delete, update and bring back; the host applies the
+/// lists every change, both ways: what each device misses, what was deleted on one side and is
+/// still on the other, songs that differ. When there are any, it waits for the user to choose
+/// which to make. Then it makes its own side of them, downloads the chosen covers it misses and
+/// merges, uploads the chosen covers the host misses and sends its snapshot (without what was not
+/// chosen) with a plan of what the host must delete, update and bring back; the host applies the
 /// plan and merges. Songs are matched by artist and name, covers and practice sessions by ids.
 /// Deletions made on this device are remembered (tombstones) from [init] on.
 final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, DisposableResource {
@@ -61,9 +62,8 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
   static const String _newSongId = '';
   static const String _snapshotField = 'snapshot';
   static const String _planField = 'plan';
-  static const String _songConflictPrefix = 'song:';
-  static const String _changedConflictPrefix = 'changed:';
-  static const String _coverConflictPrefix = 'cover:';
+  static const String _idSeparator = ':';
+  static const String _practiceRef = 'sessions';
   static const String _titleSeparator = ' — ';
   static final RegExp _lineEnd = RegExp(r'\r\n?');
   static const String _newLine = '\n';
@@ -72,7 +72,7 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
   static const String _tombstoneLog = 'SyncTombstone: ';
   static const String _successLog = 'success — ';
   static const String _failureLog = 'failure — ';
-  static const String _conflictsLog = ' conflicts';
+  static const String _changesLog = ' changes';
   static const Duration _closeDelay = Duration(seconds: 1);
 
   static const Uuid _uuid = Uuid();
@@ -193,13 +193,16 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
         base: base,
         offer: offer,
         remote: remote,
-        conflicts: _findConflicts(_snapshot(), remote),
+        changes: _findChanges(_snapshot(), remote),
       );
-      if (pending.conflicts.isEmpty) return await _finish(pending, const <String, SyncChoice>{});
+      if (pending.changes.isEmpty) return await _finish(pending, const <String>{});
       _pending = pending;
-      _state.value = ConflictsSyncState(<SyncConflict>[for (final _Conflict c in pending.conflicts) c.conflict]);
+      _state.value = ReviewSyncState(
+        changes: <SyncChange>[for (final _Change c in pending.changes) c.change],
+        peerName: offer.deviceName,
+      );
       unawaited(_client.progress(base, offer.token, const SyncStepModel(SyncStep.choosing).encode()));
-      _logger.i('$_clientLog${pending.conflicts.length}$_conflictsLog');
+      _logger.i('$_clientLog${pending.changes.length}$_changesLog');
       return Result.ok;
     } on Exception catch (e) {
       _logger.e('$_clientLog$_failureLog$e');
@@ -210,11 +213,11 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
   }
 
   @override
-  Future<Result<void, SyncFailure>> resolveConflicts(Map<String, SyncChoice> choices) async {
+  Future<Result<void, SyncFailure>> applyChanges(Set<String> chosen) async {
     final _PendingSync? pending = _pending;
     _pending = null;
     if (pending == null) return const Result.failure(SyncFailure.nothingWaits);
-    return _finish(pending, choices);
+    return _finish(pending, chosen);
   }
 
   @override
@@ -302,15 +305,15 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
 
   bool get _isBusy => _state.value is SyncingSyncState || _pending != null;
 
-  /// Applies the choices on this device, exchanges the covers and sends the snapshot and the
-  /// plan for the other device.
-  Future<Result<void, SyncFailure>> _finish(_PendingSync pending, Map<String, SyncChoice> choices) async {
+  /// Makes the [chosen] changes on this device, exchanges the covers and sends the snapshot and
+  /// the plan for the other device.
+  Future<Result<void, SyncFailure>> _finish(_PendingSync pending, Set<String> chosen) async {
     Directory? folder;
     try {
       final String token = pending.offer.token;
       final Uri base = pending.base;
       _report(base, token, const SyncStepModel(SyncStep.applying), null);
-      final _Decisions decisions = await _decide(pending, choices);
+      final _Decisions decisions = await _decide(pending, chosen);
       final SyncSnapshotModel remote = pending.remote;
 
       final Set<String> localIds = _recordings.watchRecordings().value.map(_recordingId).toSet();
@@ -344,9 +347,10 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
         folder,
         skipSongs: decisions.skipSongs,
         skipCovers: decisions.skipCovers,
+        skipSessions: decisions.skipSessions,
       )).plus(deleted: decisions.deletedHere, updated: decisions.updatedHere);
 
-      final SyncSnapshotModel local = _snapshot();
+      final SyncSnapshotModel local = _withoutSkipped(_snapshot(), decisions);
       final Set<String> remoteIds = remote.recordings.map(_syncRecordingId).toSet();
       final List<Recording> toSend = _recordings
           .watchRecordings()
@@ -394,9 +398,9 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
     }
   }
 
-  /// The conflicts between [local] and [remote]; covers of a song in a deletion conflict follow
-  /// the song and are no conflicts of their own.
-  List<_Conflict> _findConflicts(SyncSnapshotModel local, SyncSnapshotModel remote) {
+  /// Every change between [local] and [remote], those made on this device first. Covers of a song
+  /// that is added or deleted go with the song; practice sessions are one change each way.
+  List<_Change> _findChanges(SyncSnapshotModel local, SyncSnapshotModel remote) {
     final Map<String, Song> localSongs = <String, Song>{for (final Song song in local.songs) _keyOf(song): song};
     final Map<String, Song> remoteSongs = <String, Song>{for (final Song song in remote.songs) _keyOf(song): song};
     final Map<String, DateTime?> localDeleted = <String, DateTime?>{
@@ -405,135 +409,87 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
     final Map<String, DateTime?> remoteDeleted = <String, DateTime?>{
       for (final SyncSongKeyModel song in remote.deletedSongs) song.key: song.deletedAt,
     };
-    final List<_Conflict> conflicts = <_Conflict>[];
-    final Set<String> songsInConflict = <String>{};
+    final List<_Change> here = <_Change>[];
+    final List<_Change> there = <_Change>[];
 
+    // Songs.
     for (final MapEntry<String, Song> entry in remoteSongs.entries) {
-      final Song? here = localSongs[entry.key];
-      if (here == null && localDeleted.containsKey(entry.key)) {
-        songsInConflict.add(entry.key);
-        conflicts.add(
-          _Conflict(
-            conflict: SyncConflict(
-              id: '$_songConflictPrefix${entry.key}',
-              kind: SyncConflictKind.songDeletedHere,
-              songTitle: _songTitle(entry.value),
-              deletedAt: localDeleted[entry.key],
-            ),
-            song: entry.value,
-          ),
-        );
-      } else if (here != null) {
-        final Set<SongDifference> differences = _differences(here, entry.value);
-        if (differences.isNotEmpty) {
-          conflicts.add(
-            _Conflict(
-              conflict: SyncConflict(
-                id: '$_changedConflictPrefix${entry.key}',
-                kind: SyncConflictKind.songChanged,
-                songTitle: _songTitle(here),
-                differences: differences,
-              ),
-              song: here,
-              otherSong: entry.value,
-            ),
-          );
-        }
+      final String key = entry.key;
+      final Song song = entry.value;
+      final Song? mine = localSongs[key];
+      final int covers = _coversOf(remote, song.id);
+      if (mine == null && localDeleted.containsKey(key)) {
+        final _Change delete = _songChange(SyncChangeKind.delete, SyncDirection.toThere, song, key);
+        final _Change restore = _songChange(SyncChangeKind.add, SyncDirection.toHere, song, key);
+        there.add(delete.withChange(deletedAt: localDeleted[key], excludes: restore.id));
+        here.add(restore.withChange(count: covers, restores: true, excludes: delete.id, chosenFirst: false));
+      } else if (mine == null) {
+        here.add(_songChange(SyncChangeKind.add, SyncDirection.toHere, song, key).withChange(count: covers));
+      } else {
+        final Set<SongDifference> differences = _differences(mine, song);
+        if (differences.isEmpty) continue;
+        final _Change take = _songChange(SyncChangeKind.update, SyncDirection.toHere, mine, key, other: song);
+        final _Change give = _songChange(SyncChangeKind.update, SyncDirection.toThere, mine, key);
+        here.add(take.withChange(differences: differences, excludes: give.id, chosenFirst: false));
+        there.add(give.withChange(differences: differences, excludes: take.id, chosenFirst: false));
       }
     }
     for (final MapEntry<String, Song> entry in localSongs.entries) {
-      if (!remoteSongs.containsKey(entry.key) && remoteDeleted.containsKey(entry.key)) {
-        songsInConflict.add(entry.key);
-        conflicts.add(
-          _Conflict(
-            conflict: SyncConflict(
-              id: '$_songConflictPrefix${entry.key}',
-              kind: SyncConflictKind.songDeletedThere,
-              songTitle: _songTitle(entry.value),
-              deletedAt: remoteDeleted[entry.key],
-            ),
-            song: entry.value,
-          ),
-        );
+      final String key = entry.key;
+      final Song song = entry.value;
+      if (remoteSongs.containsKey(key)) continue;
+      final int covers = _coversOf(local, song.id);
+      if (remoteDeleted.containsKey(key)) {
+        final _Change delete = _songChange(SyncChangeKind.delete, SyncDirection.toHere, song, key);
+        final _Change restore = _songChange(SyncChangeKind.add, SyncDirection.toThere, song, key);
+        here.add(delete.withChange(deletedAt: remoteDeleted[key], excludes: restore.id));
+        there.add(restore.withChange(count: covers, restores: true, excludes: delete.id, chosenFirst: false));
+      } else {
+        there.add(_songChange(SyncChangeKind.add, SyncDirection.toThere, song, key).withChange(count: covers));
       }
     }
 
-    final Map<String, Song> localById = <String, Song>{for (final Song song in local.songs) song.id: song};
-    final Map<String, Song> remoteById = <String, Song>{for (final Song song in remote.songs) song.id: song};
-    final Set<String> localCovers = local.recordings.map(_syncRecordingId).toSet();
-    final Set<String> remoteCovers = remote.recordings.map(_syncRecordingId).toSet();
-    for (final SyncRecordingModel cover in remote.recordings) {
-      final Song? song = remoteById[cover.songId];
-      if (localCovers.contains(cover.id) || !local.deletedCovers.containsKey(cover.id)) continue;
-      if (song != null && songsInConflict.contains(_keyOf(song))) continue;
-      conflicts.add(_coverConflict(cover, song, SyncConflictKind.coverDeletedHere, local.deletedCovers[cover.id]));
+    // Covers of the songs both devices have.
+    void covers(SyncSnapshotModel from, SyncSnapshotModel to, Map<String, Song> songsOfTo, SyncDirection direction) {
+      final Map<String, Song> fromById = <String, Song>{for (final Song song in from.songs) song.id: song};
+      final Set<String> toCovers = to.recordings.map(_syncRecordingId).toSet();
+      final List<_Change> list = direction == SyncDirection.toHere ? here : there;
+      final List<_Change> other = direction == SyncDirection.toHere ? there : here;
+      final SyncDirection back = direction == SyncDirection.toHere ? SyncDirection.toThere : SyncDirection.toHere;
+      for (final SyncRecordingModel cover in from.recordings) {
+        final Song? song = fromById[cover.songId];
+        if (toCovers.contains(cover.id) || song == null || !songsOfTo.containsKey(_keyOf(song))) continue;
+        if (to.deletedCovers.containsKey(cover.id)) {
+          final _Change delete = _coverChange(SyncChangeKind.delete, back, cover, song);
+          final _Change restore = _coverChange(SyncChangeKind.add, direction, cover, song);
+          other.add(delete.withChange(deletedAt: to.deletedCovers[cover.id], excludes: restore.id));
+          list.add(restore.withChange(restores: true, excludes: delete.id, chosenFirst: false));
+        } else {
+          list.add(_coverChange(SyncChangeKind.add, direction, cover, song));
+        }
+      }
     }
-    for (final SyncRecordingModel cover in local.recordings) {
-      final Song? song = localById[cover.songId];
-      if (remoteCovers.contains(cover.id) || !remote.deletedCovers.containsKey(cover.id)) continue;
-      if (song != null && songsInConflict.contains(_keyOf(song))) continue;
-      conflicts.add(_coverConflict(cover, song, SyncConflictKind.coverDeletedThere, remote.deletedCovers[cover.id]));
-    }
-    return conflicts;
+
+    covers(remote, local, localSongs, SyncDirection.toHere);
+    covers(local, remote, remoteSongs, SyncDirection.toThere);
+
+    // Practice sessions.
+    final int sessionsToHere = _newSessions(remote, local);
+    if (sessionsToHere > 0) here.add(_practiceChange(SyncDirection.toHere, sessionsToHere));
+    final int sessionsToThere = _newSessions(local, remote);
+    if (sessionsToThere > 0) there.add(_practiceChange(SyncDirection.toThere, sessionsToThere));
+    return <_Change>[...here, ...there];
   }
 
-  /// Does on this device what the choices say and writes down what the other device must do.
-  Future<_Decisions> _decide(_PendingSync pending, Map<String, SyncChoice> choices) async {
+  /// Makes on this device the changes in [chosen] and writes down what the other device must do
+  /// and what it must not be sent.
+  Future<_Decisions> _decide(_PendingSync pending, Set<String> chosen) async {
     final List<SyncSongKeyModel> deleteThere = <SyncSongKeyModel>[];
     final List<SyncSongKeyModel> forgetThere = <SyncSongKeyModel>[];
     final List<Song> updateThere = <Song>[];
     final List<String> deleteCoversThere = <String>[];
     final List<String> forgetCoversThere = <String>[];
-    final Set<String> skipSongs = <String>{};
-    final Set<String> skipCovers = <String>{};
-    int deletedHere = 0;
-    int updatedHere = 0;
-
-    for (final _Conflict item in pending.conflicts) {
-      final SyncConflict conflict = item.conflict;
-      final SyncChoice choice = choices[conflict.id] ?? conflict.choices.first;
-      final Song? song = item.song;
-      final String? coverId = item.coverId;
-      switch (conflict.kind) {
-        case SyncConflictKind.songDeletedHere:
-          final SyncSongKeyModel key = _songKey(song!);
-          if (choice == SyncChoice.delete) {
-            deleteThere.add(key);
-            skipSongs.add(key.key);
-          } else {
-            await _tombstones.forgetSong(key);
-          }
-        case SyncConflictKind.songDeletedThere:
-          if (choice == SyncChoice.delete) {
-            _throwOnFailure(await _songs.deleteSong(songId: song!.id));
-            deletedHere++;
-          } else {
-            forgetThere.add(_songKey(song!));
-          }
-        case SyncConflictKind.songChanged:
-          if (choice == SyncChoice.takeOther) {
-            await _updateSong(song!.id, item.otherSong!);
-            updatedHere++;
-          } else {
-            updateThere.add(song!);
-          }
-        case SyncConflictKind.coverDeletedHere:
-          if (choice == SyncChoice.delete) {
-            deleteCoversThere.add(coverId!);
-            skipCovers.add(coverId);
-          } else {
-            await _tombstones.forgetCover(coverId!);
-          }
-        case SyncConflictKind.coverDeletedThere:
-          if (choice == SyncChoice.delete) {
-            _throwOnFailure(await _recordings.deleteRecording(coverId!));
-            deletedHere++;
-          } else {
-            forgetCoversThere.add(coverId!);
-          }
-      }
-    }
-    return _Decisions(
+    final _Decisions decisions = _Decisions(
       plan: SyncPlanModel(
         deleteSongs: deleteThere,
         forgetSongs: forgetThere,
@@ -541,10 +497,84 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
         deleteCovers: deleteCoversThere,
         forgetCovers: forgetCoversThere,
       ),
-      skipSongs: skipSongs,
-      skipCovers: skipCovers,
-      deletedHere: deletedHere,
-      updatedHere: updatedHere,
+    );
+
+    for (final _Change item in pending.changes) {
+      final SyncChange change = item.change;
+      final bool isChosen = chosen.contains(change.id);
+      final Song? song = item.song;
+      final String? coverId = item.coverId;
+      switch ((change.subject, change.kind, change.direction)) {
+        case (SyncSubject.song, SyncChangeKind.add, SyncDirection.toHere):
+          if (!isChosen) decisions.skipSongs.add(item.songKey!);
+        case (SyncSubject.song, SyncChangeKind.add, SyncDirection.toThere):
+          if (!isChosen) {
+            decisions.skipSongsThere.add(item.songKey!);
+          } else if (change.restores) {
+            forgetThere.add(_songKey(song!));
+          }
+        case (SyncSubject.song, SyncChangeKind.delete, SyncDirection.toHere):
+          if (isChosen) {
+            _throwOnFailure(await _songs.deleteSong(songId: song!.id));
+            decisions.deletedHere++;
+          }
+        case (SyncSubject.song, SyncChangeKind.delete, SyncDirection.toThere):
+          if (isChosen) deleteThere.add(_songKey(song!));
+        case (SyncSubject.song, SyncChangeKind.update, SyncDirection.toHere):
+          if (isChosen) {
+            await _updateSong(song!.id, item.otherSong!);
+            decisions.updatedHere++;
+          }
+        case (SyncSubject.song, SyncChangeKind.update, SyncDirection.toThere):
+          if (isChosen) updateThere.add(song!);
+        case (SyncSubject.cover, SyncChangeKind.add, SyncDirection.toHere):
+          if (!isChosen) decisions.skipCovers.add(coverId!);
+        case (SyncSubject.cover, SyncChangeKind.add, SyncDirection.toThere):
+          if (!isChosen) {
+            decisions.skipCoversThere.add(coverId!);
+          } else if (change.restores) {
+            forgetCoversThere.add(coverId!);
+          }
+        case (SyncSubject.cover, SyncChangeKind.delete, SyncDirection.toHere):
+          if (isChosen) {
+            _throwOnFailure(await _recordings.deleteRecording(coverId!));
+            decisions.deletedHere++;
+          }
+        case (SyncSubject.cover, SyncChangeKind.delete, SyncDirection.toThere):
+          if (isChosen) deleteCoversThere.add(coverId!);
+        case (SyncSubject.practice, _, SyncDirection.toHere):
+          if (!isChosen) decisions.skipSessions = true;
+        case (SyncSubject.practice, _, SyncDirection.toThere):
+          if (!isChosen) decisions.skipSessionsThere = true;
+        case (SyncSubject.cover, SyncChangeKind.update, _):
+          break; // A cover is never updated.
+      }
+    }
+    return decisions;
+  }
+
+  /// [snapshot] without the songs, covers and practice sessions the other device must not get.
+  static SyncSnapshotModel _withoutSkipped(SyncSnapshotModel snapshot, _Decisions decisions) {
+    final List<Song> songs = <Song>[
+      for (final Song song in snapshot.songs)
+        if (!decisions.skipSongsThere.contains(_keyOf(song))) song,
+    ];
+    final Set<String> songIds = songs.map(_songId).toSet();
+    return SyncSnapshotModel(
+      songs: songs,
+      recordings: <SyncRecordingModel>[
+        for (final SyncRecordingModel recording in snapshot.recordings)
+          if (songIds.contains(recording.songId) && !decisions.skipCoversThere.contains(recording.id)) recording,
+      ],
+      sessions: decisions.skipSessionsThere
+          ? const <PracticeSession>[]
+          : <PracticeSession>[
+              for (final PracticeSession session in snapshot.sessions)
+                if (songIds.contains(session.songId)) session,
+            ],
+      history: snapshot.history,
+      deletedSongs: snapshot.deletedSongs,
+      deletedCovers: snapshot.deletedCovers,
     );
   }
 
@@ -641,6 +671,7 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
     Directory? folder, {
     Set<String> skipSongs = const <String>{},
     Set<String> skipCovers = const <String>{},
+    bool skipSessions = false,
   }) async {
     final Map<String, String> localByKey = <String, String>{
       for (final Song song in _songs.watchSongs().value) _keyOf(song): song.id,
@@ -721,7 +752,7 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
 
     final Set<String> localSessions = _practice.watchSessions().value.map(_sessionId).toSet();
     final List<PracticeSession> sessions = <PracticeSession>[
-      for (final PracticeSession session in remote.sessions)
+      for (final PracticeSession session in skipSessions ? const <PracticeSession>[] : remote.sessions)
         if (!localSessions.contains(session.id) && songIds[session.songId] != null)
           PracticeSession(
             id: session.id,
@@ -811,17 +842,55 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
     if (result case FailureResult<void, F>(:final F failure)) throw HttpException(failure.name);
   }
 
-  static _Conflict _coverConflict(SyncRecordingModel cover, Song? song, SyncConflictKind kind, DateTime? deletedAt) =>
-      _Conflict(
-        conflict: SyncConflict(
-          id: '$_coverConflictPrefix${cover.id}',
+  static _Change _songChange(SyncChangeKind kind, SyncDirection direction, Song song, String key, {Song? other}) =>
+      _Change(
+        change: SyncChange(
+          id: _changeId(kind, direction, SyncSubject.song, key),
           kind: kind,
-          songTitle: song == null ? null : _songTitle(song),
+          direction: direction,
+          subject: SyncSubject.song,
+          songTitle: _songTitle(song),
+        ),
+        song: song,
+        otherSong: other,
+        songKey: key,
+      );
+
+  static _Change _coverChange(SyncChangeKind kind, SyncDirection direction, SyncRecordingModel cover, Song song) =>
+      _Change(
+        change: SyncChange(
+          id: _changeId(kind, direction, SyncSubject.cover, cover.id),
+          kind: kind,
+          direction: direction,
+          subject: SyncSubject.cover,
+          songTitle: _songTitle(song),
           coverRecordedAt: cover.recordedAt,
-          deletedAt: deletedAt,
         ),
         coverId: cover.id,
       );
+
+  static _Change _practiceChange(SyncDirection direction, int count) => _Change(
+    change: SyncChange(
+      id: _changeId(SyncChangeKind.add, direction, SyncSubject.practice, _practiceRef),
+      kind: SyncChangeKind.add,
+      direction: direction,
+      subject: SyncSubject.practice,
+      count: count,
+    ),
+  );
+
+  static String _changeId(SyncChangeKind kind, SyncDirection direction, SyncSubject subject, String ref) =>
+      '${direction.name}$_idSeparator${kind.name}$_idSeparator${subject.name}$_idSeparator$ref';
+
+  /// The covers of [snapshot] of its song [songId].
+  static int _coversOf(SyncSnapshotModel snapshot, String songId) =>
+      snapshot.recordings.where((SyncRecordingModel recording) => recording.songId == songId).length;
+
+  /// The practice sessions of [from] that [to] misses.
+  static int _newSessions(SyncSnapshotModel from, SyncSnapshotModel to) {
+    final Set<String> known = to.sessions.map(_sessionId).toSet();
+    return from.sessions.where((PracticeSession session) => !known.contains(session.id)).length;
+  }
 
   /// What differs between [here] and [there]: lyrics, album.
   /// The speed and the space above the lyrics are settings of each device, not of the song.
@@ -868,20 +937,54 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
   static String _sessionId(PracticeSession session) => session.id;
 }
 
-/// A conflict with what is needed to act on it.
-final class _Conflict {
-  final SyncConflict conflict;
+/// A change with what is needed to make it.
+final class _Change {
+  final SyncChange change;
 
   /// The song (of this device, or of the other one when it is missing here).
   final Song? song;
 
-  /// The other device's version of a changed song.
+  /// The other device's version of a song that is updated here.
   final Song? otherSong;
 
-  /// The cover of a cover conflict.
+  /// The key (artist and name) of the song of a song change.
+  final String? songKey;
+
+  /// The cover of a cover change.
   final String? coverId;
 
-  const _Conflict({required this.conflict, this.song, this.otherSong, this.coverId});
+  const _Change({required this.change, this.song, this.otherSong, this.songKey, this.coverId});
+
+  String get id => change.id;
+
+  /// This change with these details.
+  _Change withChange({
+    DateTime? deletedAt,
+    Set<SongDifference> differences = const <SongDifference>{},
+    int count = 0,
+    bool restores = false,
+    String? excludes,
+    bool chosenFirst = true,
+  }) => _Change(
+    change: SyncChange(
+      id: change.id,
+      kind: change.kind,
+      direction: change.direction,
+      subject: change.subject,
+      songTitle: change.songTitle,
+      coverRecordedAt: change.coverRecordedAt,
+      deletedAt: deletedAt,
+      differences: differences,
+      count: count,
+      restores: restores,
+      excludes: excludes,
+      chosenFirst: chosenFirst,
+    ),
+    song: song,
+    otherSong: otherSong,
+    songKey: songKey,
+    coverId: coverId,
+  );
 }
 
 /// An exchange that waits for the user's choices.
@@ -889,26 +992,33 @@ final class _PendingSync {
   final Uri base;
   final SyncOfferModel offer;
   final SyncSnapshotModel remote;
-  final List<_Conflict> conflicts;
+  final List<_Change> changes;
 
-  const _PendingSync({required this.base, required this.offer, required this.remote, required this.conflicts});
+  const _PendingSync({required this.base, required this.offer, required this.remote, required this.changes});
 }
 
-/// What the choices did here and ask of the other device.
+/// What the choices did here, ask of the other device and leave out.
 final class _Decisions {
   final SyncPlanModel plan;
-  final Set<String> skipSongs;
-  final Set<String> skipCovers;
-  final int deletedHere;
-  final int updatedHere;
 
-  const _Decisions({
-    required this.plan,
-    required this.skipSongs,
-    required this.skipCovers,
-    required this.deletedHere,
-    required this.updatedHere,
-  });
+  /// Songs (by key) and covers (by id) of the other device not to take here.
+  final Set<String> skipSongs = <String>{};
+  final Set<String> skipCovers = <String>{};
+
+  /// Whether the practice sessions of the other device are not taken here.
+  bool skipSessions = false;
+
+  /// Songs (by key) and covers (by id) of this device not to send.
+  final Set<String> skipSongsThere = <String>{};
+  final Set<String> skipCoversThere = <String>{};
+
+  /// Whether the practice sessions of this device are not sent.
+  bool skipSessionsThere = false;
+
+  int deletedHere = 0;
+  int updatedHere = 0;
+
+  _Decisions({required this.plan});
 }
 
 /// What the plan of the other device did here.
