@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart' show ValueListenable, ValueNotifier;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hitwave.cover/core/domain/entities/result.dart';
+import 'package:hitwave.cover/features/song/domain/entities/lyrics_layout.dart';
 import 'package:hitwave.cover/features/song/domain/entities/song.dart';
 import 'package:hitwave.cover/features/song/domain/entities/song_id_change.dart';
 import 'package:hitwave.cover/features/song/domain/repositories/song_repository.dart';
@@ -44,8 +45,11 @@ final class FakeSongRepository implements SongRepository {
   Future<Result<void, SongFailure>> deleteAllSongs() async => nextResult;
 
   @override
-  Future<Result<void, SongFailure>> updateSongScrollSpeed({required String songId, required double speed}) async =>
-      nextResult;
+  Future<Result<void, SongFailure>> updateSongScrollSpeed({
+    required String songId,
+    required LyricsLayout layout,
+    required double speed,
+  }) async => nextResult;
 
   @override
   Future<Result<List<String>, SongFailure>> addSongs(List<Song> songs) async => nextResult.when(
@@ -57,8 +61,11 @@ final class FakeSongRepository implements SongRepository {
   Stream<SongIdChange> watchSongIdChanges() => const Stream<SongIdChange>.empty();
 
   @override
-  Future<Result<void, SongFailure>> updateSongLeadIn({required String songId, required double leadIn}) async =>
-      nextResult;
+  Future<Result<void, SongFailure>> updateSongLeadIn({
+    required String songId,
+    required LyricsLayout layout,
+    required double leadIn,
+  }) async => nextResult;
 
   @override
   Future<Result<void, SongFailure>> updateSongLyrics({required String songId, required String lyrics}) async =>

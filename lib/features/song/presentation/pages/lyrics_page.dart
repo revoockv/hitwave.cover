@@ -16,6 +16,7 @@ import '../../../recordings/presentation/di/recordings_getters.dart';
 import '../../../recordings/domain/entities/microphone.dart';
 import '../../../recordings/presentation/widgets/microphone_picker_dialog_widget.dart';
 import '../../../recordings/presentation/widgets/recordings_sheet_widget.dart';
+import '../../domain/entities/lyrics_layout.dart';
 import '../../domain/entities/song.dart';
 import '../controllers/lyrics_page_controller.dart';
 import '../di/song_getters.dart';
@@ -59,8 +60,11 @@ final class LyricsPage extends WatchingWidget {
   @override
   Widget build(BuildContext context) {
     final Translations t = context.t;
+    final LyricsLayout layout = MediaQuery.sizeOf(context).width >= AppTheme.railBreakpoint
+        ? LyricsLayout.wide
+        : LyricsLayout.compact;
     final LyricsPageController lyricsPageController = createOnce(
-      _createLyricsPageController,
+      () => _createLyricsPageController(layout),
       dispose: _disposeLyricsPageController,
     );
     // After the first frame: marking the song changes the history the home page watches, and
@@ -202,12 +206,14 @@ final class LyricsPage extends WatchingWidget {
     );
   }
 
-  LyricsPageController _createLyricsPageController() {
+  /// The controller of the page opened on [layout], with the speed and the space saved for it.
+  LyricsPageController _createLyricsPageController(LyricsLayout layout) {
     final RecordingPreferences preferences = watchRecordingPreferencesUseCase().value;
     return LyricsPageController(
       lyrics: song.lyrics,
-      initialSpeed: song.scrollSpeed,
-      initialLeadIn: song.leadIn,
+      layout: layout,
+      initialSpeed: song.scrollSpeedOn(layout),
+      initialLeadIn: song.leadInOn(layout),
       record: preferences.record,
       trimSilence: preferences.trimSilence,
     );
@@ -233,7 +239,11 @@ final class LyricsPage extends WatchingWidget {
         lyricsPageController.speedSavingStateController;
     speedSavingStateController.value = ResultState.loading;
 
-    final Result<void, SongFailure> result = await updateSongScrollSpeedUseCase(songId: song.id, speed: speed);
+    final Result<void, SongFailure> result = await updateSongScrollSpeedUseCase(
+      songId: song.id,
+      layout: lyricsPageController.layout,
+      speed: speed,
+    );
     if (lyricsPageController.isDisposed) return;
 
     if (result.isSuccess) lyricsPageController.markSpeedSaved(speed);
@@ -247,7 +257,11 @@ final class LyricsPage extends WatchingWidget {
         lyricsPageController.leadInSavingStateController;
     leadInSavingStateController.value = ResultState.loading;
 
-    final Result<void, SongFailure> result = await updateSongLeadInUseCase(songId: song.id, leadIn: leadIn);
+    final Result<void, SongFailure> result = await updateSongLeadInUseCase(
+      songId: song.id,
+      layout: lyricsPageController.layout,
+      leadIn: leadIn,
+    );
     if (lyricsPageController.isDisposed) return;
 
     if (result.isSuccess) lyricsPageController.markLeadInSaved(leadIn);

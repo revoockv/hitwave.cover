@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart' show ValueListenable;
 
 import '../../../../core/domain/entities/result.dart';
 
+import '../entities/lyrics_layout.dart';
 import '../entities/song.dart';
 import '../entities/song_id_change.dart';
 import '../entities/song_failure.dart';
@@ -48,16 +49,24 @@ abstract interface class SongRepository {
     required String lyrics,
   });
 
-  /// Saves the auto-scroll [speed] of the lyrics of the song identified by [songId].
+  /// Saves the auto-scroll [speed] of the lyrics of the song identified by [songId] on [layout].
   ///
   /// Returns [Result.ok] on success, or a failure with an error message.
-  Future<Result<void, SongFailure>> updateSongScrollSpeed({required String songId, required double speed});
+  Future<Result<void, SongFailure>> updateSongScrollSpeed({
+    required String songId,
+    required LyricsLayout layout,
+    required double speed,
+  });
 
   /// Saves the space above the lyrics ([leadIn], a part of the screen height)
-  /// of the song identified by [songId].
+  /// of the song identified by [songId] on [layout].
   ///
   /// Returns [Result.ok] on success, or a failure with an error message.
-  Future<Result<void, SongFailure>> updateSongLeadIn({required String songId, required double leadIn});
+  Future<Result<void, SongFailure>> updateSongLeadIn({
+    required String songId,
+    required LyricsLayout layout,
+    required double leadIn,
+  });
 
   /// Saves the [lyrics] of the song identified by [songId] as typed.
   ///

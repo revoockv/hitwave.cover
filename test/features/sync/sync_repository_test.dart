@@ -14,6 +14,7 @@ import 'package:hitwave.cover/features/recordings/domain/entities/recording.dart
 import 'package:hitwave.cover/features/recordings/domain/entities/recording_status.dart';
 import 'package:hitwave.cover/features/recordings/domain/repositories/recordings_repository.dart';
 import 'package:hitwave.cover/features/song/domain/entities/cover.dart';
+import 'package:hitwave.cover/features/song/domain/entities/lyrics_layout.dart';
 import 'package:hitwave.cover/features/song/domain/entities/song.dart';
 import 'package:hitwave.cover/features/song/domain/entities/song_id_change.dart';
 import 'package:hitwave.cover/features/song/domain/repositories/song_repository.dart';
@@ -83,12 +84,18 @@ final class FakeSongs implements SongRepository {
   }
 
   @override
-  Future<Result<void, SongFailure>> updateSongScrollSpeed({required String songId, required double speed}) async =>
-      Result.ok;
+  Future<Result<void, SongFailure>> updateSongScrollSpeed({
+    required String songId,
+    required LyricsLayout layout,
+    required double speed,
+  }) async => Result.ok;
 
   @override
-  Future<Result<void, SongFailure>> updateSongLeadIn({required String songId, required double leadIn}) async =>
-      Result.ok;
+  Future<Result<void, SongFailure>> updateSongLeadIn({
+    required String songId,
+    required LyricsLayout layout,
+    required double leadIn,
+  }) async => Result.ok;
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);

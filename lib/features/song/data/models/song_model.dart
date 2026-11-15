@@ -29,6 +29,12 @@ final class SongModel {
   /// Saved space above the lyrics before they scroll, or `null` when never set.
   final double? leadIn;
 
+  /// [scrollSpeed] on a big screen, or `null` when never set there.
+  final double? wideScrollSpeed;
+
+  /// [leadIn] on a big screen, or `null` when never set there.
+  final double? wideLeadIn;
+
   /// Creates a new [SongModel] instance.
   const SongModel({
     required this.id,
@@ -39,6 +45,8 @@ final class SongModel {
     required this.coverIds,
     this.scrollSpeed,
     this.leadIn,
+    this.wideScrollSpeed,
+    this.wideLeadIn,
   });
 
   /// Converts this model to a domain [Song] entity.
@@ -52,6 +60,8 @@ final class SongModel {
       covers: covers,
       scrollSpeed: scrollSpeed,
       leadIn: leadIn,
+      wideScrollSpeed: wideScrollSpeed,
+      wideLeadIn: wideLeadIn,
     );
   }
 
@@ -66,6 +76,8 @@ final class SongModel {
       coverIds: (entity.covers.isNotEmpty) ? entity.covers.map((cover) => cover.id).toList() : [],
       scrollSpeed: entity.scrollSpeed,
       leadIn: entity.leadIn,
+      wideScrollSpeed: entity.wideScrollSpeed,
+      wideLeadIn: entity.wideLeadIn,
     );
   }
 }
