@@ -728,10 +728,10 @@ packages:
     dependency: "direct main"
     description:
       name: revoockv_audio_enhance
-      sha256: be59dd6e011637bf1096b99e95199fed78351952f30c9b2493145afddfe9bbe9
+      sha256: "3242e7a8048420ee296cf76d4eb01238b3efa4a0e13b359e74b26304b076a895"
       url: "https://pub.dev"
     source: hosted
-    version: "0.2.0"
+    version: "0.3.0"
   rxdart:
     dependency: transitive
     description:

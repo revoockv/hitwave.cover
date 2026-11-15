@@ -65,7 +65,7 @@ void main() {
       inputPath: raw.path,
       outputPath: output,
       preset: 'studio',
-      settings: const <String, double>{'noise_profile_seconds': 1.4, 'trim_silence': 1},
+      settings: const <String, double>{'noise_profile_seconds': 1.4, 'trim_silence': 1, 'expander_close_s': 0.3},
       onProgress: steps.add,
     );
 
@@ -79,6 +79,8 @@ void main() {
     expect(File('$output.part').existsSync(), isFalse);
     expect(report.settings['noise_reduction_db'], 22); // the studio preset
     expect(report.settings['noise_profile_seconds'], 1.4);
+    expect(report.settings['trim_silence_below_loud_db'], 25); // a step default, reported
+    expect(report.settings['expander_close_s'], 0.3); // a step value, passed through
     expect(report.after.integratedLufs, closeTo(-14, 0.5));
     expect(report.after.truePeakDb, lessThanOrEqualTo(-0.9));
     expect(report.keptFromSeconds, greaterThan(1));
