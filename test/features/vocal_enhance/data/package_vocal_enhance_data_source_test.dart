@@ -85,6 +85,25 @@ void main() {
     expect(report.keptToSeconds, closeTo(6, 0.01));
   });
 
+  for (final String preset in <String>['natural', 'studio', 'loudness', 'classic']) {
+    test('a mono take comes out as pseudo-stereo with the $preset preset', () async {
+      final File raw = File('${folder.path}/take.wav')..writeAsBytesSync(vocalTakeWav(seconds: 3, leadIn: 1));
+      final String output = '${folder.path}/take_$preset.wav';
+
+      final EnhanceReportModel report = await engine.enhance(
+        inputPath: raw.path,
+        outputPath: output,
+        preset: preset,
+        settings: const <String, double>{'widen_mono': 0},
+        onProgress: (_) {},
+      );
+
+      final ByteData header = ByteData.sublistView(File(output).readAsBytesSync(), 0, 44);
+      expect(header.getUint16(22, Endian.little), 2);
+      expect(report.settings['widen_mono'], 1);
+    });
+  }
+
   test('a missing file fails with an engine exception', () async {
     await expectLater(engine.analyze('${folder.path}/missing.wav'), throwsA(isA<VocalEnhanceEngineException>()));
   });
