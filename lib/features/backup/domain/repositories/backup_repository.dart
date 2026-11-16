@@ -2,6 +2,10 @@ import 'package:flutter/foundation.dart' show ValueListenable;
 
 import '../../../../core/domain/entities/result.dart';
 import '../entities/backup_failure.dart';
+import '../entities/import_choice.dart';
+import '../entities/import_conflict.dart';
+import '../entities/import_plan.dart';
+import '../entities/import_summary.dart';
 
 /// Defines the contract for backup and restore operations via files.
 ///
@@ -27,15 +31,19 @@ abstract interface class BackupRepository {
   /// `backup.zip` with their WAV files (only where the device has a file system).
   Future<Result<void, BackupFailure>> exportSongs({required bool includeRecordings, required String pickerTitle});
 
-  /// Imports songs from a user-selected JSON file.
+  /// Lets the user pick a backup file (`backup.json`, or `backup.zip` with takes) and reads it.
   ///
-  /// Prompts the user to select a backup file via file picker, reads
-  /// the backup data, and adds all songs to Firebase. Returns
-  /// [SuccessResult] on success, or [FailureResult] with an error
-  /// message when the import fails.
-  ///
-  /// A `backup.zip` may hold recordings; they are added only with [includeRecordings].
-  Future<Result<void, BackupFailure>> importSongs({required bool includeRecordings});
+  /// Nothing is imported yet: the plan lists the songs already in the library, and
+  /// [applyImport] or [cancelImport] follows. Returns `null` when the user cancelled the picker.
+  /// With [includeRecordings] the takes of a ZIP backup are imported too.
+  Future<Result<ImportPlan?, BackupFailure>> openImport({required bool includeRecordings});
+
+  /// Imports the backup opened by [openImport]. [choices] says what to do with each conflict
+  /// (by [ImportConflict.index]); a conflict without a choice is skipped.
+  Future<Result<ImportSummary, BackupFailure>> applyImport(Map<int, ImportChoice> choices);
+
+  /// Drops the backup opened by [openImport] without importing anything.
+  Future<void> cancelImport();
 
   /// Makes a backup of the songs (a ZIP with the takes when [includeRecordings]) and opens the
   /// share sheet with it, so it can go to Google Drive or another app.

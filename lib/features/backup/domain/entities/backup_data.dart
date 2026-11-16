@@ -15,8 +15,5 @@ final class BackupData {
   final List<Song> songs;
 
   /// Creates a new [BackupData] instance.
-  const BackupData({
-    required this.exportedAt,
-    required this.songs,
-  });
+  const BackupData({required this.exportedAt, required this.songs});
 }

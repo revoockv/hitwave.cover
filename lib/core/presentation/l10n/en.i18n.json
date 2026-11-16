@@ -1,18 +1,34 @@
 {
   "appTitle": "Hitwave Cover",
   "backup": {
+    "cancelImport": "Cancel import",
+    "conflictMessage": "“{song}” is already in your songs.",
+    "conflictTitle": "This song is already here",
     "exportDialogTitle": "Choose a folder for the export",
     "failure": {
       "exportSongs": "Could not export the songs",
       "importSongs": "Could not import the songs",
       "shareBackup": "Could not share the backup"
     },
+    "forOthers": {
+      "one": "Do the same for the other {n} song",
+      "other": "Do the same for the other {n} songs"
+    },
     "importHint": "From a file, also from Google Drive",
+    "importSummary": "Import finished: added {added}, replaced {replaced}, skipped {skipped}",
     "includeRecordings": "Include takes",
+    "keepBoth": "Keep both",
+    "keepBothHint": "Add the song from the file next to yours, with a number",
+    "otherLyrics": "The lyrics in the file are different.",
     "recordingsNote": "Takes are kept only on this device; with them the file becomes a ZIP archive.",
+    "replace": "Replace",
+    "replaceHint": "Take the lyrics from the file; your covers and takes stay",
+    "sameLyrics": "The lyrics in the file are the same.",
     "share": "Share a backup",
     "shareHint": "Save it to Google Drive or send it to another app",
-    "shareQuestion": "The songs will be shared as a file you can save to Google Drive. Takes come only in a ZIP archive."
+    "shareQuestion": "The songs will be shared as a file you can save to Google Drive. Takes come only in a ZIP archive.",
+    "skip": "Skip",
+    "skipHint": "Keep yours as it is"
   },
   "common": {
     "cancel": "Cancel",
@@ -203,8 +219,7 @@
       "updateSong": "Could not update the song.",
       "updateSpeed": "Could not save the speed."
     },
-    "importDone": "Import finished",
-    "importQuestion": "The songs from the file will be added to yours. Takes come only from a ZIP archive.",
+    "importQuestion": "The songs from the file will be added to yours; for a song you already have, you choose what to do. Takes come only from a ZIP archive.",
     "importSongs": "Import",
     "leadIn": "Lead-in",
     "lyrics": "Lyrics",
