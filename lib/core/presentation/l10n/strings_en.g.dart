@@ -58,19 +58,55 @@ class Translations$backup$en {
 
 	// Translations
 
+	/// en: 'Cancel import'
+	String get cancelImport => 'Cancel import';
+
+	/// en: '“{song}” is already in your songs.'
+	String conflictMessage({required Object song}) => '“${song}” is already in your songs.';
+
+	/// en: 'This song is already here'
+	String get conflictTitle => 'This song is already here';
+
 	/// en: 'Choose a folder for the export'
 	String get exportDialogTitle => 'Choose a folder for the export';
 
 	late final Translations$backup$failure$en failure = Translations$backup$failure$en.internal(_root);
 
+	/// en: '(one) {Do the same for the other {n} song} (other) {Do the same for the other {n} songs}'
+	String forOthers({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n,
+		one: 'Do the same for the other ${n} song',
+		other: 'Do the same for the other ${n} songs',
+	);
+
 	/// en: 'From a file, also from Google Drive'
 	String get importHint => 'From a file, also from Google Drive';
+
+	/// en: 'Import finished: added {added}, replaced {replaced}, skipped {skipped}'
+	String importSummary({required Object added, required Object replaced, required Object skipped}) => 'Import finished: added ${added}, replaced ${replaced}, skipped ${skipped}';
 
 	/// en: 'Include takes'
 	String get includeRecordings => 'Include takes';
 
+	/// en: 'Keep both'
+	String get keepBoth => 'Keep both';
+
+	/// en: 'Add the song from the file next to yours, with a number'
+	String get keepBothHint => 'Add the song from the file next to yours, with a number';
+
+	/// en: 'The lyrics in the file are different.'
+	String get otherLyrics => 'The lyrics in the file are different.';
+
 	/// en: 'Takes are kept only on this device; with them the file becomes a ZIP archive.'
 	String get recordingsNote => 'Takes are kept only on this device; with them the file becomes a ZIP archive.';
+
+	/// en: 'Replace'
+	String get replace => 'Replace';
+
+	/// en: 'Take the lyrics from the file; your covers and takes stay'
+	String get replaceHint => 'Take the lyrics from the file; your covers and takes stay';
+
+	/// en: 'The lyrics in the file are the same.'
+	String get sameLyrics => 'The lyrics in the file are the same.';
 
 	/// en: 'Share a backup'
 	String get share => 'Share a backup';
@@ -80,6 +116,12 @@ class Translations$backup$en {
 
 	/// en: 'The songs will be shared as a file you can save to Google Drive. Takes come only in a ZIP archive.'
 	String get shareQuestion => 'The songs will be shared as a file you can save to Google Drive. Takes come only in a ZIP archive.';
+
+	/// en: 'Skip'
+	String get skip => 'Skip';
+
+	/// en: 'Keep yours as it is'
+	String get skipHint => 'Keep yours as it is';
 }
 
 // Path: common
@@ -441,11 +483,8 @@ class Translations$song$en {
 
 	late final Translations$song$failure$en failure = Translations$song$failure$en.internal(_root);
 
-	/// en: 'Import finished'
-	String get importDone => 'Import finished';
-
-	/// en: 'The songs from the file will be added to yours. Takes come only from a ZIP archive.'
-	String get importQuestion => 'The songs from the file will be added to yours. Takes come only from a ZIP archive.';
+	/// en: 'The songs from the file will be added to yours; for a song you already have, you choose what to do. Takes come only from a ZIP archive.'
+	String get importQuestion => 'The songs from the file will be added to yours; for a song you already have, you choose what to do. Takes come only from a ZIP archive.';
 
 	/// en: 'Import'
 	String get importSongs => 'Import';
@@ -1065,16 +1104,29 @@ extension on Translations {
 	dynamic _flatMapFunction(String path) {
 		return switch (path) {
 			'appTitle' => 'Hitwave Cover',
+			'backup.cancelImport' => 'Cancel import',
+			'backup.conflictMessage' => ({required Object song}) => '“${song}” is already in your songs.',
+			'backup.conflictTitle' => 'This song is already here',
 			'backup.exportDialogTitle' => 'Choose a folder for the export',
 			'backup.failure.exportSongs' => 'Could not export the songs',
 			'backup.failure.importSongs' => 'Could not import the songs',
 			'backup.failure.shareBackup' => 'Could not share the backup',
+			'backup.forOthers' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, one: 'Do the same for the other ${n} song', other: 'Do the same for the other ${n} songs', ), 
 			'backup.importHint' => 'From a file, also from Google Drive',
+			'backup.importSummary' => ({required Object added, required Object replaced, required Object skipped}) => 'Import finished: added ${added}, replaced ${replaced}, skipped ${skipped}',
 			'backup.includeRecordings' => 'Include takes',
+			'backup.keepBoth' => 'Keep both',
+			'backup.keepBothHint' => 'Add the song from the file next to yours, with a number',
+			'backup.otherLyrics' => 'The lyrics in the file are different.',
 			'backup.recordingsNote' => 'Takes are kept only on this device; with them the file becomes a ZIP archive.',
+			'backup.replace' => 'Replace',
+			'backup.replaceHint' => 'Take the lyrics from the file; your covers and takes stay',
+			'backup.sameLyrics' => 'The lyrics in the file are the same.',
 			'backup.share' => 'Share a backup',
 			'backup.shareHint' => 'Save it to Google Drive or send it to another app',
 			'backup.shareQuestion' => 'The songs will be shared as a file you can save to Google Drive. Takes come only in a ZIP archive.',
+			'backup.skip' => 'Skip',
+			'backup.skipHint' => 'Keep yours as it is',
 			'common.cancel' => 'Cancel',
 			'common.clear' => 'Clear',
 			'common.delete' => 'Delete',
@@ -1226,8 +1278,7 @@ extension on Translations {
 			'song.failure.updateLyrics' => 'Could not save the lyrics.',
 			'song.failure.updateSong' => 'Could not update the song.',
 			'song.failure.updateSpeed' => 'Could not save the speed.',
-			'song.importDone' => 'Import finished',
-			'song.importQuestion' => 'The songs from the file will be added to yours. Takes come only from a ZIP archive.',
+			'song.importQuestion' => 'The songs from the file will be added to yours; for a song you already have, you choose what to do. Takes come only from a ZIP archive.',
 			'song.importSongs' => 'Import',
 			'song.leadIn' => 'Lead-in',
 			'song.lyrics' => 'Lyrics',

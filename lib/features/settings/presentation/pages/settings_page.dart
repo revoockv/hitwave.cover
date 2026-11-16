@@ -6,9 +6,14 @@ import '../../../../core/domain/entities/result.dart';
 import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../../core/presentation/theme.dart';
 import '../../../backup/domain/entities/backup_failure.dart';
+import '../../../backup/domain/entities/import_choice.dart';
+import '../../../backup/domain/entities/import_conflict.dart';
+import '../../../backup/domain/entities/import_plan.dart';
+import '../../../backup/domain/entities/import_summary.dart';
 import '../../../backup/presentation/di/backup_getters.dart';
 import '../../../backup/presentation/l10n/backup_texts.dart';
 import '../../../backup/presentation/widgets/backup_options_dialog_widget.dart';
+import '../../../backup/presentation/widgets/import_conflict_dialog_widget.dart';
 import '../../../history/domain/entities/history_failure.dart';
 import '../../../history/presentation/di/history_getters.dart';
 import '../../../history/presentation/l10n/history_texts.dart';
@@ -152,12 +157,57 @@ final class SettingsPage extends WatchingWidget {
     final Translations t = context.t;
     final bool? includeRecordings = await _askIncludeRecordings(context, t.song.importSongs, t.song.importQuestion);
     if (includeRecordings == null) return;
-    final Result<void, BackupFailure> result = await importSongsUseCase(includeRecordings: includeRecordings);
+    final Result<ImportPlan?, BackupFailure> opened = await openImportUseCase(includeRecordings: includeRecordings);
+    final ImportPlan plan;
+    switch (opened) {
+      case SuccessResult<ImportPlan?, BackupFailure>(:final ImportPlan? value):
+        if (value == null) return;
+        plan = value;
+      case FailureResult<ImportPlan?, BackupFailure>(:final BackupFailure failure):
+        if (context.mounted) _showMessage(ScaffoldMessenger.of(context), failure.text(t));
+        return;
+    }
+    if (!context.mounted) {
+      await cancelImportUseCase();
+      return;
+    }
+    final Map<int, ImportChoice>? choices = await _askImportChoices(context, plan.conflicts);
+    if (choices == null) {
+      await cancelImportUseCase();
+      return;
+    }
+    final Result<ImportSummary, BackupFailure> result = await applyImportUseCase(choices);
     if (!context.mounted) return;
     _showMessage(
       ScaffoldMessenger.of(context),
-      result.when(success: (void _) => t.song.importDone, failure: (BackupFailure failure) => failure.text(t)),
+      result.when(
+        success: (ImportSummary summary) =>
+            t.backup.importSummary(added: summary.added, replaced: summary.replaced, skipped: summary.skipped),
+        failure: (BackupFailure failure) => failure.text(t),
+      ),
     );
+  }
+
+  /// Asks, song by song, what to do with the [conflicts]; an answer may go for all the others.
+  /// `null` when the import is cancelled.
+  Future<Map<int, ImportChoice>?> _askImportChoices(BuildContext context, List<ImportConflict> conflicts) async {
+    final Map<int, ImportChoice> choices = <int, ImportChoice>{};
+    for (int i = 0; i < conflicts.length; i++) {
+      if (!context.mounted) return null;
+      final ImportConflictAnswer? answer = await showDialog<ImportConflictAnswer>(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) =>
+            ImportConflictDialogWidget(conflict: conflicts[i], othersCount: conflicts.length - i - 1),
+      );
+      if (answer == null) return null;
+      final Iterable<ImportConflict> answered = answer.isForOthers ? conflicts.skip(i) : <ImportConflict>[conflicts[i]];
+      for (final ImportConflict conflict in answered) {
+        choices[conflict.index] = answer.choice;
+      }
+      if (answer.isForOthers) break;
+    }
+    return choices;
   }
 
   Future<void> _onSharePressed(BuildContext context) async {

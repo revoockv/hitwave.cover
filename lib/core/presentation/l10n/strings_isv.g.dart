@@ -58,14 +58,32 @@ class _Translations$backup$isv extends Translations$backup$en {
 	final TranslationsIsv _root; // ignore: unused_field
 
 	// Translations
+	@override String get cancelImport => 'Отменити импорт';
+	@override String conflictMessage({required Object song}) => '«${song}» уж јест међу вашими пєснями.';
+	@override String get conflictTitle => 'Та пєсња уж јест';
 	@override String get exportDialogTitle => 'Изберите папку за експорт';
 	@override late final _Translations$backup$failure$isv failure = _Translations$backup$failure$isv._(_root);
+	@override String forOthers({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('isv'))(n,
+		few: 'Сдєлати то само за друге ${n} пєсни',
+		many: 'Сдєлати то само за другых ${n} пєсниј',
+		one: 'Сдєлати то само за другу ${n} пєсњу',
+		other: 'Сдєлати то само за другых ${n} пєсниј',
+	);
 	@override String get importHint => 'Из фајла, такоже из Google Drive';
+	@override String importSummary({required Object added, required Object replaced, required Object skipped}) => 'Импорт кончены: додано ${added}, замєнено ${replaced}, прескочено ${skipped}';
 	@override String get includeRecordings => 'Вкључити записы';
+	@override String get keepBoth => 'Оставити обе';
+	@override String get keepBothHint => 'Додати пєсњу из фајла поред вашеј, с числом';
+	@override String get otherLyrics => 'Текст в фајлу јест другы.';
 	@override String get recordingsNote => 'Записы сут храњене само на том устројству; с ними фајл стање ZIP-архивом.';
+	@override String get replace => 'Замєнити';
+	@override String get replaceHint => 'Взяти текст из фајла; ваши каверы и записы остајут';
+	@override String get sameLyrics => 'Текст в фајлу јест једнаки.';
 	@override String get share => 'Поделити резервну копију';
 	@override String get shareHint => 'Сохраните ју в Google Drive или пошљите в другу апликацију';
 	@override String get shareQuestion => 'Пєсни будут подељене како фајл, кторы можете сохранити в Google Drive. Записы идут само в ZIP-архиву.';
+	@override String get skip => 'Прескочити';
+	@override String get skipHint => 'Оставити вашу како јест';
 }
 
 // Path: common
@@ -257,8 +275,7 @@ class _Translations$song$isv extends Translations$song$en {
 	@override String get exportQuestion => 'Пєсни будут сохрањене в фајл в избраној папке.';
 	@override String get exportSongs => 'Експортовати';
 	@override late final _Translations$song$failure$isv failure = _Translations$song$failure$isv._(_root);
-	@override String get importDone => 'Импорт кончены';
-	@override String get importQuestion => 'Пєсни из фајла будут додане к вашим. Записы приходјат само из ZIP-архива.';
+	@override String get importQuestion => 'Пєсни из фајла будут додане к вашим; за пєсњу, ктору уж имате, изберете, что сдєлати. Записы приходјат само из ZIP-архива.';
 	@override String get importSongs => 'Импортовати';
 	@override String get leadIn => 'Отступ';
 	@override String get lyrics => 'Текст пєсњи';
@@ -569,16 +586,29 @@ extension on TranslationsIsv {
 	dynamic _flatMapFunction(String path) {
 		return switch (path) {
 			'appTitle' => 'Hitwave Cover',
+			'backup.cancelImport' => 'Отменити импорт',
+			'backup.conflictMessage' => ({required Object song}) => '«${song}» уж јест међу вашими пєснями.',
+			'backup.conflictTitle' => 'Та пєсња уж јест',
 			'backup.exportDialogTitle' => 'Изберите папку за експорт',
 			'backup.failure.exportSongs' => 'Не удало се експортовати пєсни',
 			'backup.failure.importSongs' => 'Не удало се импортовати пєсни',
 			'backup.failure.shareBackup' => 'Не удало се поделити резервну копију',
+			'backup.forOthers' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('isv'))(n, few: 'Сдєлати то само за друге ${n} пєсни', many: 'Сдєлати то само за другых ${n} пєсниј', one: 'Сдєлати то само за другу ${n} пєсњу', other: 'Сдєлати то само за другых ${n} пєсниј', ), 
 			'backup.importHint' => 'Из фајла, такоже из Google Drive',
+			'backup.importSummary' => ({required Object added, required Object replaced, required Object skipped}) => 'Импорт кончены: додано ${added}, замєнено ${replaced}, прескочено ${skipped}',
 			'backup.includeRecordings' => 'Вкључити записы',
+			'backup.keepBoth' => 'Оставити обе',
+			'backup.keepBothHint' => 'Додати пєсњу из фајла поред вашеј, с числом',
+			'backup.otherLyrics' => 'Текст в фајлу јест другы.',
 			'backup.recordingsNote' => 'Записы сут храњене само на том устројству; с ними фајл стање ZIP-архивом.',
+			'backup.replace' => 'Замєнити',
+			'backup.replaceHint' => 'Взяти текст из фајла; ваши каверы и записы остајут',
+			'backup.sameLyrics' => 'Текст в фајлу јест једнаки.',
 			'backup.share' => 'Поделити резервну копију',
 			'backup.shareHint' => 'Сохраните ју в Google Drive или пошљите в другу апликацију',
 			'backup.shareQuestion' => 'Пєсни будут подељене како фајл, кторы можете сохранити в Google Drive. Записы идут само в ZIP-архиву.',
+			'backup.skip' => 'Прескочити',
+			'backup.skipHint' => 'Оставити вашу како јест',
 			'common.cancel' => 'Отмєнити',
 			'common.clear' => 'Очистити',
 			'common.delete' => 'Избрисати',
@@ -730,8 +760,7 @@ extension on TranslationsIsv {
 			'song.failure.updateLyrics' => 'Не удало се сохранити текст.',
 			'song.failure.updateSong' => 'Не удало се обновити пєсњу.',
 			'song.failure.updateSpeed' => 'Не удало се сохранити скорост.',
-			'song.importDone' => 'Импорт кончены',
-			'song.importQuestion' => 'Пєсни из фајла будут додане к вашим. Записы приходјат само из ZIP-архива.',
+			'song.importQuestion' => 'Пєсни из фајла будут додане к вашим; за пєсњу, ктору уж имате, изберете, что сдєлати. Записы приходјат само из ZIP-архива.',
 			'song.importSongs' => 'Импортовати',
 			'song.leadIn' => 'Отступ',
 			'song.lyrics' => 'Текст пєсњи',
