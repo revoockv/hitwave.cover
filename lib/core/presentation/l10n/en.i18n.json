@@ -52,6 +52,13 @@
       "one": "{n} day",
       "other": "{n} days"
     },
+    "deleteFailed": "Could not delete the practice",
+    "deleteMessage": "It will be removed from the statistics.",
+    "deleteTakes": {
+      "one": "Also delete its take",
+      "other": "Also delete its {n} takes"
+    },
+    "deleteTitle": "Delete this practice?",
     "filterAll": "All",
     "filterPracticeOnly": "Practice only",
     "filterWithTakes": "With takes",

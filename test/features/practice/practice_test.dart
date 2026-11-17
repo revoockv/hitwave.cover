@@ -204,6 +204,27 @@ void main() {
       expect((await open()).watchSessions().value, isEmpty);
     });
 
+    test('a deleted session stays deleted after a restart and is not imported again', () async {
+      final PracticeRepositoryImpl repository = await open();
+      for (final String id in <String>['song-1', 'song-2']) {
+        await repository.startPractice(id);
+        clock = clock.add(const Duration(minutes: 1));
+      }
+      await repository.stopPractice();
+      final PracticeSession deleted = repository.watchSessions().value.firstWhere(
+        (PracticeSession s) => s.songId == 'song-1',
+      );
+
+      expect((await repository.deleteSession(deleted.id)).isSuccess, isTrue);
+      expect(repository.watchSessions().value.single.songId, 'song-2');
+
+      await Hive.close();
+      Hive.init(directory.path);
+      final PracticeRepositoryImpl reopened = await open();
+      await reopened.importSessions(<PracticeSession>[deleted]);
+      expect(reopened.watchSessions().value.single.songId, 'song-2');
+    });
+
     test('sessions follow a song moved into the account and go with a deleted one', () async {
       final PracticeRepositoryImpl repository = await open();
       for (final String id in <String>['local-1', 'local-2']) {

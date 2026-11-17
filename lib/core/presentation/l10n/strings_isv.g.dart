@@ -127,6 +127,15 @@ class _Translations$practice$isv extends Translations$practice$en {
 		many: '${n} дниј',
 		other: '${n} дниј',
 	);
+	@override String get deleteFailed => 'Не удало се избрисати тренинг';
+	@override String get deleteMessage => 'Он буде одстранены из статистики.';
+	@override String deleteTakes({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('isv'))(n,
+		one: 'Такоже избрисати ${n} запис',
+		few: 'Такоже избрисати ${n} записы',
+		many: 'Такоже избрисати ${n} записов',
+		other: 'Такоже избрисати ${n} записов',
+	);
+	@override String get deleteTitle => 'Избрисати тот тренинг?';
 	@override String get filterAll => 'Вся';
 	@override String get filterPracticeOnly => 'Само тренинги';
 	@override String get filterWithTakes => 'С записами';
@@ -624,6 +633,10 @@ extension on TranslationsIsv {
 			'practice.covers' => 'Каверы',
 			'practice.dayStreak' => 'Серија дниј',
 			'practice.days' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('isv'))(n, one: '${n} дењ', few: '${n} дни', many: '${n} дниј', other: '${n} дниј', ), 
+			'practice.deleteFailed' => 'Не удало се избрисати тренинг',
+			'practice.deleteMessage' => 'Он буде одстранены из статистики.',
+			'practice.deleteTakes' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('isv'))(n, one: 'Такоже избрисати ${n} запис', few: 'Такоже избрисати ${n} записы', many: 'Такоже избрисати ${n} записов', other: 'Такоже избрисати ${n} записов', ), 
+			'practice.deleteTitle' => 'Избрисати тот тренинг?',
 			'practice.filterAll' => 'Вся',
 			'practice.filterPracticeOnly' => 'Само тренинги',
 			'practice.filterWithTakes' => 'С записами',

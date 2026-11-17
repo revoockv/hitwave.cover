@@ -21,6 +21,10 @@ abstract interface class PracticeRepository {
   /// Adds [sessions] from another device; a session whose id is already here is skipped.
   Future<Result<void, PracticeFailure>> importSessions(List<PracticeSession> sessions);
 
+  /// Deletes the session [sessionId]; a synchronisation does not bring it back. Nothing happens
+  /// when there is no such session.
+  Future<Result<void, PracticeFailure>> deleteSession(String sessionId);
+
   /// Forgets every practice session.
   Future<Result<void, PracticeFailure>> clearSessions();
 }
