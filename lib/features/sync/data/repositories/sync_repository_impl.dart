@@ -920,7 +920,7 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
     updatedThere: there.updated,
   );
 
-  static String _songTitle(Song song) => '${song.name}$_titleSeparator${song.author}';
+  static String _songTitle(Song song) => '${song.author}$_titleSeparator${song.name}';
 
   static File _fileIn(Directory folder, String name) => File('${folder.path}$_separator$name');
 

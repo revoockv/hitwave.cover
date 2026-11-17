@@ -120,6 +120,7 @@ final class HomePage extends WatchingWidget {
         recentCovers: _recentCovers(recordings, history),
         coverCounts: coverCounts,
         coverTitleOf: (Recording recording) => _songTitle(t, songsById[recording.songId]),
+        coverSongPressedOf: (Recording recording) => _openerOf(context, songsById[recording.songId]),
         coverSongOf: (Recording recording) => _sharedSong(songsById[recording.songId]),
         onStatsPressed: () => _selectTab(songViewController, HomeTab.stats),
         onAllSongsPressed: () => _selectTab(songViewController, HomeTab.songs),
@@ -162,7 +163,9 @@ final class HomePage extends WatchingWidget {
               ),
             ),
           ),
-          Expanded(child: CoversListWidget(query: coverQuery)),
+          Expanded(
+            child: CoversListWidget(query: coverQuery, onSongPressed: (Song song) => _navigateToLyrics(context, song)),
+          ),
         ],
       ),
       HomeTab.stats => const PracticeStatsWidget(),
@@ -254,7 +257,7 @@ final class HomePage extends WatchingWidget {
   static SharedSong? _sharedSong(Song? song) => song == null ? null : SharedSong(author: song.author, name: song.name);
 
   static String _songTitle(Translations t, Song? song) =>
-      song == null ? t.common.songDeleted : '${song.name}$_titleSeparator${song.author}';
+      song == null ? t.common.songDeleted : '${song.author}$_titleSeparator${song.name}';
 
   /// The songs whose name, artist or album contain [query].
   static List<Song> _findSongs(List<Song> songs, String query) {
@@ -351,6 +354,10 @@ final class HomePage extends WatchingWidget {
   void _openSettings(BuildContext context) {
     Navigator.of(context).push(MaterialPageRoute<void>(builder: (BuildContext context) => const SettingsPage()));
   }
+
+  /// Opens the lyrics of [song]; `null` when the song is gone.
+  VoidCallback? _openerOf(BuildContext context, Song? song) =>
+      song == null ? null : () => _navigateToLyrics(context, song);
 
   void _navigateToLyrics(BuildContext context, Song song) {
     Navigator.of(context).push(MaterialPageRoute<void>(builder: (BuildContext context) => LyricsPage(song: song)));
