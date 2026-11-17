@@ -26,8 +26,11 @@ final class PracticeStatsWidget extends WatchingWidget {
   static const String _dateSeparator = '.';
   static const String _zero = '0';
 
+  /// Opens a song (tapping it in a list).
+  final void Function(Song song) onSongPressed;
+
   /// Creates a new [PracticeStatsWidget].
-  const PracticeStatsWidget({super.key});
+  const PracticeStatsWidget({super.key, required this.onSongPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -47,6 +50,8 @@ final class PracticeStatsWidget extends WatchingWidget {
     final Map<String, String> titles = <String, String>{
       for (final Song song in songs) song.id: '${song.author}$_titleSeparator${song.name}',
     };
+    final Map<String, Song> songsById = <String, Song>{for (final Song song in songs) song.id: song};
+    VoidCallback? pressedOf(String songId) => _pressedOf(songsById[songId]);
     final PracticeDay? day = stats.days[selectedDay];
     final ThemeData theme = Theme.of(context);
 
@@ -77,6 +82,7 @@ final class PracticeStatsWidget extends WatchingWidget {
         SongPracticeListWidget(
           songs: day?.songs ?? const <SongPractice>[],
           titleOf: (String songId) => titles[songId] ?? t.common.songDeleted,
+          onPressedOf: pressedOf,
           emptyText: t.practice.noPracticeThisDay,
         ),
         const SizedBox(height: AppTheme.spacingMedium),
@@ -84,11 +90,14 @@ final class PracticeStatsWidget extends WatchingWidget {
         SongPracticeListWidget(
           songs: stats.topSongs,
           titleOf: (String songId) => titles[songId] ?? t.common.songDeleted,
+          onPressedOf: pressedOf,
           emptyText: t.practice.noPracticeYet,
         ),
       ],
     );
   }
+
+  VoidCallback? _pressedOf(Song? song) => song == null ? null : () => onSongPressed(song);
 
   static PracticePageController _createPracticePageController() => PracticePageController(today: DateTime.now());
 

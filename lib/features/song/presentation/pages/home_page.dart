@@ -168,7 +168,7 @@ final class HomePage extends WatchingWidget {
           ),
         ],
       ),
-      HomeTab.stats => const PracticeStatsWidget(),
+      HomeTab.stats => PracticeStatsWidget(onSongPressed: (Song song) => _navigateToLyrics(context, song)),
     };
 
     return PopScope(
