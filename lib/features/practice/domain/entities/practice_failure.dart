@@ -6,6 +6,9 @@ enum PracticeFailure {
   /// Practice sessions from a backup or another device could not be added.
   importSessions,
 
+  /// A practice session could not be deleted.
+  deleteSession,
+
   /// The practice could not be cleared.
   clear,
 }

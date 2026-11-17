@@ -3,7 +3,10 @@ import 'package:watch_it/watch_it.dart';
 
 import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../../core/presentation/theme.dart';
+import '../../../../core/domain/entities/result.dart';
 import '../../../recordings/domain/entities/recording.dart';
+import '../../../recordings/domain/entities/recordings_failure.dart';
+import '../../../recordings/presentation/l10n/recordings_texts.dart';
 import '../../../recordings/domain/entities/shared_song.dart';
 import '../../../recordings/presentation/di/recordings_getters.dart';
 import '../../../recordings/presentation/widgets/recordings_list_widget.dart';
@@ -11,8 +14,11 @@ import '../../../song/domain/entities/song.dart';
 import '../../../song/presentation/di/song_getters.dart';
 import '../../domain/entities/practice_entry.dart';
 import '../../domain/entities/practice_entry_filter.dart';
+import '../../domain/entities/practice_failure.dart';
 import '../../domain/entities/practice_session.dart';
 import '../di/practice_getters.dart';
+import '../l10n/practice_texts.dart';
+import 'delete_practice_dialog_widget.dart';
 import 'practice_time_text_widget.dart';
 
 /// The practice of this device by date, the newest first: every session with the song, its
@@ -121,6 +127,7 @@ final class PracticeTimelineWidget extends WatchingWidget {
                     title: titleOf(entry.songId),
                     detail: _detailOf(t, entry),
                     onPressed: song == null ? null : () => onSongPressed(song),
+                    onDeletePressed: entry.sessionId == null ? null : () => _onDeletePressed(context, entry),
                   ),
                   if (entry.hasTakes)
                     Padding(
@@ -140,6 +147,35 @@ final class PracticeTimelineWidget extends WatchingWidget {
         ),
       ),
     );
+  }
+
+  /// Asks, then deletes the session of [entry] and — when chosen — its takes.
+  Future<void> _onDeletePressed(BuildContext context, PracticeEntry entry) async {
+    final String? sessionId = entry.sessionId;
+    if (sessionId == null) return;
+    final bool? withTakes = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) => DeletePracticeDialogWidget(takeCount: entry.recordings.length),
+    );
+    if (withTakes == null || !context.mounted) return;
+    final Translations t = context.t;
+    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+    if (withTakes) {
+      if (entry.recordings.any((Recording r) => r.id == watchPlaybackUseCase().value.recordingId)) {
+        await stopPlaybackUseCase();
+      }
+      for (final Recording recording in entry.recordings) {
+        final Result<void, RecordingsFailure> deleted = await deleteRecordingUseCase(recording.id);
+        if (deleted case FailureResult<void, RecordingsFailure>(:final RecordingsFailure failure)) {
+          messenger.showSnackBar(SnackBar(content: Text(failure.text(t))));
+          return;
+        }
+      }
+    }
+    final Result<void, PracticeFailure> result = await deletePracticeSessionUseCase(sessionId);
+    if (result case FailureResult<void, PracticeFailure>(:final PracticeFailure failure)) {
+      messenger.showSnackBar(SnackBar(content: Text(failure.text(t))));
+    }
   }
 
   String _emptyText(Translations t, String needle) {
@@ -168,13 +204,20 @@ final class PracticeTimelineWidget extends WatchingWidget {
   }
 }
 
-/// The song of an item with when and how long; with [onPressed], tapping it opens the song.
+/// The song of an item with when and how long; with [onPressed], tapping it opens the song; with
+/// [onDeletePressed], a button deletes the item.
 final class _EntryHeaderWidget extends StatelessWidget {
   final String title;
   final String detail;
   final VoidCallback? onPressed;
+  final VoidCallback? onDeletePressed;
 
-  const _EntryHeaderWidget({required this.title, required this.detail, required this.onPressed});
+  const _EntryHeaderWidget({
+    required this.title,
+    required this.detail,
+    required this.onPressed,
+    required this.onDeletePressed,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -194,6 +237,12 @@ final class _EntryHeaderWidget extends StatelessWidget {
             ),
           ),
           if (onPressed != null) Icon(Icons.chevron_right, color: theme.colorScheme.onSurfaceVariant),
+          if (onDeletePressed != null)
+            IconButton(
+              icon: const Icon(Icons.delete_outline),
+              tooltip: context.t.common.delete,
+              onPressed: onDeletePressed,
+            ),
         ],
       ),
     );

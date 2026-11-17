@@ -29,6 +29,7 @@ final class PracticeRepositoryImpl implements PracticeRepository, DisposableReso
 
   static const String _importLog = 'ImportPracticeSessions: ';
   static const String _clearLog = 'ClearPractice: ';
+  static const String _deleteLog = 'DeletePracticeSession: ';
   static const String _stopLog = 'StopPractice: ';
   static const String _songIdLog = 'PracticeSongIdChange: ';
   static const String _successLog = 'success — ';
@@ -49,6 +50,9 @@ final class PracticeRepositoryImpl implements PracticeRepository, DisposableReso
     const <PracticeSession>[],
   );
   final Map<String, PracticeSessionModel> _models = <String, PracticeSessionModel>{};
+
+  /// Ids of the sessions the user deleted; they are not imported again.
+  final Set<String> _deletedIds = <String>{};
 
   StreamSubscription<SongIdChange>? _songIdChanges;
   StreamSubscription<String>? _coverDeletions;
@@ -74,6 +78,7 @@ final class PracticeRepositoryImpl implements PracticeRepository, DisposableReso
     for (final PracticeSessionModel model in _store.readAll()) {
       _models[model.id] = model;
     }
+    _deletedIds.addAll(_store.readDeletedIds());
     _publish();
     _songIdChanges = _songs.watchSongIdChanges().listen(_onSongIdChanged);
     _rememberCovers();
@@ -135,7 +140,7 @@ final class PracticeRepositoryImpl implements PracticeRepository, DisposableReso
   Future<Result<void, PracticeFailure>> importSessions(List<PracticeSession> sessions) async {
     try {
       for (final PracticeSession session in sessions) {
-        if (_models.containsKey(session.id)) continue;
+        if (_models.containsKey(session.id) || _deletedIds.contains(session.id)) continue;
         final PracticeSessionModel model = PracticeSessionModel.fromEntity(session);
         await _store.put(model);
         _models[model.id] = model;
@@ -145,6 +150,23 @@ final class PracticeRepositoryImpl implements PracticeRepository, DisposableReso
     } on Exception catch (e) {
       _logger.e('$_importLog$_failureLog$e');
       return const Result.failure(PracticeFailure.importSessions);
+    }
+  }
+
+  @override
+  Future<Result<void, PracticeFailure>> deleteSession(String sessionId) async {
+    if (!_models.containsKey(sessionId)) return Result.ok;
+    try {
+      await _store.deleteAll(<String>[sessionId]);
+      await _store.markDeleted(<String>[sessionId]);
+      _models.remove(sessionId);
+      _deletedIds.add(sessionId);
+      _publish();
+      _logger.i('$_deleteLog$_successLog$sessionId');
+      return Result.ok;
+    } on Exception catch (e) {
+      _logger.e('$_deleteLog$_failureLog$e');
+      return const Result.failure(PracticeFailure.deleteSession);
     }
   }
 

@@ -184,6 +184,21 @@ class Translations$practice$en {
 		other: '${n} days',
 	);
 
+	/// en: 'Could not delete the practice'
+	String get deleteFailed => 'Could not delete the practice';
+
+	/// en: 'It will be removed from the statistics.'
+	String get deleteMessage => 'It will be removed from the statistics.';
+
+	/// en: '(one) {Also delete its take} (other) {Also delete its {n} takes}'
+	String deleteTakes({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n,
+		one: 'Also delete its take',
+		other: 'Also delete its ${n} takes',
+	);
+
+	/// en: 'Delete this practice?'
+	String get deleteTitle => 'Delete this practice?';
+
 	/// en: 'All'
 	String get filterAll => 'All';
 
@@ -1148,6 +1163,10 @@ extension on Translations {
 			'practice.covers' => 'Covers',
 			'practice.dayStreak' => 'Day streak',
 			'practice.days' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, one: '${n} day', other: '${n} days', ), 
+			'practice.deleteFailed' => 'Could not delete the practice',
+			'practice.deleteMessage' => 'It will be removed from the statistics.',
+			'practice.deleteTakes' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, one: 'Also delete its take', other: 'Also delete its ${n} takes', ), 
+			'practice.deleteTitle' => 'Delete this practice?',
 			'practice.filterAll' => 'All',
 			'practice.filterPracticeOnly' => 'Practice only',
 			'practice.filterWithTakes' => 'With takes',

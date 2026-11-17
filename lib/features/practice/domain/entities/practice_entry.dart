@@ -7,6 +7,9 @@ final class PracticeEntry {
   /// A take starts a moment before its session and is stopped just before it ends.
   static const Duration takeSlack = Duration(seconds: 5);
 
+  /// Id of the session; `null` for a take outside every session.
+  final String? sessionId;
+
   /// The song practised.
   final String songId;
 
@@ -21,6 +24,7 @@ final class PracticeEntry {
 
   /// Creates a [PracticeEntry].
   const PracticeEntry({
+    required this.sessionId,
     required this.songId,
     required this.startedAt,
     required this.duration,
@@ -43,6 +47,7 @@ final class PracticeEntry {
       } else {
         entries.add(
           PracticeEntry(
+            sessionId: null,
             songId: recording.songId,
             startedAt: recording.recordedAt,
             duration: null,
@@ -54,6 +59,7 @@ final class PracticeEntry {
     for (final PracticeSession session in sessions) {
       entries.add(
         PracticeEntry(
+          sessionId: session.id,
           songId: session.songId,
           startedAt: session.startedAt,
           duration: session.duration,
