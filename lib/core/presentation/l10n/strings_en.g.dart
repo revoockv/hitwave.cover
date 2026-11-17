@@ -584,8 +584,8 @@ class Translations$song$en {
 	/// en: 'Songs'
 	String get tabSongs => 'Songs';
 
-	/// en: 'Take saved, enhancing the sound…'
-	String get takeSaved => 'Take saved, enhancing the sound…';
+	/// en: 'Take saved'
+	String get takeSaved => 'Take saved';
 
 	/// en: 'Trim silence'
 	String get trimSilence => 'Trim silence';
@@ -1314,7 +1314,7 @@ extension on Translations {
 			'song.tabCovers' => 'Covers',
 			'song.tabHome' => 'Home',
 			'song.tabSongs' => 'Songs',
-			'song.takeSaved' => 'Take saved, enhancing the sound…',
+			'song.takeSaved' => 'Take saved',
 			'song.trimSilence' => 'Trim silence',
 			'sync.all' => 'All',
 			'sync.anotherDevice' => 'Another device',

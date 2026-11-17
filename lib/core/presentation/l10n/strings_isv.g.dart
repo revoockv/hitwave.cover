@@ -313,7 +313,7 @@ class _Translations$song$isv extends Translations$song$en {
 	@override String get tabCovers => 'Каверы';
 	@override String get tabHome => 'Дом';
 	@override String get tabSongs => 'Пєсни';
-	@override String get takeSaved => 'Запис сохрањены, улєпшају звук…';
+	@override String get takeSaved => 'Запис сохрањены';
 	@override String get trimSilence => 'Обрєзати тишину';
 }
 
@@ -796,7 +796,7 @@ extension on TranslationsIsv {
 			'song.tabCovers' => 'Каверы',
 			'song.tabHome' => 'Дом',
 			'song.tabSongs' => 'Пєсни',
-			'song.takeSaved' => 'Запис сохрањены, улєпшају звук…',
+			'song.takeSaved' => 'Запис сохрањены',
 			'song.trimSilence' => 'Обрєзати тишину',
 			'sync.all' => 'Все',
 			'sync.anotherDevice' => 'Друго устројство',

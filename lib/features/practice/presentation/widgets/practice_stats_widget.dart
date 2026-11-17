@@ -45,7 +45,7 @@ final class PracticeStatsWidget extends WatchingWidget {
     final DateTime now = DateTime.now();
     final PracticeStats stats = calculatePracticeStatsUseCase(sessions: sessions, recordings: recordings, now: now);
     final Map<String, String> titles = <String, String>{
-      for (final Song song in songs) song.id: '${song.name}$_titleSeparator${song.author}',
+      for (final Song song in songs) song.id: '${song.author}$_titleSeparator${song.name}',
     };
     final PracticeDay? day = stats.days[selectedDay];
     final ThemeData theme = Theme.of(context);

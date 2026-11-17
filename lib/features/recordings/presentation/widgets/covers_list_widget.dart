@@ -10,7 +10,7 @@ import '../../domain/entities/shared_song.dart';
 import '../di/recordings_getters.dart';
 import 'recordings_list_widget.dart';
 
-/// Every cover recorded on this device, grouped by song (songs by name, the newest take first);
+/// Every cover recorded on this device, grouped by song (songs by artist and name, the newest take first);
 /// with a [query], only the covers of the songs whose name or artist contain it.
 final class CoversListWidget extends WatchingWidget {
   static const String _titleSeparator = ' — ';
@@ -18,8 +18,11 @@ final class CoversListWidget extends WatchingWidget {
   /// Search text; empty shows every cover.
   final String query;
 
+  /// Opens a song (tapping its title above its covers).
+  final void Function(Song song) onSongPressed;
+
   /// Creates a new [CoversListWidget].
-  const CoversListWidget({super.key, this.query = ''});
+  const CoversListWidget({super.key, this.query = '', required this.onSongPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -27,8 +30,9 @@ final class CoversListWidget extends WatchingWidget {
     final List<Recording> recordings = watch(watchRecordingsUseCase()).value;
     final List<Song> songs = watch(watchListOfSongsUseCase()).value;
     final Map<String, String> titles = <String, String>{
-      for (final Song song in songs) song.id: '${song.name}$_titleSeparator${song.author}',
+      for (final Song song in songs) song.id: '${song.author}$_titleSeparator${song.name}',
     };
+    final Map<String, Song> songsById = <String, Song>{for (final Song song in songs) song.id: song};
     final Map<String, SharedSong> sharedSongs = <String, SharedSong>{
       for (final Song song in songs) song.id: SharedSong(author: song.author, name: song.name),
     };
@@ -49,12 +53,15 @@ final class CoversListWidget extends WatchingWidget {
           recordings: grouped,
           emptyText: needle.isEmpty ? t.recordings.noCovers : t.common.nothingFound,
           headerOf: (Recording recording) => titles[recording.songId] ?? t.common.songDeleted,
+          onHeaderPressedOf: (Recording recording) => _pressedOf(songsById[recording.songId]),
           songOf: (Recording recording) => sharedSongs[recording.songId],
           padding: const EdgeInsets.all(AppTheme.spacingMedium),
         ),
       ),
     );
   }
+
+  VoidCallback? _pressedOf(Song? song) => song == null ? null : () => onSongPressed(song);
 
   /// Songs by title, then the newest take first.
   static int _compare(Translations t, Recording a, Recording b, Map<String, String> titles) {

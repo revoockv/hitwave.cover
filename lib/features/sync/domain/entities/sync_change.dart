@@ -50,7 +50,7 @@ final class SyncChange {
   /// What it is about.
   final SyncSubject subject;
 
-  /// "Name — Artist" of the song (of the cover's song for a cover); `null` when that song is gone
+  /// "Artist — Name" of the song (of the cover's song for a cover); `null` when that song is gone
   /// or for practice sessions.
   final String? songTitle;
 
