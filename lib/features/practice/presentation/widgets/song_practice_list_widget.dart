@@ -4,7 +4,7 @@ import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../domain/entities/song_practice.dart';
 import 'practice_time_text_widget.dart';
 
-/// Songs with their practice time and takes.
+/// Songs with their practice time and takes; tapping one opens it.
 final class SongPracticeListWidget extends StatelessWidget {
   static const String _separator = ' · ';
 
@@ -14,11 +14,20 @@ final class SongPracticeListWidget extends StatelessWidget {
   /// Title of a song by its id.
   final String Function(String songId) titleOf;
 
+  /// What tapping a song does (opens it) by its id, or `null` when it does nothing.
+  final VoidCallback? Function(String songId) onPressedOf;
+
   /// Shown when [songs] is empty.
   final String emptyText;
 
   /// Creates a new [SongPracticeListWidget].
-  const SongPracticeListWidget({super.key, required this.songs, required this.titleOf, required this.emptyText});
+  const SongPracticeListWidget({
+    super.key,
+    required this.songs,
+    required this.titleOf,
+    required this.onPressedOf,
+    required this.emptyText,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -40,6 +49,7 @@ final class SongPracticeListWidget extends StatelessWidget {
                   : PracticeTimeTextWidget.format(t, song.time),
               style: theme.textTheme.bodyMedium,
             ),
+            onTap: onPressedOf(song.songId),
           ),
       ],
     );
