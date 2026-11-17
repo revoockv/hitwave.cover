@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:watch_it/watch_it.dart';
 
@@ -5,8 +6,6 @@ import '../../../../core/domain/entities/result.dart';
 import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../../core/presentation/theme.dart';
 import '../../../history/presentation/di/history_getters.dart';
-import '../../../vocal_enhance/domain/entities/enhance_progress.dart';
-import '../../../vocal_enhance/presentation/di/vocal_enhance_getters.dart';
 import '../../domain/entities/playback_state.dart';
 import '../../domain/entities/recording.dart';
 import '../../domain/entities/recording_version.dart';
@@ -64,10 +63,9 @@ final class RecordingsListWidget extends WatchingWidget {
     );
     watch(recordingVersionsController.versionsController);
     watch(recordingVersionsController.sharingController);
-    final PlaybackState playback = watch(watchPlaybackUseCase()).value;
-    final EnhanceProgress? progress = watch(watchEnhanceProgressUseCase()).value;
-    final bool trimSilence = watch(watchRecordingPreferencesUseCase()).value.trimSilence;
-    final String? enhancingId = watch(watchEnhancingRecordingUseCase()).value;
+    // Only which take is loaded and whether it plays; the position is watched by PlaybackProgressWidget alone.
+    final String? loadedId = watchPropertyValue(_loadedIdOf, target: watchPlaybackUseCase());
+    final bool isPlaying = watchPropertyValue(_isPlayingOf, target: watchPlaybackUseCase());
     final bool canShowInFolder = canShowRecordingInFolderUseCase();
     final ThemeData theme = Theme.of(context);
 
@@ -90,7 +88,7 @@ final class RecordingsListWidget extends WatchingWidget {
       itemCount: recordings.length,
       itemBuilder: (BuildContext context, int index) {
         final Recording recording = recordings[index];
-        final bool isLoaded = playback.recordingId == recording.id;
+        final bool isLoaded = loadedId == recording.id;
         final RecordingVersion version = recordingVersionsController.versionOf(recording.id);
         final String? header = headerOf?.call(recording);
         final bool showHeader = header != null && (index == 0 || headerOf?.call(recordings[index - 1]) != header);
@@ -99,18 +97,15 @@ final class RecordingsListWidget extends WatchingWidget {
           recording: recording,
           version: version,
           isLoaded: isLoaded,
-          isPlaying: isLoaded && playback.isPlaying,
-          playedFraction: isLoaded ? _fraction(playback) : 0,
-          // The take being enhanced shows how far it is; the ones waiting in the queue show 0.
-          enhanceFraction: recording.id == enhancingId ? progress?.fraction ?? 0 : 0,
+          isPlaying: isLoaded && isPlaying,
           onVersionChanged: (RecordingVersion chosen) =>
               _onVersionChanged(context, recordingVersionsController, recording, chosen, isLoaded: isLoaded),
-          onPlayPressed: () => _onPlayPressed(context, recording, playback, version),
-          onDeletePressed: () => _confirmDelete(context, recording, playback),
+          onPlayPressed: () => _onPlayPressed(context, recording, version),
+          onDeletePressed: () => _confirmDelete(context, recording),
           onSharePressed: () => _share(context, recordingVersionsController, recording, version),
           isSharing: recordingVersionsController.isSharing(recording.id),
           onShowInFolderPressed: canShowInFolder ? () => _showInFolder(context, recording) : null,
-          onRetryPressed: () => _retry(context, recording, trimSilence),
+          onRetryPressed: () => _retry(context, recording),
         );
         if (!showHeader) return tile;
         return Column(
@@ -127,19 +122,12 @@ final class RecordingsListWidget extends WatchingWidget {
     );
   }
 
-  static double _fraction(PlaybackState playback) {
-    final int total = playback.duration.inMilliseconds;
-    if (total <= 0) return 0;
-    return (playback.position.inMilliseconds / total).clamp(0.0, 1.0);
-  }
+  static String? _loadedIdOf(ValueListenable<PlaybackState> playback) => playback.value.recordingId;
 
-  Future<void> _onPlayPressed(
-    BuildContext context,
-    Recording recording,
-    PlaybackState playback,
-    RecordingVersion version,
-  ) async {
-    if (playback.recordingId == recording.id) {
+  static bool _isPlayingOf(ValueListenable<PlaybackState> playback) => playback.value.isPlaying;
+
+  Future<void> _onPlayPressed(BuildContext context, Recording recording, RecordingVersion version) async {
+    if (watchPlaybackUseCase().value.recordingId == recording.id) {
       final Result<void, RecordingsFailure> result = await togglePlaybackPauseUseCase();
       if (!context.mounted) return;
       _showFailure(context, result);
@@ -204,22 +192,22 @@ final class RecordingsListWidget extends WatchingWidget {
     _showFailure(context, result);
   }
 
-  Future<void> _retry(BuildContext context, Recording recording, bool trimSilence) async {
+  Future<void> _retry(BuildContext context, Recording recording) async {
     final Result<void, RecordingsFailure> result = await enhanceRecordingAgainUseCase(
       recordingId: recording.id,
-      trimSilence: trimSilence,
+      trimSilence: watchRecordingPreferencesUseCase().value.trimSilence,
     );
     if (!context.mounted) return;
     _showFailure(context, result);
   }
 
-  Future<void> _confirmDelete(BuildContext context, Recording recording, PlaybackState playback) async {
+  Future<void> _confirmDelete(BuildContext context, Recording recording) async {
     final bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) => const DeleteRecordingDialogWidget(),
     );
     if (confirmed != true) return;
-    if (playback.recordingId == recording.id) await stopPlaybackUseCase();
+    if (watchPlaybackUseCase().value.recordingId == recording.id) await stopPlaybackUseCase();
     final Result<void, RecordingsFailure> result = await deleteRecordingUseCase(recording.id);
     if (!context.mounted) return;
     _showFailure(context, result);

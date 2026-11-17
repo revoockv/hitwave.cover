@@ -30,6 +30,9 @@ final class ArtistPickerWidget extends WatchingWidget {
   /// Creates a new [ArtistPickerWidget].
   const ArtistPickerWidget({required this.songs, required this.onArtistSelected, this.selectedArtist = '', super.key});
 
+  /// The search text as matched: trimmed, lower case — not the cursor, so moving it does not rebuild.
+  static String _queryOf(TextEditingController searchController) => searchController.text.trim().toLowerCase();
+
   @override
   Widget build(BuildContext context) {
     final Translations t = context.t;
@@ -37,7 +40,7 @@ final class ArtistPickerWidget extends WatchingWidget {
       _createSearchController,
       dispose: _disposeSearchController,
     );
-    final String query = watch(searchController).value.text.trim().toLowerCase();
+    final String query = watchPropertyValue(_queryOf, target: searchController);
 
     final Map<String, int> songCounts = <String, int>{};
     for (final Song song in songs) {

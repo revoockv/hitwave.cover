@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:watch_it/watch_it.dart';
 
@@ -21,6 +22,7 @@ import '../../domain/entities/song.dart';
 import '../controllers/lyrics_page_controller.dart';
 import '../di/song_getters.dart';
 import '../widgets/lyrics_controls_widget.dart';
+import '../widgets/recording_indicator_widget.dart';
 import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../recordings/domain/entities/recordings_failure.dart';
 import '../../../recordings/presentation/l10n/recordings_texts.dart';
@@ -89,14 +91,10 @@ final class LyricsPage extends WatchingWidget {
       target: lyricsPageController.scrollingController,
       handler: (BuildContext context, bool isScrolling, void Function() cancel) => _onScrollingChanged(isScrolling),
     );
-    final RecorderState recorder = watch(watchRecorderUseCase()).value;
-    final String? microphoneLabel = watch(watchRecordingPreferencesUseCase()).value.microphoneLabel;
-    final int recordingCount = watch(
-      watchRecordingsUseCase(),
-    ).value.where((Recording recording) => recording.songId == song.id).length;
-    final RecordingRecorderState? recording = recorder is RecordingRecorderState && recorder.songId == song.id
-        ? recorder
-        : null;
+    // The recorder ticks several times a second: the page asks only whether this song is recorded.
+    final bool isRecording = watchPropertyValue(_isRecordingOf, target: watchRecorderUseCase());
+    final String? microphoneLabel = watchPropertyValue(_microphoneLabelOf, target: watchRecordingPreferencesUseCase());
+    final int recordingCount = watchPropertyValue(_recordingCountOf, target: watchRecordingsUseCase());
     final double screenHeight = MediaQuery.sizeOf(context).height;
     final double leadIn = screenHeight * leadInFactor;
 
@@ -194,8 +192,8 @@ final class LyricsPage extends WatchingWidget {
                     onPlayPressed: () => _onPlayPressed(ScaffoldMessenger.of(context), context.t, lyricsPageController),
                     microphoneLabel: t.song.microphone(name: microphoneLabel ?? t.recordings.systemMicrophone),
                     onMicrophonePressed: () => _chooseMicrophone(context, ScaffoldMessenger.of(context)),
-                    recordingElapsed: recording?.elapsed,
-                    recordingLevel: recording?.level ?? 0,
+                    isRecording: isRecording,
+                    recordingIndicator: RecordingIndicatorWidget(songId: song.id),
                   ),
                 ),
               ),
@@ -218,6 +216,17 @@ final class LyricsPage extends WatchingWidget {
       trimSilence: preferences.trimSilence,
     );
   }
+
+  bool _isRecordingOf(ValueListenable<RecorderState> recorder) {
+    final RecorderState state = recorder.value;
+    return state is RecordingRecorderState && state.songId == song.id;
+  }
+
+  static String? _microphoneLabelOf(ValueListenable<RecordingPreferences> preferences) =>
+      preferences.value.microphoneLabel;
+
+  int _recordingCountOf(ValueListenable<List<Recording>> recordings) =>
+      recordings.value.where((Recording recording) => recording.songId == song.id).length;
 
   /// Remembers the opening for the recent songs of the home page.
   void _onOpened(BuildContext context) {

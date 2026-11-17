@@ -68,8 +68,9 @@ final class HomePage extends WatchingWidget {
     final HomeTab tab = watch(songViewController.homeTabController).value;
     final SongSort sort = watch(songViewController.songSortController).value;
     final String selectedArtist = watch(songViewController.selectedArtistController).value;
-    final String songQuery = watch(songViewController.songSearchController).value.text;
-    final String coverQuery = watch(songViewController.coverSearchController).value.text;
+    // Only the text: moving the cursor does not rebuild the page.
+    final String songQuery = watchPropertyValue(_textOf, target: songViewController.songSearchController);
+    final String coverQuery = watchPropertyValue(_textOf, target: songViewController.coverSearchController);
     final PracticeEntryFilter coverFilter = watch(songViewController.coverFilterController).value;
     final List<PracticeSession> sessions = watch(watchPracticeSessionsUseCase()).value;
     final List<Recording> recordings = watch(watchRecordingsUseCase()).value;
@@ -258,6 +259,8 @@ final class HomePage extends WatchingWidget {
     HomeTab.covers => t.song.myCovers,
     HomeTab.stats => t.song.statistics,
   };
+
+  static String _textOf(TextEditingController searchController) => searchController.text;
 
   static int _countOf(List<Song> songs, String artist) => songs.where((Song song) => song.author == artist).length;
 
