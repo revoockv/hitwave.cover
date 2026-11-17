@@ -1,5 +1,7 @@
 import 'package:flutter/widgets.dart' show TextEditingController, ValueNotifier;
 
+import '../../../practice/domain/entities/practice_entry_filter.dart';
+
 /// View mode for the song list display.
 enum SongViewMode {
   /// Show all songs in a vertical list.
@@ -62,6 +64,11 @@ final class SongViewController {
   /// Search text of the covers tab.
   final TextEditingController coverSearchController = TextEditingController();
 
+  /// Which practice items the covers tab shows.
+  final ValueNotifier<PracticeEntryFilter> coverFilterController = ValueNotifier<PracticeEntryFilter>(
+    PracticeEntryFilter.all,
+  );
+
   /// Shows [tab].
   void selectTab(HomeTab tab) {
     homeTabController.value = tab;
@@ -90,5 +97,6 @@ final class SongViewController {
     selectedArtistController.dispose();
     songSearchController.dispose();
     coverSearchController.dispose();
+    coverFilterController.dispose();
   }
 }

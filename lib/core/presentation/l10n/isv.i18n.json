@@ -56,6 +56,9 @@
       "many": "{n} дниј",
       "other": "{n} дниј"
     },
+    "filterAll": "Вся",
+    "filterPracticeOnly": "Само тренинги",
+    "filterWithTakes": "С записами",
     "hoursMinutes": "{hours} ч {minutes} мин",
     "importFailed": "Не удало се додати тренингы",
     "lessThanMinute": "мење од минуты",
