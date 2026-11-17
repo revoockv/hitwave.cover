@@ -52,6 +52,9 @@
       "one": "{n} day",
       "other": "{n} days"
     },
+    "filterAll": "All",
+    "filterPracticeOnly": "Practice only",
+    "filterWithTakes": "With takes",
     "hoursMinutes": "{hours} h {minutes} min",
     "importFailed": "Could not add the practice sessions",
     "lessThanMinute": "less than a minute",

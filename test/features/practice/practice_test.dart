@@ -171,7 +171,7 @@ void main() {
       final PracticeRepositoryImpl repository = await open();
 
       await repository.startPractice('song-1');
-      clock = clock.add(const Duration(seconds: 5));
+      clock = clock.add(const Duration(seconds: 2));
       await repository.stopPractice();
       expect(repository.watchSessions().value, isEmpty);
 

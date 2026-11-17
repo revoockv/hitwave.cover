@@ -184,6 +184,15 @@ class Translations$practice$en {
 		other: '${n} days',
 	);
 
+	/// en: 'All'
+	String get filterAll => 'All';
+
+	/// en: 'Practice only'
+	String get filterPracticeOnly => 'Practice only';
+
+	/// en: 'With takes'
+	String get filterWithTakes => 'With takes';
+
 	/// en: '{hours} h {minutes} min'
 	String hoursMinutes({required Object hours, required Object minutes}) => '${hours} h ${minutes} min';
 
@@ -1139,6 +1148,9 @@ extension on Translations {
 			'practice.covers' => 'Covers',
 			'practice.dayStreak' => 'Day streak',
 			'practice.days' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, one: '${n} day', other: '${n} days', ), 
+			'practice.filterAll' => 'All',
+			'practice.filterPracticeOnly' => 'Practice only',
+			'practice.filterWithTakes' => 'With takes',
 			'practice.hoursMinutes' => ({required Object hours, required Object minutes}) => '${hours} h ${minutes} min',
 			'practice.importFailed' => 'Could not add the practice sessions',
 			'practice.lessThanMinute' => 'less than a minute',

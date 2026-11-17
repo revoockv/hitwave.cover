@@ -9,11 +9,12 @@ import '../../../history/presentation/di/history_getters.dart';
 import '../../../practice/domain/entities/practice_session.dart';
 import '../../../practice/domain/entities/practice_stats.dart';
 import '../../../practice/presentation/di/practice_getters.dart';
+import '../../../practice/domain/entities/practice_entry_filter.dart';
 import '../../../practice/presentation/widgets/practice_stats_widget.dart';
+import '../../../practice/presentation/widgets/practice_timeline_widget.dart';
 import '../../../recordings/domain/entities/recording.dart';
 import '../../../recordings/domain/entities/shared_song.dart';
 import '../../../recordings/presentation/di/recordings_getters.dart';
-import '../../../recordings/presentation/widgets/covers_list_widget.dart';
 import '../../../settings/presentation/pages/settings_page.dart';
 import '../../domain/entities/song.dart';
 import '../controllers/song_view_controller.dart';
@@ -69,6 +70,7 @@ final class HomePage extends WatchingWidget {
     final String selectedArtist = watch(songViewController.selectedArtistController).value;
     final String songQuery = watch(songViewController.songSearchController).value.text;
     final String coverQuery = watch(songViewController.coverSearchController).value.text;
+    final PracticeEntryFilter coverFilter = watch(songViewController.coverFilterController).value;
     final List<PracticeSession> sessions = watch(watchPracticeSessionsUseCase()).value;
     final List<Recording> recordings = watch(watchRecordingsUseCase()).value;
     final UsageHistory history = watch(watchUsageHistoryUseCase()).value;
@@ -164,7 +166,12 @@ final class HomePage extends WatchingWidget {
             ),
           ),
           Expanded(
-            child: CoversListWidget(query: coverQuery, onSongPressed: (Song song) => _navigateToLyrics(context, song)),
+            child: PracticeTimelineWidget(
+              query: coverQuery,
+              filter: coverFilter,
+              onFilterChanged: (PracticeEntryFilter filter) => songViewController.coverFilterController.value = filter,
+              onSongPressed: (Song song) => _navigateToLyrics(context, song),
+            ),
           ),
         ],
       ),

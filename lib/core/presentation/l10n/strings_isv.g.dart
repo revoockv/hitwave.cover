@@ -127,6 +127,9 @@ class _Translations$practice$isv extends Translations$practice$en {
 		many: '${n} дниј',
 		other: '${n} дниј',
 	);
+	@override String get filterAll => 'Вся';
+	@override String get filterPracticeOnly => 'Само тренинги';
+	@override String get filterWithTakes => 'С записами';
 	@override String hoursMinutes({required Object hours, required Object minutes}) => '${hours} ч ${minutes} мин';
 	@override String get importFailed => 'Не удало се додати тренингы';
 	@override String get lessThanMinute => 'мење од минуты';
@@ -621,6 +624,9 @@ extension on TranslationsIsv {
 			'practice.covers' => 'Каверы',
 			'practice.dayStreak' => 'Серија дниј',
 			'practice.days' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('isv'))(n, one: '${n} дењ', few: '${n} дни', many: '${n} дниј', other: '${n} дниј', ), 
+			'practice.filterAll' => 'Вся',
+			'practice.filterPracticeOnly' => 'Само тренинги',
+			'practice.filterWithTakes' => 'С записами',
 			'practice.hoursMinutes' => ({required Object hours, required Object minutes}) => '${hours} ч ${minutes} мин',
 			'practice.importFailed' => 'Не удало се додати тренингы',
 			'practice.lessThanMinute' => 'мење од минуты',

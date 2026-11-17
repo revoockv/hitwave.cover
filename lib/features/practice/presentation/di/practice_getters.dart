@@ -1,5 +1,6 @@
 import 'package:watch_it/watch_it.dart';
 
+import '../../domain/use_cases/build_practice_timeline_use_case.dart';
 import '../../domain/use_cases/calculate_practice_stats_use_case.dart';
 import '../../domain/use_cases/clear_practice_use_case.dart';
 import '../../domain/use_cases/start_practice_use_case.dart';
@@ -17,6 +18,9 @@ WatchPracticeSessionsUseCase get watchPracticeSessionsUseCase => di<WatchPractic
 
 /// The use case that counts the totals, streaks and calendar of the practice.
 CalculatePracticeStatsUseCase get calculatePracticeStatsUseCase => di<CalculatePracticeStatsUseCase>();
+
+/// The use case that puts the sessions and the takes into one timeline.
+BuildPracticeTimelineUseCase get buildPracticeTimelineUseCase => di<BuildPracticeTimelineUseCase>();
 
 /// The use case that forgets every practice session.
 ClearPracticeUseCase get clearPracticeUseCase => di<ClearPracticeUseCase>();

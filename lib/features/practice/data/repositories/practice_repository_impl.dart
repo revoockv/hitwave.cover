@@ -14,6 +14,7 @@ import '../../domain/entities/practice_session.dart';
 import '../../domain/repositories/practice_repository.dart';
 import '../data_sources/hive_practice_service.dart';
 import '../models/practice_session_model.dart';
+import '../../domain/entities/practice_entry.dart';
 import '../../domain/entities/practice_failure.dart';
 
 /// [PracticeRepository] on a Hive box and a clock.
@@ -22,10 +23,8 @@ import '../../domain/entities/practice_failure.dart';
 /// during which a cover was recorded goes away with that cover, so a deleted cover leaves nothing
 /// in the statistics.
 final class PracticeRepositoryImpl implements PracticeRepository, DisposableResource {
-  static const Duration _minimumLength = Duration(seconds: 10);
-
-  /// A take starts a moment before its session and is stopped just before it ends.
-  static const Duration _takeSlack = Duration(seconds: 5);
+  static const Duration _minimumLength = Duration(seconds: 3);
+  static const Duration _takeSlack = PracticeEntry.takeSlack;
   static const String _coverLog = 'PracticeCoverDeleted: ';
 
   static const String _importLog = 'ImportPracticeSessions: ';
