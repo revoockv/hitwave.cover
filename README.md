@@ -97,9 +97,13 @@ the lyrics without recording and vocal enhancement.
 - **Storage**: Hive on the device.
 
 ```bash
-flutter analyze
-flutter test --concurrency=1
+tool/check.sh   # analyze, tests and the architecture linter — exactly what CI runs
 ```
+
+**Release**: `tool/release.sh X.Y.Z` on `develop`, after the CI of `develop` passed. It refuses to run on a
+dirty or unpushed `develop`, on a version that is not higher or a tag that exists, and when the checks fail; then
+it merges into `main`, tags `vX.Y.Z` and pushes everything at once. A tag is never moved: a failed release is
+fixed on `develop` and released as the next patch version.
 
 **CI** (`.github/workflows/ci.yml`): every push to `develop` and every pull request runs
 `flutter analyze`, the tests and the architecture linter. A pushed tag `vX.Y.Z` also builds the app
