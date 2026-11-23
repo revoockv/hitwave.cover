@@ -101,7 +101,7 @@ flutter analyze
 flutter test --concurrency=1
 ```
 
-**CI** (`.github/workflows/ci.yml`): every push to `main` or `develop` and every pull request runs
+**CI** (`.github/workflows/ci.yml`): every push to `develop` and every pull request runs
 `flutter analyze`, the tests and the architecture linter. A pushed tag `vX.Y.Z` also builds the app
 for Android (APK), macOS, Windows, Linux and the web and attaches the builds to the GitHub release of
 that tag; **Run workflow** in the Actions tab makes the same builds as workflow artifacts. The macOS and

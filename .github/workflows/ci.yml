@@ -1,15 +1,21 @@
-# The quality gate on every push and pull request: analyze, tests and the clean-architecture linter
+# The quality gate on every push to develop and every pull request: analyze, tests and the clean-architecture linter
 # (revoockv-flutter-clean-arch). A pushed tag vX.Y.Z (or a manual run, "Run workflow" in the Actions tab) also
 # builds the app for Android, macOS, Windows, Linux and the web; a tag attaches the builds to its GitHub release,
 # a manual run keeps them as workflow artifacts.
 name: CI
 
+# main gets only what develop has already passed and a release tag checks it again, so pushes to main run nothing.
 on:
   push:
-    branches: [main, develop]
+    branches: [develop]
     tags: ['v[0-9]+.[0-9]+.[0-9]+*']
   pull_request:
   workflow_dispatch:
+
+# A newer push to the same branch cancels the run that is still going for it (never for a release tag).
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
 
 jobs:
   quality:
