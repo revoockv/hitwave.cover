@@ -1049,8 +1049,8 @@ class Translations$sync$failure$en {
 	/// en: 'No network connection. Connect to Wi‑Fi.'
 	String get noNetwork => 'No network connection. Connect to Wi‑Fi.';
 
-	/// en: 'This is not a sync code of hitwave.cover'
-	String get notACode => 'This is not a sync code of hitwave.cover';
+	/// en: 'This is not a sync code of Hitwave Cover'
+	String get notACode => 'This is not a sync code of Hitwave Cover';
 
 	/// en: 'No sync is waiting for decisions'
 	String get nothingWaits => 'No sync is waiting for decisions';
@@ -1374,7 +1374,7 @@ extension on Translations {
 			'sync.failure.host' => 'Could not start syncing',
 			'sync.failure.interrupted' => 'Syncing was interrupted',
 			'sync.failure.noNetwork' => 'No network connection. Connect to Wi‑Fi.',
-			'sync.failure.notACode' => 'This is not a sync code of hitwave.cover',
+			'sync.failure.notACode' => 'This is not a sync code of Hitwave Cover',
 			'sync.failure.nothingWaits' => 'No sync is waiting for decisions',
 			'sync.failure.peerStopped' => 'The other device stopped syncing',
 			'sync.goneSong' => 'a song that is gone',

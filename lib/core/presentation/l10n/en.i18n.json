@@ -306,7 +306,7 @@
       "host": "Could not start syncing",
       "interrupted": "Syncing was interrupted",
       "noNetwork": "No network connection. Connect to Wi‑Fi.",
-      "notACode": "This is not a sync code of hitwave.cover",
+      "notACode": "This is not a sync code of Hitwave Cover",
       "nothingWaits": "No sync is waiting for decisions",
       "peerStopped": "The other device stopped syncing"
     },
