@@ -15,12 +15,38 @@ class StereoTakeService {
   /// The channels count as one when their difference is this far below their sum.
   static const double _sameChannelsDb = -50;
   static const double _scale16 = 32768;
+  static const double _powerBase = 10;
+  static const double _powerDbStep = 10;
+  static const int _channelCount = 2;
   static const int _max16 = 32767;
   static const int _min16 = -32768;
   static const int _headerSize = 44;
   static const int _bytesPerSample = 2;
   static const int _bits = 16;
   static const String _partSuffix = '.part';
+
+  // RIFF/WAVE header: chunk ids, their offsets and the PCM format fields.
+  static const String _riffId = 'RIFF';
+  static const String _waveId = 'WAVE';
+  static const String _formatId = 'fmt ';
+  static const String _dataId = 'data';
+  static const int _riffAt = 0;
+  static const int _riffSizeAt = 4;
+  static const int _riffSizeExcluded = 8;
+  static const int _waveAt = 8;
+  static const int _formatAt = 12;
+  static const int _formatSizeAt = 16;
+  static const int _formatSize = 16;
+  static const int _audioFormatAt = 20;
+  static const int _pcmFormat = 1;
+  static const int _channelsAt = 22;
+  static const int _monoChannels = 1;
+  static const int _sampleRateAt = 24;
+  static const int _byteRateAt = 28;
+  static const int _blockAlignAt = 32;
+  static const int _bitsAt = 34;
+  static const int _dataAt = 36;
+  static const int _dataSizeAt = 40;
 
   /// Rewrites the WAV file at [path] as 16-bit mono when its two channels carry the same
   /// signal; returns whether it did. Mono and real stereo files stay as they are.
@@ -29,7 +55,7 @@ class StereoTakeService {
   static Future<bool> _collapse(String path) async {
     final File file = File(path);
     final WavPcmModel wav = WavPcmModel.fromBytes(await file.readAsBytes());
-    if (wav.channels.length != 2) return false;
+    if (wav.channels.length != _channelCount) return false;
     final Float64List left = wav.channels[0];
     final Float64List right = wav.channels[1];
     double mid = 0;
@@ -40,7 +66,7 @@ class StereoTakeService {
       mid += sum * sum;
       side += difference * difference;
     }
-    if (side > mid * math.pow(10, _sameChannelsDb / 10)) return false;
+    if (side > mid * math.pow(_powerBase, _sameChannelsDb / _powerDbStep)) return false;
     final File part = File('$path$_partSuffix');
     await part.writeAsBytes(_mono16(left, right, wav.sampleRate), flush: true);
     await part.rename(path);
@@ -57,21 +83,21 @@ class StereoTakeService {
       }
     }
 
-    id(0, 'RIFF');
-    data.setUint32(4, _headerSize - 8 + dataSize, Endian.little);
-    id(8, 'WAVE');
-    id(12, 'fmt ');
-    data.setUint32(16, 16, Endian.little);
-    data.setUint16(20, 1, Endian.little);
-    data.setUint16(22, 1, Endian.little);
-    data.setUint32(24, sampleRate, Endian.little);
-    data.setUint32(28, sampleRate * _bytesPerSample, Endian.little);
-    data.setUint16(32, _bytesPerSample, Endian.little);
-    data.setUint16(34, _bits, Endian.little);
-    id(36, 'data');
-    data.setUint32(40, dataSize, Endian.little);
+    id(_riffAt, _riffId);
+    data.setUint32(_riffSizeAt, _headerSize - _riffSizeExcluded + dataSize, Endian.little);
+    id(_waveAt, _waveId);
+    id(_formatAt, _formatId);
+    data.setUint32(_formatSizeAt, _formatSize, Endian.little);
+    data.setUint16(_audioFormatAt, _pcmFormat, Endian.little);
+    data.setUint16(_channelsAt, _monoChannels, Endian.little);
+    data.setUint32(_sampleRateAt, sampleRate, Endian.little);
+    data.setUint32(_byteRateAt, sampleRate * _bytesPerSample, Endian.little);
+    data.setUint16(_blockAlignAt, _bytesPerSample, Endian.little);
+    data.setUint16(_bitsAt, _bits, Endian.little);
+    id(_dataAt, _dataId);
+    data.setUint32(_dataSizeAt, dataSize, Endian.little);
     for (int i = 0; i < left.length; i++) {
-      final int value = ((left[i] + right[i]) / 2 * _scale16).round().clamp(_min16, _max16);
+      final int value = ((left[i] + right[i]) / _channelCount * _scale16).round().clamp(_min16, _max16);
       data.setInt16(_headerSize + i * _bytesPerSample, value, Endian.little);
     }
     return data.buffer.asUint8List();

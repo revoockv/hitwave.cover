@@ -23,6 +23,8 @@ final class ImportConflictAnswer {
 ///
 /// Pops an [ImportConflictAnswer], or `null` when the import is cancelled.
 final class ImportConflictDialogWidget extends WatchingWidget {
+  static const String _songSeparator = ' — ';
+
   /// The song that is already here.
   final ImportConflict conflict;
 
@@ -46,7 +48,7 @@ final class ImportConflictDialogWidget extends WatchingWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text(t.backup.conflictMessage(song: '${conflict.author} — ${conflict.name}')),
+            Text(t.backup.conflictMessage(song: '${conflict.author}$_songSeparator${conflict.name}')),
             Text(
               conflict.hasSameLyrics ? t.backup.sameLyrics : t.backup.otherLyrics,
               style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
@@ -87,7 +89,7 @@ final class ImportConflictDialogWidget extends WatchingWidget {
 
   static ValueNotifier<bool> _createForOthersController() => ValueNotifier<bool>(false);
 
-  static void _disposeController(ValueNotifier<bool> controller) => controller.dispose();
+  static void _disposeController(ValueNotifier<bool> forOthersController) => forOthersController.dispose();
 
   void _onForOthersChanged(ValueNotifier<bool> forOthersController, bool? value) {
     forOthersController.value = value ?? false;

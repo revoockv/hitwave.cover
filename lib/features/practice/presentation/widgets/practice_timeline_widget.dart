@@ -157,7 +157,8 @@ final class PracticeTimelineWidget extends WatchingWidget {
       context: context,
       builder: (BuildContext context) => DeletePracticeDialogWidget(takeCount: entry.recordings.length),
     );
-    if (withTakes == null || !context.mounted) return;
+    if (withTakes == null) return;
+    if (!context.mounted) return;
     final Translations t = context.t;
     final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
     if (withTakes) {

@@ -177,7 +177,7 @@ final class _ChangeWidget extends StatelessWidget {
     return SurfaceWidget(
       margin: const EdgeInsets.only(bottom: AppTheme.spacingSmall),
       padding: EdgeInsets.zero,
-      onTap: () => onChanged(!isChosen),
+      onTap: _onTapped,
       child: IntrinsicHeight(
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -221,4 +221,6 @@ final class _ChangeWidget extends StatelessWidget {
       ),
     );
   }
+
+  void _onTapped() => onChanged(!isChosen);
 }

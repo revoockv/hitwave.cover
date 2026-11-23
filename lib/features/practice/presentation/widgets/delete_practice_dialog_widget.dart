@@ -46,7 +46,7 @@ final class DeletePracticeDialogWidget extends WatchingWidget {
 
   static ValueNotifier<bool> _createWithTakesController() => ValueNotifier<bool>(false);
 
-  static void _disposeController(ValueNotifier<bool> controller) => controller.dispose();
+  static void _disposeController(ValueNotifier<bool> withTakesController) => withTakesController.dispose();
 
   void _onWithTakesChanged(ValueNotifier<bool> withTakesController, bool? value) {
     withTakesController.value = value ?? false;
