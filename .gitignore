@@ -55,3 +55,14 @@ Thumbs.db
 
 # Android Gradle Plugin 9 build output
 /android/build/
+
+# Local tools and leftovers, never published
+.kilo/
+.claude/
+.vscode/
+python/
+integration_test/screens_test.dart
+
+# CI: the architecture linter checkout and the packed builds
+.clean-arch/
+dist/
