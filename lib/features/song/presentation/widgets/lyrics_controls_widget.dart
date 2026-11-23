@@ -9,7 +9,7 @@ import '../controllers/lyrics_page_controller.dart';
 ///
 /// Shows the play/stop button, the speed slider, the slider of the space above
 /// the lyrics and the record / trim-silence checkboxes; while a take is being
-/// recorded, a red dot with the time and the input level. Fades out (and stops
+/// recorded, [recordingIndicator] (the time and the input level). Fades out (and stops
 /// taking touches) when the controller hides the controls during scrolling.
 /// Knows nothing about use cases: the button calls [onPlayPressed], a released
 /// slider calls [onSpeedChosen] or [onLeadInChosen].
@@ -34,21 +34,6 @@ final class LyricsControlsWidget extends WatchingWidget {
 
   /// Percent sign after the space value.
   static const String _percentSign = '%';
-
-  /// Size of the red dot shown while recording.
-  static const double _recordingDotSize = 10;
-
-  /// Width of the input level bar.
-  static const double _levelBarWidth = 48;
-
-  /// Digits of the minutes and seconds of the recording time.
-  static const int _timeDigits = 2;
-
-  /// Separator of minutes and seconds.
-  static const String _timeSeparator = ':';
-
-  /// Padding character of the recording time.
-  static const String _zero = '0';
 
   /// UI state of the lyrics page.
   final LyricsPageController lyricsPageController;
@@ -89,11 +74,11 @@ final class LyricsControlsWidget extends WatchingWidget {
   /// Called by the microphone button.
   final VoidCallback onMicrophonePressed;
 
-  /// Time of the take being recorded, or `null` when nothing is recorded.
-  final Duration? recordingElapsed;
+  /// Whether a take of this song is being recorded.
+  final bool isRecording;
 
-  /// Input level of the take being recorded, 0.0–1.0.
-  final double recordingLevel;
+  /// Shows the time and the level of the take; it watches the recorder itself.
+  final Widget recordingIndicator;
 
   /// Creates a new [LyricsControlsWidget].
   const LyricsControlsWidget({
@@ -111,8 +96,8 @@ final class LyricsControlsWidget extends WatchingWidget {
     required this.onPlayPressed,
     required this.microphoneLabel,
     required this.onMicrophonePressed,
-    required this.recordingElapsed,
-    required this.recordingLevel,
+    required this.isRecording,
+    required this.recordingIndicator,
   });
 
   @override
@@ -124,8 +109,6 @@ final class LyricsControlsWidget extends WatchingWidget {
     final bool record = watch(lyricsPageController.recordController).value;
     final bool trimSilence = watch(lyricsPageController.trimSilenceController).value;
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
-    final Duration? elapsed = recordingElapsed;
-    final bool isRecording = elapsed != null;
     final bool canChangeOptions = !isScrolling && !isRecording;
 
     return IgnorePointer(
@@ -202,29 +185,7 @@ final class LyricsControlsWidget extends WatchingWidget {
                                 onPressed: canChangeOptions ? onMicrophonePressed : null,
                                 icon: const Icon(Icons.settings_voice_outlined),
                               ),
-                              if (elapsed != null)
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: <Widget>[
-                                    Container(
-                                      width: _recordingDotSize,
-                                      height: _recordingDotSize,
-                                      decoration: BoxDecoration(color: colorScheme.error, shape: BoxShape.circle),
-                                    ),
-                                    const SizedBox(width: AppTheme.spacingSmall),
-                                    Text(
-                                      _formatTime(elapsed),
-                                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                                        fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
-                                      ),
-                                    ),
-                                    const SizedBox(width: AppTheme.spacingSmall),
-                                    SizedBox(
-                                      width: _levelBarWidth,
-                                      child: LinearProgressIndicator(value: recordingLevel, color: colorScheme.error),
-                                    ),
-                                  ],
-                                ),
+                              recordingIndicator,
                             ],
                           ),
                         ],
@@ -258,14 +219,6 @@ final class LyricsControlsWidget extends WatchingWidget {
   void _onTrimSilenceChanged(bool? value) {
     lyricsPageController.trimSilenceController.value = value ?? false;
     lyricsPageController.resetHideTimer();
-  }
-
-  /// [time] as `mm:ss`.
-  static String _formatTime(Duration time) {
-    final int seconds = time.inSeconds;
-    final String minutes = (seconds ~/ AppTheme.secondsPerMinute).toString().padLeft(_timeDigits, _zero);
-    final String rest = (seconds % AppTheme.secondsPerMinute).toString().padLeft(_timeDigits, _zero);
-    return '$minutes$_timeSeparator$rest';
   }
 }
 

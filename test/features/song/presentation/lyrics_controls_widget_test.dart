@@ -3,6 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hitwave.cover/features/song/presentation/controllers/lyrics_page_controller.dart';
 import 'package:hitwave.cover/features/song/presentation/widgets/lyrics_controls_widget.dart';
 
+/// Width of the recording indicator with a 5-character time.
+const double _indicatorWidth = 120;
+
 void main() {
   for (final double width in <double>[320, 375, 560]) {
     testWidgets('the control panel fits a $width px wide screen while recording', (WidgetTester tester) async {
@@ -31,8 +34,9 @@ void main() {
                 onPlayPressed: () {},
                 microphoneLabel: 'Мікрофон: Як у системі',
                 onMicrophonePressed: () {},
-                recordingElapsed: const Duration(minutes: 12, seconds: 34),
-                recordingLevel: 0.5,
+                isRecording: true,
+                // As wide as RecordingIndicatorWidget: the dot, the time and the level bar.
+                recordingIndicator: const SizedBox(width: _indicatorWidth, child: Text('12:34')),
               ),
             ),
           ),

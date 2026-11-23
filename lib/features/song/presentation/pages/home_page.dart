@@ -34,9 +34,9 @@ import '../l10n/song_texts.dart';
 /// Main page with the bottom navigation: home (mini statistics, recent songs and covers),
 /// songs (search and orders), covers (search) and statistics; plus backup and account actions.
 ///
-/// Watches the songs, the covers, the practice, the history, the backup status, the session and
-/// its [SongViewController]. After a sign-in it asks whether to move the songs left on the device
-/// into the account.
+/// Watches only what it shows itself — the songs (title, count, add button), the tab, the order, the artist and
+/// whether the search is empty; every tab watches its own data. After a sign-in it asks whether to move the songs
+/// left on the device into the account.
 final class HomePage extends WatchingWidget {
   /// Title of the home tab.
   static const String _homeTitle = 'hitwave.cover';
@@ -68,38 +68,35 @@ final class HomePage extends WatchingWidget {
     final HomeTab tab = watch(songViewController.homeTabController).value;
     final SongSort sort = watch(songViewController.songSortController).value;
     final String selectedArtist = watch(songViewController.selectedArtistController).value;
-    final String songQuery = watch(songViewController.songSearchController).value.text;
-    final String coverQuery = watch(songViewController.coverSearchController).value.text;
-    final PracticeEntryFilter coverFilter = watch(songViewController.coverFilterController).value;
-    final List<PracticeSession> sessions = watch(watchPracticeSessionsUseCase()).value;
-    final List<Recording> recordings = watch(watchRecordingsUseCase()).value;
-    final UsageHistory history = watch(watchUsageHistoryUseCase()).value;
+    // Only whether the search is empty: typing rebuilds the found count and the songs tab, not the page.
+    final bool isSongSearchEmpty = watchPropertyValue(_isEmptyOf, target: songViewController.songSearchController);
 
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
-    final Map<String, int> coverCounts = <String, int>{};
-    for (final Recording recording in recordings) {
-      coverCounts[recording.songId] = (coverCounts[recording.songId] ?? 0) + 1;
-    }
-    final Map<String, Song> songsById = <String, Song>{for (final Song song in songs) song.id: song};
-    final List<Song> foundSongs = _orderSongs(_findSongs(songs, songQuery), sort, history, coverCounts);
     final bool isSongsTab = tab == HomeTab.songs;
     final bool hasSelectedArtist =
         isSongsTab &&
         sort == SongSort.artists &&
-        songQuery.trim().isEmpty &&
+        isSongSearchEmpty &&
         songs.any((Song song) => song.author == selectedArtist);
     final String? newSongAuthor = hasSelectedArtist ? selectedArtist : null;
-    final DateTime now = DateTime.now();
-    final PracticeStats stats = calculatePracticeStatsUseCase(sessions: sessions, recordings: recordings, now: now);
+    final TextStyle countStyle = TextStyle(color: colorScheme.onSurfaceVariant);
 
     final Widget titleText = Text.rich(
       TextSpan(
         text: hasSelectedArtist ? selectedArtist : _titleOf(t, tab),
         children: <InlineSpan>[
-          if (isSongsTab)
-            TextSpan(
-              text: '$_countSeparator${hasSelectedArtist ? _countOf(songs, selectedArtist) : foundSongs.length}',
-              style: TextStyle(color: colorScheme.onSurfaceVariant),
+          if (hasSelectedArtist)
+            TextSpan(text: '$_countSeparator${_countOf(songs, selectedArtist)}', style: countStyle)
+          else if (isSongsTab)
+            WidgetSpan(
+              alignment: PlaceholderAlignment.baseline,
+              baseline: TextBaseline.alphabetic,
+              child: _FoundCountWidget(
+                songs: songs,
+                searchController: songViewController.songSearchController,
+                separator: _countSeparator,
+                style: countStyle,
+              ),
             ),
         ],
       ),
@@ -114,16 +111,10 @@ final class HomePage extends WatchingWidget {
       _Tab(Icons.mic_none_outlined, Icons.mic, t.song.tabCovers),
       _Tab(Icons.insights_outlined, Icons.insights, t.song.statistics),
     ];
+    // Every tab watches the data it shows itself, so a change of it does not rebuild the page and the other tabs.
     final Widget body = switch (tab) {
-      HomeTab.home => HomeDashboardWidget(
-        stats: stats,
-        today: PracticeStats.dayOf(now),
-        recentSongs: _recentSongs(songsById, history),
-        recentCovers: _recentCovers(recordings, history),
-        coverCounts: coverCounts,
-        coverTitleOf: (Recording recording) => _songTitle(t, songsById[recording.songId]),
-        coverSongPressedOf: (Recording recording) => _openerOf(context, songsById[recording.songId]),
-        coverSongOf: (Recording recording) => _sharedSong(songsById[recording.songId]),
+      HomeTab.home => _HomeTabWidget(
+        songs: songs,
         onStatsPressed: () => _selectTab(songViewController, HomeTab.stats),
         onAllSongsPressed: () => _selectTab(songViewController, HomeTab.songs),
         onAllCoversPressed: () => _selectTab(songViewController, HomeTab.covers),
@@ -131,49 +122,19 @@ final class HomePage extends WatchingWidget {
         onSongEdit: (Song song) => _showEditSongPage(context, song),
         onSongDelete: (Song song) => _onSongDeletePressed(context, song),
       ),
-      HomeTab.songs => SongsTabWidget(
-        isLibraryEmpty: songs.isEmpty,
-        songs: foundSongs,
-        coverCounts: coverCounts,
-        searchController: songViewController.songSearchController,
+      HomeTab.songs => _SongsTabWidget(
+        songs: songs,
+        songViewController: songViewController,
         sort: sort,
         selectedArtist: selectedArtist,
-        onSortSelected: songViewController.selectSort,
-        onArtistSelected: songViewController.selectArtist,
         onSongTap: (Song song) => _navigateToLyrics(context, song),
         onSongEdit: (Song song) => _showEditSongPage(context, song),
         onSongDelete: (Song song) => _onSongDeletePressed(context, song),
         onAddPressed: () => _showAddSongPage(context, newSongAuthor),
       ),
-      HomeTab.covers => Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: AppTheme.maxContentWidth),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppTheme.spacingMedium,
-                  AppTheme.spacingSmall,
-                  AppTheme.spacingMedium,
-                  0,
-                ),
-                child: SearchFieldWidget(
-                  searchController: songViewController.coverSearchController,
-                  hint: t.song.coverSearch,
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            child: PracticeTimelineWidget(
-              query: coverQuery,
-              filter: coverFilter,
-              onFilterChanged: (PracticeEntryFilter filter) => songViewController.coverFilterController.value = filter,
-              onSongPressed: (Song song) => _navigateToLyrics(context, song),
-            ),
-          ),
-        ],
+      HomeTab.covers => _CoversTabWidget(
+        songViewController: songViewController,
+        onSongPressed: (Song song) => _navigateToLyrics(context, song),
       ),
       HomeTab.stats => PracticeStatsWidget(onSongPressed: (Song song) => _navigateToLyrics(context, song)),
     };
@@ -258,6 +219,19 @@ final class HomePage extends WatchingWidget {
     HomeTab.covers => t.song.myCovers,
     HomeTab.stats => t.song.statistics,
   };
+
+  static String _textOf(TextEditingController searchController) => searchController.text;
+
+  static bool _isEmptyOf(TextEditingController searchController) => searchController.text.trim().isEmpty;
+
+  /// How many covers every song has.
+  static Map<String, int> _coverCounts(List<Recording> recordings) {
+    final Map<String, int> coverCounts = <String, int>{};
+    for (final Recording recording in recordings) {
+      coverCounts[recording.songId] = (coverCounts[recording.songId] ?? 0) + 1;
+    }
+    return coverCounts;
+  }
 
   static int _countOf(List<Song> songs, String artist) => songs.where((Song song) => song.author == artist).length;
 
@@ -362,10 +336,6 @@ final class HomePage extends WatchingWidget {
     Navigator.of(context).push(MaterialPageRoute<void>(builder: (BuildContext context) => const SettingsPage()));
   }
 
-  /// Opens the lyrics of [song]; `null` when the song is gone.
-  VoidCallback? _openerOf(BuildContext context, Song? song) =>
-      song == null ? null : () => _navigateToLyrics(context, song);
-
   void _navigateToLyrics(BuildContext context, Song song) {
     Navigator.of(context).push(MaterialPageRoute<void>(builder: (BuildContext context) => LyricsPage(song: song)));
   }
@@ -394,4 +364,173 @@ final class _Tab {
   final String label;
 
   const _Tab(this.icon, this.selectedIcon, this.label);
+}
+
+/// The number of songs the search finds, after the title of the songs tab; the only part that rebuilds while typing.
+final class _FoundCountWidget extends WatchingWidget {
+  final List<Song> songs;
+  final TextEditingController searchController;
+  final String separator;
+  final TextStyle style;
+
+  const _FoundCountWidget({
+    required this.songs,
+    required this.searchController,
+    required this.separator,
+    required this.style,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final String query = watchPropertyValue(HomePage._textOf, target: searchController);
+    return Text('$separator${HomePage._findSongs(songs, query).length}', style: style);
+  }
+}
+
+/// The home tab: mini statistics, recent songs and covers. Watches the practice, the covers and the history itself.
+final class _HomeTabWidget extends WatchingWidget {
+  final List<Song> songs;
+  final VoidCallback onStatsPressed;
+  final VoidCallback onAllSongsPressed;
+  final VoidCallback onAllCoversPressed;
+  final ValueChanged<Song> onSongTap;
+  final ValueChanged<Song> onSongEdit;
+  final ValueChanged<Song> onSongDelete;
+
+  const _HomeTabWidget({
+    required this.songs,
+    required this.onStatsPressed,
+    required this.onAllSongsPressed,
+    required this.onAllCoversPressed,
+    required this.onSongTap,
+    required this.onSongEdit,
+    required this.onSongDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final Translations t = context.t;
+    final List<PracticeSession> sessions = watch(watchPracticeSessionsUseCase()).value;
+    final List<Recording> recordings = watch(watchRecordingsUseCase()).value;
+    final UsageHistory history = watch(watchUsageHistoryUseCase()).value;
+
+    final Map<String, Song> songsById = <String, Song>{for (final Song song in songs) song.id: song};
+    final DateTime now = DateTime.now();
+
+    return HomeDashboardWidget(
+      stats: calculatePracticeStatsUseCase(sessions: sessions, recordings: recordings, now: now),
+      today: PracticeStats.dayOf(now),
+      recentSongs: HomePage._recentSongs(songsById, history),
+      recentCovers: HomePage._recentCovers(recordings, history),
+      coverCounts: HomePage._coverCounts(recordings),
+      coverTitleOf: (Recording recording) => HomePage._songTitle(t, songsById[recording.songId]),
+      coverSongPressedOf: (Recording recording) => _openerOf(songsById[recording.songId]),
+      coverSongOf: (Recording recording) => HomePage._sharedSong(songsById[recording.songId]),
+      onStatsPressed: onStatsPressed,
+      onAllSongsPressed: onAllSongsPressed,
+      onAllCoversPressed: onAllCoversPressed,
+      onSongTap: onSongTap,
+      onSongEdit: onSongEdit,
+      onSongDelete: onSongDelete,
+    );
+  }
+
+  /// Opens the lyrics of [song]; `null` when the song is gone.
+  VoidCallback? _openerOf(Song? song) => song == null ? null : () => onSongTap(song);
+}
+
+/// The songs tab: search, order and artists. Watches the search text, the covers and the history itself.
+final class _SongsTabWidget extends WatchingWidget {
+  final List<Song> songs;
+  final SongViewController songViewController;
+  final SongSort sort;
+  final String selectedArtist;
+  final ValueChanged<Song> onSongTap;
+  final ValueChanged<Song> onSongEdit;
+  final ValueChanged<Song> onSongDelete;
+  final VoidCallback onAddPressed;
+
+  const _SongsTabWidget({
+    required this.songs,
+    required this.songViewController,
+    required this.sort,
+    required this.selectedArtist,
+    required this.onSongTap,
+    required this.onSongEdit,
+    required this.onSongDelete,
+    required this.onAddPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final String query = watchPropertyValue(HomePage._textOf, target: songViewController.songSearchController);
+    final List<Recording> recordings = watch(watchRecordingsUseCase()).value;
+    final UsageHistory history = watch(watchUsageHistoryUseCase()).value;
+
+    final Map<String, int> coverCounts = HomePage._coverCounts(recordings);
+
+    return SongsTabWidget(
+      isLibraryEmpty: songs.isEmpty,
+      songs: HomePage._orderSongs(HomePage._findSongs(songs, query), sort, history, coverCounts),
+      coverCounts: coverCounts,
+      searchController: songViewController.songSearchController,
+      sort: sort,
+      selectedArtist: selectedArtist,
+      onSortSelected: songViewController.selectSort,
+      onArtistSelected: songViewController.selectArtist,
+      onSongTap: onSongTap,
+      onSongEdit: onSongEdit,
+      onSongDelete: onSongDelete,
+      onAddPressed: onAddPressed,
+    );
+  }
+}
+
+/// The covers tab: the search field and the practice timeline. Watches the search text and the filter itself.
+final class _CoversTabWidget extends WatchingWidget {
+  final SongViewController songViewController;
+  final ValueChanged<Song> onSongPressed;
+
+  const _CoversTabWidget({required this.songViewController, required this.onSongPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    final String query = watchPropertyValue(HomePage._textOf, target: songViewController.coverSearchController);
+    final PracticeEntryFilter filter = watch(songViewController.coverFilterController).value;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: AppTheme.maxContentWidth),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppTheme.spacingMedium,
+                AppTheme.spacingSmall,
+                AppTheme.spacingMedium,
+                0,
+              ),
+              child: SearchFieldWidget(
+                searchController: songViewController.coverSearchController,
+                hint: context.t.song.coverSearch,
+              ),
+            ),
+          ),
+        ),
+        Expanded(
+          child: PracticeTimelineWidget(
+            query: query,
+            filter: filter,
+            onFilterChanged: _onFilterChanged,
+            onSongPressed: onSongPressed,
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _onFilterChanged(PracticeEntryFilter filter) {
+    songViewController.coverFilterController.value = filter;
+  }
 }

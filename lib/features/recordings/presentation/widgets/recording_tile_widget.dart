@@ -7,6 +7,8 @@ import '../../domain/entities/recording_status.dart';
 import '../../domain/entities/recording_version.dart';
 import '../../../../core/presentation/l10n/app_translations.dart';
 import '../l10n/recordings_texts.dart';
+import 'enhance_progress_widget.dart';
+import 'playback_progress_widget.dart';
 
 /// One recording in the list: date, length, state, the original/enhanced switch, play, share,
 /// show in folder (desktop) and delete.
@@ -30,12 +32,6 @@ final class RecordingTileWidget extends StatelessWidget {
 
   /// Whether it is playing now.
   final bool isPlaying;
-
-  /// Played part, 0.0–1.0, while loaded.
-  final double playedFraction;
-
-  /// Progress of the enhancement of this take, 0.0–1.0, or `null` when unknown.
-  final double? enhanceFraction;
 
   /// Called with the version chosen in the switch.
   final ValueChanged<RecordingVersion> onVersionChanged;
@@ -66,8 +62,6 @@ final class RecordingTileWidget extends StatelessWidget {
     required this.version,
     required this.isLoaded,
     required this.isPlaying,
-    required this.playedFraction,
-    required this.enhanceFraction,
     required this.onVersionChanged,
     required this.onPlayPressed,
     required this.onDeletePressed,
@@ -157,7 +151,7 @@ final class RecordingTileWidget extends StatelessWidget {
             ),
             if (recording.status == RecordingStatus.enhancing) ...<Widget>[
               const SizedBox(height: AppTheme.spacingSmall),
-              LinearProgressIndicator(value: enhanceFraction),
+              EnhanceProgressWidget(recordingId: recording.id),
             ],
             if (recording.status == RecordingStatus.recorded || recording.status == RecordingStatus.enhanceFailed)
               Align(
@@ -170,10 +164,7 @@ final class RecordingTileWidget extends StatelessWidget {
                   ),
                 ),
               ),
-            if (isLoaded) ...<Widget>[
-              const SizedBox(height: AppTheme.spacingSmall),
-              LinearProgressIndicator(value: playedFraction),
-            ],
+            if (isLoaded) ...<Widget>[const SizedBox(height: AppTheme.spacingSmall), const PlaybackProgressWidget()],
           ],
         ),
       ),

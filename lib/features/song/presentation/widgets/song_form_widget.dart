@@ -126,9 +126,11 @@ final class _SaveButtonWidget extends WatchingWidget {
   /// Creates a new [_SaveButtonWidget].
   const _SaveButtonWidget({required this.savingState, required this.label, required this.onPressed});
 
+  static bool _isLoadingOf(ValueListenable<ResultState<void, SongFailure>> state) => state.value.isLoading;
+
   @override
   Widget build(BuildContext context) {
-    final bool isLoading = watch(savingState).value.isLoading;
+    final bool isLoading = watchPropertyValue(_isLoadingOf, target: savingState);
 
     return SizedBox(
       width: double.infinity,
