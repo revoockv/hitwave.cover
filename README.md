@@ -107,9 +107,10 @@ fixed on `develop` and released as the next patch version.
 
 **CI** (`.github/workflows/ci.yml`): every push to `develop` and every pull request runs
 `flutter analyze`, the tests and the architecture linter. A pushed tag `vX.Y.Z` also builds the app
-for Android (APK), macOS, Windows, Linux and the web and attaches the builds to the GitHub release of
-that tag; **Run workflow** in the Actions tab makes the same builds as workflow artifacts. The macOS and
-Windows builds are not signed, so the system asks to confirm the first start.
+for Android (APK), Windows, Linux and the web and attaches the builds to the GitHub release of that tag;
+**Run workflow** in the Actions tab makes the same builds as workflow artifacts. The macOS build is off for now
+(GitHub's macOS runners are often unavailable): build it on a Mac with `flutter build macos --release` and add
+it to the release by hand. The Windows build is not signed, so Windows asks to confirm the first start.
 
 **Screenshots**: run on macOS (the demo data lives in its own storage folder and is deleted afterwards),
 then copy the PNGs from the printed folder to `docs/screenshots/` (`themes.png` is `phone_settings` and the four

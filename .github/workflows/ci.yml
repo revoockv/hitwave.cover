@@ -1,6 +1,6 @@
 # The quality gate on every push to develop and every pull request: analyze, tests and the clean-architecture linter
 # (revoockv-flutter-clean-arch). A pushed tag vX.Y.Z (or a manual run, "Run workflow" in the Actions tab) also
-# builds the app for Android, macOS, Windows, Linux and the web; a tag attaches the builds to its GitHub release,
+# builds the app for Android, Windows, Linux and the web (macOS is off for now, see the build matrix); a tag attaches the builds to its GitHub release,
 # a manual run keeps them as workflow artifacts.
 name: CI
 
@@ -48,8 +48,10 @@ jobs:
             os: ubuntu-latest
           - target: linux
             os: ubuntu-latest
-          - target: macos
-            os: macos-latest
+          # macOS is off for now: GitHub often has no free macOS runner, so the job waits and gets cancelled.
+          # Build it on a Mac (flutter build macos --release) and add it to the release by hand.
+          # - target: macos
+          #   os: macos-latest
           - target: windows
             os: windows-latest
     runs-on: ${{ matrix.os }}
