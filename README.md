@@ -18,6 +18,12 @@ Built with Flutter for Android, iOS, macOS, Windows, Linux and the web.
 
 ![Lyrics on a wide screen](docs/screenshots/wide_lyrics.png)
 
+### Themes
+
+Four styles — light and dark glass, light and dark neumorphism — and eight accent colors, chosen in Settings:
+
+![Settings and the four theme styles](docs/screenshots/themes.png)
+
 The screenshots are made from demo songs by `integration_test/readme_screenshots_test.dart` (see Development).
 
 ## Features
@@ -95,7 +101,8 @@ flutter test --concurrency=1
 Android APK and the web app and attaches them to the GitHub release of that tag.
 
 **Screenshots**: run on macOS (the demo data lives in its own storage folder and is deleted afterwards),
-then copy the PNGs from the printed folder to `docs/screenshots/`:
+then copy the PNGs from the printed folder to `docs/screenshots/` (`themes.png` is `phone_settings` and the four
+`look_*` shots side by side, at half size):
 
 ```bash
 flutter test integration_test/readme_screenshots_test.dart -d macos \

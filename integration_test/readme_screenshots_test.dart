@@ -17,8 +17,11 @@ import 'package:hitwave.cover/features/practice/data/models/practice_session_mod
 import 'package:hitwave.cover/features/recordings/data/models/recording_model.dart';
 import 'package:hitwave.cover/features/recordings/domain/entities/recording_status.dart';
 import 'package:hitwave.cover/features/settings/data/models/app_settings_model.dart';
+import 'package:hitwave.cover/features/settings/domain/entities/accent_color.dart';
 import 'package:hitwave.cover/features/settings/domain/entities/app_settings.dart';
 import 'package:hitwave.cover/features/settings/domain/entities/app_theme_style.dart';
+import 'package:hitwave.cover/features/settings/presentation/di/settings_getters.dart';
+import 'package:hitwave.cover/features/song/domain/entities/lyrics_layout.dart';
 import 'package:hitwave.cover/features/song/domain/entities/song.dart';
 import 'package:hitwave.cover/features/song/presentation/di/song_getters.dart';
 import 'package:hitwave.cover/main.dart' as app;
@@ -34,18 +37,20 @@ const List<({String author, String name, String album, String lyrics})> _demoSon
         name: 'Paper Boats',
         album: 'Harbour',
         lyrics:
-            'We folded every promise into paper boats\n'
-            'and let the river carry what we never wrote\n'
-            'the morning found them shining on the stones\n'
-            'a hundred little letters coming home\n\n'
-            'Sail on, sail on\n'
-            'the water knows the way\n'
-            'sail on, sail on\n'
-            'and I will stay\n\n'
-            'The bridge is full of people looking down\n'
-            'they count the boats that never touch the ground\n'
-            'and every one is carrying a name\n'
-            'and none of them will ever be the same',
+            'Capo 2 · Intro: Am  F  C  G\n\n'
+            '[Am]We folded every [F]promise into paper boats\n'
+            '[C]and let the river [G]carry what we never wrote\n'
+            '[Am]the morning found them [F]shining on the stones\n'
+            '[C]a hundred little [G]letters coming home\n\n'
+            'Chorus:\n'
+            '[F]Sail on, [G]sail on\n'
+            '[Am]the water knows the [Em]way\n'
+            '[F]sail on, [G]sail on\n'
+            '[Am]and I will [G]stay\n\n'
+            '[Am]The bridge is full of [F]people looking down\n'
+            '[C]they count the boats that [G]never touch the ground\n'
+            '[Am]and every one is [F]carrying a name\n'
+            '[C]and none of them will [G]ever be the same',
       ),
       (
         author: 'Northern Lights',
@@ -207,6 +212,10 @@ void main() {
     for (int i = 2; i >= 0; i--) {
       await markCoverPlayedUseCase('demo-take-$i');
     }
+    final String paperBoats = songs.firstWhere((Song song) => song.name == 'Paper Boats').id;
+    for (final LyricsLayout layout in LyricsLayout.values) {
+      await updateSongLeadInUseCase(songId: paperBoats, layout: layout, leadIn: 0.05);
+    }
 
     // 2. Phone screens.
     tester.view.devicePixelRatio = 2;
@@ -241,6 +250,24 @@ void main() {
     await settle();
     await tester.tap(find.text('Paper Boats').first);
     await shot('wide_lyrics');
+    await tester.pageBack();
+    await settle();
+
+    // 4. The looks: every theme style with another accent, on the home tab of a phone.
+    tester.view.devicePixelRatio = 2;
+    tester.view.physicalSize = const Size(400 * 2, 860 * 2);
+    await tester.tap(tab(Icons.home_outlined));
+    const List<(AppThemeStyle, AccentColor)> looks = <(AppThemeStyle, AccentColor)>[
+      (AppThemeStyle.glassLight, AccentColor.blue),
+      (AppThemeStyle.glassDark, AccentColor.orange),
+      (AppThemeStyle.neumorphicLight, AccentColor.violet),
+      (AppThemeStyle.neumorphicDark, AccentColor.teal),
+    ];
+    for (final (AppThemeStyle style, AccentColor accent) in looks) {
+      await setThemeStyleUseCase(style);
+      await setAccentColorUseCase(accent);
+      await shot('look_${style.name}');
+    }
 
     storage.deleteSync(recursive: true);
     // ignore: avoid_print
