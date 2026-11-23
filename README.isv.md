@@ -6,6 +6,19 @@ Hitwave Cover држи тексты ваших пєснеј и ваше каве
 
 Написано на Flutter за Android, iOS, macOS, Windows, Linux и веб.
 
+## Снимкы екрана
+
+<p align="center">
+  <img src="docs/screenshots/phone_home.png" width="24%" alt="Домов">
+  <img src="docs/screenshots/phone_lyrics.png" width="24%" alt="Текст">
+  <img src="docs/screenshots/phone_covers.png" width="24%" alt="Мојі каверы">
+  <img src="docs/screenshots/phone_stats.png" width="24%" alt="Статистика">
+</p>
+<p align="center">
+  <img src="docs/screenshots/wide_home.png" width="49%" alt="Домов на ширшем екранє">
+  <img src="docs/screenshots/wide_lyrics.png" width="49%" alt="Текст на ширшем екранє">
+</p>
+
 ## Можности
 
 ### Пєсни и тексты
@@ -50,7 +63,7 @@ tool/flutter_python.sh windows run   # Windows and Linux: package Python, then r
 
 ## Развој
 
-- **Архитектура**: чиста архитектура по шаблону `revoockv-original@2.0.0` (глејте `.clean_arch.toml`): всака функција в `lib/features/<feature>/` имаје слоје `data`, `domain` и `presentation`; стан живје в репозиторијах како `ValueNotifier` и доходи до интерфејса чрез усе цасе и `watch_it`; зависности сут регистроване с GetIt.
+- **Архитектура**: чиста архитектура по шаблону `revoockv-original@2.0.0` скила [revoockv-flutter-clean-arch](https://github.com/revoockv/revoockv-flutter-clean-arch) (глејте `.clean_arch.toml`); јего линтер провєрјаје код в CI: всака функција в `lib/features/<feature>/` имаје слоје `data`, `domain` и `presentation`; стан живје в репозиторијах како `ValueNotifier` и доходи до интерфејса чрез усе цасе и `watch_it`; зависности сут регистроване с GetIt.
 - **Погрєшкы**: операције врачајут `Result<T, F>`, кде `F` јест енум погрєшек функције; јего текст се избираје в `presentation/l10n/`.
 - **Преводы**: [slang](https://pub.dev/packages/slang). Тексты сут в `lib/core/presentation/l10n/en.i18n.json` и `isv.i18n.json`; по измєнах пустите `dart run slang`.
 - **Темы**: `lib/core/presentation/theme.dart` гради тему из стиља, јаркости и акцента; `SurfaceWidget` рисује стекљане или неуморфне панели.

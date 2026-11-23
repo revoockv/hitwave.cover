@@ -8,6 +8,21 @@ device, keeps every take next to its song and counts how much you practice.
 
 Built with Flutter for Android, iOS, macOS, Windows, Linux and the web.
 
+## Screenshots
+
+<p align="center">
+  <img src="docs/screenshots/phone_home.png" width="24%" alt="Home">
+  <img src="docs/screenshots/phone_lyrics.png" width="24%" alt="Lyrics">
+  <img src="docs/screenshots/phone_covers.png" width="24%" alt="My covers">
+  <img src="docs/screenshots/phone_stats.png" width="24%" alt="Statistics">
+</p>
+<p align="center">
+  <img src="docs/screenshots/wide_home.png" width="49%" alt="Home on a wide screen">
+  <img src="docs/screenshots/wide_lyrics.png" width="49%" alt="Lyrics on a wide screen">
+</p>
+
+The screenshots are made from demo songs by `integration_test/readme_screenshots_test.dart` (see Development).
+
 ## Features
 
 ### Songs and lyrics
@@ -60,8 +75,8 @@ the lyrics without recording and vocal enhancement.
 
 ## Development
 
-- **Architecture**: clean architecture by the `revoockv-original@2.0.0` template (see
-  `.clean_arch.toml`): every feature in `lib/features/<feature>/` has `data`, `domain` and
+- **Architecture**: clean architecture by the `revoockv-original@2.0.0` template of the
+  [revoockv-flutter-clean-arch](https://github.com/revoockv/revoockv-flutter-clean-arch) skill (see `.clean_arch.toml`); its linter checks the code in CI: every feature in `lib/features/<feature>/` has `data`, `domain` and
   `presentation` layers; state lives in repositories as `ValueNotifier` and reaches the UI through
   use cases and `watch_it`; dependencies are registered with GetIt.
 - **Errors**: operations return `Result<T, F>`, where `F` is the failure enum of the feature; its
@@ -76,6 +91,18 @@ the lyrics without recording and vocal enhancement.
 ```bash
 flutter analyze
 flutter test --concurrency=1
+```
+
+**CI** (`.github/workflows/ci.yml`): every push to `main` or `develop` and every pull request runs
+`flutter analyze`, the tests and the architecture linter. A pushed tag `vX.Y.Z` also builds the
+Android APK and the web app and attaches them to the GitHub release of that tag.
+
+**Screenshots**: run on macOS (the demo data lives in its own storage folder and is deleted afterwards),
+then copy the PNGs from the printed folder to `docs/screenshots/`:
+
+```bash
+flutter test integration_test/readme_screenshots_test.dart -d macos \
+  --dart-define=HITWAVE_STORAGE_FOLDER=readme_screenshots
 ```
 
 Git: `develop` collects the work; every change has its own branch — `feature/NNN-name`,

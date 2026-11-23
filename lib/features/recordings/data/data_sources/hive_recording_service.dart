@@ -9,7 +9,8 @@ import '../models/recording_model.dart';
 import 'mp3_encoder_service.dart';
 
 /// The recordings library on this device: one Hive map per recording plus its WAV files (and the
-/// MP3s made from them for sharing) in `<documents>/recordings/`.
+/// MP3s made from them for sharing) in `<documents>/recordings/` (`<documents>/<storage folder>/recordings/` when
+/// [LocalStorageService.storageFolder] is set).
 final class HiveRecordingService {
   static const String _boxName = 'recordings';
   static const String _folderName = 'recordings';
@@ -32,7 +33,10 @@ final class HiveRecordingService {
   Future<HiveRecordingService> init() async {
     _box = await _storage.openBox(_boxName);
     final Directory documents = await _documentsFolder();
-    final Directory folder = await Directory('${documents.path}$_separator$_folderName').create(recursive: true);
+    final String storage = LocalStorageService.storageFolder.isEmpty
+        ? documents.path
+        : '${documents.path}$_separator${LocalStorageService.storageFolder}';
+    final Directory folder = await Directory('$storage$_separator$_folderName').create(recursive: true);
     _folder = folder.path;
     return this;
   }
