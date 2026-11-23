@@ -66,7 +66,7 @@ extension SyncChangeText on SyncChange {
       SyncSubject.practice => t.sync.practiceItem(n: count),
       SyncSubject.cover when recordedAt != null => t.sync.coverTitle(song: song, date: _date(recordedAt)),
       SyncSubject.song when kind == SyncChangeKind.add && count > 0 =>
-        '${t.sync.songItem(song: song)}, ${t.sync.withCovers(n: count)}',
+        '${t.sync.songItem(song: song)}$_listSeparator${t.sync.withCovers(n: count)}',
       SyncSubject.song || SyncSubject.cover => t.sync.songItem(song: song),
     };
   }
