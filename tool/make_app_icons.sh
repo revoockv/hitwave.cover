@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Makes the app icon of every platform from assets/icon/app_icon.svg.
 #   tool/make_app_icons.sh
-# Change the SVG, run this, commit the result. Needs rsvg-convert (brew install librsvg).
+# Change the SVG, run this, commit the result. Needs rsvg-convert (brew install librsvg) and Python with Pillow.
 #
 # The SVG is a rounded tile; the platforms want different cuts of it, rendered into
 # build/app_icon/ (not in git):
@@ -48,3 +48,19 @@ render "$out/foreground.svg" "$out/app_icon_foreground.png"
 
 cd "$root"
 dart run flutter_launcher_icons
+
+# flutter_launcher_icons makes the web favicon 16 px from the 1024 px picture (a blur) and the Windows icon
+# in one size only; these are drawn from the SVG at each size instead. Linux gets a window icon of its own.
+render_at() { rsvg-convert -w "$1" -h "$1" "$source_svg" -o "$2"; }
+render_at 32 web/favicon.png
+mkdir -p linux/runner/resources
+render_at 256 linux/runner/resources/app_icon.png
+for size in 16 24 32 48 64 128 256; do render_at "$size" "$out/ico_$size.png"; done
+python3 - "$out" <<'PY'
+import sys
+from PIL import Image
+out = sys.argv[1]
+sizes = [16, 24, 32, 48, 64, 128, 256]
+images = [Image.open(f"{out}/ico_{s}.png").convert("RGBA") for s in sizes]
+images[-1].save("windows/runner/resources/app_icon.ico", sizes=[(s, s) for s in sizes], append_images=images[:-1])
+PY

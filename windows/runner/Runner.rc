@@ -89,11 +89,11 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.example" "\0"
+            VALUE "CompanyName", "revoockv" "\0"
             VALUE "FileDescription", "Hitwave Cover" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "hitwave.cover" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 com.example. All rights reserved." "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 revoockv. All rights reserved." "\0"
             VALUE "OriginalFilename", "hitwave.cover.exe" "\0"
             VALUE "ProductName", "Hitwave Cover" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"

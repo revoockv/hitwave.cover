@@ -38,9 +38,6 @@ import '../l10n/song_texts.dart';
 /// whether the search is empty; every tab watches its own data. After a sign-in it asks whether to move the songs
 /// left on the device into the account.
 final class HomePage extends WatchingWidget {
-  /// Title of the home tab.
-  static const String _homeTitle = 'hitwave.cover';
-
   /// Separator between a song and its artist.
   static const String _titleSeparator = ' — ';
 
@@ -214,7 +211,7 @@ final class HomePage extends WatchingWidget {
   }
 
   static String _titleOf(Translations t, HomeTab tab) => switch (tab) {
-    HomeTab.home => _homeTitle,
+    HomeTab.home => t.appTitle,
     HomeTab.songs => t.song.mySongs,
     HomeTab.covers => t.song.myCovers,
     HomeTab.stats => t.song.statistics,
