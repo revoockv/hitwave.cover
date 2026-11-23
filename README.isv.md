@@ -8,16 +8,13 @@ Hitwave Cover држи тексты ваших пєснеј и ваше каве
 
 ## Снимкы екрана
 
-<p align="center">
-  <img src="docs/screenshots/phone_home.png" width="24%" alt="Домов">
-  <img src="docs/screenshots/phone_lyrics.png" width="24%" alt="Текст">
-  <img src="docs/screenshots/phone_covers.png" width="24%" alt="Мојі каверы">
-  <img src="docs/screenshots/phone_stats.png" width="24%" alt="Статистика">
-</p>
-<p align="center">
-  <img src="docs/screenshots/wide_home.png" width="49%" alt="Домов на ширшем екранє">
-  <img src="docs/screenshots/wide_lyrics.png" width="49%" alt="Текст на ширшем екранє">
-</p>
+| Домов | Текст | Мојі каверы | Статистика |
+|---|---|---|---|
+| ![Домов](docs/screenshots/phone_home.png) | ![Текст](docs/screenshots/phone_lyrics.png) | ![Мојі каверы](docs/screenshots/phone_covers.png) | ![Статистика](docs/screenshots/phone_stats.png) |
+
+![Домов на ширшем екранє](docs/screenshots/wide_home.png)
+
+![Текст на ширшем екранє](docs/screenshots/wide_lyrics.png)
 
 ## Можности
 

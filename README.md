@@ -10,16 +10,13 @@ Built with Flutter for Android, iOS, macOS, Windows, Linux and the web.
 
 ## Screenshots
 
-<p align="center">
-  <img src="docs/screenshots/phone_home.png" width="24%" alt="Home">
-  <img src="docs/screenshots/phone_lyrics.png" width="24%" alt="Lyrics">
-  <img src="docs/screenshots/phone_covers.png" width="24%" alt="My covers">
-  <img src="docs/screenshots/phone_stats.png" width="24%" alt="Statistics">
-</p>
-<p align="center">
-  <img src="docs/screenshots/wide_home.png" width="49%" alt="Home on a wide screen">
-  <img src="docs/screenshots/wide_lyrics.png" width="49%" alt="Lyrics on a wide screen">
-</p>
+| Home | Lyrics | My covers | Statistics |
+|---|---|---|---|
+| ![Home](docs/screenshots/phone_home.png) | ![Lyrics](docs/screenshots/phone_lyrics.png) | ![My covers](docs/screenshots/phone_covers.png) | ![Statistics](docs/screenshots/phone_stats.png) |
+
+![Home on a wide screen](docs/screenshots/wide_home.png)
+
+![Lyrics on a wide screen](docs/screenshots/wide_lyrics.png)
 
 The screenshots are made from demo songs by `integration_test/readme_screenshots_test.dart` (see Development).
 
