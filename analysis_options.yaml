@@ -1,4 +1,7 @@
 analyzer:
+  errors:
+    # The package is called hitwave.cover (the app's name, used in every import); a dot breaks this style rule only.
+    package_names: ignore
   exclude:
     - build/**
     - android/**
