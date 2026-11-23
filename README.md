@@ -10,8 +10,8 @@ Built with Flutter for Android, iOS, macOS, Windows, Linux and the web.
 
 ## Screenshots
 
-| Home | Lyrics | My covers | Statistics |
-|---|---|---|---|
+| Home                                     | Lyrics                                       | My covers                                       | Statistics                                      |
+| ---------------------------------------- | -------------------------------------------- | ----------------------------------------------- | ----------------------------------------------- |
 | ![Home](docs/screenshots/phone_home.png) | ![Lyrics](docs/screenshots/phone_lyrics.png) | ![My covers](docs/screenshots/phone_covers.png) | ![Statistics](docs/screenshots/phone_stats.png) |
 
 ![Home on a wide screen](docs/screenshots/wide_home.png)
@@ -29,12 +29,14 @@ The screenshots are made from demo songs by `integration_test/readme_screenshots
 ## Features
 
 ### Songs and lyrics
+
 - A library of songs with artist, title, album and lyrics: add, edit and delete them.
 - Search by song or artist; sort by artists, A–Z, recently opened or by the number of covers.
 - The lyrics page scrolls the text by itself. The speed and the lead-in before the first line are
   remembered for every song.
 
 ### Recording covers
+
 - Tick **Record** and press **Start**: the take is recorded while the lyrics scroll.
 - Choose the microphone; the app warns about a silent take.
 - **Vocal enhancement** runs on the device in pure Dart
@@ -45,12 +47,14 @@ The screenshots are made from demo songs by `integration_test/readme_screenshots
 - **My covers**: every take of every song in one list, with search.
 
 ### Practice
+
 - The time spent with each song is counted on its own.
 - Statistics: today, this week and this month, the day streak, the number of takes, a month
   calendar of practice days and the most practiced songs.
 - The home tab shows the recently opened songs and the recently played covers.
 
 ### Sync and backup
+
 - Everything stays on the device; there is no account to create.
 - **Sync between devices** over the local Wi‑Fi network: one device shows a QR code, the other
   scans it. Songs, covers, practice and history are merged; nothing is deleted without asking —
@@ -60,6 +64,7 @@ The screenshots are made from demo songs by `integration_test/readme_screenshots
 - **Settings → Data** also clears the songs, the covers, the practice statistics or the history.
 
 ### Settings
+
 - **Language**: English (default) or Interslavic (Medžuslovjansky, written in Cyrillic).
 - **Theme**: light or dark glass, light or dark neumorphism.
 - **Accent color**: one of eight.
@@ -97,8 +102,10 @@ flutter test --concurrency=1
 ```
 
 **CI** (`.github/workflows/ci.yml`): every push to `main` or `develop` and every pull request runs
-`flutter analyze`, the tests and the architecture linter. A pushed tag `vX.Y.Z` also builds the
-Android APK and the web app and attaches them to the GitHub release of that tag.
+`flutter analyze`, the tests and the architecture linter. A pushed tag `vX.Y.Z` also builds the app
+for Android (APK), macOS, Windows, Linux and the web and attaches the builds to the GitHub release of
+that tag; **Run workflow** in the Actions tab makes the same builds as workflow artifacts. The macOS and
+Windows builds are not signed, so the system asks to confirm the first start.
 
 **Screenshots**: run on macOS (the demo data lives in its own storage folder and is deleted afterwards),
 then copy the PNGs from the printed folder to `docs/screenshots/` (`themes.png` is `phone_settings` and the four
