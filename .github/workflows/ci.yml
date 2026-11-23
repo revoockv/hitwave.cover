@@ -27,15 +27,13 @@ jobs:
           channel: stable
           flutter-version: 3.47.0
           cache: true
-      - run: flutter pub get
-      - run: flutter analyze
-      - run: flutter test --concurrency=1
       - name: Get the architecture linter
         uses: actions/checkout@v4
         with:
           repository: revoockv/revoockv-flutter-clean-arch
           path: .clean-arch
-      - run: python3 .clean-arch/scripts/dart_clean_arch_linter.py lib --strict
+      # The same script as before a release (tool/release.sh), so a local pass means a CI pass.
+      - run: tool/check.sh
 
   build:
     if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
