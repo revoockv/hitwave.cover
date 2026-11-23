@@ -10,7 +10,7 @@ final class SyncOfferModel {
   static const String _tokenField = 't';
   static const String _deviceField = 'd';
   static const String _padding = '=';
-  static const String _notACodeError = 'Not a sync code of hitwave.cover';
+  static const String _notACodeError = 'Not a sync code of Hitwave Cover';
 
   /// IPv4 addresses of the hosting device on its networks.
   final List<String> addresses;

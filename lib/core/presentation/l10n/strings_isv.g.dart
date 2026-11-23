@@ -552,7 +552,7 @@ class _Translations$sync$failure$isv extends Translations$sync$failure$en {
 	@override String get host => 'Не удало се начети синхронизацију';
 	@override String get interrupted => 'Синхронизација прєрвала се';
 	@override String get noNetwork => 'Нема повезања с сетју. Подкључите се к Wi‑Fi.';
-	@override String get notACode => 'То не јест код синхронизације hitwave.cover';
+	@override String get notACode => 'То не јест код синхронизације Hitwave Cover';
 	@override String get nothingWaits => 'Нема синхронизације, ктора чака на рєшења';
 	@override String get peerStopped => 'Друго устројство зауставило синхронизацију';
 }
@@ -844,7 +844,7 @@ extension on TranslationsIsv {
 			'sync.failure.host' => 'Не удало се начети синхронизацију',
 			'sync.failure.interrupted' => 'Синхронизација прєрвала се',
 			'sync.failure.noNetwork' => 'Нема повезања с сетју. Подкључите се к Wi‑Fi.',
-			'sync.failure.notACode' => 'То не јест код синхронизације hitwave.cover',
+			'sync.failure.notACode' => 'То не јест код синхронизације Hitwave Cover',
 			'sync.failure.nothingWaits' => 'Нема синхронизације, ктора чака на рєшења',
 			'sync.failure.peerStopped' => 'Друго устројство зауставило синхронизацију',
 			'sync.goneSong' => 'пєсња, кторој уж нема',
