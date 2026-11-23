@@ -1,35 +1,39 @@
-# The quality gate on every push and pull request: analyze, tests and the clean-architecture linter
+# The quality gate on every push to develop and every pull request: analyze, tests and the clean-architecture linter
 # (revoockv-flutter-clean-arch). A pushed tag vX.Y.Z (or a manual run, "Run workflow" in the Actions tab) also
-# builds the app for Android, macOS, Windows, Linux and the web; a tag attaches the builds to its GitHub release,
+# builds the app for Android, Windows, Linux and the web (macOS is off for now, see the build matrix); a tag attaches the builds to its GitHub release,
 # a manual run keeps them as workflow artifacts.
 name: CI
 
+# main gets only what develop has already passed and a release tag checks it again, so pushes to main run nothing.
 on:
   push:
-    branches: [main, develop]
+    branches: [develop]
     tags: ['v[0-9]+.[0-9]+.[0-9]+*']
   pull_request:
   workflow_dispatch:
+
+# A newer push to the same branch cancels the run that is still going for it (never for a release tag).
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
 
 jobs:
   quality:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
           flutter-version: 3.47.0
           cache: true
-      - run: flutter pub get
-      - run: flutter analyze
-      - run: flutter test --concurrency=1
       - name: Get the architecture linter
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: revoockv/revoockv-flutter-clean-arch
           path: .clean-arch
-      - run: python3 .clean-arch/scripts/dart_clean_arch_linter.py lib --strict
+      # The same script as before a release (tool/release.sh), so a local pass means a CI pass.
+      - run: tool/check.sh
 
   build:
     if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
@@ -44,17 +48,19 @@ jobs:
             os: ubuntu-latest
           - target: linux
             os: ubuntu-latest
-          - target: macos
-            os: macos-latest
+          # macOS is off for now: GitHub often has no free macOS runner, so the job waits and gets cancelled.
+          # Build it on a Mac (flutter build macos --release) and add it to the release by hand.
+          # - target: macos
+          #   os: macos-latest
           - target: windows
             os: windows-latest
     runs-on: ${{ matrix.os }}
     env:
       NAME: hitwave-cover-${{ github.ref_name }}-${{ matrix.target }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - if: matrix.target == 'android'
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
@@ -95,20 +101,22 @@ jobs:
           New-Item -ItemType Directory -Force dist | Out-Null
           Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath "dist/$env:NAME.zip"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: ${{ env.NAME }}
           path: dist/*
 
+  # Runs even when a build failed (GitHub sometimes has no macOS runner): the release gets the builds that exist.
+  # "Re-run failed jobs" builds the missing one and runs this job again, which adds its file to the release.
   release:
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: ${{ !cancelled() && startsWith(github.ref, 'refs/tags/v') && needs.build.result != 'skipped' }}
     needs: build
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v5
         with:
           path: dist
           merge-multiple: true
@@ -116,4 +124,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
-        run: gh release create "$TAG" --title "$TAG" --generate-notes --verify-tag dist/*
+        run: |
+          ls dist/* >/dev/null 2>&1 || { echo "no builds to release"; exit 1; }
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist/* --clobber
+          else
+            gh release create "$TAG" --title "$TAG" --generate-notes --verify-tag dist/*
+          fi

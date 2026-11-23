@@ -97,15 +97,20 @@ the lyrics without recording and vocal enhancement.
 - **Storage**: Hive on the device.
 
 ```bash
-flutter analyze
-flutter test --concurrency=1
+tool/check.sh   # analyze, tests and the architecture linter — exactly what CI runs
 ```
 
-**CI** (`.github/workflows/ci.yml`): every push to `main` or `develop` and every pull request runs
+**Release**: `tool/release.sh X.Y.Z` on `develop`, after the CI of `develop` passed. It refuses to run on a
+dirty or unpushed `develop`, on a version that is not higher or a tag that exists, and when the checks fail; then
+it merges into `main`, tags `vX.Y.Z` and pushes everything at once. A tag is never moved: a failed release is
+fixed on `develop` and released as the next patch version.
+
+**CI** (`.github/workflows/ci.yml`): every push to `develop` and every pull request runs
 `flutter analyze`, the tests and the architecture linter. A pushed tag `vX.Y.Z` also builds the app
-for Android (APK), macOS, Windows, Linux and the web and attaches the builds to the GitHub release of
-that tag; **Run workflow** in the Actions tab makes the same builds as workflow artifacts. The macOS and
-Windows builds are not signed, so the system asks to confirm the first start.
+for Android (APK), Windows, Linux and the web and attaches the builds to the GitHub release of that tag;
+**Run workflow** in the Actions tab makes the same builds as workflow artifacts. The macOS build is off for now
+(GitHub's macOS runners are often unavailable): build it on a Mac with `flutter build macos --release` and add
+it to the release by hand. The Windows build is not signed, so Windows asks to confirm the first start.
 
 **Screenshots**: run on macOS (the demo data lives in its own storage folder and is deleted afterwards),
 then copy the PNGs from the printed folder to `docs/screenshots/` (`themes.png` is `phone_settings` and the four
