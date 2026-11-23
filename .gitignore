@@ -11,7 +11,6 @@
 .svn/
 .swiftpm/
 migrate_working_dir/
-
 # IntelliJ related
 *.iml
 *.ipr
@@ -33,7 +32,7 @@ migrate_working_dir/
 /build/
 /coverage/
 
-# Symbolication related
+# Symbolization related
 app.*.symbols
 
 # Obfuscation related
@@ -43,3 +42,16 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+/ios/Runner/GoogleService-Info.plist
+/macos/Runner/GoogleService-Info.plist
+/android/app/google-services.json
+
+# Firebase
+firebase.json
+
+# OS
+Thumbs.db
+/lib/features/auth/data/data_sources/firebase_options.dart
+
+# Android Gradle Plugin 9 build output
+/android/build/

@@ -1,0 +1,19 @@
+/// Represents a cover recording for a song.
+///
+/// Contains the recording metadata and the audio data as bytes.
+final class Cover {
+  /// The unique identifier for the cover.
+  final String id;
+
+  /// The date when this cover was recorded.
+  final DateTime date;
+
+  /// The audio data as a list of bytes.
+  final List<int> audioBytes;
+
+  /// Optional notes about this cover recording.
+  final String? notes;
+
+  /// Creates a new [Cover] instance.
+  const Cover({required this.id, required this.date, required this.audioBytes, this.notes});
+}

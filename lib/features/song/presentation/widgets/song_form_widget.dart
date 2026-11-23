@@ -1,0 +1,148 @@
+import 'package:flutter/foundation.dart' show ValueListenable;
+import 'package:flutter/material.dart';
+import 'package:watch_it/watch_it.dart';
+
+import '../../../../core/domain/entities/result_state.dart';
+import '../../../../core/presentation/l10n/app_translations.dart';
+import '../../../../core/presentation/theme.dart';
+import '../controllers/song_form_controller.dart';
+import '../../domain/entities/song_failure.dart';
+
+/// Song form shared by the add and edit pages.
+///
+/// Shows the author, name, album and lyrics fields with inline validation and
+/// a submit button pinned to the bottom. Knows nothing about use cases: the
+/// button calls [onSubmit], and the page saves the song.
+final class SongFormWidget extends StatelessWidget {
+  /// Visible lines of the lyrics field before it scrolls.
+  static const int _lyricsMinLines = 8;
+
+  /// Controller holding the fields and the saving progress.
+  final SongFormController songFormController;
+
+  /// Label of the submit button.
+  final String submitLabel;
+
+  /// Called when the submit button is pressed.
+  final VoidCallback onSubmit;
+
+  /// Creates a new [SongFormWidget].
+  const SongFormWidget({
+    super.key,
+    required this.songFormController,
+    required this.submitLabel,
+    required this.onSubmit,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final Translations t = context.t;
+    return Column(
+      children: <Widget>[
+        Expanded(
+          child: Form(
+            key: songFormController.formKey,
+            child: ListView(
+              padding: const EdgeInsets.all(AppTheme.spacingMedium),
+              children: <Widget>[
+                TextFormField(
+                  controller: songFormController.authorController,
+                  textCapitalization: TextCapitalization.words,
+                  textInputAction: TextInputAction.next,
+                  decoration: InputDecoration(labelText: t.song.artist, prefixIcon: const Icon(Icons.person_outline)),
+                  validator: (String? value) => _validateRequired(t, value),
+                ),
+                const SizedBox(height: AppTheme.spacingMedium),
+                TextFormField(
+                  controller: songFormController.nameController,
+                  textCapitalization: TextCapitalization.sentences,
+                  textInputAction: TextInputAction.next,
+                  decoration: InputDecoration(
+                    labelText: t.song.songName,
+                    prefixIcon: const Icon(Icons.music_note_outlined),
+                  ),
+                  validator: (String? value) => _validateRequired(t, value),
+                ),
+                const SizedBox(height: AppTheme.spacingMedium),
+                TextFormField(
+                  controller: songFormController.albumController,
+                  textCapitalization: TextCapitalization.sentences,
+                  textInputAction: TextInputAction.next,
+                  decoration: InputDecoration(
+                    labelText: t.song.album,
+                    helperText: t.song.optional,
+                    prefixIcon: const Icon(Icons.album_outlined),
+                  ),
+                ),
+                const SizedBox(height: AppTheme.spacingMedium),
+                TextFormField(
+                  controller: songFormController.lyricsController,
+                  textCapitalization: TextCapitalization.sentences,
+                  keyboardType: TextInputType.multiline,
+                  minLines: _lyricsMinLines,
+                  maxLines: null,
+                  style: const TextStyle(height: AppTheme.readingLineHeight),
+                  decoration: InputDecoration(labelText: t.song.lyrics, alignLabelWithHint: true),
+                  validator: (String? value) => _validateRequired(t, value),
+                ),
+              ],
+            ),
+          ),
+        ),
+        SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.all(AppTheme.spacingMedium),
+            child: _SaveButtonWidget(
+              savingState: songFormController.savingStateController,
+              label: submitLabel,
+              onPressed: onSubmit,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  static String? _validateRequired(Translations t, String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return t.song.required;
+    }
+    return null;
+  }
+}
+
+/// Save button that shows progress while the save runs.
+final class _SaveButtonWidget extends WatchingWidget {
+  /// Progress of saving.
+  final ValueListenable<ResultState<void, SongFailure>> savingState;
+
+  /// Label of the button.
+  final String label;
+
+  /// Called when the button is pressed.
+  final VoidCallback onPressed;
+
+  /// Creates a new [_SaveButtonWidget].
+  const _SaveButtonWidget({required this.savingState, required this.label, required this.onPressed});
+
+  static bool _isLoadingOf(ValueListenable<ResultState<void, SongFailure>> state) => state.value.isLoading;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isLoading = watchPropertyValue(_isLoadingOf, target: savingState);
+
+    return SizedBox(
+      width: double.infinity,
+      child: FilledButton(
+        onPressed: isLoading ? null : onPressed,
+        child: isLoading
+            ? const SizedBox.square(
+                dimension: AppTheme.loadingIndicatorSize,
+                child: CircularProgressIndicator(strokeWidth: AppTheme.loadingIndicatorStroke),
+              )
+            : Text(label),
+      ),
+    );
+  }
+}
