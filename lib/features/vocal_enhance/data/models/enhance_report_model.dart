@@ -1,5 +1,6 @@
 import '../../domain/entities/enhance_report.dart';
 import 'recording_analysis_model.dart';
+import '../../domain/entities/enhance_setting.dart';
 
 /// The `report` object of the engine's `done` event.
 final class EnhanceReportModel {
@@ -68,7 +69,7 @@ final class EnhanceReportModel {
     return EnhanceReportModel(
       inputPath: entity.inputPath,
       outputPath: entity.outputPath,
-      settings: entity.settings,
+      settings: <String, double>{for (final EnhanceSetting setting in entity.settings) setting.name: setting.value},
       before: RecordingAnalysisModel.fromEntity(entity.before),
       after: RecordingAnalysisModel.fromEntity(entity.after),
       secondsSpent: entity.secondsSpent,
@@ -82,7 +83,9 @@ final class EnhanceReportModel {
     return EnhanceReport(
       inputPath: inputPath,
       outputPath: outputPath,
-      settings: settings,
+      settings: <EnhanceSetting>[
+        for (final MapEntry<String, double> entry in settings.entries) EnhanceSetting(entry.key, entry.value),
+      ],
       before: before.toEntity(),
       after: after.toEntity(),
       secondsSpent: secondsSpent,

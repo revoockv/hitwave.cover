@@ -63,17 +63,17 @@ final class HistoryRepositoryImpl implements HistoryRepository, DisposableResour
   @override
   Future<Result<void, HistoryFailure>> importHistory(UsageHistory history) async {
     try {
-      for (final MapEntry<String, DateTime> entry in history.songsOpenedAt.entries) {
-        final DateTime? current = _songsOpenedAt[entry.key];
-        if (current != null && !entry.value.isAfter(current)) continue;
-        _songsOpenedAt[entry.key] = entry.value;
-        await _store.putSongOpened(entry.key, entry.value);
+      for (final UsageTime opened in history.songsOpened) {
+        final DateTime? current = _songsOpenedAt[opened.id];
+        if (current != null && !opened.at.isAfter(current)) continue;
+        _songsOpenedAt[opened.id] = opened.at;
+        await _store.putSongOpened(opened.id, opened.at);
       }
-      for (final MapEntry<String, DateTime> entry in history.coversPlayedAt.entries) {
-        final DateTime? current = _coversPlayedAt[entry.key];
-        if (current != null && !entry.value.isAfter(current)) continue;
-        _coversPlayedAt[entry.key] = entry.value;
-        await _store.putCoverPlayed(entry.key, entry.value);
+      for (final UsageTime played in history.coversPlayed) {
+        final DateTime? current = _coversPlayedAt[played.id];
+        if (current != null && !played.at.isAfter(current)) continue;
+        _coversPlayedAt[played.id] = played.at;
+        await _store.putCoverPlayed(played.id, played.at);
       }
       _publish();
       return Result.ok;
@@ -130,8 +130,8 @@ final class HistoryRepositoryImpl implements HistoryRepository, DisposableResour
 
   void _publish() {
     _history.value = UsageHistory(
-      songsOpenedAt: Map<String, DateTime>.unmodifiable(_songsOpenedAt),
-      coversPlayedAt: Map<String, DateTime>.unmodifiable(_coversPlayedAt),
+      songsOpened: UsageHistoryModel.usageTimes(_songsOpenedAt),
+      coversPlayed: UsageHistoryModel.usageTimes(_coversPlayedAt),
     );
   }
 }

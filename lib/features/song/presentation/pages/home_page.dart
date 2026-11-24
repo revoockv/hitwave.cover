@@ -12,6 +12,7 @@ import '../../../practice/presentation/di/practice_getters.dart';
 import '../../../practice/domain/entities/practice_entry_filter.dart';
 import '../../../practice/presentation/widgets/practice_stats_widget.dart';
 import '../../../practice/presentation/widgets/practice_timeline_widget.dart';
+import '../../../recordings/domain/entities/cover_counts.dart';
 import '../../../recordings/domain/entities/recording.dart';
 import '../../../recordings/domain/entities/shared_song.dart';
 import '../../../recordings/presentation/di/recordings_getters.dart';
@@ -221,15 +222,6 @@ final class HomePage extends WatchingWidget {
 
   static bool _isEmptyOf(TextEditingController searchController) => searchController.text.trim().isEmpty;
 
-  /// How many covers every song has.
-  static Map<String, int> _coverCounts(List<Recording> recordings) {
-    final Map<String, int> coverCounts = <String, int>{};
-    for (final Recording recording in recordings) {
-      coverCounts[recording.songId] = (coverCounts[recording.songId] ?? 0) + 1;
-    }
-    return coverCounts;
-  }
-
   static int _countOf(List<Song> songs, String artist) => songs.where((Song song) => song.author == artist).length;
 
   static SharedSong? _sharedSong(Song? song) => song == null ? null : SharedSong(author: song.author, name: song.name);
@@ -252,7 +244,7 @@ final class HomePage extends WatchingWidget {
   }
 
   /// [songs] in the chosen order; ties and the artist order go by name.
-  static List<Song> _orderSongs(List<Song> songs, SongSort sort, UsageHistory history, Map<String, int> coverCounts) {
+  static List<Song> _orderSongs(List<Song> songs, SongSort sort, UsageHistory history, CoverCounts coverCounts) {
     int byName(Song a, Song b) => a.name.toLowerCase().compareTo(b.name.toLowerCase());
     final DateTime never = DateTime.fromMillisecondsSinceEpoch(0);
     final List<Song> ordered = songs.toList();
@@ -266,12 +258,12 @@ final class HomePage extends WatchingWidget {
         });
       case SongSort.recent:
         ordered.sort((Song a, Song b) {
-          final int byTime = (history.songsOpenedAt[b.id] ?? never).compareTo(history.songsOpenedAt[a.id] ?? never);
+          final int byTime = (history.songOpenedAt(b.id) ?? never).compareTo(history.songOpenedAt(a.id) ?? never);
           return byTime != 0 ? byTime : byName(a, b);
         });
       case SongSort.covers:
         ordered.sort((Song a, Song b) {
-          final int byCovers = (coverCounts[b.id] ?? 0).compareTo(coverCounts[a.id] ?? 0);
+          final int byCovers = coverCounts.of(b.id).compareTo(coverCounts.of(a.id));
           return byCovers != 0 ? byCovers : byName(a, b);
         });
     }
@@ -280,19 +272,17 @@ final class HomePage extends WatchingWidget {
 
   /// The songs opened last that still exist, newest first.
   static List<Song> _recentSongs(Map<String, Song> songsById, UsageHistory history) {
-    final List<MapEntry<String, DateTime>> opened =
-        history.songsOpenedAt.entries
-            .where((MapEntry<String, DateTime> entry) => songsById.containsKey(entry.key))
-            .toList()
-          ..sort((MapEntry<String, DateTime> a, MapEntry<String, DateTime> b) => b.value.compareTo(a.value));
-    return <Song>[for (final MapEntry<String, DateTime> entry in opened.take(_recentCount)) songsById[entry.key]!];
+    final List<UsageTime> opened =
+        history.songsOpened.where((UsageTime time) => songsById.containsKey(time.id)).toList()
+          ..sort((UsageTime a, UsageTime b) => b.at.compareTo(a.at));
+    return <Song>[for (final UsageTime time in opened.take(_recentCount)) songsById[time.id]!];
   }
 
   /// The covers played last that still exist, newest first.
   static List<Recording> _recentCovers(List<Recording> recordings, UsageHistory history) {
     final List<Recording> played =
-        recordings.where((Recording recording) => history.coversPlayedAt.containsKey(recording.id)).toList()
-          ..sort((Recording a, Recording b) => history.coversPlayedAt[b.id]!.compareTo(history.coversPlayedAt[a.id]!));
+        recordings.where((Recording recording) => history.coverPlayedAt(recording.id) != null).toList()
+          ..sort((Recording a, Recording b) => history.coverPlayedAt(b.id)!.compareTo(history.coverPlayedAt(a.id)!));
     return played.take(_recentCount).toList();
   }
 
@@ -419,7 +409,7 @@ final class _HomeTabWidget extends WatchingWidget {
       today: PracticeStats.dayOf(now),
       recentSongs: HomePage._recentSongs(songsById, history),
       recentCovers: HomePage._recentCovers(recordings, history),
-      coverCounts: HomePage._coverCounts(recordings),
+      coverCounts: CoverCounts.fromRecordings(recordings),
       coverTitleOf: (Recording recording) => HomePage._songTitle(t, songsById[recording.songId]),
       coverSongPressedOf: (Recording recording) => _openerOf(songsById[recording.songId]),
       coverSongOf: (Recording recording) => HomePage._sharedSong(songsById[recording.songId]),
@@ -464,7 +454,7 @@ final class _SongsTabWidget extends WatchingWidget {
     final List<Recording> recordings = watch(watchRecordingsUseCase()).value;
     final UsageHistory history = watch(watchUsageHistoryUseCase()).value;
 
-    final Map<String, int> coverCounts = HomePage._coverCounts(recordings);
+    final CoverCounts coverCounts = CoverCounts.fromRecordings(recordings);
 
     return SongsTabWidget(
       isLibraryEmpty: songs.isEmpty,

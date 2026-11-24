@@ -52,7 +52,7 @@ final class PracticeStatsWidget extends WatchingWidget {
     };
     final Map<String, Song> songsById = <String, Song>{for (final Song song in songs) song.id: song};
     VoidCallback? pressedOf(String songId) => _pressedOf(songsById[songId]);
-    final PracticeDay? day = stats.days[selectedDay];
+    final PracticeDay? day = stats.dayOn(selectedDay);
     final ThemeData theme = Theme.of(context);
 
     return ListView(
@@ -67,7 +67,7 @@ final class PracticeStatsWidget extends WatchingWidget {
               month: month,
               selectedDay: selectedDay,
               today: PracticeStats.dayOf(now),
-              days: stats.days,
+              stats: stats,
               onDaySelected: practicePageController.selectDay,
               onPreviousMonth: practicePageController.showPreviousMonth,
               onNextMonth: practicePageController.showNextMonth,

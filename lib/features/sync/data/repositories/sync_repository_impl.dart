@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -28,6 +27,7 @@ import '../data_sources/hive_sync_tombstone_service.dart';
 import '../data_sources/sync_client_data_source.dart';
 import '../data_sources/sync_server_data_source.dart';
 import '../models/sync_counts_model.dart';
+import '../models/sync_envelope_model.dart';
 import '../models/sync_offer_model.dart';
 import '../models/sync_plan_model.dart';
 import '../models/sync_snapshot_model.dart';
@@ -60,8 +60,6 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
   static const String _rawSuffix = '_raw.wav';
   static const String _enhancedSuffix = '_enhanced.wav';
   static const String _newSongId = '';
-  static const String _snapshotField = 'snapshot';
-  static const String _planField = 'plan';
   static const String _idSeparator = ':';
   static const String _practiceRef = 'sessions';
   static const String _titleSeparator = ' — ';
@@ -278,13 +276,9 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
   @override
   Future<String> receiveSnapshot({required String json, required String receivedJson}) async {
     try {
-      final Map<String, dynamic> envelope = jsonDecode(json) as Map<String, dynamic>;
-      final SyncPlanModel plan = SyncPlanModel.fromJson(envelope[_planField] as Map<String, dynamic>);
-      final _Applied applied = await _applyPlan(plan);
-      final SyncCountsModel merged = await _merge(
-        SyncSnapshotModel.fromJson(envelope[_snapshotField] as Map<String, dynamic>),
-        _received,
-      );
+      final SyncEnvelopeModel envelope = SyncEnvelopeModel.fromJsonText(json);
+      final _Applied applied = await _applyPlan(envelope.plan);
+      final SyncCountsModel merged = await _merge(envelope.snapshot, _received);
       final SyncCountsModel received = merged.plus(deleted: applied.deleted, updated: applied.updated);
       final SyncCountsModel sent = SyncCountsModel.fromJsonText(receivedJson);
       _state.value = DoneSyncState(_summary(here: received, there: sent));
@@ -381,7 +375,7 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
         await _client.sendSnapshot(
           base: base,
           token: token,
-          json: jsonEncode(<String, dynamic>{_snapshotField: local.toJson(), _planField: decisions.plan.toJson()}),
+          json: SyncEnvelopeModel(snapshot: local, plan: decisions.plan).toJsonText(),
           receivedJson: received.toJsonText(),
         ),
       );
@@ -766,11 +760,11 @@ final class SyncRepositoryImpl implements SyncRepository, SyncHostHandler, Dispo
     _throwOnFailure(
       await _history.importHistory(
         UsageHistory(
-          songsOpenedAt: <String, DateTime>{
-            for (final MapEntry<String, DateTime> entry in remote.history.songsOpenedAt.entries)
-              if (songIds[entry.key] != null) songIds[entry.key]!: entry.value,
-          },
-          coversPlayedAt: remote.history.coversPlayedAt,
+          songsOpened: <UsageTime>[
+            for (final UsageTime opened in remote.history.songsOpened)
+              if (songIds[opened.id] != null) UsageTime(id: songIds[opened.id]!, at: opened.at),
+          ],
+          coversPlayed: remote.history.coversPlayed,
         ),
       ),
     );

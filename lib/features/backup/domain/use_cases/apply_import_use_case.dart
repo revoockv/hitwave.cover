@@ -1,6 +1,6 @@
 import '../../../../core/domain/entities/result.dart';
 import '../entities/backup_failure.dart';
-import '../entities/import_choice.dart';
+import '../entities/import_decision.dart';
 import '../entities/import_summary.dart';
 import '../repositories/backup_repository.dart';
 
@@ -11,6 +11,7 @@ final class ApplyImportUseCase {
   /// Creates an [ApplyImportUseCase].
   ApplyImportUseCase(this._repository);
 
-  /// Imports the opened backup; [choices] says what to do with each conflict (by its index).
-  Future<Result<ImportSummary, BackupFailure>> call(Map<int, ImportChoice> choices) => _repository.applyImport(choices);
+  /// Imports the opened backup; [decisions] say what to do with the conflicts, one without a decision is skipped.
+  Future<Result<ImportSummary, BackupFailure>> call(List<ImportDecision> decisions) =>
+      _repository.applyImport(decisions);
 }

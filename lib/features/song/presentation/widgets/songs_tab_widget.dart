@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../recordings/domain/entities/cover_counts.dart';
 
 import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../../core/presentation/theme.dart';
@@ -18,7 +19,7 @@ final class SongsTabWidget extends StatelessWidget {
   final List<Song> songs;
 
   /// Number of covers by song id.
-  final Map<String, int> coverCounts;
+  final CoverCounts coverCounts;
 
   /// The search text.
   final TextEditingController searchController;

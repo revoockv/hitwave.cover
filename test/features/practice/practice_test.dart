@@ -112,7 +112,7 @@ void main() {
       expect(stats.totalTakes, 2);
       expect(stats.currentStreak, 5); // 8–12 November
       expect(stats.longestStreak, 5);
-      final today = stats.days[DateTime(2026, 11, 12)]!;
+      final today = stats.dayOn(DateTime(2026, 11, 12))!;
       expect(today.time, const Duration(minutes: 25));
       expect(today.takes, 1);
       expect(today.songs.map((s) => s.songId), <String>['a', 'b']);

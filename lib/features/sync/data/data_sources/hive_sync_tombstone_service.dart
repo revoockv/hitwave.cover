@@ -30,7 +30,7 @@ final class HiveSyncTombstoneService {
   List<SyncSongKeyModel> deletedSongs() => <SyncSongKeyModel>[
     for (final MapEntry<dynamic, dynamic> entry in _tombstones.toMap().entries)
       if (entry.key is String && (entry.key as String).startsWith(_songPrefix))
-        SyncSongKeyModel.fromJson(entry.value as Map<dynamic, dynamic>),
+        SyncSongKeyModel.fromStored(entry.value),
   ];
 
   /// The deleted covers by id, with the time of the deletion when it is known.

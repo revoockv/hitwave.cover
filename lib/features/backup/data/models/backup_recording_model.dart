@@ -61,7 +61,8 @@ final class BackupRecordingModel {
   }
 
   /// Reads a map of the `recordings` list.
-  factory BackupRecordingModel.fromJson(Map<String, dynamic> json) {
+  factory BackupRecordingModel.fromJson(Object? value) {
+    final Map<dynamic, dynamic> json = value! as Map<dynamic, dynamic>;
     return BackupRecordingModel(
       songId: json[_songIdField] as String,
       recordedAt: DateTime.parse(json[_recordedAtField] as String),

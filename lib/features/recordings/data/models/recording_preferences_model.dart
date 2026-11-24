@@ -27,6 +27,10 @@ final class RecordingPreferencesModel {
     this.microphoneLabel,
   });
 
+  /// Reads what Hive returned: `null` when nothing (or no map) was stored.
+  static RecordingPreferencesModel? fromStored(Object? value) =>
+      value is Map<dynamic, dynamic> ? RecordingPreferencesModel.fromMap(value) : null;
+
   /// Reads a stored map; a missing field keeps its first-start value.
   factory RecordingPreferencesModel.fromMap(Map<dynamic, dynamic> map) => RecordingPreferencesModel(
     record: map[_recordField] as bool? ?? RecordingPreferences.initial.record,

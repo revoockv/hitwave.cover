@@ -2,13 +2,28 @@ import 'package:flutter/foundation.dart' show ValueNotifier;
 
 import '../../domain/entities/recording_version.dart';
 
+/// The version chosen on the cards of a list; a card nobody chose on shows the enhanced one.
+final class ChosenVersions {
+  /// No card chosen on yet.
+  static const ChosenVersions none = ChosenVersions._(<String, RecordingVersion>{});
+
+  final Map<String, RecordingVersion> _byRecordingId;
+
+  const ChosenVersions._(this._byRecordingId);
+
+  /// The version chosen on the card of [recordingId].
+  RecordingVersion of(String recordingId) => _byRecordingId[recordingId] ?? RecordingVersion.enhanced;
+
+  /// These choices with [version] chosen on the card of [recordingId].
+  ChosenVersions withChoice(String recordingId, RecordingVersion version) =>
+      ChosenVersions._(<String, RecordingVersion>{..._byRecordingId, recordingId: version});
+}
+
 /// UI state of a list of recordings: the version (original or enhanced) chosen on each card and
 /// the cards whose MP3 is being made for sharing.
 final class RecordingVersionsController {
-  /// The version chosen on each card, by recording id; a card not in it shows the enhanced one.
-  final ValueNotifier<Map<String, RecordingVersion>> versionsController = ValueNotifier<Map<String, RecordingVersion>>(
-    const <String, RecordingVersion>{},
-  );
+  /// The version chosen on each card.
+  final ValueNotifier<ChosenVersions> versionsController = ValueNotifier<ChosenVersions>(ChosenVersions.none);
 
   /// Ids of the recordings whose MP3 is being made for sharing.
   final ValueNotifier<Set<String>> sharingController = ValueNotifier<Set<String>>(const <String>{});
@@ -24,11 +39,11 @@ final class RecordingVersionsController {
   }
 
   /// The version chosen on the card of [recordingId].
-  RecordingVersion versionOf(String recordingId) => versionsController.value[recordingId] ?? RecordingVersion.enhanced;
+  RecordingVersion versionOf(String recordingId) => versionsController.value.of(recordingId);
 
   /// Chooses [version] on the card of [recordingId] only.
   void choose(String recordingId, RecordingVersion version) {
-    versionsController.value = <String, RecordingVersion>{...versionsController.value, recordingId: version};
+    versionsController.value = versionsController.value.withChoice(recordingId, version);
   }
 
   /// Disposes the notifier.

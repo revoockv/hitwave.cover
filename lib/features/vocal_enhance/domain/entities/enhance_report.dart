@@ -1,3 +1,4 @@
+import 'enhance_setting.dart';
 import 'recording_analysis.dart';
 
 /// Result of enhancing one recording.
@@ -9,7 +10,7 @@ final class EnhanceReport {
   final String outputPath;
 
   /// Every setting of the chain as it was applied.
-  final Map<String, double> settings;
+  final List<EnhanceSetting> settings;
 
   /// Levels of the raw recording.
   final RecordingAnalysis before;
@@ -37,4 +38,12 @@ final class EnhanceReport {
     this.keptFromSeconds = 0,
     this.keptToSeconds,
   });
+
+  /// The value [name] was applied with; `null` when the chain has no such setting.
+  double? valueOf(String name) {
+    for (final EnhanceSetting setting in settings) {
+      if (setting.name == name) return setting.value;
+    }
+    return null;
+  }
 }

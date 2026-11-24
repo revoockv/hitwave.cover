@@ -41,5 +41,5 @@ final class HivePracticeService {
   Future<void> markDeleted(Iterable<String> ids) =>
       _deletedBox!.putAll(<String, String>{for (final String id in ids) id: DateTime.now().toUtc().toIso8601String()});
 
-  PracticeSessionModel _toModel(dynamic value) => PracticeSessionModel.fromMap(value as Map<dynamic, dynamic>);
+  PracticeSessionModel _toModel(dynamic value) => PracticeSessionModel.fromStored(value);
 }

@@ -26,6 +26,7 @@ import '../models/recording_model.dart';
 import '../../../vocal_enhance/domain/entities/vocal_enhance_failure.dart';
 import '../../domain/entities/enhance_failure.dart';
 import '../../domain/entities/recordings_failure.dart';
+import '../../../vocal_enhance/domain/entities/enhance_setting.dart';
 
 /// [RecordingsRepository] on the microphone, the Hive library and the audio engine.
 ///
@@ -397,7 +398,7 @@ final class RecordingsRepositoryImpl implements RecordingsRepository, Disposable
         preset: EnhancePreset.natural,
         roomToneSeconds: null,
         trimSilence: model.trimSilence,
-        settings: const <String, double>{},
+        settings: const <EnhanceSetting>[],
       );
     } finally {
       _enhancingId.value = null;

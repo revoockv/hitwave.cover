@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../recordings/domain/entities/cover_counts.dart';
 
 import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../../core/presentation/theme.dart';
@@ -67,12 +68,12 @@ final class SongListModeWidget extends StatelessWidget {
   final void Function(Song song) onSongDelete;
 
   /// Number of covers by song id.
-  final Map<String, int> coverCounts;
+  final CoverCounts coverCounts;
 
   /// Creates a new [SongListModeWidget].
   const SongListModeWidget({
     required this.songs,
-    this.coverCounts = const <String, int>{},
+    required this.coverCounts,
     required this.onSongTap,
     required this.onSongEdit,
     required this.onSongDelete,
@@ -91,7 +92,7 @@ final class SongListModeWidget extends StatelessWidget {
           onTap: onSongTap,
           onEdit: onSongEdit,
           onDelete: onSongDelete,
-          coverCount: coverCounts[song.id] ?? 0,
+          coverCount: coverCounts.of(song.id),
         );
       },
     );
@@ -125,12 +126,12 @@ final class ArtistModeWidget extends StatelessWidget {
   final void Function(Song song) onSongDelete;
 
   /// Number of covers by song id.
-  final Map<String, int> coverCounts;
+  final CoverCounts coverCounts;
 
   /// Creates a new [ArtistModeWidget].
   const ArtistModeWidget({
     required this.songs,
-    this.coverCounts = const <String, int>{},
+    required this.coverCounts,
     required this.selectedArtist,
     required this.onArtistSelected,
     required this.onSongTap,
@@ -156,7 +157,7 @@ final class ArtistModeWidget extends StatelessWidget {
         onTap: onSongTap,
         onEdit: onSongEdit,
         onDelete: onSongDelete,
-        coverCount: coverCounts[artistSongs[index].id] ?? 0,
+        coverCount: coverCounts.of(artistSongs[index].id),
       ),
     );
   }
@@ -177,11 +178,11 @@ final class SongsWidget extends StatelessWidget {
     required this.onSongDelete,
     required this.onAddPressed,
     this.selectedArtist = '',
-    this.coverCounts = const <String, int>{},
+    required this.coverCounts,
   });
 
   /// Number of covers by song id.
-  final Map<String, int> coverCounts;
+  final CoverCounts coverCounts;
 
   /// The list of songs.
   final List<Song> songs;
