@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hitwave.cover/core/presentation/l10n/app_translations.dart';
 import 'package:hitwave.cover/features/backup/domain/entities/import_choice.dart';
 import 'package:hitwave.cover/features/backup/domain/entities/import_conflict.dart';
+import 'package:hitwave.cover/features/backup/presentation/l10n/backup_texts.dart';
 import 'package:hitwave.cover/features/backup/presentation/widgets/import_conflict_dialog_widget.dart';
 
 void main() {
@@ -42,7 +43,7 @@ void main() {
                   onPressed: () async => answer = await showDialog<ImportConflictAnswer>(
                     context: context,
                     builder: (BuildContext context) =>
-                        const ImportConflictDialogWidget(conflict: conflict, othersCount: 5),
+                        ImportConflictDialogWidget(othersCount: 5, texts: context.t.importConflict(conflict, 5)),
                   ),
                   child: const Text('open'),
                 ),

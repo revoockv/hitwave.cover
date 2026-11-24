@@ -200,8 +200,10 @@ final class SettingsPage extends WatchingWidget {
       final ImportConflictAnswer? answer = await showDialog<ImportConflictAnswer>(
         context: context,
         barrierDismissible: false,
-        builder: (BuildContext context) =>
-            ImportConflictDialogWidget(conflict: conflicts[i], othersCount: conflicts.length - i - 1),
+        builder: (BuildContext context) => ImportConflictDialogWidget(
+          othersCount: conflicts.length - i - 1,
+          texts: context.t.importConflict(conflicts[i], conflicts.length - i - 1),
+        ),
       );
       if (answer == null) return null;
       final Iterable<ImportConflict> answered = answer.isForOthers ? conflicts.skip(i) : <ImportConflict>[conflicts[i]];
@@ -229,7 +231,14 @@ final class SettingsPage extends WatchingWidget {
     if (kIsWeb) return false;
     return showDialog<bool>(
       context: context,
-      builder: (BuildContext context) => BackupOptionsDialogWidget(title: title, message: message, confirmLabel: title),
+      builder: (BuildContext context) => BackupOptionsDialogWidget(
+        title: title,
+        message: message,
+        confirmLabel: title,
+        includeRecordingsLabel: context.t.backup.includeRecordings,
+        recordingsNote: context.t.backup.recordingsNote,
+        cancelLabel: context.t.common.cancel,
+      ),
     );
   }
 
