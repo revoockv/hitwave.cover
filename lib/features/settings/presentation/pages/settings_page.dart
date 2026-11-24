@@ -33,11 +33,11 @@ import '../../domain/entities/app_language.dart';
 import '../../domain/entities/app_settings.dart';
 import '../../domain/entities/app_theme_style.dart';
 import '../../domain/entities/settings_failure.dart';
-import '../controllers/clear_data_controller.dart';
+import '../../domain/entities/clearable_data.dart';
 import '../di/settings_getters.dart';
 import '../l10n/settings_texts.dart';
 import '../widgets/accent_color_picker_widget.dart';
-import '../widgets/clear_data_dialog_widget.dart';
+import 'clear_data_dialog_page.dart';
 import '../widgets/language_picker_widget.dart';
 import '../widgets/theme_picker_widget.dart';
 
@@ -81,17 +81,20 @@ final class SettingsPage extends WatchingWidget {
           ListTile(title: Text(t.settings.theme, style: sectionStyle)),
           ThemePickerWidget(
             selected: settings.themeStyle,
+            labelOf: t.themeStyleLabel,
             onSelected: (AppThemeStyle style) => _onThemeStyleSelected(context, style),
           ),
           ListTile(title: Text(t.settings.accentColor, style: sectionStyle)),
           AccentColorPickerWidget(
             selected: settings.accentColor,
+            labelOf: t.accentColorLabel,
             onSelected: (AccentColor color) => _onAccentColorSelected(context, color),
           ),
           const SizedBox(height: AppTheme.spacingMedium),
           ListTile(title: Text(t.settings.language, style: sectionStyle)),
           LanguagePickerWidget(
             selected: settings.language,
+            labelOf: t.languageLabel,
             onSelected: (AppLanguage language) => _onLanguageSelected(context, language),
           ),
           ListTile(title: Text(t.settings.data, style: sectionStyle)),
@@ -239,7 +242,7 @@ final class SettingsPage extends WatchingWidget {
     final Translations t = context.t;
     final Set<ClearableData>? chosen = await showDialog<Set<ClearableData>>(
       context: context,
-      builder: (BuildContext context) => const ClearDataDialogWidget(),
+      builder: (BuildContext context) => const ClearDataDialogPage(),
     );
     if (chosen == null || chosen.isEmpty) return;
     final String? failure = await _clear(t, chosen);

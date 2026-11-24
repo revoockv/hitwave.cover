@@ -1,20 +1,36 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../../core/presentation/theme.dart';
 import '../../domain/entities/accent_color.dart';
-import '../l10n/settings_texts.dart';
+
+/// How an [AccentColor] is painted.
+extension AccentColorPaint on AccentColor {
+  /// The color.
+  Color get color => switch (this) {
+    AccentColor.orange => AppTheme.accentOrange,
+    AccentColor.blue => AppTheme.accentBlue,
+    AccentColor.indigo => AppTheme.accentIndigo,
+    AccentColor.violet => AppTheme.accentViolet,
+    AccentColor.pink => AppTheme.accentPink,
+    AccentColor.red => AppTheme.accentRed,
+    AccentColor.green => AppTheme.accentGreen,
+    AccentColor.teal => AppTheme.accentTeal,
+  };
+}
 
 /// The accent colors as round swatches; [selected] has a check mark.
 final class AccentColorPickerWidget extends StatelessWidget {
   /// The accent now.
   final AccentColor selected;
 
+  /// The name of a color as shown to the user.
+  final String Function(AccentColor color) labelOf;
+
   /// Called with the color the user picked.
   final ValueChanged<AccentColor> onSelected;
 
   /// Creates the picker.
-  const AccentColorPickerWidget({required this.selected, required this.onSelected, super.key});
+  const AccentColorPickerWidget({required this.selected, required this.labelOf, required this.onSelected, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +42,13 @@ final class AccentColorPickerWidget extends StatelessWidget {
         runSpacing: AppTheme.spacingMedium,
         children: <Widget>[
           for (final AccentColor color in AccentColor.values)
-            _SwatchWidget(color: color, isSelected: color == selected, ring: ring, onSelected: onSelected),
+            _SwatchWidget(
+              color: color,
+              label: labelOf(color),
+              isSelected: color == selected,
+              ring: ring,
+              onSelected: onSelected,
+            ),
         ],
       ),
     );
@@ -39,21 +61,27 @@ final class _SwatchWidget extends StatelessWidget {
   static const double _selectedBorderWidth = 3;
 
   final AccentColor color;
+  final String label;
   final bool isSelected;
   final Color ring;
   final ValueChanged<AccentColor> onSelected;
 
-  const _SwatchWidget({required this.color, required this.isSelected, required this.ring, required this.onSelected});
+  const _SwatchWidget({
+    required this.color,
+    required this.label,
+    required this.isSelected,
+    required this.ring,
+    required this.onSelected,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final String name = color.text(context.t);
     return Tooltip(
-      message: name,
+      message: label,
       child: Semantics(
         selected: isSelected,
         button: true,
-        label: name,
+        label: label,
         child: InkResponse(
           onTap: _onTap,
           radius: _size / 2,

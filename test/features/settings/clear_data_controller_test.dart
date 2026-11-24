@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hitwave.cover/features/settings/domain/entities/clearable_data.dart';
 import 'package:hitwave.cover/features/settings/presentation/controllers/clear_data_controller.dart';
 
 void main() {

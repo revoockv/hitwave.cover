@@ -1,19 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-/// Data the user can clear.
-enum ClearableData {
-  /// Every song with its covers.
-  songs,
-
-  /// Every cover.
-  covers,
-
-  /// The practice statistics.
-  practice,
-
-  /// The recently opened songs and played covers.
-  history,
-}
+import '../../domain/entities/clearable_data.dart';
 
 /// UI state of the clear-data dialog: what is chosen to be cleared.
 ///
