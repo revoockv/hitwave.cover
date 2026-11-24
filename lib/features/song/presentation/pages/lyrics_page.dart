@@ -28,6 +28,7 @@ import '../../../recordings/domain/entities/recordings_failure.dart';
 import '../../../recordings/presentation/l10n/recordings_texts.dart';
 import '../../domain/entities/song_failure.dart';
 import '../l10n/song_texts.dart';
+import '../../../tuner/presentation/pages/tuner_page.dart';
 
 /// Lyrics display page with auto-scroll functionality.
 ///
@@ -109,6 +110,12 @@ final class LyricsPage extends WatchingWidget {
       child: Scaffold(
         appBar: AppBar(
           actions: <Widget>[
+            IconButton(
+              tooltip: t.tuner.open,
+              // The microphone records the take: the tuner waits until the take ends.
+              onPressed: isRecording ? null : () => _openTuner(context),
+              icon: const Icon(Icons.graphic_eq),
+            ),
             IconButton(
               tooltip: t.recordings.title,
               onPressed: () => _openRecordings(context),
@@ -416,6 +423,11 @@ final class LyricsPage extends WatchingWidget {
         ),
       ),
     );
+  }
+
+  /// Opens the tuner; it frees the microphone when its page closes.
+  Future<void> _openTuner(BuildContext context) async {
+    await Navigator.of(context).push(MaterialPageRoute<void>(builder: (BuildContext context) => const TunerPage()));
   }
 
   /// Opens the recordings of this song; playback stops when the sheet closes.
