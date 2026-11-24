@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../../core/presentation/theme.dart';
-import '../../domain/entities/practice_day.dart';
+import '../../domain/entities/practice_stats.dart';
 import 'practice_day_cell_widget.dart';
 
 /// Month calendar with a mark on every day of practice ([PracticeDayCellWidget]); weeks start
@@ -21,8 +21,8 @@ final class PracticeCalendarWidget extends StatelessWidget {
   /// Today (midnight).
   final DateTime today;
 
-  /// Days with practice, by midnight.
-  final Map<DateTime, PracticeDay> days;
+  /// The practice whose days are marked.
+  final PracticeStats stats;
 
   /// Called with the tapped day.
   final ValueChanged<DateTime> onDaySelected;
@@ -39,7 +39,7 @@ final class PracticeCalendarWidget extends StatelessWidget {
     required this.month,
     required this.selectedDay,
     required this.today,
-    required this.days,
+    required this.stats,
     required this.onDaySelected,
     required this.onPreviousMonth,
     required this.onNextMonth,
@@ -112,7 +112,7 @@ final class PracticeCalendarWidget extends StatelessWidget {
 
   PracticeDayCellWidget _cell(DateTime day) => PracticeDayCellWidget(
     day: day,
-    practice: days[day],
+    practice: stats.dayOn(day),
     isSelected: day == selectedDay,
     isToday: day == today,
     onSelected: onDaySelected,

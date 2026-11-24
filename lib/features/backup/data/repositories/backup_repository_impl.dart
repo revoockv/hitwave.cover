@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -11,7 +10,6 @@ import '../../../../core/domain/entities/result.dart';
 import '../../../recordings/domain/entities/imported_recording.dart';
 import '../../../recordings/domain/entities/recording.dart';
 import '../../../recordings/domain/repositories/recordings_repository.dart';
-import '../../../song/domain/entities/cover.dart';
 import '../../../song/domain/entities/song.dart';
 import '../../../song/domain/repositories/song_repository.dart';
 import '../../domain/repositories/backup_repository.dart';
@@ -19,10 +17,12 @@ import '../data_sources/backup_archive_data_source.dart';
 import '../data_sources/backup_data_source.dart';
 import '../models/backup_data_model.dart';
 import '../models/backup_recording_model.dart';
+import '../models/backup_song_model.dart';
 import '../../../recordings/domain/entities/recordings_failure.dart';
 import '../../../song/domain/entities/song_failure.dart';
 import '../../domain/entities/backup_failure.dart';
 import '../../domain/entities/import_choice.dart';
+import '../../domain/entities/import_decision.dart';
 import '../../domain/entities/import_conflict.dart';
 import '../../domain/entities/import_plan.dart';
 import '../../domain/entities/import_summary.dart';
@@ -43,16 +43,6 @@ final class BackupRepositoryImpl implements BackupRepository, DisposableResource
   static const String _statusCancelled = 'cancelled';
   static const String _statusFailed = 'failed';
   static const String _newDocumentId = '';
-  static const String _idField = 'id';
-  static const String _authorField = 'author';
-  static const String _nameField = 'name';
-  static const String _albumField = 'album';
-  static const String _lyricsField = 'lyrics';
-  static const String _coverIdsField = 'coverIds';
-  static const String _scrollSpeedField = 'scrollSpeed';
-  static const String _leadInField = 'leadIn';
-  static const String _wideScrollSpeedField = 'wideScrollSpeed';
-  static const String _wideLeadInField = 'wideLeadIn';
   static const String _jsonFileName = 'backup.json';
   static const String _zipFileName = 'backup.zip';
   static const String _separator = '/';
@@ -141,8 +131,8 @@ final class BackupRepositoryImpl implements BackupRepository, DisposableResource
 
       final BackupDataModel model = BackupDataModel(
         exportedAt: DateTime.now(),
-        songs: songs.map(_encodeSong).toList(),
-        recordings: recordingModels.map(_encodeRecording).toList(),
+        songs: songs.map(BackupSongModel.fromEntity).toList(),
+        recordings: recordingModels,
       );
 
       if (_dataSource.supportsDirectorySelection) {
@@ -167,9 +157,7 @@ final class BackupRepositoryImpl implements BackupRepository, DisposableResource
           '$_exportToFileLog$filePath$_closingQuoteLog',
         );
       } else {
-        final Map<String, dynamic> jsonMap = jsonDecode(model.toJson()) as Map<String, dynamic>;
-        final String jsonString = const JsonEncoder.withIndent(_jsonIndent).convert(jsonMap);
-        await _dataSource.triggerExportDownload(jsonString);
+        await _dataSource.triggerExportDownload(model.toJson(indent: _jsonIndent));
         _logger.i('$_exportSuccessLog${songs.length}$_exportWebLog');
       }
 
@@ -199,8 +187,8 @@ final class BackupRepositoryImpl implements BackupRepository, DisposableResource
       final List<BackupRecordingModel> recordingModels = recordings.map(BackupRecordingModel.fromEntity).toList();
       final BackupDataModel model = BackupDataModel(
         exportedAt: DateTime.now(),
-        songs: songs.map(_encodeSong).toList(),
-        recordings: recordingModels.map(_encodeRecording).toList(),
+        songs: songs.map(BackupSongModel.fromEntity).toList(),
+        recordings: recordingModels,
       );
 
       final Directory folder = await Directory.systemTemp.createTemp(_shareFolderPrefix);
@@ -260,7 +248,7 @@ final class BackupRepositoryImpl implements BackupRepository, DisposableResource
       final Map<int, String> existingIds = <int, String>{};
       final List<ImportConflict> conflicts = <ImportConflict>[];
       for (int i = 0; i < model.songs.length; i++) {
-        final Song song = _decodeSong(model.songs[i]);
+        final Song song = model.songs[i].toImportedSong(id: _newDocumentId);
         final Song? existing = library[_keyOf(song.author, song.name)];
         if (existing == null) continue;
         existingIds[i] = existing.id;
@@ -293,7 +281,7 @@ final class BackupRepositoryImpl implements BackupRepository, DisposableResource
   }
 
   @override
-  Future<Result<ImportSummary, BackupFailure>> applyImport(Map<int, ImportChoice> choices) async {
+  Future<Result<ImportSummary, BackupFailure>> applyImport(List<ImportDecision> decisions) async {
     final _PendingImport? pending = _pending;
     _pending = null;
     if (pending == null) return const Result.failure(BackupFailure.importSongs);
@@ -304,6 +292,9 @@ final class BackupRepositoryImpl implements BackupRepository, DisposableResource
       final Set<String> taken = <String>{
         for (final Song song in _songRepository.watchSongs().value) _keyOf(song.author, song.name),
       };
+      final Map<int, ImportChoice> choices = <int, ImportChoice>{
+        for (final ImportDecision decision in decisions) decision.index: decision.choice,
+      };
       final Map<String, String> targetIds = <String, String>{};
       final Set<String> replacedIds = <String>{};
       final List<String> addedBackupIds = <String>[];
@@ -311,28 +302,28 @@ final class BackupRepositoryImpl implements BackupRepository, DisposableResource
       int skipped = 0;
 
       for (int i = 0; i < model.songs.length; i++) {
-        final Map<String, dynamic> json = model.songs[i];
-        final String backupId = json[_idField] as String;
+        final BackupSongModel backupSong = model.songs[i];
+        final String backupId = backupSong.id;
         final String? existingId = pending.existingIds[i];
         if (existingId == null) {
           addedBackupIds.add(backupId);
-          added.add(_decodeSong(json));
+          added.add(backupSong.toImportedSong(id: _newDocumentId));
           continue;
         }
         switch (choices[i] ?? ImportChoice.skip) {
           case ImportChoice.replace:
-            if (!await _replace(existingId, _decodeSong(json))) {
+            if (!await _replace(existingId, backupSong.toImportedSong(id: _newDocumentId))) {
               _status.value = _statusFailed;
               return const Result.failure(BackupFailure.importSongs);
             }
             targetIds[backupId] = existingId;
             replacedIds.add(existingId);
           case ImportChoice.keepBoth:
-            final Song song = _decodeSong(json);
+            final Song song = backupSong.toImportedSong(id: _newDocumentId);
             final String name = _freeName(song.author, song.name, taken);
             taken.add(_keyOf(song.author, name));
             addedBackupIds.add(backupId);
-            added.add(_decodeSong(json, name: name));
+            added.add(backupSong.toImportedSong(id: _newDocumentId, name: name));
           case ImportChoice.skip:
             skipped++;
         }
@@ -430,8 +421,7 @@ final class BackupRepositoryImpl implements BackupRepository, DisposableResource
         if (replacedIds.contains(recording.songId)) _takeKey(recording.songId, recording.recordedAt),
     };
     final List<ImportedRecording> recordings = <ImportedRecording>[];
-    for (final Map<String, dynamic> json in pending.model.recordings) {
-      final BackupRecordingModel model = BackupRecordingModel.fromJson(json);
+    for (final BackupRecordingModel model in pending.model.recordings) {
       final String? songId = targetIds[model.songId];
       if (songId == null || present.contains(_takeKey(songId, model.recordedAt))) continue;
       recordings.add(model.toEntity(songId: songId, folder: folder));
@@ -474,42 +464,6 @@ final class BackupRepositoryImpl implements BackupRepository, DisposableResource
   }
 
   static String _songId(Song song) => song.id;
-
-  static Map<String, dynamic> _encodeRecording(BackupRecordingModel model) => model.toJson();
-
-  /// Encodes a song into a JSON-serializable map.
-  Map<String, dynamic> _encodeSong(Song song) {
-    return <String, dynamic>{
-      _idField: song.id,
-      _authorField: song.author,
-      _nameField: song.name,
-      _albumField: song.album,
-      _lyricsField: song.lyrics,
-      _coverIdsField: song.covers.map(_coverId).toList(),
-      _scrollSpeedField: song.scrollSpeed,
-      _leadInField: song.leadIn,
-      _wideScrollSpeedField: song.wideScrollSpeed,
-      _wideLeadInField: song.wideLeadIn,
-    };
-  }
-
-  String _coverId(Cover cover) => cover.id;
-
-  /// Decodes a song of a backup file, under [name] when given; its covers are not imported.
-  Song _decodeSong(Map<String, dynamic> songJson, {String? name}) {
-    return Song(
-      id: _newDocumentId,
-      author: songJson[_authorField] as String,
-      name: name ?? songJson[_nameField] as String,
-      album: songJson[_albumField] as String?,
-      lyrics: songJson[_lyricsField] as String,
-      covers: const <Cover>[],
-      scrollSpeed: (songJson[_scrollSpeedField] as num?)?.toDouble(),
-      leadIn: (songJson[_leadInField] as num?)?.toDouble(),
-      wideScrollSpeed: (songJson[_wideScrollSpeedField] as num?)?.toDouble(),
-      wideLeadIn: (songJson[_wideLeadInField] as num?)?.toDouble(),
-    );
-  }
 }
 
 /// A backup read by [BackupRepositoryImpl.openImport] and waiting to be imported.

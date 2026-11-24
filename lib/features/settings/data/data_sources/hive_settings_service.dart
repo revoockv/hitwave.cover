@@ -23,8 +23,7 @@ final class HiveSettingsService {
 
   /// The stored settings, or `null` before they were first changed.
   AppSettingsModel? read() {
-    final Object? value = _box!.get(_key);
-    return value is Map<dynamic, dynamic> ? AppSettingsModel.fromMap(value) : null;
+    return AppSettingsModel.fromStored(_box!.get(_key));
   }
 
   /// Stores [model].

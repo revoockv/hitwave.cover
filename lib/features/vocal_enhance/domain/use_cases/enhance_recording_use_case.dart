@@ -3,6 +3,7 @@ import '../entities/enhance_preset.dart';
 import '../entities/enhance_report.dart';
 import '../repositories/vocal_enhance_repository.dart';
 import '../entities/vocal_enhance_failure.dart';
+import '../entities/enhance_setting.dart';
 
 /// Use case that turns a raw vocal take into a cleaned, mastered WAV file.
 final class EnhanceRecordingUseCase {
@@ -25,7 +26,7 @@ final class EnhanceRecordingUseCase {
     EnhancePreset preset = EnhancePreset.natural,
     double? roomToneSeconds,
     bool trimSilence = false,
-    Map<String, double> settings = const <String, double>{},
+    List<EnhanceSetting> settings = const <EnhanceSetting>[],
   }) async {
     if (inputPath == outputPath) {
       return const Result.failure(VocalEnhanceFailure.samePath);

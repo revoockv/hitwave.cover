@@ -6,7 +6,7 @@ import '../../../../core/domain/entities/result.dart';
 import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../../core/presentation/theme.dart';
 import '../../../backup/domain/entities/backup_failure.dart';
-import '../../../backup/domain/entities/import_choice.dart';
+import '../../../backup/domain/entities/import_decision.dart';
 import '../../../backup/domain/entities/import_conflict.dart';
 import '../../../backup/domain/entities/import_plan.dart';
 import '../../../backup/domain/entities/import_summary.dart';
@@ -171,12 +171,12 @@ final class SettingsPage extends WatchingWidget {
       await cancelImportUseCase();
       return;
     }
-    final Map<int, ImportChoice>? choices = await _askImportChoices(context, plan.conflicts);
-    if (choices == null) {
+    final List<ImportDecision>? decisions = await _askImportDecisions(context, plan.conflicts);
+    if (decisions == null) {
       await cancelImportUseCase();
       return;
     }
-    final Result<ImportSummary, BackupFailure> result = await applyImportUseCase(choices);
+    final Result<ImportSummary, BackupFailure> result = await applyImportUseCase(decisions);
     if (!context.mounted) return;
     _showMessage(
       ScaffoldMessenger.of(context),
@@ -190,8 +190,8 @@ final class SettingsPage extends WatchingWidget {
 
   /// Asks, song by song, what to do with the [conflicts]; an answer may go for all the others.
   /// `null` when the import is cancelled.
-  Future<Map<int, ImportChoice>?> _askImportChoices(BuildContext context, List<ImportConflict> conflicts) async {
-    final Map<int, ImportChoice> choices = <int, ImportChoice>{};
+  Future<List<ImportDecision>?> _askImportDecisions(BuildContext context, List<ImportConflict> conflicts) async {
+    final List<ImportDecision> decisions = <ImportDecision>[];
     for (int i = 0; i < conflicts.length; i++) {
       if (!context.mounted) return null;
       final ImportConflictAnswer? answer = await showDialog<ImportConflictAnswer>(
@@ -203,11 +203,11 @@ final class SettingsPage extends WatchingWidget {
       if (answer == null) return null;
       final Iterable<ImportConflict> answered = answer.isForOthers ? conflicts.skip(i) : <ImportConflict>[conflicts[i]];
       for (final ImportConflict conflict in answered) {
-        choices[conflict.index] = answer.choice;
+        decisions.add(ImportDecision.forConflict(conflict, answer.choice));
       }
       if (answer.isForOthers) break;
     }
-    return choices;
+    return decisions;
   }
 
   Future<void> _onSharePressed(BuildContext context) async {

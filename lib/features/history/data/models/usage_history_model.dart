@@ -19,10 +19,13 @@ final class UsageHistoryModel {
   static String encodeTime(DateTime time) => time.toUtc().toIso8601String();
 
   /// The domain entity.
-  UsageHistory toEntity() => UsageHistory(
-    songsOpenedAt: Map<String, DateTime>.unmodifiable(songsOpenedAt),
-    coversPlayedAt: Map<String, DateTime>.unmodifiable(coversPlayedAt),
-  );
+  UsageHistory toEntity() =>
+      UsageHistory(songsOpened: usageTimes(songsOpenedAt), coversPlayed: usageTimes(coversPlayedAt));
+
+  /// The entries of [times] as [UsageTime]s.
+  static List<UsageTime> usageTimes(Map<String, DateTime> times) => <UsageTime>[
+    for (final MapEntry<String, DateTime> entry in times.entries) UsageTime(id: entry.key, at: entry.value),
+  ];
 
   static Map<String, DateTime> _times(Map<dynamic, dynamic> map) {
     final Map<String, DateTime> times = <String, DateTime>{};

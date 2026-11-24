@@ -55,7 +55,7 @@ final class PracticeOverviewWidget extends StatelessWidget {
                     label: t.practice.today,
                     value: PracticeTimeTextWidget.format(
                       t,
-                      stats.days[today]?.time ?? Duration.zero,
+                      stats.dayOn(today)?.time ?? Duration.zero,
                     ),
                   ),
                   _StatWidget(
@@ -86,7 +86,7 @@ final class PracticeOverviewWidget extends StatelessWidget {
                       ),
                       child: _DayMarkWidget(
                         letter: t.practice.weekdayLetters[index],
-                        practised: stats.days.containsKey(
+                        practised: stats.practisedOn(
                           DateTime(
                             monday.year,
                             monday.month,

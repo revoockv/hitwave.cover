@@ -2,8 +2,7 @@ import 'package:flutter/foundation.dart' show ValueListenable;
 
 import '../../../../core/domain/entities/result.dart';
 import '../entities/backup_failure.dart';
-import '../entities/import_choice.dart';
-import '../entities/import_conflict.dart';
+import '../entities/import_decision.dart';
 import '../entities/import_plan.dart';
 import '../entities/import_summary.dart';
 
@@ -38,9 +37,9 @@ abstract interface class BackupRepository {
   /// With [includeRecordings] the takes of a ZIP backup are imported too.
   Future<Result<ImportPlan?, BackupFailure>> openImport({required bool includeRecordings});
 
-  /// Imports the backup opened by [openImport]. [choices] says what to do with each conflict
-  /// (by [ImportConflict.index]); a conflict without a choice is skipped.
-  Future<Result<ImportSummary, BackupFailure>> applyImport(Map<int, ImportChoice> choices);
+  /// Imports the backup opened by [openImport]. [decisions] say what to do with the conflicts;
+  /// a conflict without a decision is skipped.
+  Future<Result<ImportSummary, BackupFailure>> applyImport(List<ImportDecision> decisions);
 
   /// Drops the backup opened by [openImport] without importing anything.
   Future<void> cancelImport();

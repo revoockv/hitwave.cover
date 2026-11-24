@@ -23,8 +23,7 @@ final class HiveRecordingPreferencesService {
 
   /// The stored options, or `null` before they were first changed.
   RecordingPreferencesModel? read() {
-    final Object? value = _box!.get(_key);
-    return value is Map<dynamic, dynamic> ? RecordingPreferencesModel.fromMap(value) : null;
+    return RecordingPreferencesModel.fromStored(_box!.get(_key));
   }
 
   /// Stores [model].
