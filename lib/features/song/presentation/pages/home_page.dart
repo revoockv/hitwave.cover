@@ -31,6 +31,7 @@ import 'lyrics_page.dart';
 import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../domain/entities/song_failure.dart';
 import '../l10n/song_texts.dart';
+import '../../../tuner/presentation/widgets/tuner_widget.dart';
 
 /// Main page with the bottom navigation: home (mini statistics, recent songs and covers),
 /// songs (search and orders), covers (search) and statistics; plus backup and account actions.
@@ -108,6 +109,7 @@ final class HomePage extends WatchingWidget {
       _Tab(Icons.queue_music_outlined, Icons.queue_music, t.song.tabSongs),
       _Tab(Icons.mic_none_outlined, Icons.mic, t.song.tabCovers),
       _Tab(Icons.insights_outlined, Icons.insights, t.song.statistics),
+      _Tab(Icons.graphic_eq_outlined, Icons.graphic_eq, t.tuner.title),
     ];
     // Every tab watches the data it shows itself, so a change of it does not rebuild the page and the other tabs.
     final Widget body = switch (tab) {
@@ -135,6 +137,7 @@ final class HomePage extends WatchingWidget {
         onSongPressed: (Song song) => _navigateToLyrics(context, song),
       ),
       HomeTab.stats => PracticeStatsWidget(onSongPressed: (Song song) => _navigateToLyrics(context, song)),
+      HomeTab.tuner => const TunerWidget(),
     };
 
     return PopScope(
@@ -216,6 +219,7 @@ final class HomePage extends WatchingWidget {
     HomeTab.songs => t.song.mySongs,
     HomeTab.covers => t.song.myCovers,
     HomeTab.stats => t.song.statistics,
+    HomeTab.tuner => t.tuner.title,
   };
 
   static String _textOf(TextEditingController searchController) => searchController.text;

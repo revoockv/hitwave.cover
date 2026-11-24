@@ -48,6 +48,7 @@ class TranslationsIsv extends Translations with BaseTranslations<AppLocale, Tran
 	@override late final _Translations$settings$isv settings = _Translations$settings$isv._(_root);
 	@override late final _Translations$song$isv song = _Translations$song$isv._(_root);
 	@override late final _Translations$sync$isv sync = _Translations$sync$isv._(_root);
+	@override late final _Translations$tuner$isv tuner = _Translations$tuner$isv._(_root);
 	@override late final _Translations$vocalEnhance$isv vocalEnhance = _Translations$vocalEnhance$isv._(_root);
 }
 
@@ -384,6 +385,26 @@ class _Translations$sync$isv extends Translations$sync$en {
 	@override String withCovers({required Object n}) => 'с каверами: ${n}';
 }
 
+// Path: tuner
+class _Translations$tuner$isv extends Translations$tuner$en {
+	_Translations$tuner$isv._(TranslationsIsv root) : this._root = root, super.internal(root);
+
+	final TranslationsIsv _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Тюнер';
+	@override String get open => 'Настроити инструмент';
+	@override String get playString => 'Заиграј на струнє';
+	@override String get inTune => 'Настроено';
+	@override String get tuneUp => 'Натягни выше';
+	@override String get tuneDown => 'Отпусти ниже';
+	@override String hertz({required Object value}) => '${value} Hz';
+	@override String cents({required Object value}) => '${value} центов';
+	@override String get retry => 'Попробовати знову';
+	@override late final _Translations$tuner$instruments$isv instruments = _Translations$tuner$instruments$isv._(_root);
+	@override late final _Translations$tuner$failure$isv failure = _Translations$tuner$failure$isv._(_root);
+}
+
 // Path: vocalEnhance
 class _Translations$vocalEnhance$isv extends Translations$vocalEnhance$en {
 	_Translations$vocalEnhance$isv._(TranslationsIsv root) : this._root = root, super.internal(root);
@@ -572,6 +593,31 @@ class _Translations$sync$step$isv extends Translations$sync$step$en {
 	@override String get merging => 'Сједињају дане…';
 	@override String get reading => 'Достају спис пєснеј и каверов…';
 	@override String uploading({required Object done, required Object total}) => 'Посылају каверы ${done} из ${total}';
+}
+
+// Path: tuner.instruments
+class _Translations$tuner$instruments$isv extends Translations$tuner$instruments$en {
+	_Translations$tuner$instruments$isv._(TranslationsIsv root) : this._root = root, super.internal(root);
+
+	final TranslationsIsv _root; // ignore: unused_field
+
+	// Translations
+	@override String get guitar => 'Гитара';
+	@override String get ukulele => 'Укулеле';
+	@override String get bass => 'Бас';
+	@override String get violin => 'Скрипка';
+	@override String get chromatic => 'Хроматичны';
+}
+
+// Path: tuner.failure
+class _Translations$tuner$failure$isv extends Translations$tuner$failure$en {
+	_Translations$tuner$failure$isv._(TranslationsIsv root) : this._root = root, super.internal(root);
+
+	final TranslationsIsv _root; // ignore: unused_field
+
+	// Translations
+	@override String get microphonePermission => 'Дозволи микрофон, да бы користати тюнер.';
+	@override String get start => 'Не јест возможно отворити микрофон.';
 }
 
 // Path: vocalEnhance.failure
@@ -883,6 +929,22 @@ extension on TranslationsIsv {
 			'sync.updatedCount' => ({required Object n}) => 'обновјено: ${n}',
 			'sync.waiting' => 'Чакају, докле друго устројство сканује код…',
 			'sync.withCovers' => ({required Object n}) => 'с каверами: ${n}',
+			'tuner.title' => 'Тюнер',
+			'tuner.open' => 'Настроити инструмент',
+			'tuner.playString' => 'Заиграј на струнє',
+			'tuner.inTune' => 'Настроено',
+			'tuner.tuneUp' => 'Натягни выше',
+			'tuner.tuneDown' => 'Отпусти ниже',
+			'tuner.hertz' => ({required Object value}) => '${value} Hz',
+			'tuner.cents' => ({required Object value}) => '${value} центов',
+			'tuner.retry' => 'Попробовати знову',
+			'tuner.instruments.guitar' => 'Гитара',
+			'tuner.instruments.ukulele' => 'Укулеле',
+			'tuner.instruments.bass' => 'Бас',
+			'tuner.instruments.violin' => 'Скрипка',
+			'tuner.instruments.chromatic' => 'Хроматичны',
+			'tuner.failure.microphonePermission' => 'Дозволи микрофон, да бы користати тюнер.',
+			'tuner.failure.start' => 'Не јест возможно отворити микрофон.',
 			'vocalEnhance.failure.analyze' => 'Не удало се измєрити запис',
 			'vocalEnhance.failure.enhance' => 'Не удало се улєпшити запис',
 			'vocalEnhance.failure.negativeLeadIn' => 'Тишина на початку не може быти негативна',

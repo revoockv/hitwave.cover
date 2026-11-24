@@ -349,6 +349,28 @@
     "waiting": "Waiting for the other device to scan the code…",
     "withCovers": "with covers: {n}"
   },
+  "tuner": {
+    "title": "Tuner",
+    "open": "Tune the instrument",
+    "playString": "Play a string",
+    "inTune": "In tune",
+    "tuneUp": "Tune up",
+    "tuneDown": "Tune down",
+    "hertz": "{value} Hz",
+    "cents": "{value} cents",
+    "retry": "Try again",
+    "instruments": {
+      "guitar": "Guitar",
+      "ukulele": "Ukulele",
+      "bass": "Bass",
+      "violin": "Violin",
+      "chromatic": "Chromatic"
+    },
+    "failure": {
+      "microphonePermission": "Allow the microphone to use the tuner.",
+      "start": "Could not open the microphone."
+    }
+  },
   "vocalEnhance": {
     "failure": {
       "analyze": "Could not measure the take",

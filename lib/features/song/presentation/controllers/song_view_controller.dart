@@ -24,6 +24,9 @@ enum HomeTab {
 
   /// The practice statistics.
   stats,
+
+  /// The tuner of the instrument.
+  tuner,
 }
 
 /// Order of the songs tab.

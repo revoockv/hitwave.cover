@@ -47,6 +47,7 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final Translations$settings$en settings = Translations$settings$en.internal(_root);
 	late final Translations$song$en song = Translations$song$en.internal(_root);
 	late final Translations$sync$en sync = Translations$sync$en.internal(_root);
+	late final Translations$tuner$en tuner = Translations$tuner$en.internal(_root);
 	late final Translations$vocalEnhance$en vocalEnhance = Translations$vocalEnhance$en.internal(_root);
 }
 
@@ -758,6 +759,45 @@ class Translations$sync$en {
 	String withCovers({required Object n}) => 'with covers: ${n}';
 }
 
+// Path: tuner
+class Translations$tuner$en {
+	Translations$tuner$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Tuner'
+	String get title => 'Tuner';
+
+	/// en: 'Tune the instrument'
+	String get open => 'Tune the instrument';
+
+	/// en: 'Play a string'
+	String get playString => 'Play a string';
+
+	/// en: 'In tune'
+	String get inTune => 'In tune';
+
+	/// en: 'Tune up'
+	String get tuneUp => 'Tune up';
+
+	/// en: 'Tune down'
+	String get tuneDown => 'Tune down';
+
+	/// en: '{value} Hz'
+	String hertz({required Object value}) => '${value} Hz';
+
+	/// en: '{value} cents'
+	String cents({required Object value}) => '${value} cents';
+
+	/// en: 'Try again'
+	String get retry => 'Try again';
+
+	late final Translations$tuner$instruments$en instruments = Translations$tuner$instruments$en.internal(_root);
+	late final Translations$tuner$failure$en failure = Translations$tuner$failure$en.internal(_root);
+}
+
 // Path: vocalEnhance
 class Translations$vocalEnhance$en {
 	Translations$vocalEnhance$en.internal(this._root);
@@ -1092,6 +1132,45 @@ class Translations$sync$step$en {
 	String uploading({required Object done, required Object total}) => 'Sending covers ${done} of ${total}';
 }
 
+// Path: tuner.instruments
+class Translations$tuner$instruments$en {
+	Translations$tuner$instruments$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Guitar'
+	String get guitar => 'Guitar';
+
+	/// en: 'Ukulele'
+	String get ukulele => 'Ukulele';
+
+	/// en: 'Bass'
+	String get bass => 'Bass';
+
+	/// en: 'Violin'
+	String get violin => 'Violin';
+
+	/// en: 'Chromatic'
+	String get chromatic => 'Chromatic';
+}
+
+// Path: tuner.failure
+class Translations$tuner$failure$en {
+	Translations$tuner$failure$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Allow the microphone to use the tuner.'
+	String get microphonePermission => 'Allow the microphone to use the tuner.';
+
+	/// en: 'Could not open the microphone.'
+	String get start => 'Could not open the microphone.';
+}
+
 // Path: vocalEnhance.failure
 class Translations$vocalEnhance$failure$en {
 	Translations$vocalEnhance$failure$en.internal(this._root);
@@ -1413,6 +1492,22 @@ extension on Translations {
 			'sync.updatedCount' => ({required Object n}) => 'updated: ${n}',
 			'sync.waiting' => 'Waiting for the other device to scan the code…',
 			'sync.withCovers' => ({required Object n}) => 'with covers: ${n}',
+			'tuner.title' => 'Tuner',
+			'tuner.open' => 'Tune the instrument',
+			'tuner.playString' => 'Play a string',
+			'tuner.inTune' => 'In tune',
+			'tuner.tuneUp' => 'Tune up',
+			'tuner.tuneDown' => 'Tune down',
+			'tuner.hertz' => ({required Object value}) => '${value} Hz',
+			'tuner.cents' => ({required Object value}) => '${value} cents',
+			'tuner.retry' => 'Try again',
+			'tuner.instruments.guitar' => 'Guitar',
+			'tuner.instruments.ukulele' => 'Ukulele',
+			'tuner.instruments.bass' => 'Bass',
+			'tuner.instruments.violin' => 'Violin',
+			'tuner.instruments.chromatic' => 'Chromatic',
+			'tuner.failure.microphonePermission' => 'Allow the microphone to use the tuner.',
+			'tuner.failure.start' => 'Could not open the microphone.',
 			'vocalEnhance.failure.analyze' => 'Could not measure the take',
 			'vocalEnhance.failure.enhance' => 'Could not enhance the take',
 			'vocalEnhance.failure.negativeLeadIn' => 'The silence at the start cannot be negative',
