@@ -148,21 +148,24 @@ final class LyricsPage extends WatchingWidget {
                         ignoring: isScrolling,
                         child: Focus(
                           onFocusChange: (bool hasFocus) => _onLyricsFocusChanged(lyricsPageController, hasFocus),
-                          child: TextField(
-                            controller: lyricsPageController.lyricsTextController,
-                            focusNode: lyricsPageController.lyricsFocusNode,
-                            readOnly: isScrolling,
-                            textInputAction: TextInputAction.done,
-                            onEditingComplete: lyricsPageController.hideKeyboard,
-                            maxLines: null,
-                            decoration: const InputDecoration(
-                              filled: false,
-                              border: InputBorder.none,
-                              enabledBorder: InputBorder.none,
-                              focusedBorder: InputBorder.none,
-                              isCollapsed: true,
+                          child: LayoutBuilder(
+                            builder: (BuildContext context, BoxConstraints constraints) => TextField(
+                              controller: lyricsPageController.lyricsTextController..lineWidth = constraints.maxWidth,
+                              onChanged: (String lyrics) => _onLyricsChanged(lyricsPageController, lyrics),
+                              focusNode: lyricsPageController.lyricsFocusNode,
+                              readOnly: isScrolling,
+                              textInputAction: TextInputAction.done,
+                              onEditingComplete: lyricsPageController.hideKeyboard,
+                              maxLines: null,
+                              decoration: const InputDecoration(
+                                filled: false,
+                                border: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                isCollapsed: true,
+                              ),
+                              style: lyricsStyle,
                             ),
-                            style: lyricsStyle,
                           ),
                         ),
                       ),
@@ -209,6 +212,7 @@ final class LyricsPage extends WatchingWidget {
     final RecordingPreferences preferences = watchRecordingPreferencesUseCase().value;
     return LyricsPageController(
       lyrics: song.lyrics,
+      tabBlocks: song.tabs,
       layout: layout,
       initialSpeed: song.scrollSpeedOn(layout),
       initialLeadIn: song.leadInOn(layout),
@@ -275,6 +279,11 @@ final class LyricsPage extends WatchingWidget {
 
     if (result.isSuccess) lyricsPageController.markLeadInSaved(leadIn);
     leadInSavingStateController.value = ResultState.of(result);
+  }
+
+  /// Finds the tablatures of the edited [lyrics] again, so they keep the fixed-width font.
+  void _onLyricsChanged(LyricsPageController lyricsPageController, String lyrics) {
+    lyricsPageController.lyricsTextController.tabBlocks = findTabBlocksUseCase(lyrics);
   }
 
   /// Saves the edited lyrics when the field loses focus.
