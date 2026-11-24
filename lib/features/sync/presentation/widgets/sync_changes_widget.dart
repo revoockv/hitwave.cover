@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/presentation/theme.dart';
-import '../../../../core/presentation/widgets/surface_widget.dart';
 import '../../domain/entities/sync_change.dart';
+import 'sync_change_group_widget.dart';
 
 /// The texts of [SyncChangesWidget], with the other device's name already in them.
 final class SyncChangesTexts {
@@ -101,7 +101,7 @@ final class SyncChangesWidget extends StatelessWidget {
         const SizedBox(height: AppTheme.spacingSmall),
         Text(texts.messageText, style: theme.textTheme.bodyMedium),
         if (toHere.isNotEmpty)
-          _GroupWidget(
+          SyncChangeGroupWidget(
             title: texts.toHereTitle,
             icon: Icons.south,
             changes: toHere,
@@ -111,7 +111,7 @@ final class SyncChangesWidget extends StatelessWidget {
             onAllChosenChanged: onAllChosenChanged,
           ),
         if (toThere.isNotEmpty)
-          _GroupWidget(
+          SyncChangeGroupWidget(
             title: texts.toThereTitle,
             icon: Icons.north,
             changes: toThere,
@@ -130,133 +130,4 @@ final class SyncChangesWidget extends StatelessWidget {
   static bool _isToHere(SyncChange change) => change.direction == SyncDirection.toHere;
 
   static bool _isToThere(SyncChange change) => change.direction == SyncDirection.toThere;
-}
-
-/// The changes made on one device, under a heading with "all" checkbox.
-final class _GroupWidget extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  final List<SyncChange> changes;
-  final Set<String> chosen;
-  final SyncChangesTexts texts;
-  final void Function(SyncChange change, bool isChosen) onChosenChanged;
-  final void Function(List<SyncChange> changes, bool isChosen) onAllChosenChanged;
-
-  const _GroupWidget({
-    required this.title,
-    required this.icon,
-    required this.changes,
-    required this.chosen,
-    required this.texts,
-    required this.onChosenChanged,
-    required this.onAllChosenChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final int ticked = changes.where((SyncChange change) => chosen.contains(change.id)).length;
-    final bool? all = ticked == 0 ? false : (ticked == changes.length ? true : null);
-    return Padding(
-      padding: const EdgeInsets.only(top: AppTheme.spacingLarge),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          Row(
-            children: <Widget>[
-              Icon(icon, size: AppTheme.spacingMedium + AppTheme.spacingTiny, color: theme.colorScheme.primary),
-              const SizedBox(width: AppTheme.spacingSmall),
-              Expanded(child: Text(title, style: theme.textTheme.titleMedium)),
-              Text(texts.allLabel, style: theme.textTheme.labelMedium),
-              Checkbox(
-                tristate: true,
-                value: all,
-                onChanged: (bool? value) => onAllChosenChanged(changes, all != true),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppTheme.spacingSmall),
-          for (final SyncChange change in changes)
-            _ChangeWidget(
-              change: change,
-              isChosen: chosen.contains(change.id),
-              texts: texts,
-              onChanged: (bool? value) => onChosenChanged(change, value ?? false),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-/// One change: its checkbox, its coloured badge, what it is about and its detail.
-final class _ChangeWidget extends StatelessWidget {
-  static const double _badgeAlpha = 0.16;
-  static const double _stripeWidth = 4;
-
-  final SyncChange change;
-  final bool isChosen;
-  final SyncChangesTexts texts;
-  final ValueChanged<bool?> onChanged;
-
-  const _ChangeWidget({required this.change, required this.isChosen, required this.texts, required this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final Color color = switch (change.kind) {
-      SyncChangeKind.add => AppTheme.accentGreen,
-      SyncChangeKind.delete => theme.colorScheme.error,
-      SyncChangeKind.update => AppTheme.accentBlue,
-    };
-    final String? detail = texts.detailOf(change);
-    return SurfaceWidget(
-      margin: const EdgeInsets.only(bottom: AppTheme.spacingSmall),
-      padding: EdgeInsets.zero,
-      onTap: _onTapped,
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            ColoredBox(
-              color: color,
-              child: const SizedBox(width: _stripeWidth),
-            ),
-            Checkbox(value: isChosen, onChanged: onChanged),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingSmall),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: color.withValues(alpha: _badgeAlpha),
-                        borderRadius: BorderRadius.circular(AppTheme.spacingSmall),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingTiny, vertical: 2),
-                        child: Text(texts.badgeOf(change), style: theme.textTheme.labelSmall?.copyWith(color: color)),
-                      ),
-                    ),
-                    const SizedBox(height: AppTheme.spacingTiny),
-                    Text(texts.titleOf(change), style: theme.textTheme.titleSmall),
-                    if (detail != null)
-                      Text(
-                        detail,
-                        style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(width: AppTheme.spacingSmall),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _onTapped() => onChanged(!isChosen);
 }

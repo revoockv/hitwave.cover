@@ -5,7 +5,7 @@ import '../widgets/delete_song_dialog_widget.dart';
 import '../widgets/song_form_widget.dart';
 import '../widgets/song_tile_widget.dart';
 import '../widgets/songs_tab_widget.dart';
-import '../widgets/songs_widget.dart';
+import '../widgets/empty_songs_widget.dart';
 
 /// The texts of the song widgets in the language of these [Translations]: the pages and wrappers build them, the
 /// dumb widgets only show them.

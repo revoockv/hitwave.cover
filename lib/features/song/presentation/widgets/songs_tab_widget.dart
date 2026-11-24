@@ -6,6 +6,7 @@ import '../../domain/entities/song_sort.dart';
 import 'artist_picker_widget.dart';
 import 'search_field_widget.dart';
 import 'song_tile_widget.dart';
+import 'empty_songs_widget.dart';
 import 'songs_widget.dart';
 
 /// The texts of the songs tab and its lists.
