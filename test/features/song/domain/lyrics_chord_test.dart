@@ -10,6 +10,7 @@ void main() {
     expect(chordsOf('   A(V) C#m(IV) F G#(IV) G(III)  (2)'), <String>['A(V)', 'C#m(IV)', 'F', 'G#(IV)', 'G(III)']);
     expect(chordsOf('E               G#m **'), <String>['E', 'G#m']);
     expect(chordsOf('Cmaj7 D7/F# AmM7 Emadd9 A7sus4 Hm'), <String>['Cmaj7', 'D7/F#', 'AmM7', 'Emadd9', 'A7sus4', 'Hm']);
+    expect(chordsOf('D7sus C7sus F7sus D7sus4 C9sus G7add'), <String>['D7sus', 'C7sus', 'F7sus', 'D7sus4', 'C9sus', 'G7add']);
   });
 
   test('a run of chords before or inside words', () {
