@@ -213,6 +213,7 @@ final class LyricsPage extends WatchingWidget {
     return LyricsPageController(
       lyrics: song.lyrics,
       tabBlocks: song.tabs,
+      chords: song.chords,
       layout: layout,
       initialSpeed: song.scrollSpeedOn(layout),
       initialLeadIn: song.leadInOn(layout),
@@ -281,9 +282,11 @@ final class LyricsPage extends WatchingWidget {
     leadInSavingStateController.value = ResultState.of(result);
   }
 
-  /// Finds the tablatures of the edited [lyrics] again, so they keep the fixed-width font.
+  /// Finds the tablatures and chords of the edited [lyrics] again, so they keep their look.
   void _onLyricsChanged(LyricsPageController lyricsPageController, String lyrics) {
-    lyricsPageController.lyricsTextController.tabBlocks = findTabBlocksUseCase(lyrics);
+    lyricsPageController.lyricsTextController
+      ..tabBlocks = findTabBlocksUseCase(lyrics)
+      ..chords = findChordsUseCase(lyrics);
   }
 
   /// Saves the edited lyrics when the field loses focus.

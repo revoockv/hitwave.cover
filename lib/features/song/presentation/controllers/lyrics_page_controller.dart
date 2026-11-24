@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/domain/entities/result_state.dart';
 import '../../domain/entities/lyrics_layout.dart';
+import '../../domain/entities/lyrics_chord.dart';
 import '../../domain/entities/song_failure.dart';
 import '../../domain/entities/tab_block.dart';
 import 'lyrics_text_controller.dart';
@@ -91,13 +92,14 @@ final class LyricsPageController {
   /// The screen the page was opened on: the speed and the space are saved for it.
   final LyricsLayout layout;
 
-  /// Creates the controller with the [lyrics] to show on [layout] and their [tabBlocks].
+  /// Creates the controller with the [lyrics] to show on [layout], their [tabBlocks] and [chords].
   ///
   /// Starts at [initialSpeed] and [initialLeadIn] (saved with the song) or the defaults, with the
   /// checkboxes as they were last chosen ([record], [trimSilence]).
   LyricsPageController({
     required String lyrics,
     List<TabBlock> tabBlocks = const <TabBlock>[],
+    List<LyricsChord> chords = const <LyricsChord>[],
     LyricsLayout layout = LyricsLayout.compact,
     double? initialSpeed,
     double? initialLeadIn,
@@ -106,6 +108,7 @@ final class LyricsPageController {
   }) : this._(
          lyrics,
          tabBlocks,
+         chords,
          (initialSpeed ?? _defaultSpeed).clamp(minSpeed, maxSpeed),
          (initialLeadIn ?? _defaultLeadIn).clamp(minLeadIn, maxLeadIn),
          record,
@@ -116,6 +119,7 @@ final class LyricsPageController {
   LyricsPageController._(
     String lyrics,
     List<TabBlock> tabBlocks,
+    List<LyricsChord> chords,
     double startSpeed,
     double startLeadIn,
     bool record,
@@ -123,7 +127,7 @@ final class LyricsPageController {
     this.layout,
   ) : recordController = ValueNotifier<bool>(record),
       trimSilenceController = ValueNotifier<bool>(trimSilence),
-      lyricsTextController = LyricsTextController(text: lyrics, tabBlocks: tabBlocks),
+      lyricsTextController = LyricsTextController(text: lyrics, tabBlocks: tabBlocks, chords: chords),
       speedController = ValueNotifier<double>(startSpeed),
       leadInController = ValueNotifier<double>(startLeadIn),
       _savedSpeed = startSpeed,

@@ -5,6 +5,7 @@ import '../../domain/use_cases/add_song_use_case.dart';
 import '../../domain/use_cases/delete_all_songs_use_case.dart';
 import '../../domain/use_cases/delete_cover_use_case.dart';
 import '../../domain/use_cases/delete_song_use_case.dart';
+import '../../domain/use_cases/find_chords_use_case.dart';
 import '../../domain/use_cases/find_tab_blocks_use_case.dart';
 import '../../domain/use_cases/update_cover_use_case.dart';
 import '../../domain/use_cases/update_song_lead_in_use_case.dart';
@@ -48,3 +49,6 @@ DeleteAllSongsUseCase get deleteAllSongsUseCase => di<DeleteAllSongsUseCase>();
 
 /// The use case that finds the tablatures in the lyrics of a song.
 FindTabBlocksUseCase get findTabBlocksUseCase => di<FindTabBlocksUseCase>();
+
+/// The use case that finds the chords in the lyrics of a song.
+FindChordsUseCase get findChordsUseCase => di<FindChordsUseCase>();

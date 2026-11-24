@@ -2,13 +2,15 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../domain/entities/lyrics_chord.dart';
 import '../../domain/entities/tab_block.dart';
 
-/// Text of the lyrics field that draws the tablatures in a fixed-width font, so their strings
-/// keep their columns; a tab wider than the field is made smaller to fit it on one line.
+/// Text of the lyrics field that draws the chords in the accent colour and the tablatures in a
+/// fixed-width font, so their strings keep their columns; a tab wider than the field is made
+/// smaller to fit it on one line.
 ///
-/// UI state only: the owner widget finds the tabs with the use case and gives them to
-/// [tabBlocks]; the layout gives the field's width to [lineWidth].
+/// UI state only: the owner widget finds the tabs and chords with the use cases and gives them
+/// to [tabBlocks] and [chords]; the layout gives the field's width to [lineWidth].
 final class LyricsTextController extends TextEditingController {
   /// Fixed-width font of the tabs, bundled with the app (`assets/fonts`), so every platform draws the same.
   static const String _monospaceFamily = 'RobotoMono';
@@ -33,6 +35,9 @@ final class LyricsTextController extends TextEditingController {
   /// Tab blocks of the current text, in order; the owner updates them when the text changes.
   List<TabBlock> tabBlocks;
 
+  /// Chords of the current text, in order; the owner updates them when the text changes.
+  List<LyricsChord> chords;
+
   /// Width of the field, set by its layout; `null` until it is laid out (tabs then keep their size).
   double? lineWidth;
 
@@ -40,29 +45,36 @@ final class LyricsTextController extends TextEditingController {
   double? _characterWidth;
   TextScaler? _measuredScaler;
 
-  /// Creates the controller with [text] and its [tabBlocks].
-  LyricsTextController({super.text, this.tabBlocks = const <TabBlock>[]});
+  /// Creates the controller with [text], its [tabBlocks] and [chords].
+  LyricsTextController({super.text, this.tabBlocks = const <TabBlock>[], this.chords = const <LyricsChord>[]});
 
   @override
   TextSpan buildTextSpan({required BuildContext context, TextStyle? style, required bool withComposing}) {
     final bool composing = withComposing && value.isComposingRangeValid;
-    if (tabBlocks.isEmpty || composing || !_blocksFit) {
+    if ((tabBlocks.isEmpty && chords.isEmpty) || composing || !_marksFit) {
       return super.buildTextSpan(context: context, style: style, withComposing: withComposing);
     }
     final TextScaler scaler = MediaQuery.textScalerOf(context);
+    final TextStyle chordStyle = TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w600);
+    final List<_Mark> marks = <_Mark>[
+      for (final TabBlock block in tabBlocks) (start: block.start, end: block.end, style: _tabStyle(style, block, scaler)),
+      for (final LyricsChord chord in chords) (start: chord.start, end: chord.end, style: chordStyle),
+    ]..sort((_Mark a, _Mark b) => a.start - b.start);
     final List<TextSpan> children = <TextSpan>[];
     int offset = 0;
-    for (final TabBlock block in tabBlocks) {
-      if (block.start > offset) children.add(TextSpan(text: text.substring(offset, block.start)));
-      children.add(TextSpan(text: text.substring(block.start, block.end), style: _tabStyle(style, block, scaler)));
-      offset = block.end;
+    for (final _Mark mark in marks) {
+      if (mark.start < offset) continue;
+      if (mark.start > offset) children.add(TextSpan(text: text.substring(offset, mark.start)));
+      children.add(TextSpan(text: text.substring(mark.start, mark.end), style: mark.style));
+      offset = mark.end;
     }
     if (offset < text.length) children.add(TextSpan(text: text.substring(offset)));
     return TextSpan(style: style, children: children);
   }
 
-  /// Whether the blocks still match the text: while typing, the owner has not updated them yet.
-  bool get _blocksFit => tabBlocks.last.end <= text.length;
+  /// Whether the marks still match the text: while typing, the owner has not updated them yet.
+  bool get _marksFit =>
+      (tabBlocks.isEmpty || tabBlocks.last.end <= text.length) && (chords.isEmpty || chords.last.end <= text.length);
 
   /// Fixed-width style of [block]: the lyrics size, or smaller so its widest line fits [lineWidth].
   TextStyle _tabStyle(TextStyle? style, TabBlock block, TextScaler scaler) {
@@ -100,3 +112,6 @@ final class LyricsTextController extends TextEditingController {
     return width;
   }
 }
+
+/// A part of the text drawn in its own style: a tab or a chord.
+typedef _Mark = ({int start, int end, TextStyle style});

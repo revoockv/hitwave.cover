@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hitwave.cover/features/song/domain/entities/lyrics_chord.dart';
 import 'package:hitwave.cover/features/song/domain/entities/tab_block.dart';
 import 'package:hitwave.cover/features/song/domain/use_cases/find_tab_blocks_use_case.dart';
 import 'package:hitwave.cover/features/song/presentation/controllers/lyrics_text_controller.dart';
@@ -79,5 +80,22 @@ void main() {
     final TextSpan span = await spansOf(tester, lyricsTextController);
 
     expect(span.children, isNull);
+  });
+
+  testWidgets('chords take the accent colour, the words between them stay plain', (WidgetTester tester) async {
+    const String song = 'Am   G\nla la\ne-----0---|\nB---1-----|';
+    final LyricsTextController lyricsTextController = LyricsTextController(
+      text: song,
+      tabBlocks: const FindTabBlocksUseCase()(song),
+      chords: LyricsChord.findAll(song),
+    );
+    addTearDown(lyricsTextController.dispose);
+
+    final List<TextSpan> children = (await spansOf(tester, lyricsTextController)).children!.cast<TextSpan>();
+
+    expect(children.map((TextSpan child) => child.text), <String>['Am', '   ', 'G', '\nla la\n', 'e-----0---|\nB---1-----|']);
+    expect(children.first.style?.color, ThemeData().colorScheme.primary);
+    expect(children[1].style, isNull);
+    expect(children.last.style?.fontFamily, 'RobotoMono');
   });
 }
