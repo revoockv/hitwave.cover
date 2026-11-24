@@ -4,9 +4,40 @@ import '../../../../core/presentation/theme.dart';
 import '../../domain/entities/note.dart';
 import '../../domain/entities/tuner_reading.dart';
 
+/// The texts of [TunerMeterWidget].
+final class TunerMeterTexts {
+  /// Shown instead of the action while nothing clear sounds.
+  final String idleText;
+
+  /// Shown when the pitch is in tune.
+  final String inTuneText;
+
+  /// Shown when the pitch is too low.
+  final String tuneUpText;
+
+  /// Shown when the pitch is too high.
+  final String tuneDownText;
+
+  /// Formats the heard frequency (`110.0 Hz`).
+  final String Function(String value) hertzText;
+
+  /// Formats the distance in cents (`-12 cents`).
+  final String Function(String value) centsText;
+
+  /// Creates the texts.
+  const TunerMeterTexts({
+    required this.idleText,
+    required this.inTuneText,
+    required this.tuneUpText,
+    required this.tuneDownText,
+    required this.hertzText,
+    required this.centsText,
+  });
+}
+
 /// The note to tune to, a scale from -50 to +50 cents with a needle, and what to do.
 ///
-/// Pure: shows [reading], or [idleText] while nothing clear sounds.
+/// Dumb: shows [reading], or the idle text of [texts] while nothing clear sounds.
 final class TunerMeterWidget extends StatelessWidget {
   static const double _noteFontSize = 72;
   static const double _scaleCents = 50;
@@ -26,35 +57,11 @@ final class TunerMeterWidget extends StatelessWidget {
   /// The reading, `null` while nothing clear sounds.
   final TunerReading? reading;
 
-  /// Shown instead of the action while nothing clear sounds.
-  final String idleText;
-
-  /// Shown when the pitch is in tune.
-  final String inTuneText;
-
-  /// Shown when the pitch is too low.
-  final String tuneUpText;
-
-  /// Shown when the pitch is too high.
-  final String tuneDownText;
-
-  /// Formats the heard frequency (`110.0 Hz`).
-  final String Function(String value) hertzText;
-
-  /// Formats the distance in cents (`-12 cents`).
-  final String Function(String value) centsText;
+  /// The texts.
+  final TunerMeterTexts texts;
 
   /// Creates a [TunerMeterWidget].
-  const TunerMeterWidget({
-    required this.reading,
-    required this.idleText,
-    required this.inTuneText,
-    required this.tuneUpText,
-    required this.tuneDownText,
-    required this.hertzText,
-    required this.centsText,
-    super.key,
-  });
+  const TunerMeterWidget({required this.reading, required this.texts, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -77,7 +84,10 @@ final class TunerMeterWidget extends StatelessWidget {
             text: target?.name ?? _noNote,
             children: <InlineSpan>[
               if (target != null)
-                TextSpan(text: '${target.octave}', style: theme.textTheme.headlineSmall?.copyWith(color: needleColor)),
+                TextSpan(
+                  text: '${target.octave}',
+                  style: theme.textTheme.headlineSmall?.copyWith(color: needleColor),
+                ),
             ],
           ),
           style: theme.textTheme.displayLarge?.copyWith(
@@ -111,10 +121,7 @@ final class TunerMeterWidget extends StatelessWidget {
                     bottom: 0,
                     child: Container(
                       width: _needleWidth,
-                      decoration: BoxDecoration(
-                        color: needleColor,
-                        borderRadius: BorderRadius.circular(_needleWidth),
-                      ),
+                      decoration: BoxDecoration(color: needleColor, borderRadius: BorderRadius.circular(_needleWidth)),
                     ),
                   ),
                 ],
@@ -125,20 +132,20 @@ final class TunerMeterWidget extends StatelessWidget {
         const SizedBox(height: AppTheme.spacingMedium),
         Text(
           current == null
-              ? idleText
+              ? texts.idleText
               : current.isInTune
-              ? inTuneText
+              ? texts.inTuneText
               : current.cents < 0
-              ? tuneUpText
-              : tuneDownText,
+              ? texts.tuneUpText
+              : texts.tuneDownText,
           style: theme.textTheme.titleLarge?.copyWith(color: needleColor),
         ),
         const SizedBox(height: AppTheme.spacingTiny),
         Text(
           current == null
               ? _emptyLine
-              : '${hertzText(current.hertz.toStringAsFixed(_hertzDigits))}$_separator'
-                    '${centsText(current.cents.round().toString())}',
+              : '${texts.hertzText(current.hertz.toStringAsFixed(_hertzDigits))}$_separator'
+                    '${texts.centsText(current.cents.round().toString())}',
           style: theme.textTheme.bodyMedium?.copyWith(color: colors.onSurfaceVariant),
         ),
       ],

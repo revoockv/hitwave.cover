@@ -33,7 +33,7 @@ import '../../../lyrics/presentation/pages/lyrics_page.dart';
 import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../song/domain/entities/song_failure.dart';
 import '../../../song/presentation/l10n/song_texts.dart';
-import '../../../tuner/presentation/widgets/tuner_widget.dart';
+import '../../../tuner/presentation/pages/tuner_panel_page.dart';
 import '../../../song/presentation/l10n/song_widget_texts.dart';
 
 /// Main page with the bottom navigation: home (mini statistics, recent songs and covers),
@@ -145,7 +145,7 @@ final class HomePage extends WatchingWidget {
         onSongPressed: (Song song) => _navigateToLyrics(context, song),
       ),
       HomeTab.stats => PracticeStatsPage(onSongPressed: (Song song) => _navigateToLyrics(context, song)),
-      HomeTab.tuner => const TunerWidget(),
+      HomeTab.tuner => const TunerPanelPage(),
     };
 
     return PopScope(

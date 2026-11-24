@@ -10,7 +10,7 @@ import 'package:hitwave.cover/features/tuner/domain/repositories/tuner_repositor
 import 'package:hitwave.cover/features/tuner/domain/use_cases/start_tuner_use_case.dart';
 import 'package:hitwave.cover/features/tuner/domain/use_cases/stop_tuner_use_case.dart';
 import 'package:hitwave.cover/features/tuner/domain/use_cases/watch_tuner_use_case.dart';
-import 'package:hitwave.cover/features/tuner/presentation/widgets/tuner_widget.dart';
+import 'package:hitwave.cover/features/tuner/presentation/pages/tuner_panel_page.dart';
 import 'package:watch_it/watch_it.dart';
 
 /// The tuner without a microphone: the test sets the heard pitch.
@@ -62,7 +62,7 @@ void main() {
         GlobalCupertinoLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
       ],
-      home: Scaffold(body: shown ? const TunerWidget() : const SizedBox()),
+      home: Scaffold(body: shown ? const TunerPanelPage() : const SizedBox()),
     ),
   );
 
