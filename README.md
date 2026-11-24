@@ -100,6 +100,12 @@ the lyrics without recording and vocal enhancement.
 tool/check.sh   # analyze, tests and the architecture linter — exactly what CI runs
 ```
 
+**The skill's version** is pinned: `tool/clean_arch_skill_version` holds a release tag of the skill, and
+`tool/check.sh` (locally and in CI) lints with the linter of that tag, so a change in the skill never changes the
+result of an old commit. To move the project to a newer skill, change the tag (and `.clean_arch.toml` when a new
+template version is wanted) in one commit. To try an unreleased skill once:
+`CLEAN_ARCH_DIR=~/.agents/skills/revoockv-flutter-clean-arch tool/check.sh`.
+
 **Release**: `tool/release.sh X.Y.Z` on `develop`, after the CI of `develop` passed. It refuses to run on a
 dirty or unpushed `develop`, on a version that is not higher or a tag that exists, and when the checks fail; then
 it merges into `main`, tags `vX.Y.Z` and pushes everything at once. A tag is never moved: a failed release is
