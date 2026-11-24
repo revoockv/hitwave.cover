@@ -7,7 +7,7 @@ import '../../../practice/domain/entities/practice_stats.dart';
 import '../../../practice/presentation/widgets/practice_overview_widget.dart';
 import '../../../recordings/domain/entities/recording.dart';
 import '../../../recordings/domain/entities/shared_song.dart';
-import '../../../recordings/presentation/widgets/recordings_list_widget.dart';
+import '../../../recordings/presentation/pages/recordings_list_page.dart';
 import '../../../song/domain/entities/song.dart';
 import '../../../song/presentation/widgets/song_tile_widget.dart';
 import '../../../song/presentation/l10n/song_widget_texts.dart';
@@ -108,7 +108,7 @@ final class HomeDashboardWidget extends StatelessWidget {
       if (recentCovers.isEmpty)
         Text(t.song.noRecentCovers, style: hintStyle)
       else
-        RecordingsListWidget(
+        RecordingsListPage(
           recordings: recentCovers,
           emptyText: t.song.noRecentCovers,
           headerOf: coverTitleOf,

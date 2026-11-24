@@ -16,7 +16,7 @@ import '../../../recordings/domain/entities/shared_song.dart';
 import '../../../recordings/presentation/di/recordings_getters.dart';
 import '../../../recordings/domain/entities/microphone.dart';
 import '../../../recordings/presentation/widgets/microphone_picker_dialog_widget.dart';
-import '../../../recordings/presentation/widgets/recordings_sheet_widget.dart';
+import '../../../recordings/presentation/pages/recordings_sheet_page.dart';
 import '../../../song/domain/entities/lyrics_layout.dart';
 import '../../../song/domain/entities/song.dart';
 import '../controllers/lyrics_page_controller.dart';
@@ -372,6 +372,7 @@ final class LyricsPage extends WatchingWidget {
           builder: (BuildContext context) => MicrophonePickerDialogWidget(
             microphones: value,
             selectedId: watchRecordingPreferencesUseCase().value.microphoneId,
+            texts: context.t.recordingsTexts,
           ),
         );
         if (chosen == null) return;
@@ -436,7 +437,7 @@ final class LyricsPage extends WatchingWidget {
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-      builder: (BuildContext context) => RecordingsSheetWidget(
+      builder: (BuildContext context) => RecordingsSheetPage(
         songId: song.id,
         song: SharedSong(author: song.author, name: song.name),
       ),

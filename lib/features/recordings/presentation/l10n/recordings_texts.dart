@@ -1,6 +1,9 @@
 import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../domain/entities/enhance_failure.dart';
 import '../../domain/entities/recordings_failure.dart';
+import '../../domain/entities/recording.dart';
+import '../../domain/entities/recording_status.dart';
+import '../widgets/recording_tile_widget.dart';
 
 /// The text of a [RecordingsFailure] shown to the user.
 extension RecordingsFailureText on RecordingsFailure {
@@ -31,4 +34,38 @@ extension EnhanceFailureText on EnhanceFailure {
     EnhanceFailure.unavailable => t.recordings.enhanceFailure.unavailable,
     EnhanceFailure.failed => t.recordings.enhanceFailure.failed,
   };
+}
+
+/// The texts of the recordings widgets in the language of these [Translations].
+extension RecordingsWidgetTexts on Translations {
+  /// The texts of every recordings widget.
+  RecordingsTexts get recordingsTexts => RecordingsTexts(
+    playTooltip: recordings.play,
+    pauseTooltip: recordings.pause,
+    shareTooltip: recordings.share,
+    preparingMp3Tooltip: recordings.preparingMp3,
+    showInFolderTooltip: recordings.showInFolder,
+    retryLabel: recordings.retry,
+    enhanceNowLabel: recordings.enhanceNow,
+    deleteTooltip: common.delete,
+    originalLabel: recordings.original,
+    enhancedLabel: recordings.enhanced,
+    statusOf: _statusOf,
+    deleteTitle: recordings.deleteTitle,
+    deleteMessage: recordings.deleteMessage,
+    cancelLabel: common.cancel,
+    deleteLabel: common.delete,
+    microphoneTitle: recordings.microphoneTitle,
+    microphoneHint: recordings.microphoneHint,
+    systemMicrophoneLabel: recordings.systemMicrophone,
+  );
+
+  String _statusOf(Recording recording) => recording.isSilent
+      ? recordings.silent
+      : switch (recording.status) {
+          RecordingStatus.recorded => recordings.notEnhanced,
+          RecordingStatus.enhancing => recordings.enhancing,
+          RecordingStatus.enhanced => recordings.enhanced,
+          RecordingStatus.enhanceFailed => recording.enhanceFailure?.text(this) ?? recordings.notEnhanced,
+        };
 }

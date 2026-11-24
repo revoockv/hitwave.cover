@@ -5,15 +5,91 @@ import '../../../../core/presentation/theme.dart';
 import '../../domain/entities/recording.dart';
 import '../../domain/entities/recording_status.dart';
 import '../../domain/entities/recording_version.dart';
-import '../../../../core/presentation/l10n/app_translations.dart';
-import '../l10n/recordings_texts.dart';
-import 'enhance_progress_widget.dart';
-import 'playback_progress_widget.dart';
+
+/// The texts of the recordings widgets.
+final class RecordingsTexts {
+  /// Tooltip of the play button.
+  final String playTooltip;
+
+  /// Tooltip of the play button while the take plays.
+  final String pauseTooltip;
+
+  /// Tooltip of the share button.
+  final String shareTooltip;
+
+  /// Tooltip of the share button while the MP3 is made.
+  final String preparingMp3Tooltip;
+
+  /// Tooltip of the show-in-folder button.
+  final String showInFolderTooltip;
+
+  /// Tooltip and label of enhancing again.
+  final String retryLabel;
+
+  /// Label of enhancing a take that was not enhanced yet.
+  final String enhanceNowLabel;
+
+  /// Tooltip of the delete button.
+  final String deleteTooltip;
+
+  /// Label of the original version.
+  final String originalLabel;
+
+  /// Label of the enhanced version.
+  final String enhancedLabel;
+
+  /// The state of a take as text ("not enhanced", "enhancing…", the failure).
+  final String Function(Recording recording) statusOf;
+
+  /// Title of the delete dialog.
+  final String deleteTitle;
+
+  /// What deleting a take does.
+  final String deleteMessage;
+
+  /// Label of the cancel button.
+  final String cancelLabel;
+
+  /// Label of the delete button.
+  final String deleteLabel;
+
+  /// Title of the microphone picker.
+  final String microphoneTitle;
+
+  /// Hint of the microphone picker.
+  final String microphoneHint;
+
+  /// Name of the input the system uses.
+  final String systemMicrophoneLabel;
+
+  /// Creates the texts.
+  const RecordingsTexts({
+    required this.playTooltip,
+    required this.pauseTooltip,
+    required this.shareTooltip,
+    required this.preparingMp3Tooltip,
+    required this.showInFolderTooltip,
+    required this.retryLabel,
+    required this.enhanceNowLabel,
+    required this.deleteTooltip,
+    required this.originalLabel,
+    required this.enhancedLabel,
+    required this.statusOf,
+    required this.deleteTitle,
+    required this.deleteMessage,
+    required this.cancelLabel,
+    required this.deleteLabel,
+    required this.microphoneTitle,
+    required this.microphoneHint,
+    required this.systemMicrophoneLabel,
+  });
+}
 
 /// One recording in the list: date, length, state, the original/enhanced switch, play, share,
 /// show in folder (desktop) and delete.
 ///
-/// Knows nothing about use cases; every action is a callback.
+/// Dumb: every action is a callback; the progress bars of enhancing and playing come as widgets (their wrappers watch
+/// the fast progress).
 final class RecordingTileWidget extends StatelessWidget {
   static const String _dateSeparator = '.';
   static const String _timeSeparator = ':';
@@ -55,6 +131,15 @@ final class RecordingTileWidget extends StatelessWidget {
   /// failed enhancement, and the one in the actions of an enhanced take.
   final VoidCallback onRetryPressed;
 
+  /// The texts.
+  final RecordingsTexts texts;
+
+  /// The progress of enhancing, shown while the take is enhanced.
+  final Widget enhanceProgress;
+
+  /// The progress of playing, shown while the take is loaded; `null` when it is not.
+  final Widget? playbackProgress;
+
   /// Creates a new [RecordingTileWidget].
   const RecordingTileWidget({
     super.key,
@@ -69,11 +154,13 @@ final class RecordingTileWidget extends StatelessWidget {
     this.isSharing = false,
     required this.onShowInFolderPressed,
     required this.onRetryPressed,
+    required this.texts,
+    required this.enhanceProgress,
+    this.playbackProgress,
   });
 
   @override
   Widget build(BuildContext context) {
-    final Translations t = context.t;
     final ThemeData theme = Theme.of(context);
     final bool isEnhanced = recording.status == RecordingStatus.enhanced && recording.enhancedPath != null;
 
@@ -92,7 +179,7 @@ final class RecordingTileWidget extends StatelessWidget {
                     children: <Widget>[
                       Text(_formatDate(recording.recordedAt), style: theme.textTheme.titleSmall),
                       Text(
-                        '${_formatLength(recording)}$_dateTimeSeparator${_statusText(context.t, recording)}',
+                        '${_formatLength(recording)}$_dateTimeSeparator${texts.statusOf(recording)}',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: recording.status == RecordingStatus.enhanceFailed || recording.isSilent
                               ? theme.colorScheme.error
@@ -103,12 +190,12 @@ final class RecordingTileWidget extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  tooltip: isLoaded && isPlaying ? t.recordings.pause : t.recordings.play,
+                  tooltip: isLoaded && isPlaying ? texts.pauseTooltip : texts.playTooltip,
                   onPressed: onPlayPressed,
                   icon: Icon(isLoaded && isPlaying ? Icons.pause_circle : Icons.play_circle),
                 ),
                 IconButton(
-                  tooltip: isSharing ? t.recordings.preparingMp3 : t.recordings.share,
+                  tooltip: isSharing ? texts.preparingMp3Tooltip : texts.shareTooltip,
                   onPressed: isSharing ? null : onSharePressed,
                   icon: isSharing
                       ? const SizedBox.square(
@@ -119,18 +206,18 @@ final class RecordingTileWidget extends StatelessWidget {
                 ),
                 if (onShowInFolderPressed != null)
                   IconButton(
-                    tooltip: t.recordings.showInFolder,
+                    tooltip: texts.showInFolderTooltip,
                     onPressed: onShowInFolderPressed,
                     icon: const Icon(Icons.folder_open_outlined),
                   ),
                 if (recording.status == RecordingStatus.enhanced)
                   IconButton(
-                    tooltip: t.recordings.retry,
+                    tooltip: texts.retryLabel,
                     onPressed: onRetryPressed,
                     icon: const Icon(Icons.auto_fix_high),
                   ),
                 IconButton(
-                  tooltip: t.common.delete,
+                  tooltip: texts.deleteTooltip,
                   onPressed: onDeletePressed,
                   icon: const Icon(Icons.delete_outline),
                 ),
@@ -139,10 +226,10 @@ final class RecordingTileWidget extends StatelessWidget {
             const SizedBox(height: AppTheme.spacingSmall),
             SegmentedButton<RecordingVersion>(
               segments: <ButtonSegment<RecordingVersion>>[
-                ButtonSegment<RecordingVersion>(value: RecordingVersion.original, label: Text(t.recordings.original)),
+                ButtonSegment<RecordingVersion>(value: RecordingVersion.original, label: Text(texts.originalLabel)),
                 ButtonSegment<RecordingVersion>(
                   value: RecordingVersion.enhanced,
-                  label: Text(t.recordings.enhanced),
+                  label: Text(texts.enhancedLabel),
                   enabled: isEnhanced,
                 ),
               ],
@@ -151,7 +238,7 @@ final class RecordingTileWidget extends StatelessWidget {
             ),
             if (recording.status == RecordingStatus.enhancing) ...<Widget>[
               const SizedBox(height: AppTheme.spacingSmall),
-              EnhanceProgressWidget(recordingId: recording.id),
+              enhanceProgress,
             ],
             if (recording.status == RecordingStatus.recorded || recording.status == RecordingStatus.enhanceFailed)
               Align(
@@ -159,12 +246,13 @@ final class RecordingTileWidget extends StatelessWidget {
                 child: TextButton.icon(
                   onPressed: onRetryPressed,
                   icon: const Icon(Icons.auto_fix_high),
-                  label: Text(
-                    recording.status == RecordingStatus.recorded ? t.recordings.enhanceNow : t.recordings.retry,
-                  ),
+                  label: Text(recording.status == RecordingStatus.recorded ? texts.enhanceNowLabel : texts.retryLabel),
                 ),
               ),
-            if (isLoaded) ...<Widget>[const SizedBox(height: AppTheme.spacingSmall), const PlaybackProgressWidget()],
+            if (playbackProgress case final Widget progress) ...<Widget>[
+              const SizedBox(height: AppTheme.spacingSmall),
+              progress,
+            ],
           ],
         ),
       ),
@@ -172,15 +260,6 @@ final class RecordingTileWidget extends StatelessWidget {
   }
 
   void _onSelectionChanged(Set<RecordingVersion> selection) => onVersionChanged(selection.first);
-
-  static String _statusText(Translations t, Recording recording) => recording.isSilent
-      ? t.recordings.silent
-      : switch (recording.status) {
-          RecordingStatus.recorded => t.recordings.notEnhanced,
-          RecordingStatus.enhancing => t.recordings.enhancing,
-          RecordingStatus.enhanced => t.recordings.enhanced,
-          RecordingStatus.enhanceFailed => recording.enhanceFailure?.text(t) ?? t.recordings.notEnhanced,
-        };
 
   /// `dd.mm.yyyy · hh:mm`.
   static String _formatDate(DateTime date) {

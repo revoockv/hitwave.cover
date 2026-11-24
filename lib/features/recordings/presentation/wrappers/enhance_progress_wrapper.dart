@@ -8,13 +8,14 @@ import '../di/recordings_getters.dart';
 
 /// How far the enhancement of one take is; a take waiting in the queue shows 0.
 ///
-/// The only widget that watches the enhancement progress, so the list and the tiles do not rebuild with it.
-final class EnhanceProgressWidget extends WatchingWidget {
+/// The only wrapper that watches the enhancement progress, so the list and the tiles do not rebuild with it; it gives a plain
+/// [LinearProgressIndicator] the fraction.
+final class EnhanceProgressWrapper extends WatchingWidget {
   /// The take whose progress is shown.
   final String recordingId;
 
-  /// Creates a new [EnhanceProgressWidget].
-  const EnhanceProgressWidget({super.key, required this.recordingId});
+  /// Creates a new [EnhanceProgressWrapper].
+  const EnhanceProgressWrapper({super.key, required this.recordingId});
 
   @override
   Widget build(BuildContext context) {

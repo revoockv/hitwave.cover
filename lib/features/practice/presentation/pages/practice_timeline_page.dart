@@ -7,7 +7,7 @@ import '../../../recordings/domain/entities/recordings_failure.dart';
 import '../../../recordings/domain/entities/shared_song.dart';
 import '../../../recordings/presentation/di/recordings_getters.dart';
 import '../../../recordings/presentation/l10n/recordings_texts.dart';
-import '../../../recordings/presentation/widgets/recordings_list_widget.dart';
+import '../../../recordings/presentation/pages/recordings_list_page.dart';
 import '../../../song/domain/entities/song.dart';
 import '../../domain/entities/practice_entry.dart';
 import '../../domain/entities/practice_entry_filter.dart';
@@ -48,7 +48,7 @@ final class PracticeTimelinePage extends StatelessWidget {
       query: query,
       filter: filter,
       texts: t.practiceTexts,
-      takesBuilder: (PracticeEntry entry, Song? song) => RecordingsListWidget(
+      takesBuilder: (PracticeEntry entry, Song? song) => RecordingsListPage(
         recordings: entry.recordings,
         emptyText: t.recordings.noTakes,
         songOf: (Recording recording) => song == null ? null : SharedSong(author: song.author, name: song.name),

@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:watch_it/watch_it.dart';
 
 import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../../core/presentation/theme.dart';
 import '../../domain/entities/recording.dart';
 import '../../domain/entities/shared_song.dart';
-import '../di/recordings_getters.dart';
-import 'recordings_list_widget.dart';
+import '../wrappers/song_recordings_wrapper.dart';
+import 'recordings_list_page.dart';
 
 /// Bottom sheet with the recordings of one song.
-final class RecordingsSheetWidget extends WatchingWidget {
+final class RecordingsSheetPage extends StatelessWidget {
   static const double _heightFactor = 0.7;
 
   /// The song whose recordings are shown.
@@ -18,18 +17,14 @@ final class RecordingsSheetWidget extends WatchingWidget {
   /// The song, which shared recordings are named after.
   final SharedSong song;
 
-  /// Creates a new [RecordingsSheetWidget].
-  const RecordingsSheetWidget({super.key, required this.songId, required this.song});
+  /// Creates a new [RecordingsSheetPage].
+  const RecordingsSheetPage({super.key, required this.songId, required this.song});
 
   SharedSong _songOf(Recording recording) => song;
 
   @override
   Widget build(BuildContext context) {
     final Translations t = context.t;
-    final List<Recording> recordings = watch(
-      watchRecordingsUseCase(),
-    ).value.where((Recording recording) => recording.songId == songId).toList();
-
     return SafeArea(
       child: SizedBox(
         height: MediaQuery.sizeOf(context).height * _heightFactor,
@@ -41,7 +36,11 @@ final class RecordingsSheetWidget extends WatchingWidget {
               Text(t.recordings.title, style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: AppTheme.spacingMedium),
               Expanded(
-                child: RecordingsListWidget(recordings: recordings, emptyText: t.recordings.noTakes, songOf: _songOf),
+                child: SongRecordingsWrapper(
+                  songId: songId,
+                  builder: (List<Recording> recordings) =>
+                      RecordingsListPage(recordings: recordings, emptyText: t.recordings.noTakes, songOf: _songOf),
+                ),
               ),
             ],
           ),

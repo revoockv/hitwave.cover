@@ -7,11 +7,11 @@ import '../di/recordings_getters.dart';
 
 /// How much of the loaded recording is played.
 ///
-/// The only widget that watches the playback position, which changes many times a second, so the list and the tiles
-/// do not rebuild with it.
-final class PlaybackProgressWidget extends WatchingWidget {
-  /// Creates a new [PlaybackProgressWidget].
-  const PlaybackProgressWidget({super.key});
+/// The only wrapper that watches the playback position, which changes many times a second, so the list and the tiles
+/// do not rebuild with it. It gives a plain [LinearProgressIndicator] the fraction.
+final class PlaybackProgressWrapper extends WatchingWidget {
+  /// Creates a new [PlaybackProgressWrapper].
+  const PlaybackProgressWrapper({super.key});
 
   @override
   Widget build(BuildContext context) {
