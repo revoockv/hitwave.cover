@@ -35,6 +35,8 @@ import '../../../song/domain/entities/song_failure.dart';
 import '../../../song/presentation/l10n/song_texts.dart';
 import '../../../tuner/presentation/pages/tuner_panel_page.dart';
 import '../../../song/presentation/l10n/song_widget_texts.dart';
+import '../../../practice/presentation/l10n/practice_texts.dart';
+import '../../../recordings/presentation/pages/recordings_list_page.dart';
 
 /// Main page with the bottom navigation: home (mini statistics, recent songs and covers),
 /// songs (search and orders), covers (search) and statistics; plus backup and account actions.
@@ -418,15 +420,31 @@ final class _HomeTabWidget extends WatchingWidget {
     final Map<String, Song> songsById = <String, Song>{for (final Song song in songs) song.id: song};
     final DateTime now = DateTime.now();
 
+    final List<Recording> recentCovers = HomePage._recentCovers(recordings, history);
     return HomeDashboardWidget(
       stats: calculatePracticeStatsUseCase(sessions: sessions, recordings: recordings, now: now),
       today: PracticeStats.dayOf(now),
       recentSongs: HomePage._recentSongs(songsById, history),
-      recentCovers: HomePage._recentCovers(recordings, history),
-      coverCounts: CoverCounts.fromRecordings(recordings),
-      coverTitleOf: (Recording recording) => HomePage._songTitle(t, songsById[recording.songId]),
-      coverSongPressedOf: (Recording recording) => _openerOf(songsById[recording.songId]),
-      coverSongOf: (Recording recording) => HomePage._sharedSong(songsById[recording.songId]),
+      recentCoversList: recentCovers.isEmpty
+          ? null
+          : RecordingsListPage(
+              recordings: recentCovers,
+              emptyText: t.song.noRecentCovers,
+              headerOf: (Recording recording) => HomePage._songTitle(t, songsById[recording.songId]),
+              onHeaderPressedOf: (Recording recording) => _openerOf(songsById[recording.songId]),
+              songOf: (Recording recording) => HomePage._sharedSong(songsById[recording.songId]),
+              shrinkWrap: true,
+            ),
+      coverCountOf: CoverCounts.fromRecordings(recordings).of,
+      texts: HomeDashboardTexts(
+        recentSongsTitle: t.song.recentlyOpened,
+        recentCoversTitle: t.song.recentlyPlayed,
+        allLabel: t.song.all,
+        noRecentSongsText: t.song.noRecentSongs,
+        noRecentCoversText: t.song.noRecentCovers,
+        practice: t.practiceTexts,
+        songTile: t.songTile,
+      ),
       onStatsPressed: onStatsPressed,
       onAllSongsPressed: onAllSongsPressed,
       onAllCoversPressed: onAllCoversPressed,
