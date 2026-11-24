@@ -8,8 +8,8 @@ import '../../../practice/presentation/widgets/practice_overview_widget.dart';
 import '../../../recordings/domain/entities/recording.dart';
 import '../../../recordings/domain/entities/shared_song.dart';
 import '../../../recordings/presentation/widgets/recordings_list_widget.dart';
-import '../../domain/entities/song.dart';
-import 'song_tile_widget.dart';
+import '../../../song/domain/entities/song.dart';
+import '../../../song/presentation/widgets/song_tile_widget.dart';
 
 /// The home tab: the mini statistics, the songs opened last and the covers played last.
 final class HomeDashboardWidget extends StatelessWidget {

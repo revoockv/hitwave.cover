@@ -17,17 +17,17 @@ import '../../../recordings/presentation/di/recordings_getters.dart';
 import '../../../recordings/domain/entities/microphone.dart';
 import '../../../recordings/presentation/widgets/microphone_picker_dialog_widget.dart';
 import '../../../recordings/presentation/widgets/recordings_sheet_widget.dart';
-import '../../domain/entities/lyrics_layout.dart';
-import '../../domain/entities/song.dart';
+import '../../../song/domain/entities/lyrics_layout.dart';
+import '../../../song/domain/entities/song.dart';
 import '../controllers/lyrics_page_controller.dart';
-import '../di/song_getters.dart';
+import '../../../song/presentation/di/song_getters.dart';
 import '../widgets/lyrics_controls_widget.dart';
 import '../widgets/recording_indicator_widget.dart';
 import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../recordings/domain/entities/recordings_failure.dart';
 import '../../../recordings/presentation/l10n/recordings_texts.dart';
-import '../../domain/entities/song_failure.dart';
-import '../l10n/song_texts.dart';
+import '../../../song/domain/entities/song_failure.dart';
+import '../../../song/presentation/l10n/song_texts.dart';
 import '../../../tuner/presentation/pages/tuner_page.dart';
 
 /// Lyrics display page with auto-scroll functionality.

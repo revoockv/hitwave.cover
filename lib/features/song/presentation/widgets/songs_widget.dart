@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../../recordings/domain/entities/cover_counts.dart';
 
 import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../../core/presentation/theme.dart';
 import '../../domain/entities/song.dart';
-import '../controllers/song_view_controller.dart';
+import '../../domain/entities/song_sort.dart';
 import 'artist_picker_widget.dart';
 import 'song_tile_widget.dart';
 
@@ -67,13 +66,13 @@ final class SongListModeWidget extends StatelessWidget {
   /// Called when "delete" is chosen for a song.
   final void Function(Song song) onSongDelete;
 
-  /// Number of covers by song id.
-  final CoverCounts coverCounts;
+  /// How many covers the song with an id has.
+  final int Function(String songId) coverCountOf;
 
   /// Creates a new [SongListModeWidget].
   const SongListModeWidget({
     required this.songs,
-    required this.coverCounts,
+    required this.coverCountOf,
     required this.onSongTap,
     required this.onSongEdit,
     required this.onSongDelete,
@@ -92,7 +91,7 @@ final class SongListModeWidget extends StatelessWidget {
           onTap: onSongTap,
           onEdit: onSongEdit,
           onDelete: onSongDelete,
-          coverCount: coverCounts.of(song.id),
+          coverCount: coverCountOf(song.id),
         );
       },
     );
@@ -125,13 +124,13 @@ final class ArtistModeWidget extends StatelessWidget {
   /// Called when "delete" is chosen for a song.
   final void Function(Song song) onSongDelete;
 
-  /// Number of covers by song id.
-  final CoverCounts coverCounts;
+  /// How many covers the song with an id has.
+  final int Function(String songId) coverCountOf;
 
   /// Creates a new [ArtistModeWidget].
   const ArtistModeWidget({
     required this.songs,
-    required this.coverCounts,
+    required this.coverCountOf,
     required this.selectedArtist,
     required this.onArtistSelected,
     required this.onSongTap,
@@ -157,7 +156,7 @@ final class ArtistModeWidget extends StatelessWidget {
         onTap: onSongTap,
         onEdit: onSongEdit,
         onDelete: onSongDelete,
-        coverCount: coverCounts.of(artistSongs[index].id),
+        coverCount: coverCountOf(artistSongs[index].id),
       ),
     );
   }
@@ -178,11 +177,11 @@ final class SongsWidget extends StatelessWidget {
     required this.onSongDelete,
     required this.onAddPressed,
     this.selectedArtist = '',
-    required this.coverCounts,
+    required this.coverCountOf,
   });
 
-  /// Number of covers by song id.
-  final CoverCounts coverCounts;
+  /// How many covers the song with an id has.
+  final int Function(String songId) coverCountOf;
 
   /// The list of songs.
   final List<Song> songs;
@@ -217,7 +216,7 @@ final class SongsWidget extends StatelessWidget {
     if (viewMode == SongViewMode.list) {
       return SongListModeWidget(
         songs: songs,
-        coverCounts: coverCounts,
+        coverCountOf: coverCountOf,
         onSongTap: onSongTap,
         onSongEdit: onSongEdit,
         onSongDelete: onSongDelete,
@@ -226,7 +225,7 @@ final class SongsWidget extends StatelessWidget {
 
     return ArtistModeWidget(
       songs: songs,
-      coverCounts: coverCounts,
+      coverCountOf: coverCountOf,
       selectedArtist: selectedArtist,
       onArtistSelected: onArtistSelected,
       onSongTap: onSongTap,

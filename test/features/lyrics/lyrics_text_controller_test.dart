@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hitwave.cover/features/song/domain/entities/lyrics_chord.dart';
 import 'package:hitwave.cover/features/song/domain/entities/tab_block.dart';
 import 'package:hitwave.cover/features/song/domain/use_cases/find_tab_blocks_use_case.dart';
-import 'package:hitwave.cover/features/song/presentation/controllers/lyrics_text_controller.dart';
+import 'package:hitwave.cover/features/lyrics/presentation/controllers/lyrics_text_controller.dart';
 
 void main() {
   const String lyrics = 'Intro\ne-----0---|\nB---1-----|\nLa la';

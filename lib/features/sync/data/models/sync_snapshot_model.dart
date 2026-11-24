@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import '../../../history/data/models/usage_history_model.dart';
 import '../../../history/domain/entities/usage_history.dart';
 import '../../../practice/domain/entities/practice_session.dart';
 import '../../../recordings/domain/entities/recording.dart';
@@ -165,8 +164,8 @@ final class SyncSnapshotModel {
       for (final dynamic session in json[_sessionsField] as List<dynamic>) _session(session as Map<String, dynamic>),
     ],
     history: UsageHistory(
-      songsOpened: UsageHistoryModel.usageTimes(_times(json[_songsOpenedField] as Map<String, dynamic>)),
-      coversPlayed: UsageHistoryModel.usageTimes(_times(json[_coversPlayedField] as Map<String, dynamic>)),
+      songsOpened: _usageTimes(_times(json[_songsOpenedField] as Map<String, dynamic>)),
+      coversPlayed: _usageTimes(_times(json[_coversPlayedField] as Map<String, dynamic>)),
     ),
     deletedSongs: <SyncSongKeyModel>[
       for (final dynamic song in json[_deletedSongsField] as List<dynamic>? ?? const <dynamic>[])
@@ -243,6 +242,10 @@ final class SyncSnapshotModel {
     for (final MapEntry<String, dynamic> entry in json.entries)
       entry.key: DateTime.parse(entry.value as String).toLocal(),
   };
+
+  static List<UsageTime> _usageTimes(Map<String, DateTime> times) => <UsageTime>[
+    for (final MapEntry<String, DateTime> entry in times.entries) UsageTime(id: entry.key, at: entry.value),
+  ];
 
   static Map<String, String> _encodeTimes(List<UsageTime> times) => <String, String>{
     for (final UsageTime time in times) time.id: time.at.toUtc().toIso8601String(),

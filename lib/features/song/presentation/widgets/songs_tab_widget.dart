@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../../recordings/domain/entities/cover_counts.dart';
 
 import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../../core/presentation/theme.dart';
 import '../../domain/entities/song.dart';
-import '../controllers/song_view_controller.dart';
+import '../../domain/entities/song_sort.dart';
 import 'search_field_widget.dart';
 import 'songs_widget.dart';
 
@@ -18,8 +17,8 @@ final class SongsTabWidget extends StatelessWidget {
   /// The songs found, in the order to show.
   final List<Song> songs;
 
-  /// Number of covers by song id.
-  final CoverCounts coverCounts;
+  /// How many covers the song with an id has.
+  final int Function(String songId) coverCountOf;
 
   /// The search text.
   final TextEditingController searchController;
@@ -53,7 +52,7 @@ final class SongsTabWidget extends StatelessWidget {
     super.key,
     required this.isLibraryEmpty,
     required this.songs,
-    required this.coverCounts,
+    required this.coverCountOf,
     required this.searchController,
     required this.sort,
     required this.selectedArtist,
@@ -117,7 +116,7 @@ final class SongsTabWidget extends StatelessWidget {
               ? Center(child: Text(t.common.nothingFound))
               : SongsWidget(
                   songs: songs,
-                  coverCounts: coverCounts,
+                  coverCountOf: coverCountOf,
                   viewMode: sort == SongSort.artists && !isSearching ? SongViewMode.artist : SongViewMode.list,
                   selectedArtist: selectedArtist,
                   onArtistSelected: onArtistSelected,

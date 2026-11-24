@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hitwave.cover/core/domain/entities/result_state.dart';
-import 'package:hitwave.cover/features/song/presentation/controllers/lyrics_page_controller.dart';
+import 'package:hitwave.cover/features/lyrics/presentation/controllers/lyrics_page_controller.dart';
 
 void main() {
   test('starts at the speed saved with the song', () {

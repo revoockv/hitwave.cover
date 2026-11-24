@@ -2,8 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../../domain/entities/lyrics_chord.dart';
-import '../../domain/entities/tab_block.dart';
+import '../../../song/domain/entities/lyrics_chord.dart';
+import '../../../song/domain/entities/tab_block.dart';
 
 /// Text of the lyrics field that draws the chords in the accent colour and the tablatures in a
 /// fixed-width font, so their strings keep their columns; a tab wider than the field is made

@@ -8,7 +8,7 @@ import 'di.dart';
 import 'features/settings/domain/entities/app_settings.dart';
 import 'features/settings/presentation/di/settings_getters.dart';
 import 'features/settings/presentation/l10n/settings_texts.dart';
-import 'features/song/presentation/pages/home_page.dart';
+import 'features/home/presentation/pages/home_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

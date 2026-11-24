@@ -17,20 +17,22 @@ import '../../../recordings/domain/entities/recording.dart';
 import '../../../recordings/domain/entities/shared_song.dart';
 import '../../../recordings/presentation/di/recordings_getters.dart';
 import '../../../settings/presentation/pages/settings_page.dart';
-import '../../domain/entities/song.dart';
+import '../../../song/domain/entities/song.dart';
+import '../../../song/domain/entities/song_sort.dart';
 import '../controllers/song_view_controller.dart';
-import '../di/song_getters.dart';
-import '../widgets/artist_switcher_title_widget.dart';
-import '../widgets/delete_song_dialog_widget.dart';
+import '../controllers/home_controller.dart';
+import '../../../song/presentation/di/song_getters.dart';
+import '../../../song/presentation/widgets/artist_switcher_title_widget.dart';
+import '../../../song/presentation/widgets/delete_song_dialog_widget.dart';
 import '../widgets/home_dashboard_widget.dart';
-import '../widgets/search_field_widget.dart';
-import '../widgets/songs_tab_widget.dart';
-import 'add_song_page.dart';
-import 'edit_song_page.dart';
-import 'lyrics_page.dart';
+import '../../../song/presentation/widgets/search_field_widget.dart';
+import '../../../song/presentation/widgets/songs_tab_widget.dart';
+import '../../../song/presentation/pages/add_song_page.dart';
+import '../../../song/presentation/pages/edit_song_page.dart';
+import '../../../lyrics/presentation/pages/lyrics_page.dart';
 import '../../../../core/presentation/l10n/app_translations.dart';
-import '../../domain/entities/song_failure.dart';
-import '../l10n/song_texts.dart';
+import '../../../song/domain/entities/song_failure.dart';
+import '../../../song/presentation/l10n/song_texts.dart';
 import '../../../tuner/presentation/widgets/tuner_widget.dart';
 
 /// Main page with the bottom navigation: home (mini statistics, recent songs and covers),
@@ -56,6 +58,10 @@ final class HomePage extends WatchingWidget {
 
   static void _disposeSongViewController(SongViewController songViewController) => songViewController.dispose();
 
+  static HomeController _createHomeController() => HomeController();
+
+  static void _disposeHomeController(HomeController homeController) => homeController.dispose();
+
   @override
   Widget build(BuildContext context) {
     final Translations t = context.t;
@@ -64,7 +70,8 @@ final class HomePage extends WatchingWidget {
       dispose: _disposeSongViewController,
     );
     final List<Song> songs = watch(watchListOfSongsUseCase()).value;
-    final HomeTab tab = watch(songViewController.homeTabController).value;
+    final HomeController homeController = createOnce(_createHomeController, dispose: _disposeHomeController);
+    final HomeTab tab = watch(homeController.homeTabController).value;
     final SongSort sort = watch(songViewController.songSortController).value;
     final String selectedArtist = watch(songViewController.selectedArtistController).value;
     // Only whether the search is empty: typing rebuilds the found count and the songs tab, not the page.
@@ -115,9 +122,9 @@ final class HomePage extends WatchingWidget {
     final Widget body = switch (tab) {
       HomeTab.home => _HomeTabWidget(
         songs: songs,
-        onStatsPressed: () => _selectTab(songViewController, HomeTab.stats),
-        onAllSongsPressed: () => _selectTab(songViewController, HomeTab.songs),
-        onAllCoversPressed: () => _selectTab(songViewController, HomeTab.covers),
+        onStatsPressed: () => _selectTab(homeController, HomeTab.stats),
+        onAllSongsPressed: () => _selectTab(homeController, HomeTab.songs),
+        onAllCoversPressed: () => _selectTab(homeController, HomeTab.covers),
         onSongTap: (Song song) => _navigateToLyrics(context, song),
         onSongEdit: (Song song) => _showEditSongPage(context, song),
         onSongDelete: (Song song) => _onSongDeletePressed(context, song),
@@ -133,7 +140,7 @@ final class HomePage extends WatchingWidget {
         onAddPressed: () => _showAddSongPage(context, newSongAuthor),
       ),
       HomeTab.covers => _CoversTabWidget(
-        songViewController: songViewController,
+        homeController: homeController,
         onSongPressed: (Song song) => _navigateToLyrics(context, song),
       ),
       HomeTab.stats => PracticeStatsWidget(onSongPressed: (Song song) => _navigateToLyrics(context, song)),
@@ -175,7 +182,7 @@ final class HomePage extends WatchingWidget {
                 children: <Widget>[
                   NavigationRail(
                     selectedIndex: tab.index,
-                    onDestinationSelected: (int index) => _selectTab(songViewController, HomeTab.values[index]),
+                    onDestinationSelected: (int index) => _selectTab(homeController, HomeTab.values[index]),
                     destinations: <NavigationRailDestination>[
                       for (final _Tab destination in tabs)
                         NavigationRailDestination(
@@ -193,7 +200,7 @@ final class HomePage extends WatchingWidget {
             ? null
             : NavigationBar(
                 selectedIndex: tab.index,
-                onDestinationSelected: (int index) => _selectTab(songViewController, HomeTab.values[index]),
+                onDestinationSelected: (int index) => _selectTab(homeController, HomeTab.values[index]),
                 destinations: <NavigationDestination>[
                   for (final _Tab destination in tabs)
                     NavigationDestination(
@@ -332,10 +339,10 @@ final class HomePage extends WatchingWidget {
   }
 
   /// Shows [tab]; a cover playing on the tab left behind stops.
-  void _selectTab(SongViewController songViewController, HomeTab tab) {
-    if (tab == songViewController.homeTabController.value) return;
+  void _selectTab(HomeController homeController, HomeTab tab) {
+    if (tab == homeController.homeTabController.value) return;
     stopPlaybackUseCase();
-    songViewController.selectTab(tab);
+    homeController.selectTab(tab);
   }
 
   /// Opens the form of a new song; on an artist's page its author is filled in.
@@ -463,7 +470,7 @@ final class _SongsTabWidget extends WatchingWidget {
     return SongsTabWidget(
       isLibraryEmpty: songs.isEmpty,
       songs: HomePage._orderSongs(HomePage._findSongs(songs, query), sort, history, coverCounts),
-      coverCounts: coverCounts,
+      coverCountOf: coverCounts.of,
       searchController: songViewController.songSearchController,
       sort: sort,
       selectedArtist: selectedArtist,
@@ -479,15 +486,15 @@ final class _SongsTabWidget extends WatchingWidget {
 
 /// The covers tab: the search field and the practice timeline. Watches the search text and the filter itself.
 final class _CoversTabWidget extends WatchingWidget {
-  final SongViewController songViewController;
+  final HomeController homeController;
   final ValueChanged<Song> onSongPressed;
 
-  const _CoversTabWidget({required this.songViewController, required this.onSongPressed});
+  const _CoversTabWidget({required this.homeController, required this.onSongPressed});
 
   @override
   Widget build(BuildContext context) {
-    final String query = watchPropertyValue(HomePage._textOf, target: songViewController.coverSearchController);
-    final PracticeEntryFilter filter = watch(songViewController.coverFilterController).value;
+    final String query = watchPropertyValue(HomePage._textOf, target: homeController.coverSearchController);
+    final PracticeEntryFilter filter = watch(homeController.coverFilterController).value;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -503,7 +510,7 @@ final class _CoversTabWidget extends WatchingWidget {
                 0,
               ),
               child: SearchFieldWidget(
-                searchController: songViewController.coverSearchController,
+                searchController: homeController.coverSearchController,
                 hint: context.t.song.coverSearch,
               ),
             ),
@@ -522,6 +529,6 @@ final class _CoversTabWidget extends WatchingWidget {
   }
 
   void _onFilterChanged(PracticeEntryFilter filter) {
-    songViewController.coverFilterController.value = filter;
+    homeController.coverFilterController.value = filter;
   }
 }

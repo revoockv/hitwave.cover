@@ -3,10 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../../core/domain/entities/result_state.dart';
-import '../../domain/entities/lyrics_layout.dart';
-import '../../domain/entities/lyrics_chord.dart';
-import '../../domain/entities/song_failure.dart';
-import '../../domain/entities/tab_block.dart';
+import '../../../song/domain/entities/lyrics_layout.dart';
+import '../../../song/domain/entities/lyrics_chord.dart';
+import '../../../song/domain/entities/song_failure.dart';
+import '../../../song/domain/entities/tab_block.dart';
 import 'lyrics_text_controller.dart';
 
 /// UI state of the lyrics page, like a Flutter controller: auto-scroll, the
