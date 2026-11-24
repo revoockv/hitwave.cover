@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hitwave.cover/core/presentation/l10n/app_translations.dart';
 import 'package:hitwave.cover/features/sync/domain/entities/song_difference.dart';
 import 'package:hitwave.cover/features/sync/domain/entities/sync_change.dart';
+import 'package:hitwave.cover/features/sync/presentation/l10n/sync_texts.dart';
 import 'package:hitwave.cover/features/sync/presentation/widgets/sync_changes_widget.dart';
 
 void main() {
@@ -65,14 +66,16 @@ void main() {
           home: Scaffold(
             body: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
-              child: SyncChangesWidget(
-                changes: changes,
-                chosen: const <String>{'a', 'd', 'p'},
-                peerName: 'Galaxy A07',
-                onChosenChanged: (SyncChange change, bool isChosen) => ticked.add((change.id, isChosen)),
-                onAllChosenChanged: (List<SyncChange> _, bool _) {},
-                onApplyPressed: () {},
-                onCancelPressed: () {},
+              child: Builder(
+                builder: (BuildContext context) => SyncChangesWidget(
+                  changes: changes,
+                  chosen: const <String>{'a', 'd', 'p'},
+                  texts: context.t.syncChanges('Galaxy A07'),
+                  onChosenChanged: (SyncChange change, bool isChosen) => ticked.add((change.id, isChosen)),
+                  onAllChosenChanged: (List<SyncChange> _, bool _) {},
+                  onApplyPressed: () {},
+                  onCancelPressed: () {},
+                ),
               ),
             ),
           ),

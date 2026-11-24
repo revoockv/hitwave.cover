@@ -1,10 +1,55 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../../core/presentation/theme.dart';
 import '../../../../core/presentation/widgets/surface_widget.dart';
 import '../../domain/entities/sync_change.dart';
-import '../l10n/sync_texts.dart';
+
+/// The texts of [SyncChangesWidget], with the other device's name already in them.
+final class SyncChangesTexts {
+  /// Title of the review.
+  final String titleText;
+
+  /// What to do.
+  final String messageText;
+
+  /// Heading of the changes that come to this device.
+  final String toHereTitle;
+
+  /// Heading of the changes that go to the other device.
+  final String toThereTitle;
+
+  /// Label of the "all" checkbox of a group.
+  final String allLabel;
+
+  /// Label of the apply button with the number of chosen changes.
+  final String Function(int count) applyLabel;
+
+  /// Label of the cancel button.
+  final String cancelLabel;
+
+  /// The badge of a change ("new", "deleted", "changed").
+  final String Function(SyncChange change) badgeOf;
+
+  /// What a change is about.
+  final String Function(SyncChange change) titleOf;
+
+  /// More about a change, or `null`.
+  final String? Function(SyncChange change) detailOf;
+
+  /// Creates the texts.
+  const SyncChangesTexts({
+    required this.titleText,
+    required this.messageText,
+    required this.toHereTitle,
+    required this.toThereTitle,
+    required this.allLabel,
+    required this.applyLabel,
+    required this.cancelLabel,
+    required this.badgeOf,
+    required this.titleOf,
+    required this.detailOf,
+  });
+}
 
 /// The changes of a synchronisation, in two groups (to this device, to the other one), each with a
 /// checkbox and a coloured badge (add, delete, change), and the buttons that go on or cancel.
@@ -16,8 +61,8 @@ final class SyncChangesWidget extends StatelessWidget {
   /// Ids of the ticked changes.
   final Set<String> chosen;
 
-  /// Name of the other device.
-  final String peerName;
+  /// The texts.
+  final SyncChangesTexts texts;
 
   /// Called with a change and whether it is now ticked.
   final void Function(SyncChange change, bool isChosen) onChosenChanged;
@@ -36,7 +81,7 @@ final class SyncChangesWidget extends StatelessWidget {
     super.key,
     required this.changes,
     required this.chosen,
-    required this.peerName,
+    required this.texts,
     required this.onChosenChanged,
     required this.onAllChosenChanged,
     required this.onApplyPressed,
@@ -45,7 +90,6 @@ final class SyncChangesWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Translations t = context.t;
     final ThemeData theme = Theme.of(context);
     final List<SyncChange> toHere = changes.where(_isToHere).toList();
     final List<SyncChange> toThere = changes.where(_isToThere).toList();
@@ -53,37 +97,32 @@ final class SyncChangesWidget extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        Text(t.sync.reviewTitle, style: theme.textTheme.titleLarge),
+        Text(texts.titleText, style: theme.textTheme.titleLarge),
         const SizedBox(height: AppTheme.spacingSmall),
-        Text(t.sync.reviewMessage, style: theme.textTheme.bodyMedium),
+        Text(texts.messageText, style: theme.textTheme.bodyMedium),
         if (toHere.isNotEmpty)
           _GroupWidget(
-            title: t.sync.toHere(device: peerName),
+            title: texts.toHereTitle,
             icon: Icons.south,
             changes: toHere,
             chosen: chosen,
-            peerName: peerName,
-            allLabel: t.sync.all,
+            texts: texts,
             onChosenChanged: onChosenChanged,
             onAllChosenChanged: onAllChosenChanged,
           ),
         if (toThere.isNotEmpty)
           _GroupWidget(
-            title: t.sync.toThere(device: peerName),
+            title: texts.toThereTitle,
             icon: Icons.north,
             changes: toThere,
             chosen: chosen,
-            peerName: peerName,
-            allLabel: t.sync.all,
+            texts: texts,
             onChosenChanged: onChosenChanged,
             onAllChosenChanged: onAllChosenChanged,
           ),
         const SizedBox(height: AppTheme.spacingMedium),
-        FilledButton(
-          onPressed: onApplyPressed,
-          child: Text(t.sync.applyChosen(n: chosen.length)),
-        ),
-        TextButton(onPressed: onCancelPressed, child: Text(t.common.cancel)),
+        FilledButton(onPressed: onApplyPressed, child: Text(texts.applyLabel(chosen.length))),
+        TextButton(onPressed: onCancelPressed, child: Text(texts.cancelLabel)),
       ],
     );
   }
@@ -99,8 +138,7 @@ final class _GroupWidget extends StatelessWidget {
   final IconData icon;
   final List<SyncChange> changes;
   final Set<String> chosen;
-  final String peerName;
-  final String allLabel;
+  final SyncChangesTexts texts;
   final void Function(SyncChange change, bool isChosen) onChosenChanged;
   final void Function(List<SyncChange> changes, bool isChosen) onAllChosenChanged;
 
@@ -109,8 +147,7 @@ final class _GroupWidget extends StatelessWidget {
     required this.icon,
     required this.changes,
     required this.chosen,
-    required this.peerName,
-    required this.allLabel,
+    required this.texts,
     required this.onChosenChanged,
     required this.onAllChosenChanged,
   });
@@ -130,7 +167,7 @@ final class _GroupWidget extends StatelessWidget {
               Icon(icon, size: AppTheme.spacingMedium + AppTheme.spacingTiny, color: theme.colorScheme.primary),
               const SizedBox(width: AppTheme.spacingSmall),
               Expanded(child: Text(title, style: theme.textTheme.titleMedium)),
-              Text(allLabel, style: theme.textTheme.labelMedium),
+              Text(texts.allLabel, style: theme.textTheme.labelMedium),
               Checkbox(
                 tristate: true,
                 value: all,
@@ -143,7 +180,7 @@ final class _GroupWidget extends StatelessWidget {
             _ChangeWidget(
               change: change,
               isChosen: chosen.contains(change.id),
-              peerName: peerName,
+              texts: texts,
               onChanged: (bool? value) => onChosenChanged(change, value ?? false),
             ),
         ],
@@ -159,21 +196,20 @@ final class _ChangeWidget extends StatelessWidget {
 
   final SyncChange change;
   final bool isChosen;
-  final String peerName;
+  final SyncChangesTexts texts;
   final ValueChanged<bool?> onChanged;
 
-  const _ChangeWidget({required this.change, required this.isChosen, required this.peerName, required this.onChanged});
+  const _ChangeWidget({required this.change, required this.isChosen, required this.texts, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
-    final Translations t = context.t;
     final ThemeData theme = Theme.of(context);
     final Color color = switch (change.kind) {
       SyncChangeKind.add => AppTheme.accentGreen,
       SyncChangeKind.delete => theme.colorScheme.error,
       SyncChangeKind.update => AppTheme.accentBlue,
     };
-    final String? detail = change.detail(t, peerName);
+    final String? detail = texts.detailOf(change);
     return SurfaceWidget(
       margin: const EdgeInsets.only(bottom: AppTheme.spacingSmall),
       padding: EdgeInsets.zero,
@@ -201,11 +237,11 @@ final class _ChangeWidget extends StatelessWidget {
                       ),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingTiny, vertical: 2),
-                        child: Text(change.badge(t), style: theme.textTheme.labelSmall?.copyWith(color: color)),
+                        child: Text(texts.badgeOf(change), style: theme.textTheme.labelSmall?.copyWith(color: color)),
                       ),
                     ),
                     const SizedBox(height: AppTheme.spacingTiny),
-                    Text(change.title(t), style: theme.textTheme.titleSmall),
+                    Text(texts.titleOf(change), style: theme.textTheme.titleSmall),
                     if (detail != null)
                       Text(
                         detail,
