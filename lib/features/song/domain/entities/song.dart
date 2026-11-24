@@ -1,4 +1,5 @@
 import 'cover.dart';
+import 'lyrics_chord.dart';
 import 'lyrics_layout.dart';
 import 'tab_block.dart';
 
@@ -53,6 +54,9 @@ final class Song {
 
   /// Every tablature in the [lyrics], in order; empty when the song has none.
   List<TabBlock> get tabs => TabBlock.findAll(lyrics);
+
+  /// Every chord in the [lyrics] outside the tabs, in order; empty when the song has none.
+  List<LyricsChord> get chords => LyricsChord.findAll(lyrics);
 
   /// The saved scroll speed on [layout]; a big screen takes the phone one until it has its own.
   double? scrollSpeedOn(LyricsLayout layout) => switch (layout) {
