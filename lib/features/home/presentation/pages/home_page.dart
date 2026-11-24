@@ -10,8 +10,8 @@ import '../../../practice/domain/entities/practice_session.dart';
 import '../../../practice/domain/entities/practice_stats.dart';
 import '../../../practice/presentation/di/practice_getters.dart';
 import '../../../practice/domain/entities/practice_entry_filter.dart';
-import '../../../practice/presentation/widgets/practice_stats_widget.dart';
-import '../../../practice/presentation/widgets/practice_timeline_widget.dart';
+import '../../../practice/presentation/pages/practice_stats_page.dart';
+import '../../../practice/presentation/pages/practice_timeline_page.dart';
 import '../../../recordings/domain/entities/cover_counts.dart';
 import '../../../recordings/domain/entities/recording.dart';
 import '../../../recordings/domain/entities/shared_song.dart';
@@ -144,7 +144,7 @@ final class HomePage extends WatchingWidget {
         homeController: homeController,
         onSongPressed: (Song song) => _navigateToLyrics(context, song),
       ),
-      HomeTab.stats => PracticeStatsWidget(onSongPressed: (Song song) => _navigateToLyrics(context, song)),
+      HomeTab.stats => PracticeStatsPage(onSongPressed: (Song song) => _navigateToLyrics(context, song)),
       HomeTab.tuner => const TunerWidget(),
     };
 
@@ -522,7 +522,7 @@ final class _CoversTabWidget extends WatchingWidget {
           ),
         ),
         Expanded(
-          child: PracticeTimelineWidget(
+          child: PracticeTimelinePage(
             query: query,
             filter: filter,
             onFilterChanged: _onFilterChanged,

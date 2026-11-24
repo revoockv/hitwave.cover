@@ -23,7 +23,8 @@ final class PracticeSessionModel {
   const PracticeSessionModel({required this.id, required this.songId, required this.startedAt, required this.seconds});
 
   /// Reads what Hive returned for one record.
-  factory PracticeSessionModel.fromStored(Object? value) => PracticeSessionModel.fromMap(value! as Map<dynamic, dynamic>);
+  factory PracticeSessionModel.fromStored(Object? value) =>
+      PracticeSessionModel.fromMap(value! as Map<dynamic, dynamic>);
 
   /// Reads a stored map.
   factory PracticeSessionModel.fromMap(Map<dynamic, dynamic> map) => PracticeSessionModel(

@@ -11,6 +11,7 @@ import '../../../recordings/presentation/widgets/recordings_list_widget.dart';
 import '../../../song/domain/entities/song.dart';
 import '../../../song/presentation/widgets/song_tile_widget.dart';
 import '../../../song/presentation/l10n/song_widget_texts.dart';
+import '../../../practice/presentation/l10n/practice_texts.dart';
 
 /// The home tab: the mini statistics, the songs opened last and the covers played last.
 final class HomeDashboardWidget extends StatelessWidget {
@@ -81,7 +82,12 @@ final class HomeDashboardWidget extends StatelessWidget {
     final ThemeData theme = Theme.of(context);
     final TextStyle? hintStyle = theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant);
 
-    final Widget overview = PracticeOverviewWidget(stats: stats, today: today, onOpenPressed: onStatsPressed);
+    final Widget overview = PracticeOverviewWidget(
+      stats: stats,
+      today: today,
+      onOpenPressed: onStatsPressed,
+      texts: t.practiceTexts,
+    );
     final List<Widget> songsSection = <Widget>[
       _SectionTitleWidget(title: t.song.recentlyOpened, actionLabel: t.song.all, onActionPressed: onAllSongsPressed),
       if (recentSongs.isEmpty)
