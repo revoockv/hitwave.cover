@@ -13,7 +13,7 @@ final class LyricsChord {
   /// A chord: root (`A`–`H`), accidental, quality, extensions, a position or an option in
   /// parentheses, a bass note, trailing marks (`G#m**`).
   static const String _chord =
-      r'[A-H](?:#|b)?(?:maj|min|dim|aug|sus|add|m|M|°|ø|\+)*\d{0,2}(?:(?:maj|sus|add|b|#|\+|-)\d{1,2})*'
+      r'[A-H](?:#|b)?(?:maj|min|dim|aug|sus|add|m|M|°|ø|\+)*\d{0,2}(?:(?:maj|sus|add|dim|aug)\d{0,2}|(?:b|#|\+|-)\d{1,2})*'
       r'(?:\([^)\s]*\))?(?:/[A-H](?:#|b)?)?\**';
 
   static final RegExp _plainChord = RegExp('^$_chord\$');
