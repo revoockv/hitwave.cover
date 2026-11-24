@@ -3,6 +3,7 @@ import 'package:watch_it/watch_it.dart';
 import 'core/presentation/di/core_di.dart';
 import 'features/backup/presentation/di/backup_di.dart';
 import 'features/history/presentation/di/history_di.dart';
+import 'features/home/presentation/di/home_di.dart';
 import 'features/practice/presentation/di/practice_di.dart';
 import 'features/recordings/presentation/di/recordings_di.dart';
 import 'features/settings/presentation/di/settings_di.dart';
@@ -26,6 +27,7 @@ Future<void> registerAndInit() async {
   registerAndInitSync();
   registerAndInitBackup();
   registerAndInitTuner();
+  registerAndInitHome();
 
   await di.allReady();
 }

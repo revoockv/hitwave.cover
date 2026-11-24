@@ -4,29 +4,20 @@ import 'package:watch_it/watch_it.dart';
 
 import '../../../../core/domain/entities/result.dart';
 import '../../../../core/presentation/theme.dart';
-import '../../../history/domain/entities/usage_history.dart';
-import '../../../history/presentation/di/history_getters.dart';
-import '../../../practice/domain/entities/practice_session.dart';
-import '../../../practice/domain/entities/practice_stats.dart';
-import '../../../practice/presentation/di/practice_getters.dart';
-import '../../../practice/domain/entities/practice_entry_filter.dart';
 import '../../../practice/presentation/pages/practice_stats_page.dart';
-import '../../../practice/presentation/pages/practice_timeline_page.dart';
-import '../../../recordings/domain/entities/cover_counts.dart';
-import '../../../recordings/domain/entities/recording.dart';
-import '../../../recordings/domain/entities/shared_song.dart';
 import '../../../recordings/presentation/di/recordings_getters.dart';
 import '../../../settings/presentation/pages/settings_page.dart';
 import '../../../song/domain/entities/song.dart';
 import '../../../song/domain/entities/song_sort.dart';
 import '../controllers/song_view_controller.dart';
 import '../controllers/home_controller.dart';
+import '../wrappers/covers_tab_wrapper.dart';
+import '../wrappers/found_count_wrapper.dart';
+import '../wrappers/home_dashboard_wrapper.dart';
+import '../wrappers/songs_tab_wrapper.dart';
 import '../../../song/presentation/di/song_getters.dart';
 import '../../../song/presentation/widgets/artist_switcher_title_widget.dart';
 import '../../../song/presentation/widgets/delete_song_dialog_widget.dart';
-import '../widgets/home_dashboard_widget.dart';
-import '../../../song/presentation/widgets/search_field_widget.dart';
-import '../../../song/presentation/widgets/songs_tab_widget.dart';
 import '../../../song/presentation/pages/add_song_page.dart';
 import '../../../song/presentation/pages/edit_song_page.dart';
 import '../../../lyrics/presentation/pages/lyrics_page.dart';
@@ -35,8 +26,6 @@ import '../../../song/domain/entities/song_failure.dart';
 import '../../../song/presentation/l10n/song_texts.dart';
 import '../../../tuner/presentation/pages/tuner_panel_page.dart';
 import '../../../song/presentation/l10n/song_widget_texts.dart';
-import '../../../practice/presentation/l10n/practice_texts.dart';
-import '../../../recordings/presentation/pages/recordings_list_page.dart';
 
 /// Main page with the bottom navigation: home (mini statistics, recent songs and covers),
 /// songs (search and orders), covers (search) and statistics; plus backup and account actions.
@@ -45,12 +34,6 @@ import '../../../recordings/presentation/pages/recordings_list_page.dart';
 /// whether the search is empty; every tab watches its own data. After a sign-in it asks whether to move the songs
 /// left on the device into the account.
 final class HomePage extends WatchingWidget {
-  /// Separator between a song and its artist.
-  static const String _titleSeparator = ' — ';
-
-  /// How many songs and covers the home tab shows.
-  static const int _recentCount = 5;
-
   /// Separator between the title and the song count.
   static const String _countSeparator = '  ';
 
@@ -100,7 +83,7 @@ final class HomePage extends WatchingWidget {
             WidgetSpan(
               alignment: PlaceholderAlignment.baseline,
               baseline: TextBaseline.alphabetic,
-              child: _FoundCountWidget(
+              child: FoundCountWrapper(
                 songs: songs,
                 searchController: songViewController.songSearchController,
                 separator: _countSeparator,
@@ -123,7 +106,7 @@ final class HomePage extends WatchingWidget {
     ];
     // Every tab watches the data it shows itself, so a change of it does not rebuild the page and the other tabs.
     final Widget body = switch (tab) {
-      HomeTab.home => _HomeTabWidget(
+      HomeTab.home => HomeDashboardWrapper(
         songs: songs,
         onStatsPressed: () => _selectTab(homeController, HomeTab.stats),
         onAllSongsPressed: () => _selectTab(homeController, HomeTab.songs),
@@ -132,7 +115,7 @@ final class HomePage extends WatchingWidget {
         onSongEdit: (Song song) => _showEditSongPage(context, song),
         onSongDelete: (Song song) => _onSongDeletePressed(context, song),
       ),
-      HomeTab.songs => _SongsTabWidget(
+      HomeTab.songs => SongsTabWrapper(
         songs: songs,
         songViewController: songViewController,
         sort: sort,
@@ -142,7 +125,7 @@ final class HomePage extends WatchingWidget {
         onSongDelete: (Song song) => _onSongDeletePressed(context, song),
         onAddPressed: () => _showAddSongPage(context, newSongAuthor),
       ),
-      HomeTab.covers => _CoversTabWidget(
+      HomeTab.covers => CoversTabWrapper(
         homeController: homeController,
         onSongPressed: (Song song) => _navigateToLyrics(context, song),
       ),
@@ -234,73 +217,9 @@ final class HomePage extends WatchingWidget {
     HomeTab.tuner => t.tuner.title,
   };
 
-  static String _textOf(TextEditingController searchController) => searchController.text;
-
   static bool _isEmptyOf(TextEditingController searchController) => searchController.text.trim().isEmpty;
 
   static int _countOf(List<Song> songs, String artist) => songs.where((Song song) => song.author == artist).length;
-
-  static SharedSong? _sharedSong(Song? song) => song == null ? null : SharedSong(author: song.author, name: song.name);
-
-  static String _songTitle(Translations t, Song? song) =>
-      song == null ? t.common.songDeleted : '${song.author}$_titleSeparator${song.name}';
-
-  /// The songs whose name, artist or album contain [query].
-  static List<Song> _findSongs(List<Song> songs, String query) {
-    final String needle = query.trim().toLowerCase();
-    if (needle.isEmpty) return songs;
-    return songs
-        .where(
-          (Song song) =>
-              song.name.toLowerCase().contains(needle) ||
-              song.author.toLowerCase().contains(needle) ||
-              (song.album ?? '').toLowerCase().contains(needle),
-        )
-        .toList();
-  }
-
-  /// [songs] in the chosen order; ties and the artist order go by name.
-  static List<Song> _orderSongs(List<Song> songs, SongSort sort, UsageHistory history, CoverCounts coverCounts) {
-    int byName(Song a, Song b) => a.name.toLowerCase().compareTo(b.name.toLowerCase());
-    final DateTime never = DateTime.fromMillisecondsSinceEpoch(0);
-    final List<Song> ordered = songs.toList();
-    switch (sort) {
-      case SongSort.name:
-        ordered.sort(byName);
-      case SongSort.artists:
-        ordered.sort((Song a, Song b) {
-          final int byArtist = a.author.toLowerCase().compareTo(b.author.toLowerCase());
-          return byArtist != 0 ? byArtist : byName(a, b);
-        });
-      case SongSort.recent:
-        ordered.sort((Song a, Song b) {
-          final int byTime = (history.songOpenedAt(b.id) ?? never).compareTo(history.songOpenedAt(a.id) ?? never);
-          return byTime != 0 ? byTime : byName(a, b);
-        });
-      case SongSort.covers:
-        ordered.sort((Song a, Song b) {
-          final int byCovers = coverCounts.of(b.id).compareTo(coverCounts.of(a.id));
-          return byCovers != 0 ? byCovers : byName(a, b);
-        });
-    }
-    return ordered;
-  }
-
-  /// The songs opened last that still exist, newest first.
-  static List<Song> _recentSongs(Map<String, Song> songsById, UsageHistory history) {
-    final List<UsageTime> opened =
-        history.songsOpened.where((UsageTime time) => songsById.containsKey(time.id)).toList()
-          ..sort((UsageTime a, UsageTime b) => b.at.compareTo(a.at));
-    return <Song>[for (final UsageTime time in opened.take(_recentCount)) songsById[time.id]!];
-  }
-
-  /// The covers played last that still exist, newest first.
-  static List<Recording> _recentCovers(List<Recording> recordings, UsageHistory history) {
-    final List<Recording> played =
-        recordings.where((Recording recording) => history.coverPlayedAt(recording.id) != null).toList()
-          ..sort((Recording a, Recording b) => history.coverPlayedAt(b.id)!.compareTo(history.coverPlayedAt(a.id)!));
-    return played.take(_recentCount).toList();
-  }
 
   void _onBackInvoked(SongViewController songViewController, bool didPop) {
     if (!didPop) {
@@ -367,191 +286,4 @@ final class _Tab {
   final String label;
 
   const _Tab(this.icon, this.selectedIcon, this.label);
-}
-
-/// The number of songs the search finds, after the title of the songs tab; the only part that rebuilds while typing.
-final class _FoundCountWidget extends WatchingWidget {
-  final List<Song> songs;
-  final TextEditingController searchController;
-  final String separator;
-  final TextStyle style;
-
-  const _FoundCountWidget({
-    required this.songs,
-    required this.searchController,
-    required this.separator,
-    required this.style,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final String query = watchPropertyValue(HomePage._textOf, target: searchController);
-    return Text('$separator${HomePage._findSongs(songs, query).length}', style: style);
-  }
-}
-
-/// The home tab: mini statistics, recent songs and covers. Watches the practice, the covers and the history itself.
-final class _HomeTabWidget extends WatchingWidget {
-  final List<Song> songs;
-  final VoidCallback onStatsPressed;
-  final VoidCallback onAllSongsPressed;
-  final VoidCallback onAllCoversPressed;
-  final ValueChanged<Song> onSongTap;
-  final ValueChanged<Song> onSongEdit;
-  final ValueChanged<Song> onSongDelete;
-
-  const _HomeTabWidget({
-    required this.songs,
-    required this.onStatsPressed,
-    required this.onAllSongsPressed,
-    required this.onAllCoversPressed,
-    required this.onSongTap,
-    required this.onSongEdit,
-    required this.onSongDelete,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final Translations t = context.t;
-    final List<PracticeSession> sessions = watch(watchPracticeSessionsUseCase()).value;
-    final List<Recording> recordings = watch(watchRecordingsUseCase()).value;
-    final UsageHistory history = watch(watchUsageHistoryUseCase()).value;
-
-    final Map<String, Song> songsById = <String, Song>{for (final Song song in songs) song.id: song};
-    final DateTime now = DateTime.now();
-
-    final List<Recording> recentCovers = HomePage._recentCovers(recordings, history);
-    return HomeDashboardWidget(
-      stats: calculatePracticeStatsUseCase(sessions: sessions, recordings: recordings, now: now),
-      today: PracticeStats.dayOf(now),
-      recentSongs: HomePage._recentSongs(songsById, history),
-      recentCoversList: recentCovers.isEmpty
-          ? null
-          : RecordingsListPage(
-              recordings: recentCovers,
-              emptyText: t.song.noRecentCovers,
-              headerOf: (Recording recording) => HomePage._songTitle(t, songsById[recording.songId]),
-              onHeaderPressedOf: (Recording recording) => _openerOf(songsById[recording.songId]),
-              songOf: (Recording recording) => HomePage._sharedSong(songsById[recording.songId]),
-              shrinkWrap: true,
-            ),
-      coverCountOf: CoverCounts.fromRecordings(recordings).of,
-      texts: HomeDashboardTexts(
-        recentSongsTitle: t.song.recentlyOpened,
-        recentCoversTitle: t.song.recentlyPlayed,
-        allLabel: t.song.all,
-        noRecentSongsText: t.song.noRecentSongs,
-        noRecentCoversText: t.song.noRecentCovers,
-        practice: t.practiceTexts,
-        songTile: t.songTile,
-      ),
-      onStatsPressed: onStatsPressed,
-      onAllSongsPressed: onAllSongsPressed,
-      onAllCoversPressed: onAllCoversPressed,
-      onSongTap: onSongTap,
-      onSongEdit: onSongEdit,
-      onSongDelete: onSongDelete,
-    );
-  }
-
-  /// Opens the lyrics of [song]; `null` when the song is gone.
-  VoidCallback? _openerOf(Song? song) => song == null ? null : () => onSongTap(song);
-}
-
-/// The songs tab: search, order and artists. Watches the search text, the covers and the history itself.
-final class _SongsTabWidget extends WatchingWidget {
-  final List<Song> songs;
-  final SongViewController songViewController;
-  final SongSort sort;
-  final String selectedArtist;
-  final ValueChanged<Song> onSongTap;
-  final ValueChanged<Song> onSongEdit;
-  final ValueChanged<Song> onSongDelete;
-  final VoidCallback onAddPressed;
-
-  const _SongsTabWidget({
-    required this.songs,
-    required this.songViewController,
-    required this.sort,
-    required this.selectedArtist,
-    required this.onSongTap,
-    required this.onSongEdit,
-    required this.onSongDelete,
-    required this.onAddPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final String query = watchPropertyValue(HomePage._textOf, target: songViewController.songSearchController);
-    final List<Recording> recordings = watch(watchRecordingsUseCase()).value;
-    final UsageHistory history = watch(watchUsageHistoryUseCase()).value;
-
-    final CoverCounts coverCounts = CoverCounts.fromRecordings(recordings);
-
-    return SongsTabWidget(
-      isLibraryEmpty: songs.isEmpty,
-      songs: HomePage._orderSongs(HomePage._findSongs(songs, query), sort, history, coverCounts),
-      coverCountOf: coverCounts.of,
-      texts: context.t.songList,
-      searchController: songViewController.songSearchController,
-      sort: sort,
-      selectedArtist: selectedArtist,
-      onSortSelected: songViewController.selectSort,
-      onArtistSelected: songViewController.selectArtist,
-      onSongTap: onSongTap,
-      onSongEdit: onSongEdit,
-      onSongDelete: onSongDelete,
-      onAddPressed: onAddPressed,
-    );
-  }
-}
-
-/// The covers tab: the search field and the practice timeline. Watches the search text and the filter itself.
-final class _CoversTabWidget extends WatchingWidget {
-  final HomeController homeController;
-  final ValueChanged<Song> onSongPressed;
-
-  const _CoversTabWidget({required this.homeController, required this.onSongPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    final String query = watchPropertyValue(HomePage._textOf, target: homeController.coverSearchController);
-    final PracticeEntryFilter filter = watch(homeController.coverFilterController).value;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: <Widget>[
-        Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: AppTheme.maxContentWidth),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppTheme.spacingMedium,
-                AppTheme.spacingSmall,
-                AppTheme.spacingMedium,
-                0,
-              ),
-              child: SearchFieldWidget(
-                searchController: homeController.coverSearchController,
-                hintText: context.t.song.coverSearch,
-                clearTooltip: context.t.common.clear,
-              ),
-            ),
-          ),
-        ),
-        Expanded(
-          child: PracticeTimelinePage(
-            query: query,
-            filter: filter,
-            onFilterChanged: _onFilterChanged,
-            onSongPressed: onSongPressed,
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _onFilterChanged(PracticeEntryFilter filter) {
-    homeController.coverFilterController.value = filter;
-  }
 }
