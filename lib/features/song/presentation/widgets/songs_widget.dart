@@ -1,11 +1,26 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../../core/presentation/theme.dart';
 import '../../domain/entities/song.dart';
 import '../../domain/entities/song_sort.dart';
 import 'artist_picker_widget.dart';
 import 'song_tile_widget.dart';
+import 'songs_tab_widget.dart';
+
+/// The texts of [EmptySongsWidget].
+final class EmptySongsTexts {
+  /// Title of the empty state.
+  final String titleText;
+
+  /// Hint under the title.
+  final String messageText;
+
+  /// Label of the add button.
+  final String addLabel;
+
+  /// Creates the texts.
+  const EmptySongsTexts({required this.titleText, required this.messageText, required this.addLabel});
+}
 
 /// Empty state shown when there are no songs yet.
 ///
@@ -14,15 +29,17 @@ final class EmptySongsWidget extends StatelessWidget {
   /// Size of the music icon.
   static const double _iconSize = 72;
 
+  /// The texts.
+  final EmptySongsTexts texts;
+
   /// Called when the add button is pressed.
   final VoidCallback onAddPressed;
 
   /// Creates a new [EmptySongsWidget].
-  const EmptySongsWidget({required this.onAddPressed, super.key});
+  const EmptySongsWidget({required this.texts, required this.onAddPressed, super.key});
 
   @override
   Widget build(BuildContext context) {
-    final Translations t = context.t;
     final ThemeData theme = Theme.of(context);
 
     return Center(
@@ -33,15 +50,15 @@ final class EmptySongsWidget extends StatelessWidget {
           children: <Widget>[
             Icon(Icons.library_music_outlined, size: _iconSize, color: theme.colorScheme.primary),
             const SizedBox(height: AppTheme.spacingMedium),
-            Text(t.song.noSongsTitle, style: theme.textTheme.titleLarge, textAlign: TextAlign.center),
+            Text(texts.titleText, style: theme.textTheme.titleLarge, textAlign: TextAlign.center),
             const SizedBox(height: AppTheme.spacingSmall),
             Text(
-              t.song.noSongsMessage,
+              texts.messageText,
               style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppTheme.spacingLarge),
-            FilledButton.icon(onPressed: onAddPressed, icon: const Icon(Icons.add), label: Text(t.song.addSong)),
+            FilledButton.icon(onPressed: onAddPressed, icon: const Icon(Icons.add), label: Text(texts.addLabel)),
           ],
         ),
       ),
@@ -69,10 +86,14 @@ final class SongListModeWidget extends StatelessWidget {
   /// How many covers the song with an id has.
   final int Function(String songId) coverCountOf;
 
+  /// The texts of the list.
+  final SongListTexts texts;
+
   /// Creates a new [SongListModeWidget].
   const SongListModeWidget({
     required this.songs,
     required this.coverCountOf,
+    required this.texts,
     required this.onSongTap,
     required this.onSongEdit,
     required this.onSongDelete,
@@ -92,6 +113,7 @@ final class SongListModeWidget extends StatelessWidget {
           onEdit: onSongEdit,
           onDelete: onSongDelete,
           coverCount: coverCountOf(song.id),
+          texts: texts.tile,
         );
       },
     );
@@ -127,10 +149,14 @@ final class ArtistModeWidget extends StatelessWidget {
   /// How many covers the song with an id has.
   final int Function(String songId) coverCountOf;
 
+  /// The texts of the list.
+  final SongListTexts texts;
+
   /// Creates a new [ArtistModeWidget].
   const ArtistModeWidget({
     required this.songs,
     required this.coverCountOf,
+    required this.texts,
     required this.selectedArtist,
     required this.onArtistSelected,
     required this.onSongTap,
@@ -145,7 +171,7 @@ final class ArtistModeWidget extends StatelessWidget {
       ..sort(_compareByName);
 
     if (artistSongs.isEmpty) {
-      return ArtistPickerWidget(songs: songs, onArtistSelected: onArtistSelected);
+      return ArtistPickerWidget(songs: songs, texts: texts.picker, onArtistSelected: onArtistSelected);
     }
 
     return ListView.builder(
@@ -157,6 +183,7 @@ final class ArtistModeWidget extends StatelessWidget {
         onEdit: onSongEdit,
         onDelete: onSongDelete,
         coverCount: coverCountOf(artistSongs[index].id),
+        texts: texts.tile,
       ),
     );
   }
@@ -178,10 +205,14 @@ final class SongsWidget extends StatelessWidget {
     required this.onAddPressed,
     this.selectedArtist = '',
     required this.coverCountOf,
+    required this.texts,
   });
 
   /// How many covers the song with an id has.
   final int Function(String songId) coverCountOf;
+
+  /// The texts of the list.
+  final SongListTexts texts;
 
   /// The list of songs.
   final List<Song> songs;
@@ -210,13 +241,14 @@ final class SongsWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (songs.isEmpty) {
-      return EmptySongsWidget(onAddPressed: onAddPressed);
+      return EmptySongsWidget(texts: texts.empty, onAddPressed: onAddPressed);
     }
 
     if (viewMode == SongViewMode.list) {
       return SongListModeWidget(
         songs: songs,
         coverCountOf: coverCountOf,
+        texts: texts,
         onSongTap: onSongTap,
         onSongEdit: onSongEdit,
         onSongDelete: onSongDelete,
@@ -226,6 +258,7 @@ final class SongsWidget extends StatelessWidget {
     return ArtistModeWidget(
       songs: songs,
       coverCountOf: coverCountOf,
+      texts: texts,
       selectedArtist: selectedArtist,
       onArtistSelected: onArtistSelected,
       onSongTap: onSongTap,

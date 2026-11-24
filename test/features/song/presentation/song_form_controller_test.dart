@@ -4,7 +4,17 @@ import 'package:hitwave.cover/features/song/domain/entities/cover.dart';
 import 'package:hitwave.cover/features/song/domain/entities/song.dart';
 import 'package:hitwave.cover/features/song/presentation/controllers/song_form_controller.dart';
 import 'package:hitwave.cover/features/song/presentation/widgets/song_form_widget.dart';
+import 'package:hitwave.cover/features/song/presentation/wrappers/song_form_wrapper.dart';
 import 'package:hitwave.cover/core/presentation/l10n/app_translations.dart';
+
+const SongFormTexts formTexts = SongFormTexts(
+  artistLabel: 'Artist',
+  songNameLabel: 'Song',
+  albumLabel: 'Album',
+  optionalText: 'optional',
+  lyricsLabel: 'Lyrics',
+  requiredText: 'Fill in this field',
+);
 
 void main() {
   late int submits;
@@ -16,7 +26,12 @@ void main() {
       MaterialApp(
         localizationsDelegates: const <LocalizationsDelegate<Object>>[TranslationsDelegate()],
         home: Scaffold(
-          body: SongFormWidget(songFormController: songFormController, submitLabel: 'Save', onSubmit: () => submits++),
+          body: SongFormWrapper(
+            songFormController: songFormController,
+            texts: formTexts,
+            submitLabel: 'Save',
+            onSubmitPressed: () => submits++,
+          ),
         ),
       ),
     );

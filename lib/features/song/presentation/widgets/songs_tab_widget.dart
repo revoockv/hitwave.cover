@@ -1,11 +1,47 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../../core/presentation/theme.dart';
 import '../../domain/entities/song.dart';
 import '../../domain/entities/song_sort.dart';
+import 'artist_picker_widget.dart';
 import 'search_field_widget.dart';
+import 'song_tile_widget.dart';
 import 'songs_widget.dart';
+
+/// The texts of the songs tab and its lists.
+final class SongListTexts {
+  /// The texts of a song tile.
+  final SongTileTexts tile;
+
+  /// The texts of the empty library.
+  final EmptySongsTexts empty;
+
+  /// The texts of the artist list.
+  final ArtistPickerTexts picker;
+
+  /// Hint of the search field.
+  final String searchHintText;
+
+  /// Tooltip of the button that clears the search.
+  final String clearTooltip;
+
+  /// Shown when no song matches the search.
+  final String nothingFoundText;
+
+  /// The label of an order chip.
+  final String Function(SongSort sort) sortLabelOf;
+
+  /// Creates the texts.
+  const SongListTexts({
+    required this.tile,
+    required this.empty,
+    required this.picker,
+    required this.searchHintText,
+    required this.clearTooltip,
+    required this.nothingFoundText,
+    required this.sortLabelOf,
+  });
+}
 
 /// The songs tab: search, the order chips and the songs.
 ///
@@ -19,6 +55,9 @@ final class SongsTabWidget extends StatelessWidget {
 
   /// How many covers the song with an id has.
   final int Function(String songId) coverCountOf;
+
+  /// The texts.
+  final SongListTexts texts;
 
   /// The search text.
   final TextEditingController searchController;
@@ -53,6 +92,7 @@ final class SongsTabWidget extends StatelessWidget {
     required this.isLibraryEmpty,
     required this.songs,
     required this.coverCountOf,
+    required this.texts,
     required this.searchController,
     required this.sort,
     required this.selectedArtist,
@@ -66,8 +106,7 @@ final class SongsTabWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Translations t = context.t;
-    if (isLibraryEmpty) return EmptySongsWidget(onAddPressed: onAddPressed);
+    if (isLibraryEmpty) return EmptySongsWidget(texts: texts.empty, onAddPressed: onAddPressed);
     final bool isSearching = searchController.text.trim().isNotEmpty;
     final bool showsArtist = sort == SongSort.artists && selectedArtist.isNotEmpty && !isSearching;
 
@@ -88,7 +127,11 @@ final class SongsTabWidget extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
-                    SearchFieldWidget(searchController: searchController, hint: t.song.searchSongs),
+                    SearchFieldWidget(
+                      searchController: searchController,
+                      hintText: texts.searchHintText,
+                      clearTooltip: texts.clearTooltip,
+                    ),
                     const SizedBox(height: AppTheme.spacingSmall),
                     SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
@@ -98,7 +141,7 @@ final class SongsTabWidget extends StatelessWidget {
                             Padding(
                               padding: const EdgeInsets.only(right: AppTheme.spacingSmall),
                               child: ChoiceChip(
-                                label: Text(_sortLabel(t, option)),
+                                label: Text(texts.sortLabelOf(option)),
                                 selected: option == sort,
                                 onSelected: (bool selected) => onSortSelected(option),
                               ),
@@ -113,10 +156,11 @@ final class SongsTabWidget extends StatelessWidget {
           ),
         Expanded(
           child: songs.isEmpty
-              ? Center(child: Text(t.common.nothingFound))
+              ? Center(child: Text(texts.nothingFoundText))
               : SongsWidget(
                   songs: songs,
                   coverCountOf: coverCountOf,
+                  texts: texts,
                   viewMode: sort == SongSort.artists && !isSearching ? SongViewMode.artist : SongViewMode.list,
                   selectedArtist: selectedArtist,
                   onArtistSelected: onArtistSelected,
@@ -129,11 +173,4 @@ final class SongsTabWidget extends StatelessWidget {
       ],
     );
   }
-
-  static String _sortLabel(Translations t, SongSort sort) => switch (sort) {
-    SongSort.artists => t.song.sort.artists,
-    SongSort.name => t.song.sort.name,
-    SongSort.recent => t.song.sort.recent,
-    SongSort.covers => t.song.sort.covers,
-  };
 }

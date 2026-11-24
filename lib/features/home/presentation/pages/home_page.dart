@@ -34,6 +34,7 @@ import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../song/domain/entities/song_failure.dart';
 import '../../../song/presentation/l10n/song_texts.dart';
 import '../../../tuner/presentation/widgets/tuner_widget.dart';
+import '../../../song/presentation/l10n/song_widget_texts.dart';
 
 /// Main page with the bottom navigation: home (mini statistics, recent songs and covers),
 /// songs (search and orders), covers (search) and statistics; plus backup and account actions.
@@ -164,6 +165,8 @@ final class HomePage extends WatchingWidget {
                   title: titleText,
                   songs: songs,
                   selectedArtist: selectedArtist,
+                  tooltip: t.song.otherArtist,
+                  pickerTexts: t.artistPicker,
                   onArtistSelected: songViewController.selectArtist,
                 )
               : titleText,
@@ -311,7 +314,7 @@ final class HomePage extends WatchingWidget {
     final Translations t = context.t;
     final bool? confirmed = await showDialog<bool>(
       context: context,
-      builder: (BuildContext context) => DeleteSongDialogWidget(songName: song.name),
+      builder: (BuildContext context) => DeleteSongDialogWidget(texts: context.t.deleteSongDialog(song.name)),
     );
     if (confirmed != true) {
       return;
@@ -471,6 +474,7 @@ final class _SongsTabWidget extends WatchingWidget {
       isLibraryEmpty: songs.isEmpty,
       songs: HomePage._orderSongs(HomePage._findSongs(songs, query), sort, history, coverCounts),
       coverCountOf: coverCounts.of,
+      texts: context.t.songList,
       searchController: songViewController.songSearchController,
       sort: sort,
       selectedArtist: selectedArtist,
@@ -511,7 +515,8 @@ final class _CoversTabWidget extends WatchingWidget {
               ),
               child: SearchFieldWidget(
                 searchController: homeController.coverSearchController,
-                hint: context.t.song.coverSearch,
+                hintText: context.t.song.coverSearch,
+                clearTooltip: context.t.common.clear,
               ),
             ),
           ),

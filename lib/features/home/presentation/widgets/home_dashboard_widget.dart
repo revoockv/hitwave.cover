@@ -10,6 +10,7 @@ import '../../../recordings/domain/entities/shared_song.dart';
 import '../../../recordings/presentation/widgets/recordings_list_widget.dart';
 import '../../../song/domain/entities/song.dart';
 import '../../../song/presentation/widgets/song_tile_widget.dart';
+import '../../../song/presentation/l10n/song_widget_texts.dart';
 
 /// The home tab: the mini statistics, the songs opened last and the covers played last.
 final class HomeDashboardWidget extends StatelessWidget {
@@ -93,6 +94,7 @@ final class HomeDashboardWidget extends StatelessWidget {
             onEdit: onSongEdit,
             onDelete: onSongDelete,
             coverCount: coverCounts.of(song.id),
+            texts: t.songTile,
           ),
     ];
     final List<Widget> coversSection = <Widget>[
