@@ -93,7 +93,13 @@ void main() {
 
     final List<TextSpan> children = (await spansOf(tester, lyricsTextController)).children!.cast<TextSpan>();
 
-    expect(children.map((TextSpan child) => child.text), <String>['Am', '   ', 'G', '\nla la\n', 'e-----0---|\nB---1-----|']);
+    expect(children.map((TextSpan child) => child.text), <String>[
+      'Am',
+      '   ',
+      'G',
+      '\nla la\n',
+      'e-----0---|\nB---1-----|',
+    ]);
     expect(children.first.style?.color, ThemeData().colorScheme.primary);
     expect(children[1].style, isNull);
     expect(children.last.style?.fontFamily, 'RobotoMono');

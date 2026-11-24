@@ -57,7 +57,8 @@ final class LyricsTextController extends TextEditingController {
     final TextScaler scaler = MediaQuery.textScalerOf(context);
     final TextStyle chordStyle = TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w600);
     final List<_Mark> marks = <_Mark>[
-      for (final TabBlock block in tabBlocks) (start: block.start, end: block.end, style: _tabStyle(style, block, scaler)),
+      for (final TabBlock block in tabBlocks)
+        (start: block.start, end: block.end, style: _tabStyle(style, block, scaler)),
       for (final LyricsChord chord in chords) (start: chord.start, end: chord.end, style: chordStyle),
     ]..sort((_Mark a, _Mark b) => a.start - b.start);
     final List<TextSpan> children = <TextSpan>[];

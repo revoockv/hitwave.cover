@@ -1,9 +1,7 @@
 import '../../../../core/presentation/widgets/surface_widget.dart';
 import 'package:flutter/material.dart';
-import 'package:watch_it/watch_it.dart';
 
 import '../../../../core/presentation/theme.dart';
-import '../controllers/lyrics_page_controller.dart';
 
 /// Floating control panel of the lyrics page.
 ///
@@ -11,9 +9,9 @@ import '../controllers/lyrics_page_controller.dart';
 /// the lyrics and the record / trim-silence checkboxes; while a take is being
 /// recorded, [recordingIndicator] (the time and the input level). Fades out (and stops
 /// taking touches) when the controller hides the controls during scrolling.
-/// Knows nothing about use cases: the button calls [onPlayPressed], a released
-/// slider calls [onSpeedChosen] or [onLeadInChosen].
-final class LyricsControlsWidget extends WatchingWidget {
+/// Dumb: the values, the texts and the callbacks come from above — a moved slider calls [onSpeedChanged], a released
+/// one [onSpeedChosen].
+final class LyricsControlsWidget extends StatelessWidget {
   /// Fade duration of the panel.
   static const Duration _fadeDuration = Duration(milliseconds: 250);
 
@@ -35,8 +33,47 @@ final class LyricsControlsWidget extends WatchingWidget {
   /// Percent sign after the space value.
   static const String _percentSign = '%';
 
-  /// UI state of the lyrics page.
-  final LyricsPageController lyricsPageController;
+  /// Whether the panel is shown.
+  final bool visible;
+
+  /// Whether the lyrics scroll.
+  final bool isScrolling;
+
+  /// The scroll speed.
+  final double speed;
+
+  /// Lowest speed of the slider.
+  final double minSpeed;
+
+  /// Highest speed of the slider.
+  final double maxSpeed;
+
+  /// The space above the lyrics, as a part of the screen height.
+  final double leadIn;
+
+  /// Lowest space of the slider.
+  final double minLeadIn;
+
+  /// Highest space of the slider.
+  final double maxLeadIn;
+
+  /// Whether start also records a take.
+  final bool record;
+
+  /// Whether the silence is cut from the enhanced take.
+  final bool trimSilence;
+
+  /// Called while the speed slider moves.
+  final ValueChanged<double> onSpeedChanged;
+
+  /// Called while the space slider moves.
+  final ValueChanged<double> onLeadInChanged;
+
+  /// Called with the record checkbox's new value.
+  final ValueChanged<bool> onRecordChanged;
+
+  /// Called with the trim-silence checkbox's new value.
+  final ValueChanged<bool> onTrimSilenceChanged;
 
   /// Called with the speed when the user releases the slider.
   final ValueChanged<double> onSpeedChosen;
@@ -83,7 +120,20 @@ final class LyricsControlsWidget extends WatchingWidget {
   /// Creates a new [LyricsControlsWidget].
   const LyricsControlsWidget({
     super.key,
-    required this.lyricsPageController,
+    required this.visible,
+    required this.isScrolling,
+    required this.speed,
+    required this.minSpeed,
+    required this.maxSpeed,
+    required this.leadIn,
+    required this.minLeadIn,
+    required this.maxLeadIn,
+    required this.record,
+    required this.trimSilence,
+    required this.onSpeedChanged,
+    required this.onLeadInChanged,
+    required this.onRecordChanged,
+    required this.onTrimSilenceChanged,
     required this.onSpeedChosen,
     required this.onLeadInChosen,
     required this.leadInLabel,
@@ -102,12 +152,6 @@ final class LyricsControlsWidget extends WatchingWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool visible = watch(lyricsPageController.controlsVisibilityController).value;
-    final bool isScrolling = watch(lyricsPageController.scrollingController).value;
-    final double speed = watch(lyricsPageController.speedController).value;
-    final double leadIn = watch(lyricsPageController.leadInController).value;
-    final bool record = watch(lyricsPageController.recordController).value;
-    final bool trimSilence = watch(lyricsPageController.trimSilenceController).value;
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final bool canChangeOptions = !isScrolling && !isRecording;
 
@@ -149,22 +193,22 @@ final class LyricsControlsWidget extends WatchingWidget {
                             label: speedLabel,
                             labelWidth: _labelWidth,
                             value: speed,
-                            min: LyricsPageController.minSpeed,
-                            max: LyricsPageController.maxSpeed,
+                            min: minSpeed,
+                            max: maxSpeed,
                             divisions: _sliderDivisions,
                             valueText: speed.toStringAsFixed(_speedDigits),
-                            onChanged: _onSpeedChanged,
+                            onChanged: onSpeedChanged,
                             onChangeEnd: onSpeedChosen,
                           ),
                           _SliderRowWidget(
                             label: leadInLabel,
                             labelWidth: _labelWidth,
                             value: leadIn,
-                            min: LyricsPageController.minLeadIn,
-                            max: LyricsPageController.maxLeadIn,
+                            min: minLeadIn,
+                            max: maxLeadIn,
                             divisions: _leadInDivisions,
                             valueText: '${(leadIn * _percent).round()}$_percentSign',
-                            onChanged: _onLeadInChanged,
+                            onChanged: onLeadInChanged,
                             onChangeEnd: onLeadInChosen,
                           ),
                           Wrap(
@@ -201,24 +245,12 @@ final class LyricsControlsWidget extends WatchingWidget {
     );
   }
 
-  void _onSpeedChanged(double value) {
-    lyricsPageController.speedController.value = value;
-    lyricsPageController.resetHideTimer();
-  }
-
-  void _onLeadInChanged(double value) {
-    lyricsPageController.leadInController.value = value;
-    lyricsPageController.resetHideTimer();
-  }
-
   void _onRecordChanged(bool? value) {
-    lyricsPageController.recordController.value = value ?? false;
-    lyricsPageController.resetHideTimer();
+    onRecordChanged(value ?? false);
   }
 
   void _onTrimSilenceChanged(bool? value) {
-    lyricsPageController.trimSilenceController.value = value ?? false;
-    lyricsPageController.resetHideTimer();
+    onTrimSilenceChanged(value ?? false);
   }
 }
 

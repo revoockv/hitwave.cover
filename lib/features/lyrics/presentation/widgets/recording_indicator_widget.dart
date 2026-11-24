@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:watch_it/watch_it.dart';
 
 import '../../../../core/presentation/theme.dart';
-import '../../../recordings/domain/entities/recorder_state.dart';
-import '../../../recordings/presentation/di/recordings_getters.dart';
 
-/// A red dot, the time and the input level of the take of [songId] being recorded; nothing otherwise.
+/// A red dot, the time and the input level of the take being recorded.
 ///
-/// The only widget that watches the recorder ticks (several a second), so the lyrics page and its panel do not
-/// rebuild with them.
-final class RecordingIndicatorWidget extends WatchingWidget {
+/// Dumb: the time and the level come from its wrapper, which watches the recorder ticks.
+final class RecordingIndicatorWidget extends StatelessWidget {
   /// Size of the red dot.
   static const double _dotSize = 10;
 
@@ -25,16 +21,17 @@ final class RecordingIndicatorWidget extends WatchingWidget {
   /// Padding character of the time.
   static const String _zero = '0';
 
-  /// The song whose take is shown.
-  final String songId;
+  /// How long the take has been recorded.
+  final Duration elapsed;
+
+  /// The input level, 0 to 1.
+  final double level;
 
   /// Creates a new [RecordingIndicatorWidget].
-  const RecordingIndicatorWidget({super.key, required this.songId});
+  const RecordingIndicatorWidget({super.key, required this.elapsed, required this.level});
 
   @override
   Widget build(BuildContext context) {
-    final RecorderState recorder = watch(watchRecorderUseCase()).value;
-    if (recorder is! RecordingRecorderState || recorder.songId != songId) return const SizedBox.shrink();
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
 
     return Row(
@@ -47,7 +44,7 @@ final class RecordingIndicatorWidget extends WatchingWidget {
         ),
         const SizedBox(width: AppTheme.spacingSmall),
         Text(
-          _formatTime(recorder.elapsed),
+          _formatTime(elapsed),
           style: Theme.of(
             context,
           ).textTheme.labelLarge?.copyWith(fontFeatures: const <FontFeature>[FontFeature.tabularFigures()]),
@@ -55,7 +52,7 @@ final class RecordingIndicatorWidget extends WatchingWidget {
         const SizedBox(width: AppTheme.spacingSmall),
         SizedBox(
           width: _levelBarWidth,
-          child: LinearProgressIndicator(value: recorder.level, color: colorScheme.error),
+          child: LinearProgressIndicator(value: level, color: colorScheme.error),
         ),
       ],
     );

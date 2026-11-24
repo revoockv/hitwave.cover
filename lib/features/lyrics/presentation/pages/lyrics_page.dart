@@ -21,8 +21,8 @@ import '../../../song/domain/entities/lyrics_layout.dart';
 import '../../../song/domain/entities/song.dart';
 import '../controllers/lyrics_page_controller.dart';
 import '../../../song/presentation/di/song_getters.dart';
-import '../widgets/lyrics_controls_widget.dart';
-import '../widgets/recording_indicator_widget.dart';
+import '../wrappers/lyrics_controls_wrapper.dart';
+import '../wrappers/recording_indicator_wrapper.dart';
 import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../recordings/domain/entities/recordings_failure.dart';
 import '../../../recordings/presentation/l10n/recordings_texts.dart';
@@ -188,7 +188,7 @@ final class LyricsPage extends WatchingWidget {
               child: Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: AppTheme.maxContentWidth),
-                  child: LyricsControlsWidget(
+                  child: LyricsControlsWrapper(
                     lyricsPageController: lyricsPageController,
                     onSpeedChosen: (double speed) => _onSpeedChosen(lyricsPageController, speed),
                     onLeadInChosen: (double leadIn) => _onLeadInChosen(lyricsPageController, leadIn),
@@ -203,7 +203,7 @@ final class LyricsPage extends WatchingWidget {
                     microphoneLabel: t.song.microphone(name: microphoneLabel ?? t.recordings.systemMicrophone),
                     onMicrophonePressed: () => _chooseMicrophone(context, ScaffoldMessenger.of(context)),
                     isRecording: isRecording,
-                    recordingIndicator: RecordingIndicatorWidget(songId: song.id),
+                    recordingIndicator: RecordingIndicatorWrapper(songId: song.id),
                   ),
                 ),
               ),

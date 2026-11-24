@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hitwave.cover/features/lyrics/presentation/controllers/lyrics_page_controller.dart';
-import 'package:hitwave.cover/features/lyrics/presentation/widgets/lyrics_controls_widget.dart';
+import 'package:hitwave.cover/features/lyrics/presentation/wrappers/lyrics_controls_wrapper.dart';
 
 /// Width of the recording indicator with a 5-character time.
 const double _indicatorWidth = 120;
@@ -20,7 +20,7 @@ void main() {
           home: Scaffold(
             body: Align(
               alignment: Alignment.bottomCenter,
-              child: LyricsControlsWidget(
+              child: LyricsControlsWrapper(
                 lyricsPageController: lyricsPageController,
                 onSpeedChosen: (double _) {},
                 onLeadInChosen: (double _) {},
