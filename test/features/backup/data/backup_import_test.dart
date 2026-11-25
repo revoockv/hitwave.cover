@@ -222,10 +222,7 @@ void main() {
 
     await repository.cancelImport();
 
-    expect(
-      await repository.applyImport(const <ImportDecision>[]),
-      isA<FailureResult<ImportSummary, BackupFailure>>(),
-    );
+    expect(await repository.applyImport(const <ImportDecision>[]), isA<FailureResult<ImportSummary, BackupFailure>>());
     expect(songs.songs.value, hasLength(4));
   });
 

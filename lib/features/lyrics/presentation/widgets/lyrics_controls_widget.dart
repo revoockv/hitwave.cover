@@ -1,0 +1,288 @@
+import '../../../../core/presentation/widgets/surface_widget.dart';
+import 'package:flutter/material.dart';
+
+import '../../../../core/presentation/theme.dart';
+import 'lyrics_slider_row_widget.dart';
+
+/// Floating control panel of the lyrics page.
+///
+/// Shows the play/stop button, the speed slider, the slider of the space above
+/// the lyrics and the record / trim-silence checkboxes; while a take is being
+/// recorded, [recordingIndicator] (the time and the input level). Fades out (and stops
+/// taking touches) when the controller hides the controls during scrolling.
+/// Dumb: the values, the texts and the callbacks come from above — a moved slider calls [onSpeedChanged], a released
+/// one [onSpeedChosen].
+final class LyricsControlsWidget extends StatelessWidget {
+  /// Fade duration of the panel.
+  static const Duration _fadeDuration = Duration(milliseconds: 250);
+
+  /// Number of slider steps.
+  static const int _sliderDivisions = 20;
+
+  /// Number of steps of the space slider.
+  static const int _leadInDivisions = 16;
+
+  /// Width of the slider labels, so both sliders start at the same place.
+  static const double _labelWidth = 80;
+
+  /// Digits after the point in the speed value.
+  static const int _speedDigits = 1;
+
+  /// Shows the space as percent of the screen height.
+  static const int _percent = 100;
+
+  /// Percent sign after the space value.
+  static const String _percentSign = '%';
+
+  /// Whether the panel is shown.
+  final bool visible;
+
+  /// Whether the lyrics scroll.
+  final bool isScrolling;
+
+  /// The scroll speed.
+  final double speed;
+
+  /// Lowest speed of the slider.
+  final double minSpeed;
+
+  /// Highest speed of the slider.
+  final double maxSpeed;
+
+  /// The space above the lyrics, as a part of the screen height.
+  final double leadIn;
+
+  /// Lowest space of the slider.
+  final double minLeadIn;
+
+  /// Highest space of the slider.
+  final double maxLeadIn;
+
+  /// Whether start also records a take.
+  final bool record;
+
+  /// Whether the silence is cut from the enhanced take.
+  final bool trimSilence;
+
+  /// Called while the speed slider moves.
+  final ValueChanged<double> onSpeedChanged;
+
+  /// Called while the space slider moves.
+  final ValueChanged<double> onLeadInChanged;
+
+  /// Called with the record checkbox's new value.
+  final ValueChanged<bool> onRecordChanged;
+
+  /// Called with the trim-silence checkbox's new value.
+  final ValueChanged<bool> onTrimSilenceChanged;
+
+  /// Called with the speed when the user releases the slider.
+  final ValueChanged<double> onSpeedChosen;
+
+  /// Called with the space above the lyrics when the user releases its slider.
+  final ValueChanged<double> onLeadInChosen;
+
+  /// Label of the space slider.
+  final String leadInLabel;
+
+  /// Speed label text.
+  final String speedLabel;
+
+  /// Stop button label text.
+  final String stopLabel;
+
+  /// Start button label text.
+  final String startLabel;
+
+  /// Label of the button while a take is being recorded.
+  final String stopRecordingLabel;
+
+  /// Label of the record checkbox.
+  final String recordLabel;
+
+  /// Label of the trim-silence checkbox.
+  final String trimSilenceLabel;
+
+  /// Called when the play/pause button is pressed.
+  final VoidCallback onPlayPressed;
+
+  /// Tooltip of the microphone button (the chosen input).
+  final String microphoneLabel;
+
+  /// Called by the microphone button.
+  final VoidCallback onMicrophonePressed;
+
+  /// Whether a take of this song is being recorded.
+  final bool isRecording;
+
+  /// Shows the time and the level of the take; it watches the recorder itself.
+  final Widget recordingIndicator;
+
+  /// Creates a new [LyricsControlsWidget].
+  const LyricsControlsWidget({
+    super.key,
+    required this.visible,
+    required this.isScrolling,
+    required this.speed,
+    required this.minSpeed,
+    required this.maxSpeed,
+    required this.leadIn,
+    required this.minLeadIn,
+    required this.maxLeadIn,
+    required this.record,
+    required this.trimSilence,
+    required this.onSpeedChanged,
+    required this.onLeadInChanged,
+    required this.onRecordChanged,
+    required this.onTrimSilenceChanged,
+    required this.onSpeedChosen,
+    required this.onLeadInChosen,
+    required this.leadInLabel,
+    required this.speedLabel,
+    required this.stopLabel,
+    required this.startLabel,
+    required this.stopRecordingLabel,
+    required this.recordLabel,
+    required this.trimSilenceLabel,
+    required this.onPlayPressed,
+    required this.microphoneLabel,
+    required this.onMicrophonePressed,
+    required this.isRecording,
+    required this.recordingIndicator,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    final bool canChangeOptions = !isScrolling && !isRecording;
+
+    return IgnorePointer(
+      ignoring: !visible,
+      child: AnimatedOpacity(
+        opacity: visible ? 1.0 : 0.0,
+        duration: _fadeDuration,
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppTheme.spacingMedium,
+              0,
+              AppTheme.spacingMedium,
+              AppTheme.spacingMedium,
+            ),
+            child: SurfaceWidget(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppTheme.spacingMedium,
+                  vertical: AppTheme.spacingSmall,
+                ),
+                child: Row(
+                  children: <Widget>[
+                    IconButton.filled(
+                      iconSize: AppTheme.spacingLarge,
+                      tooltip: isRecording ? stopRecordingLabel : (isScrolling ? stopLabel : startLabel),
+                      onPressed: onPlayPressed,
+                      style: isRecording ? IconButton.styleFrom(backgroundColor: colorScheme.error) : null,
+                      icon: Icon(isRecording ? Icons.stop : (isScrolling ? Icons.pause : Icons.play_arrow)),
+                    ),
+                    const SizedBox(width: AppTheme.spacingSmall),
+                    Expanded(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          LyricsSliderRowWidget(
+                            label: speedLabel,
+                            labelWidth: _labelWidth,
+                            value: speed,
+                            min: minSpeed,
+                            max: maxSpeed,
+                            divisions: _sliderDivisions,
+                            valueText: speed.toStringAsFixed(_speedDigits),
+                            onChanged: onSpeedChanged,
+                            onChangeEnd: onSpeedChosen,
+                          ),
+                          LyricsSliderRowWidget(
+                            label: leadInLabel,
+                            labelWidth: _labelWidth,
+                            value: leadIn,
+                            min: minLeadIn,
+                            max: maxLeadIn,
+                            divisions: _leadInDivisions,
+                            valueText: '${(leadIn * _percent).round()}$_percentSign',
+                            onChanged: onLeadInChanged,
+                            onChangeEnd: onLeadInChosen,
+                          ),
+                          Wrap(
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: <Widget>[
+                              _CheckboxWidget(
+                                label: recordLabel,
+                                value: record,
+                                onChanged: canChangeOptions ? _onRecordChanged : null,
+                              ),
+                              _CheckboxWidget(
+                                label: trimSilenceLabel,
+                                value: trimSilence,
+                                onChanged: canChangeOptions ? _onTrimSilenceChanged : null,
+                              ),
+                              IconButton(
+                                tooltip: microphoneLabel,
+                                onPressed: canChangeOptions ? onMicrophonePressed : null,
+                                icon: const Icon(Icons.settings_voice_outlined),
+                              ),
+                              recordingIndicator,
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _onRecordChanged(bool? value) {
+    onRecordChanged(value ?? false);
+  }
+
+  void _onTrimSilenceChanged(bool? value) {
+    onTrimSilenceChanged(value ?? false);
+  }
+}
+
+/// A checkbox with its label; the whole row toggles it.
+final class _CheckboxWidget extends StatelessWidget {
+  /// Text after the box.
+  final String label;
+
+  /// Whether it is checked.
+  final bool value;
+
+  /// Called with the new value; `null` disables it.
+  final ValueChanged<bool?>? onChanged;
+
+  /// Creates a new [_CheckboxWidget].
+  const _CheckboxWidget({required this.label, required this.value, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    final ValueChanged<bool?>? changed = onChanged;
+    return InkWell(
+      borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+      onTap: changed == null ? null : () => changed(!value),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Checkbox(value: value, onChanged: changed, visualDensity: VisualDensity.compact),
+          Flexible(child: Text(label, style: Theme.of(context).textTheme.labelLarge)),
+          const SizedBox(width: AppTheme.spacingSmall),
+        ],
+      ),
+    );
+  }
+}

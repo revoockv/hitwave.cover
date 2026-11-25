@@ -15,7 +15,10 @@ void main() {
   );
 
   test('a backup survives a JSON round trip', () {
-    final BackupDataModel model = BackupDataModel(exportedAt: DateTime.utc(2026, 11, 4), songs: <BackupSongModel>[song]);
+    final BackupDataModel model = BackupDataModel(
+      exportedAt: DateTime.utc(2026, 11, 4),
+      songs: <BackupSongModel>[song],
+    );
 
     final BackupData backup = BackupDataModel.fromJson(model.toJson()).toEntity();
 
@@ -25,7 +28,10 @@ void main() {
   });
 
   test('a double-encoded JSON file is unwrapped', () {
-    final BackupDataModel model = BackupDataModel(exportedAt: DateTime.utc(2026, 11, 4), songs: <BackupSongModel>[song]);
+    final BackupDataModel model = BackupDataModel(
+      exportedAt: DateTime.utc(2026, 11, 4),
+      songs: <BackupSongModel>[song],
+    );
 
     final BackupData backup = BackupDataModel.fromJson(jsonEncode(model.toJson())).toEntity();
 
@@ -47,7 +53,10 @@ void main() {
   });
 
   test('an indented backup is the same backup', () {
-    final BackupDataModel model = BackupDataModel(exportedAt: DateTime.utc(2026, 11, 4), songs: <BackupSongModel>[song]);
+    final BackupDataModel model = BackupDataModel(
+      exportedAt: DateTime.utc(2026, 11, 4),
+      songs: <BackupSongModel>[song],
+    );
 
     expect(jsonDecode(model.toJson(indent: '  ')), jsonDecode(model.toJson()));
   });

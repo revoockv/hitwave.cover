@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../../core/presentation/theme.dart';
 import '../../domain/entities/song.dart';
 import 'artist_picker_widget.dart';
@@ -22,6 +21,12 @@ final class ArtistSwitcherTitleWidget extends StatelessWidget {
   /// The artist being shown.
   final String selectedArtist;
 
+  /// Tooltip of the title ("Other artist").
+  final String tooltip;
+
+  /// The texts of the artist list in the sheet.
+  final ArtistPickerTexts pickerTexts;
+
   /// Called with the artist chosen in the sheet.
   final void Function(String artist) onArtistSelected;
 
@@ -30,17 +35,18 @@ final class ArtistSwitcherTitleWidget extends StatelessWidget {
     required this.title,
     required this.songs,
     required this.selectedArtist,
+    required this.tooltip,
+    required this.pickerTexts,
     required this.onArtistSelected,
     super.key,
   });
 
   @override
   Widget build(BuildContext context) {
-    final Translations t = context.t;
     final Color iconColor = Theme.of(context).colorScheme.onSurfaceVariant;
 
     return Tooltip(
-      message: t.song.otherArtist,
+      message: tooltip,
       child: InkWell(
         borderRadius: BorderRadius.circular(AppTheme.radius),
         onTap: () => _onPressed(context),
@@ -70,6 +76,7 @@ final class ArtistSwitcherTitleWidget extends StatelessWidget {
         child: ArtistPickerWidget(
           songs: songs,
           selectedArtist: selectedArtist,
+          texts: pickerTexts,
           onArtistSelected: Navigator.of(context).pop,
         ),
       ),

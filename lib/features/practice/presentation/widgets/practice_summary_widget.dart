@@ -1,7 +1,6 @@
 import '../../../../core/presentation/widgets/surface_widget.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../../core/presentation/theme.dart';
 import '../../domain/entities/practice_stats.dart';
 import 'practice_time_text_widget.dart';
@@ -14,34 +13,28 @@ final class PracticeSummaryWidget extends StatelessWidget {
   /// The stats.
   final PracticeStats stats;
 
+  /// The texts.
+  final PracticeTexts texts;
+
   /// Creates a new [PracticeSummaryWidget].
-  const PracticeSummaryWidget({super.key, required this.stats});
+  const PracticeSummaryWidget({super.key, required this.stats, required this.texts});
 
   @override
   Widget build(BuildContext context) {
-    final Translations t = context.t;
     final List<_TileData> tiles = <_TileData>[
+      _TileData(texts.thisWeekLabel, texts.timeText(stats.weekTime), texts.daysText(stats.weekDays)),
+      _TileData(texts.thisMonthLabel, texts.timeText(stats.monthTime), texts.daysText(stats.monthDays)),
       _TileData(
-        t.practice.thisWeek,
-        PracticeTimeTextWidget.format(t, stats.weekTime),
-        t.practice.days(n: stats.weekDays),
+        texts.totalLabel,
+        texts.timeText(stats.totalTime),
+        '${texts.sessionsText(stats.totalSessions)}$_separator${texts.daysText(stats.days.length)}',
       ),
       _TileData(
-        t.practice.thisMonth,
-        PracticeTimeTextWidget.format(t, stats.monthTime),
-        t.practice.days(n: stats.monthDays),
+        texts.dayStreakLabel,
+        texts.daysText(stats.currentStreak),
+        texts.longestText(texts.daysText(stats.longestStreak)),
       ),
-      _TileData(
-        t.practice.total,
-        PracticeTimeTextWidget.format(t, stats.totalTime),
-        '${t.practice.sessions(n: stats.totalSessions)}$_separator${t.practice.days(n: stats.days.length)}',
-      ),
-      _TileData(
-        t.practice.dayStreak,
-        t.practice.days(n: stats.currentStreak),
-        t.practice.longest(value: t.practice.days(n: stats.longestStreak)),
-      ),
-      _TileData(t.practice.takes, '${stats.totalTakes}', null),
+      _TileData(texts.takesLabel, '${stats.totalTakes}', null),
     ];
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {

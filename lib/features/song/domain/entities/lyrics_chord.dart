@@ -20,7 +20,10 @@ final class LyricsChord {
   static final RegExp _enclosedChord = RegExp('^(?:\\[$_chord\\]|\\($_chord\\))\$');
 
   /// Bars, repeats and fillers a chord line may hold besides chords.
-  static final RegExp _neutral = RegExp(r'^(?:\|+:?|:?\|+|%|-+|=|\*+|x\d+|\(x?\d+\)|\d+x|/|\.+|,)$', caseSensitive: false);
+  static final RegExp _neutral = RegExp(
+    r'^(?:\|+:?|:?\|+|%|-+|=|\*+|x\d+|\(x?\d+\)|\d+x|/|\.+|,)$',
+    caseSensitive: false,
+  );
 
   static final RegExp _token = RegExp(r'\S+');
 

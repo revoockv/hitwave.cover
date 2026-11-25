@@ -17,7 +17,8 @@ Float64List tone(double hertz, double sampleRate, int length, {double amplitude 
   final Float64List samples = Float64List(length);
   for (int i = 0; i < length; i++) {
     final double t = i / sampleRate;
-    samples[i] = amplitude *
+    samples[i] =
+        amplitude *
         (math.sin(2 * math.pi * hertz * t) +
             0.5 * math.sin(2 * math.pi * 2 * hertz * t) +
             0.25 * math.sin(2 * math.pi * 3 * hertz * t)) /
@@ -107,7 +108,10 @@ void main() {
 
     setUp(() {
       source = FakePitchDataSource();
-      repository = TunerRepositoryImpl(dataSource: source, logger: Logger(level: Level.off));
+      repository = TunerRepositoryImpl(
+        dataSource: source,
+        logger: Logger(level: Level.off),
+      );
     });
 
     Future<double?> heard() async {

@@ -1,6 +1,7 @@
 import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../domain/entities/instrument.dart';
 import '../../domain/entities/tuner_failure.dart';
+import '../widgets/tuner_meter_widget.dart';
 
 /// The text of a [TunerFailure] shown to the user.
 extension TunerFailureText on TunerFailure {
@@ -21,4 +22,24 @@ extension InstrumentLabel on Instrument {
     Instrument.violin => t.tuner.instruments.violin,
     Instrument.chromatic => t.tuner.instruments.chromatic,
   };
+}
+
+/// The texts of the tuner widgets in the language of these [Translations].
+extension TunerWidgetTexts on Translations {
+  /// The texts of the meter.
+  TunerMeterTexts get tunerMeter => TunerMeterTexts(
+    idleText: tuner.playString,
+    inTuneText: tuner.inTune,
+    tuneUpText: tuner.tuneUp,
+    tuneDownText: tuner.tuneDown,
+    hertzText: _hertz,
+    centsText: _cents,
+  );
+
+  /// The name of an instrument.
+  String instrumentLabel(Instrument instrument) => instrument.label(this);
+
+  String _hertz(String value) => tuner.hertz(value: value);
+
+  String _cents(String value) => tuner.cents(value: value);
 }

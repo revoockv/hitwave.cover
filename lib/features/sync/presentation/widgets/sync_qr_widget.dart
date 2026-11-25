@@ -1,8 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
-import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../../core/presentation/theme.dart';
+
+/// The texts of [SyncQrWidget].
+final class SyncQrTexts {
+  /// How to use the code.
+  final String hintText;
+
+  /// Shown while waiting for the other device.
+  final String waitingText;
+
+  /// Label of the copy button.
+  final String copyCodeLabel;
+
+  /// Label of the cancel button.
+  final String cancelLabel;
+
+  /// Creates the texts.
+  const SyncQrTexts({
+    required this.hintText,
+    required this.waitingText,
+    required this.copyCodeLabel,
+    required this.cancelLabel,
+  });
+}
 
 /// The QR code of this device with the code as text (to copy to a device that cannot scan).
 final class SyncQrWidget extends StatelessWidget {
@@ -12,6 +34,9 @@ final class SyncQrWidget extends StatelessWidget {
   /// The sync code.
   final String code;
 
+  /// The texts.
+  final SyncQrTexts texts;
+
   /// Called by the copy button.
   final VoidCallback onCopyPressed;
 
@@ -19,11 +44,16 @@ final class SyncQrWidget extends StatelessWidget {
   final VoidCallback onCancelPressed;
 
   /// Creates a new [SyncQrWidget].
-  const SyncQrWidget({super.key, required this.code, required this.onCopyPressed, required this.onCancelPressed});
+  const SyncQrWidget({
+    super.key,
+    required this.code,
+    required this.texts,
+    required this.onCopyPressed,
+    required this.onCancelPressed,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final Translations t = context.t;
     final ThemeData theme = Theme.of(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -38,9 +68,9 @@ final class SyncQrWidget extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppTheme.spacingMedium),
-        Text(t.sync.qrHint, textAlign: TextAlign.center, style: theme.textTheme.bodyMedium),
+        Text(texts.hintText, textAlign: TextAlign.center, style: theme.textTheme.bodyMedium),
         const SizedBox(height: AppTheme.spacingMedium),
-        Text(t.sync.waiting, textAlign: TextAlign.center, style: theme.textTheme.titleSmall),
+        Text(texts.waitingText, textAlign: TextAlign.center, style: theme.textTheme.titleSmall),
         const SizedBox(height: AppTheme.spacingSmall),
         const LinearProgressIndicator(),
         const SizedBox(height: AppTheme.spacingMedium),
@@ -48,8 +78,12 @@ final class SyncQrWidget extends StatelessWidget {
           spacing: AppTheme.spacingSmall,
           alignment: WrapAlignment.center,
           children: <Widget>[
-            OutlinedButton.icon(onPressed: onCopyPressed, icon: const Icon(Icons.copy), label: Text(t.sync.copyCode)),
-            TextButton(onPressed: onCancelPressed, child: Text(t.common.cancel)),
+            OutlinedButton.icon(
+              onPressed: onCopyPressed,
+              icon: const Icon(Icons.copy),
+              label: Text(texts.copyCodeLabel),
+            ),
+            TextButton(onPressed: onCancelPressed, child: Text(texts.cancelLabel)),
           ],
         ),
       ],
