@@ -5,9 +5,13 @@ import 'tab_block.dart';
 /// [findAll] finds them:
 /// - on a line of chords only (`C#m   Am`, `| G Em | Am G ||`, `A(V) G(III) (2)`) every chord;
 /// - on a line with words, a run of two or more chords (`C#m Am Коли ти смієшся`, `Intro: Em G Em`);
-/// - anywhere, a chord in brackets or parentheses (`[Am]`, `Because I (C) want`).
+/// - anywhere, a chord in brackets or parentheses (`[Am]`, `Because I (C) want`), and every chord of brackets that
+///   hold chords only (`[F Dm] Duke, Duke`, `(Am | G)`);
+/// - in a song with chords (chords on at least two lines by the rules above), also a lone chord among words
+///   (`Bb Duke, Duke of Earl`, `C 'Cause I'm the Duke`).
 ///
-/// A single plain word like `A` or `Am` among words stays text: in lyrics it is more often a word.
+/// Elsewhere a single plain word like `A` or `Am` among words stays text: in lyrics it is more often a word. Even in a
+/// song with chords `A` and `Am` before a Latin word (`A girl to hold`, `Am I wrong`) stay text.
 /// Tab lines ([TabBlock.isTabLine]) have no chords.
 final class LyricsChord {
   /// A chord: root (`A`–`H`), accidental, quality, extensions, a position or an option in
@@ -26,6 +30,18 @@ final class LyricsChord {
   );
 
   static final RegExp _token = RegExp(r'\S+');
+
+  /// Brackets or parentheses around several tokens (`[F Dm]`), that may be a group of chords.
+  static final RegExp _group = RegExp(r'[\[(]([^\[\]()]*\s[^\[\]()]*)[\])]');
+
+  /// The lone chords that are words more often, kept as text before a Latin word.
+  static const Set<String> _wordLike = <String>{'A', 'Am'};
+
+  /// A word that starts with a Latin letter.
+  static final RegExp _latinWord = RegExp(r'^[^A-Za-z\u0400-\u04FF]*[A-Za-z]');
+
+  /// Fewest lines with chords that make the lyrics a song with chords.
+  static const int _minChordLines = 2;
 
   static const String _lineBreak = '\n';
 
@@ -46,54 +62,96 @@ final class LyricsChord {
 
   /// The chords of [lyrics] in order; empty when the lyrics have none.
   static List<LyricsChord> findAll(String lyrics) {
-    final List<LyricsChord> chords = <LyricsChord>[];
+    final List<_Line> lines = <_Line>[];
     int lineStart = 0;
     while (lineStart <= lyrics.length) {
       final int breakIndex = lyrics.indexOf(_lineBreak, lineStart);
       final int lineEnd = breakIndex < 0 ? lyrics.length : breakIndex;
       final String line = lyrics.substring(lineStart, lineEnd);
-      if (!TabBlock.isTabLine(line)) {
-        for (final Match token in _chordsOf(line)) {
-          chords.add(LyricsChord(start: lineStart + token.start, end: lineStart + token.end, text: token[0]!));
-        }
-      }
+      if (!TabBlock.isTabLine(line)) lines.add(_chordsOf(line, lineStart));
       if (breakIndex < 0) break;
       lineStart = breakIndex + 1;
     }
-    return chords;
+    final bool withChords = lines.where((_Line line) => line.chords.isNotEmpty).length >= _minChordLines;
+    return <LyricsChord>[
+      for (final _Line line in lines)
+        ...(withChords ? (<LyricsChord>[...line.chords, ...line.lone]..sort(_byStart)) : line.chords),
+    ];
   }
 
-  /// The tokens of [line] that are chords.
-  static List<Match> _chordsOf(String line) {
-    final List<Match> tokens = _token.allMatches(line).toList();
+  static int _byStart(LyricsChord a, LyricsChord b) => a.start.compareTo(b.start);
+
+  /// The chords of [line] that starts at [offset] in the lyrics, and its lone chords among words.
+  static _Line _chordsOf(String line, int offset) {
+    final List<Match> tokens = _token.allMatches(_ungrouped(line)).toList();
     final List<_Kind> kinds = tokens.map((Match token) => _kindOf(token[0]!)).toList();
+    _markGroups(line, tokens, kinds);
+    LyricsChord chordAt(int i) =>
+        LyricsChord(start: offset + tokens[i].start, end: offset + tokens[i].end, text: tokens[i][0]!);
+
     final bool chordsOnly = !kinds.contains(_Kind.word) && kinds.any(_isChord);
     if (chordsOnly) {
-      return <Match>[
-        for (int i = 0; i < tokens.length; i++)
-          if (_isChord(kinds[i])) tokens[i],
-      ];
+      return _Line(
+        chords: <LyricsChord>[
+          for (int i = 0; i < tokens.length; i++)
+            if (_isChord(kinds[i])) chordAt(i),
+        ],
+        lone: const <LyricsChord>[],
+      );
     }
-    final List<Match> chords = <Match>[];
+    final List<LyricsChord> chords = <LyricsChord>[];
+    final List<LyricsChord> lone = <LyricsChord>[];
     final List<int> run = <int>[];
-    void closeRun() {
-      final int plain = run.where((int i) => kinds[i] == _Kind.plain).length;
+    void closeRun(int next) {
+      final List<int> plain = run.where((int i) => kinds[i] == _Kind.plain).toList();
       for (final int i in run) {
-        if (kinds[i] == _Kind.enclosed || (kinds[i] == _Kind.plain && plain >= _minRun)) chords.add(tokens[i]);
+        if (kinds[i] == _Kind.enclosed || (kinds[i] == _Kind.plain && plain.length >= _minRun)) chords.add(chordAt(i));
+      }
+      if (plain.length == 1 && !_isWord(tokens[plain.single][0]!, next < tokens.length ? tokens[next][0]! : null)) {
+        lone.add(chordAt(plain.single));
       }
       run.clear();
     }
 
     for (int i = 0; i < tokens.length; i++) {
       if (kinds[i] == _Kind.word) {
-        closeRun();
+        closeRun(i);
       } else {
         run.add(i);
       }
     }
-    closeRun();
-    return chords;
+    closeRun(tokens.length);
+    return _Line(chords: chords, lone: lone);
   }
+
+  /// [line] with the brackets of its chord groups ([_group]) turned into spaces, so their chords are tokens of their
+  /// own at the same offsets.
+  static String _ungrouped(String line) => line.replaceAllMapped(_group, (Match group) {
+    final String inside = group[1]!;
+    return _isChordGroup(inside) ? ' $inside ' : group[0]!;
+  });
+
+  /// Marks the chords inside the chord groups of [line] as always chords, like a chord in brackets.
+  static void _markGroups(String line, List<Match> tokens, List<_Kind> kinds) {
+    for (final Match group in _group.allMatches(line)) {
+      if (!_isChordGroup(group[1]!)) continue;
+      for (int i = 0; i < tokens.length; i++) {
+        if (tokens[i].start > group.start && tokens[i].end < group.end && kinds[i] == _Kind.plain) {
+          kinds[i] = _Kind.enclosed;
+        }
+      }
+    }
+  }
+
+  /// Whether the tokens of [inside] are chords, bars and repeats only, with at least one chord.
+  static bool _isChordGroup(String inside) {
+    final List<_Kind> kinds = _token.allMatches(inside).map((Match token) => _kindOf(token[0]!)).toList();
+    return kinds.contains(_Kind.plain) && kinds.every((_Kind kind) => kind == _Kind.plain || kind == _Kind.neutral);
+  }
+
+  /// Whether a lone [chord] before [next] is more likely a word (`A girl`, `Am I wrong`).
+  static bool _isWord(String chord, String? next) =>
+      _wordLike.contains(chord) && next != null && _latinWord.hasMatch(next);
 
   static _Kind _kindOf(String token) {
     if (_plainChord.hasMatch(token)) return _Kind.plain;
@@ -110,6 +168,18 @@ final class LyricsChord {
 
   @override
   int get hashCode => Object.hash(start, end, text);
+}
+
+/// The chords found on one line of lyrics.
+final class _Line {
+  /// Chords by the rules of a line alone.
+  final List<LyricsChord> chords;
+
+  /// Lone plain chords among words, chords only in a song with chords.
+  final List<LyricsChord> lone;
+
+  /// Creates a new [_Line].
+  const _Line({required this.chords, required this.lone});
 }
 
 /// What a token of a lyrics line is.
