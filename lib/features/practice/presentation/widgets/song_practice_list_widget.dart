@@ -44,12 +44,13 @@ final class SongPracticeListWidget extends StatelessWidget {
           ListTile(
             contentPadding: EdgeInsets.zero,
             leading: const Icon(Icons.music_note_outlined),
-            title: Text(titleOf(song.songId), maxLines: 1, overflow: TextOverflow.ellipsis),
-            trailing: Text(
+            // The time goes under the name, so a long name keeps the whole line.
+            title: Text(titleOf(song.songId), maxLines: 2, overflow: TextOverflow.ellipsis),
+            subtitle: Text(
               song.takes > 0
                   ? '${texts.timeText(song.time)}$_separator${texts.takesText(song.takes)}'
                   : texts.timeText(song.time),
-              style: theme.textTheme.bodyMedium,
+              style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
             ),
             onTap: onPressedOf(song.songId),
           ),

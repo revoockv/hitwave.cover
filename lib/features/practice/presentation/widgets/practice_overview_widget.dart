@@ -10,6 +10,9 @@ import 'practice_time_text_widget.dart';
 final class PracticeOverviewWidget extends StatelessWidget {
   static const double _dayMarkSize = 26;
 
+  /// The narrowest "All statistics" beside the days; on a narrower card it goes under them.
+  static const double _allStatsMinWidth = 96;
+
   /// The stats.
   final PracticeStats stats;
 
@@ -59,31 +62,58 @@ final class PracticeOverviewWidget extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: AppTheme.spacingSmall),
-              Row(
-                children: <Widget>[
-                  for (int index = 0; index < texts.weekdayLetters.length; index++)
-                    Padding(
-                      padding: const EdgeInsets.only(right: AppTheme.spacingTiny),
-                      child: _DayMarkWidget(
-                        letter: texts.weekdayLetters[index],
-                        practised: stats.practisedOn(DateTime(monday.year, monday.month, monday.day + index)),
-                        isToday: index == today.weekday - DateTime.monday,
-                        size: _dayMarkSize,
-                        colors: colors,
-                        style: theme.textTheme.labelSmall,
+              LayoutBuilder(
+                builder: (BuildContext context, BoxConstraints constraints) {
+                  final List<Widget> days = <Widget>[
+                    for (int index = 0; index < texts.weekdayLetters.length; index++)
+                      Padding(
+                        padding: const EdgeInsets.only(right: AppTheme.spacingTiny),
+                        child: _DayMarkWidget(
+                          letter: texts.weekdayLetters[index],
+                          practised: stats.practisedOn(DateTime(monday.year, monday.month, monday.day + index)),
+                          isToday: index == today.weekday - DateTime.monday,
+                          size: _dayMarkSize,
+                          colors: colors,
+                          style: theme.textTheme.labelSmall,
+                        ),
                       ),
-                    ),
-                  Expanded(
-                    child: Text(
-                      texts.allStatsLabel,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.end,
-                      style: theme.textTheme.labelMedium?.copyWith(color: colors.primary),
-                    ),
-                  ),
-                  Icon(Icons.chevron_right, color: colors.primary),
-                ],
+                  ];
+                  final Widget allStats = Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Flexible(
+                        child: Text(
+                          texts.allStatsLabel,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.end,
+                          style: theme.textTheme.labelMedium?.copyWith(color: colors.primary),
+                        ),
+                      ),
+                      Icon(Icons.chevron_right, color: colors.primary),
+                    ],
+                  );
+                  final double daysWidth = texts.weekdayLetters.length * (_dayMarkSize + AppTheme.spacingTiny);
+                  if (constraints.maxWidth - daysWidth >= _allStatsMinWidth) {
+                    return Row(
+                      children: <Widget>[
+                        ...days,
+                        Expanded(
+                          child: Align(alignment: Alignment.centerRight, child: allStats),
+                        ),
+                      ],
+                    );
+                  }
+                  // A narrow phone: the days fill the line, "All statistics" goes under them.
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: <Widget>[
+                      Row(children: days),
+                      const SizedBox(height: AppTheme.spacingTiny),
+                      Align(alignment: Alignment.centerRight, child: allStats),
+                    ],
+                  );
+                },
               ),
             ],
           ),
@@ -103,13 +133,26 @@ final class _StatWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    // A long value ("20 h 43 min") gets smaller instead of cut, with a gap to the next one.
     return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(label, style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-          Text(value, maxLines: 1, overflow: TextOverflow.ellipsis, style: theme.textTheme.titleMedium),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.only(right: AppTheme.spacingSmall),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            ),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(value, maxLines: 1, style: theme.textTheme.titleMedium),
+            ),
+          ],
+        ),
       ),
     );
   }

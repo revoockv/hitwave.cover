@@ -102,7 +102,7 @@ final class HomePage extends WatchingWidget {
       _Tab(Icons.home_outlined, Icons.home, t.song.tabHome),
       _Tab(Icons.queue_music_outlined, Icons.queue_music, t.song.tabSongs),
       _Tab(Icons.mic_none_outlined, Icons.mic, t.song.tabCovers),
-      _Tab(Icons.insights_outlined, Icons.insights, t.song.statistics),
+      _Tab(Icons.insights_outlined, Icons.insights, t.song.tabStatistics),
       _Tab(Icons.graphic_eq_outlined, Icons.graphic_eq, t.tuner.title),
     ];
     // Every tab watches the data it shows itself, so a change of it does not rebuild the page and the other tabs.

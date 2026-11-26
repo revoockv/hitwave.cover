@@ -612,6 +612,9 @@ class Translations$song$en {
 	/// en: 'Songs'
 	String get tabSongs => 'Songs';
 
+	/// en: 'Statistics'
+	String get tabStatistics => 'Statistics';
+
 	/// en: 'Take saved'
 	String get takeSaved => 'Take saved';
 
@@ -1456,6 +1459,7 @@ extension on Translations {
 			'song.tabCovers' => 'Covers',
 			'song.tabHome' => 'Home',
 			'song.tabSongs' => 'Songs',
+			'song.tabStatistics' => 'Statistics',
 			'song.takeSaved' => 'Take saved',
 			'song.trimSilence' => 'Trim silence',
 			'sync.all' => 'All',
