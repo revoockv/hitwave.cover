@@ -10,7 +10,14 @@ void main() {
     expect(chordsOf('   A(V) C#m(IV) F G#(IV) G(III)  (2)'), <String>['A(V)', 'C#m(IV)', 'F', 'G#(IV)', 'G(III)']);
     expect(chordsOf('E               G#m **'), <String>['E', 'G#m']);
     expect(chordsOf('Cmaj7 D7/F# AmM7 Emadd9 A7sus4 Hm'), <String>['Cmaj7', 'D7/F#', 'AmM7', 'Emadd9', 'A7sus4', 'Hm']);
-    expect(chordsOf('D7sus C7sus F7sus D7sus4 C9sus G7add'), <String>['D7sus', 'C7sus', 'F7sus', 'D7sus4', 'C9sus', 'G7add']);
+    expect(chordsOf('D7sus C7sus F7sus D7sus4 C9sus G7add'), <String>[
+      'D7sus',
+      'C7sus',
+      'F7sus',
+      'D7sus4',
+      'C9sus',
+      'G7add',
+    ]);
   });
 
   test('a run of chords before or inside words', () {
@@ -23,6 +30,38 @@ void main() {
     expect(chordsOf('[C] No one knows'), <String>['[C]']);
     expect(chordsOf('Because I (C) want a (G7) girl'), <String>['(C)', '(G7)']);
     expect(chordsOf('Drea-ea- [F] ea- [C] eam'), <String>['[F]', '[C]']);
+  });
+
+  test('chords inside brackets that hold chords only', () {
+    expect(chordsOf('[F Dm] Duke, Duke, Duke, Duke of Earl.'), <String>['F', 'Dm']);
+    expect(chordsOf('(Am | G) la la'), <String>['Am', 'G']);
+    expect(chordsOf('[Verse 1] (2 guitars)'), isEmpty);
+  });
+
+  test('a lone chord among words in a song with chords', () {
+    const String duke =
+        '[F Dm] Duke, Duke, Duke, Duke of Earl.\n'
+        'Bb Duke, Duke, Duke of Earl.\n'
+        'C Duke, Duke, Duke of Earl.\n'
+        '2x\n'
+        'F Dm As I, I walk through this world,\n'
+        "C 'Cause I'm the Duke of Earl.\n"
+        'So, yeah, yeah, yeah, yeah.';
+
+    expect(chordsOf(duke), <String>['F', 'Dm', 'Bb', 'C', 'F', 'Dm', 'C']);
+    expect(chordsOf('C G Out of work\nAm I wrong, E7 the rent\nA girl to hold\nDm F We are\nAm Коли ти'), <String>[
+      'C',
+      'G',
+      'E7',
+      'Dm',
+      'F',
+      'Am',
+    ]);
+  });
+
+  test('a lone chord among words stays text in a song without chords', () {
+    expect(chordsOf('Bb Duke, Duke, Duke of Earl.\nC Duke, Duke, Duke of Earl.'), isEmpty);
+    expect(chordsOf('C G Out of work\nBb Duke of Earl'), <String>['C', 'G']);
   });
 
   test('words, sections and tabs are not chords', () {
