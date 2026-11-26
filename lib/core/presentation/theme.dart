@@ -53,6 +53,12 @@ final class AppTheme {
     return EdgeInsets.symmetric(horizontal: side, vertical: minimum);
   }
 
+  /// [padding] with the system navigation bar under it: Android draws the app behind that bar (edge to edge), so
+  /// the end of a scroll view would hide behind it. Nothing is added where a bottom bar of the Scaffold already
+  /// took the space.
+  static EdgeInsets clearOfSystemBar(BuildContext context, EdgeInsets padding) =>
+      padding.copyWith(bottom: padding.bottom + MediaQuery.paddingOf(context).bottom);
+
   /// Line height of lyrics and other long text.
   static const double readingLineHeight = 1.5;
 

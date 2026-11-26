@@ -76,7 +76,7 @@ final class SettingsPage extends WatchingWidget {
             : null,
       ),
       body: ListView(
-        padding: const EdgeInsets.only(bottom: AppTheme.spacingLarge),
+        padding: AppTheme.clearOfSystemBar(context, const EdgeInsets.only(bottom: AppTheme.spacingLarge)),
         children: <Widget>[
           ListTile(title: Text(t.settings.theme, style: sectionStyle)),
           ThemePickerWidget(

@@ -146,7 +146,10 @@ final class HomeDashboardWidget extends StatelessWidget {
         // A desktop window: the overview and the songs on the left, the covers on the right.
         if (width >= AppTheme.twoColumnBreakpoint) {
           return SingleChildScrollView(
-            padding: AppTheme.centeredPadding(width, AppTheme.maxPageWidth, minimum: AppTheme.spacingLarge),
+            padding: AppTheme.clearOfSystemBar(
+              context,
+              AppTheme.centeredPadding(width, AppTheme.maxPageWidth, minimum: AppTheme.spacingLarge),
+            ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
@@ -169,7 +172,7 @@ final class HomeDashboardWidget extends StatelessWidget {
           );
         }
         return ListView(
-          padding: AppTheme.centeredPadding(width, AppTheme.maxContentWidth),
+          padding: AppTheme.clearOfSystemBar(context, AppTheme.centeredPadding(width, AppTheme.maxContentWidth)),
           children: <Widget>[
             overview,
             const SizedBox(height: AppTheme.spacingMedium),

@@ -69,7 +69,7 @@ final class PracticeStatsWidget extends StatelessWidget {
     final ThemeData theme = Theme.of(context);
 
     return ListView(
-      padding: const EdgeInsets.all(AppTheme.spacingMedium),
+      padding: AppTheme.clearOfSystemBar(context, const EdgeInsets.all(AppTheme.spacingMedium)),
       children: <Widget>[
         PracticeSummaryWidget(stats: stats, texts: texts),
         const SizedBox(height: AppTheme.spacingMedium),

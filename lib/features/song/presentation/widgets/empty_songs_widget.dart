@@ -38,7 +38,7 @@ final class EmptySongsWidget extends StatelessWidget {
 
     return Center(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppTheme.spacingLarge),
+        padding: AppTheme.clearOfSystemBar(context, const EdgeInsets.all(AppTheme.spacingLarge)),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[

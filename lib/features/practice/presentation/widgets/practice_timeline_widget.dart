@@ -65,7 +65,7 @@ final class PracticeTimelineWidget extends StatelessWidget {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: AppTheme.maxContentWidth),
         child: ListView.builder(
-          padding: const EdgeInsets.all(AppTheme.spacingMedium),
+          padding: AppTheme.clearOfSystemBar(context, const EdgeInsets.all(AppTheme.spacingMedium)),
           itemCount: entries.length + 1,
           itemBuilder: (BuildContext context, int index) {
             if (index == 0) {
