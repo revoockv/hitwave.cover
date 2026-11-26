@@ -41,7 +41,10 @@ final class SongListModeWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
-      padding: const EdgeInsets.only(top: AppTheme.spacingSmall, bottom: _fabClearance),
+      padding: AppTheme.clearOfSystemBar(
+        context,
+        const EdgeInsets.only(top: AppTheme.spacingSmall, bottom: _fabClearance),
+      ),
       itemCount: songs.length,
       itemBuilder: (BuildContext context, int index) {
         final Song song = songs[index];

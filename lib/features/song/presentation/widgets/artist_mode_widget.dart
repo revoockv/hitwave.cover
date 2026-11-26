@@ -60,7 +60,10 @@ final class ArtistModeWidget extends StatelessWidget {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.only(top: AppTheme.spacingSmall, bottom: _fabClearance),
+      padding: AppTheme.clearOfSystemBar(
+        context,
+        const EdgeInsets.only(top: AppTheme.spacingSmall, bottom: _fabClearance),
+      ),
       itemCount: artistSongs.length,
       itemBuilder: (BuildContext context, int index) => SongTileWidget(
         song: artistSongs[index],

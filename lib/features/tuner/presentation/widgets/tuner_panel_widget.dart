@@ -47,7 +47,7 @@ final class TunerPanelWidget extends StatelessWidget {
     final String? failure = failureText;
     return Center(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppTheme.spacingLarge),
+        padding: AppTheme.clearOfSystemBar(context, const EdgeInsets.all(AppTheme.spacingLarge)),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: AppTheme.maxContentWidth),
           child: Column(

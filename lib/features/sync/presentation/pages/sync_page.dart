@@ -48,7 +48,7 @@ final class SyncPage extends WatchingWidget {
         appBar: AppBar(title: Text(t.sync.title)),
         body: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(AppTheme.spacingLarge),
+            padding: AppTheme.clearOfSystemBar(context, const EdgeInsets.all(AppTheme.spacingLarge)),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: AppTheme.maxContentWidth),
               child: switch (state) {

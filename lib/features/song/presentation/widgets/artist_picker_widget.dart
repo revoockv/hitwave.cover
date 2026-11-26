@@ -118,7 +118,7 @@ final class _ArtistPickerWidgetState extends State<ArtistPickerWidget> {
               if (artists.isEmpty) return Center(child: Text(widget.texts.nothingFoundText));
               return ListView.builder(
                 keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-                padding: const EdgeInsets.only(bottom: _fabClearance),
+                padding: AppTheme.clearOfSystemBar(context, const EdgeInsets.only(bottom: _fabClearance)),
                 itemCount: artists.length,
                 itemBuilder: (BuildContext context, int index) => ArtistTileWidget(
                   artist: artists[index].name,
