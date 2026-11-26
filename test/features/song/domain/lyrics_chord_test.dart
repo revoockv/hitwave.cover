@@ -97,10 +97,11 @@ void main() {
     expect(marked.replaceAll(LyricsChord.textMark, ''), lyrics);
     expect(chordsOf(lyrics), <String>['Am', 'C', 'G', 'D', 'Em', 'G', 'Em']);
     expect(chordsOf(marked), <String>['Am', 'C', 'G', 'D', 'Em', 'Em']);
-    final ({int start, int end, String text})? word = LyricsChord.markedWordAt(marked, g.start + 1);
-    expect(word?.text, 'G');
-    expect(LyricsChord.markedWordAt(marked, 0), isNull);
-    expect(LyricsChord.unmark(marked, word!.start, word.end), lyrics);
+    final List<({int start, int end, String text})> words = LyricsChord.markedWords(marked);
+    expect(words.map((({int start, int end, String text}) word) => word.text), <String>['G']);
+    expect(words.single.start, g.start);
+    expect(LyricsChord.markedWords(lyrics), isEmpty);
+    expect(LyricsChord.unmark(marked, words.single.start, words.single.end), lyrics);
   });
 
   test('a chord in brackets called a word keeps its brackets and stays text', () {

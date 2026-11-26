@@ -184,16 +184,12 @@ final class LyricsChord {
     return lyrics.replaceRange(at, at, textMark);
   }
 
-  /// The word at [offset] of [lyrics] that was a chord marked as a word, or `null`: its range and its text without
+  /// The words of [lyrics] that were chords the user marked as words, in order: their ranges and their texts without
   /// the mark.
-  static ({int start, int end, String text})? markedWordAt(String lyrics, int offset) {
-    for (final Match word in _token.allMatches(lyrics)) {
-      if (word.start > offset) break;
-      if (offset > word.end || !word[0]!.contains(textMark)) continue;
-      return (start: word.start, end: word.end, text: word[0]!.replaceAll(textMark, ''));
-    }
-    return null;
-  }
+  static List<({int start, int end, String text})> markedWords(String lyrics) => <({int start, int end, String text})>[
+    for (final Match word in _token.allMatches(lyrics))
+      if (word[0]!.contains(textMark)) (start: word.start, end: word.end, text: word[0]!.replaceAll(textMark, '')),
+  ];
 
   /// [lyrics] without the [textMark]s between [start] and [end]: the word there may be a chord again.
   static String unmark(String lyrics, int start, int end) =>
