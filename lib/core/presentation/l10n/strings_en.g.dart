@@ -215,8 +215,8 @@ class Translations$practice$en {
 	/// en: 'Could not add the practice sessions'
 	String get importFailed => 'Could not add the practice sessions';
 
-	/// en: 'less than a minute'
-	String get lessThanMinute => 'less than a minute';
+	/// en: '< 1 min'
+	String get lessThanMinute => '< 1 min';
 
 	/// en: 'longest {value}'
 	String longest({required Object value}) => 'longest ${value}';
@@ -1254,7 +1254,7 @@ extension on Translations {
 			'practice.filterWithTakes' => 'With takes',
 			'practice.hoursMinutes' => ({required Object hours, required Object minutes}) => '${hours} h ${minutes} min',
 			'practice.importFailed' => 'Could not add the practice sessions',
-			'practice.lessThanMinute' => 'less than a minute',
+			'practice.lessThanMinute' => '< 1 min',
 			'practice.longest' => ({required Object value}) => 'longest ${value}',
 			'practice.minutes' => ({required Object minutes}) => '${minutes} min',
 			'practice.monthNames.0' => 'January',

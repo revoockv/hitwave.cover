@@ -59,31 +59,31 @@ class _Translations$backup$isv extends Translations$backup$en {
 	final TranslationsIsv _root; // ignore: unused_field
 
 	// Translations
-	@override String get cancelImport => 'Отменити импорт';
-	@override String conflictMessage({required Object song}) => '«${song}» уж јест међу вашими пєснями.';
+	@override String get cancelImport => 'Ануловати импорт';
+	@override String conflictMessage({required Object song}) => '«${song}» уж јест међу вашими пєсњами.';
 	@override String get conflictTitle => 'Та пєсња уж јест';
 	@override String get exportDialogTitle => 'Изберите папку за експорт';
 	@override late final _Translations$backup$failure$isv failure = _Translations$backup$failure$isv._(_root);
 	@override String forOthers({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('isv'))(n,
-		few: 'Сдєлати то само за друге ${n} пєсни',
-		many: 'Сдєлати то само за другых ${n} пєсниј',
+		few: 'Сдєлати то само за друге ${n} пєсње',
+		many: 'Сдєлати то само за другых ${n} пєснеј',
 		one: 'Сдєлати то само за другу ${n} пєсњу',
-		other: 'Сдєлати то само за другых ${n} пєсниј',
+		other: 'Сдєлати то само за другых ${n} пєснеј',
 	);
 	@override String get importHint => 'Из фајла, такоже из Google Drive';
-	@override String importSummary({required Object added, required Object replaced, required Object skipped}) => 'Импорт кончены: додано ${added}, замєнено ${replaced}, прескочено ${skipped}';
+	@override String importSummary({required Object added, required Object replaced, required Object skipped}) => 'Импорт укончены: додано ${added}, замєњено ${replaced}, пропушчено ${skipped}';
 	@override String get includeRecordings => 'Вкључити записы';
 	@override String get keepBoth => 'Оставити обе';
 	@override String get keepBothHint => 'Додати пєсњу из фајла поред вашеј, с числом';
 	@override String get otherLyrics => 'Текст в фајлу јест другы.';
-	@override String get recordingsNote => 'Записы сут храњене само на том устројству; с ними фајл стање ZIP-архивом.';
+	@override String get recordingsNote => 'Записы сут само на том устројству; с њими фајл стане ZIP-архивом.';
 	@override String get replace => 'Замєнити';
-	@override String get replaceHint => 'Взяти текст из фајла; ваши каверы и записы остајут';
+	@override String get replaceHint => 'Взети текст из фајла; ваши каверы и записы оставајут';
 	@override String get sameLyrics => 'Текст в фајлу јест једнаки.';
-	@override String get share => 'Поделити резервну копију';
-	@override String get shareHint => 'Сохраните ју в Google Drive или пошљите в другу апликацију';
-	@override String get shareQuestion => 'Пєсни будут подељене како фајл, кторы можете сохранити в Google Drive. Записы идут само в ZIP-архиву.';
-	@override String get skip => 'Прескочити';
+	@override String get share => 'Подєлити резервну копију';
+	@override String get shareHint => 'Схраните ју в Google Drive или пошлите в другу апликацију';
+	@override String get shareQuestion => 'Пєсње будут подєљене како фајл, кторы можете схранити в Google Drive. Записы идут само в ZIP-архиву.';
+	@override String get skip => 'Пропустити';
 	@override String get skipHint => 'Оставити вашу како јест';
 }
 
@@ -94,11 +94,11 @@ class _Translations$common$isv extends Translations$common$en {
 	final TranslationsIsv _root; // ignore: unused_field
 
 	// Translations
-	@override String get cancel => 'Отмєнити';
+	@override String get cancel => 'Ануловати';
 	@override String get clear => 'Очистити';
-	@override String get delete => 'Избрисати';
+	@override String get delete => 'Одстранити';
 	@override String get nothingFound => 'Ничто не најдено.';
-	@override String get songDeleted => 'Пєсња избрисана';
+	@override String get songDeleted => 'Пєсња одстрањена';
 }
 
 // Path: history
@@ -121,35 +121,35 @@ class _Translations$practice$isv extends Translations$practice$en {
 	@override String get allStats => 'Вса статистика';
 	@override String get clearFailed => 'Не удало се очистити тренингы';
 	@override String get covers => 'Каверы';
-	@override String get dayStreak => 'Серија дниј';
+	@override String get dayStreak => 'Серија дњев';
 	@override String days({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('isv'))(n,
 		one: '${n} дењ',
 		few: '${n} дни',
-		many: '${n} дниј',
-		other: '${n} дниј',
+		many: '${n} дњев',
+		other: '${n} дњев',
 	);
-	@override String get deleteFailed => 'Не удало се избрисати тренинг';
-	@override String get deleteMessage => 'Он буде одстранены из статистики.';
+	@override String get deleteFailed => 'Не удало се одстранити тренинг';
+	@override String get deleteMessage => 'Он буде одстрањены из статистикы.';
 	@override String deleteTakes({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('isv'))(n,
-		one: 'Такоже избрисати ${n} запис',
-		few: 'Такоже избрисати ${n} записы',
-		many: 'Такоже избрисати ${n} записов',
-		other: 'Такоже избрисати ${n} записов',
+		one: 'Такоже одстранити ${n} запис',
+		few: 'Такоже одстранити ${n} записы',
+		many: 'Такоже одстранити ${n} записов',
+		other: 'Такоже одстранити ${n} записов',
 	);
-	@override String get deleteTitle => 'Избрисати тот тренинг?';
-	@override String get filterAll => 'Вся';
+	@override String get deleteTitle => 'Одстранити тутој тренинг?';
+	@override String get filterAll => 'Все';
 	@override String get filterPracticeOnly => 'Само тренинги';
 	@override String get filterWithTakes => 'С записами';
 	@override String hoursMinutes({required Object hours, required Object minutes}) => '${hours} ч ${minutes} мин';
 	@override String get importFailed => 'Не удало се додати тренингы';
-	@override String get lessThanMinute => 'мење од минуты';
+	@override String get lessThanMinute => '< 1 мин';
 	@override String longest({required Object value}) => 'рекорд ${value}';
 	@override String minutes({required Object minutes}) => '${minutes} мин';
 	@override List<String> get monthNames => [
 		'Јануар',
-		'Фебруар',
+		'Февруар',
 		'Марец',
-		'Април',
+		'Априљ',
 		'Мај',
 		'Јуниј',
 		'Јулиј',
@@ -163,7 +163,7 @@ class _Translations$practice$isv extends Translations$practice$en {
 	@override String get noPracticeThisDay => 'Того дња не было тренинга.';
 	@override String get noPracticeYet => 'Јешче нема тренингов. Отворите пєсњу и притисните «Старт».';
 	@override String get previousMonth => 'Прєдходны мєсец';
-	@override String get saveFailed => 'Не удало се сохранити тренинг';
+	@override String get saveFailed => 'Не удало се схранити тренинг';
 	@override String sessions({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('isv'))(n,
 		one: '${n} тренинг',
 		few: '${n} тренингы',
@@ -181,7 +181,7 @@ class _Translations$practice$isv extends Translations$practice$en {
 	@override String get thisMonth => 'Тутој мєсец';
 	@override String get thisWeek => 'Тутој тыдењ';
 	@override String get today => 'Днес';
-	@override String get topSongs => 'Најчестєјше';
+	@override String get topSongs => 'Најчестєје';
 	@override String get total => 'Всего';
 	@override String get week => 'Тыдењ';
 	@override List<String> get weekdayLetters => [
@@ -211,15 +211,15 @@ class _Translations$recordings$isv extends Translations$recordings$en {
 	final TranslationsIsv _root; // ignore: unused_field
 
 	// Translations
-	@override String get captionCopied => 'Опис скопированы — вставите его (⌘V) како подпис к фајлу.';
-	@override String get deleteMessage => 'Оригинал и улєпшены фајл будут избрисане с устројства.';
-	@override String get deleteTitle => 'Избрисати запис?';
+	@override String get captionCopied => 'Опис скопированы — вставите јего (⌘V) како подпис к фајлу.';
+	@override String get deleteMessage => 'Оригинал и улєпшены фајл будут одстрањене с устројства.';
+	@override String get deleteTitle => 'Одстранити запис?';
 	@override late final _Translations$recordings$enhanceFailure$isv enhanceFailure = _Translations$recordings$enhanceFailure$isv._(_root);
 	@override String get enhanceNow => 'Улєпшити';
 	@override String get enhanced => 'Улєпшены';
-	@override String get enhancing => 'Улєпшају…';
+	@override String get enhancing => 'Улєпшајемо…';
 	@override late final _Translations$recordings$failure$isv failure = _Translations$recordings$failure$isv._(_root);
-	@override String get microphoneHint => 'Ако слушалкы сут подкључене к гнєзду, система може записывати из них. Изберите вбудованы микрофон.';
+	@override String get microphoneHint => 'Ако слушалкы сут подкључене к гнєздку, система може записывати из њих. Изберите внутрны микрофон.';
 	@override String get microphoneTitle => 'Микрофон';
 	@override String get noCovers => 'Јешче нема каверов. Отворите пєсњу, означите «Запис» и притисните «Старт».';
 	@override String get noTakes => 'Јешче нема записов. Означите «Запис» и притисните «Старт».';
@@ -227,7 +227,7 @@ class _Translations$recordings$isv extends Translations$recordings$en {
 	@override String get original => 'Оригинал';
 	@override String get pause => 'Пауза';
 	@override String get play => 'Слушати';
-	@override String get preparingMp3 => 'Приправјају MP3…';
+	@override String get preparingMp3 => 'Приправјајемо MP3…';
 	@override String get retry => 'Улєпшити јешче раз';
 	@override String get share => 'Послати';
 	@override String get showInFolder => 'Показати в папке';
@@ -243,21 +243,21 @@ class _Translations$settings$isv extends Translations$settings$en {
 	final TranslationsIsv _root; // ignore: unused_field
 
 	// Translations
-	@override String get accentColor => 'Акцентна барва';
+	@override String get accentColor => 'Барва акцента';
 	@override String get clear => 'Очистити';
 	@override String get clearCovers => 'Каверы';
 	@override String get clearData => 'Очистити дане';
 	@override String get clearHistory => 'Недавно отворене и слушане';
-	@override String get clearMessage => 'Изберите, что избрисати. То не можно вратити.';
+	@override String get clearMessage => 'Изберите, что одстранити. То не можно вратити.';
 	@override String get clearPractice => 'Статистика тренингов';
-	@override String get clearSongs => 'Пєсни и јих каверы';
+	@override String get clearSongs => 'Пєсње и јих каверы';
 	@override String get clearTitle => 'Очистити дане?';
 	@override String get cleared => 'Дане очишчене';
 	@override late final _Translations$settings$colors$isv colors = _Translations$settings$colors$isv._(_root);
 	@override String get data => 'Дане';
 	@override String get language => 'Језык';
 	@override String get open => 'Наставјења';
-	@override String get saveFailed => 'Не удало се сохранити наставјења';
+	@override String get saveFailed => 'Не удало се схранити наставјења';
 	@override String get theme => 'Тема';
 	@override late final _Translations$settings$themes$isv themes = _Translations$settings$themes$isv._(_root);
 	@override String get title => 'Наставјења';
@@ -270,65 +270,65 @@ class _Translations$song$isv extends Translations$song$en {
 	final TranslationsIsv _root; // ignore: unused_field
 
 	// Translations
-	@override String get actions => 'Дєјствија';
+	@override String get actions => 'Дєјања';
 	@override String get add => 'Додати';
 	@override String get addSong => 'Додати пєсњу';
 	@override String get album => 'Албум';
 	@override String get all => 'Все';
-	@override String get allArtists => 'Вси изполнитељи';
-	@override String get artist => 'Изполнитељ';
-	@override String get artistSearch => 'Искати изполнитеља';
+	@override String get allArtists => 'Вси артисти';
+	@override String get artist => 'Артист';
+	@override String get artistSearch => 'Искати артиста';
 	@override String get countPractice => 'Тренинг';
 	@override String get coverSearch => 'Искати каверы по пєсњи';
 	@override String get coversTooltip => 'Каверы';
-	@override String deleteMessage({required Object name}) => 'Пєсња «${name}» буде избрисана навсегда.';
-	@override String get deleteTitle => 'Избрисати пєсњу?';
+	@override String deleteMessage({required Object name}) => 'Пєсња «${name}» буде одстрањена навєкы.';
+	@override String get deleteTitle => 'Одстранити пєсњу?';
 	@override String get edit => 'Уредити';
 	@override String get editSong => 'Уредити пєсњу';
-	@override String get exportDone => 'Експорт кончены';
-	@override String get exportQuestion => 'Пєсни будут сохрањене в фајл в избраној папке.';
+	@override String get exportDone => 'Експорт укончены';
+	@override String get exportQuestion => 'Пєсње будут схрањене в фајл в избраној папке.';
 	@override String get exportSongs => 'Експортовати';
 	@override late final _Translations$song$failure$isv failure = _Translations$song$failure$isv._(_root);
-	@override String get importQuestion => 'Пєсни из фајла будут додане к вашим; за пєсњу, ктору уж имате, изберете, что сдєлати. Записы приходјат само из ZIP-архива.';
+	@override String get importQuestion => 'Пєсње из фајла будут додане к вашим; за пєсњу, ктору уж имате, изберете, что сдєлати. Записы идут само из ZIP-архива.';
 	@override String get importSongs => 'Импортовати';
-	@override String get leadIn => 'Отступ';
+	@override String get leadIn => 'Вступ';
 	@override String get lyrics => 'Текст пєсњи';
 	@override String microphone({required Object name}) => 'Микрофон: ${name}';
 	@override String get myCovers => 'Моје каверы';
-	@override String get mySongs => 'Моје пєсни';
+	@override String get mySongs => 'Моје пєсње';
 	@override String get newSong => 'Нова пєсња';
-	@override String get noRecentCovers => 'Послушајте свој кавер — он појави се ту.';
-	@override String get noRecentSongs => 'Отворите пєсњу — она појави се ту.';
+	@override String get noRecentCovers => 'Послушајте свој кавер — он јави се ту.';
+	@override String get noRecentSongs => 'Отворите пєсњу — она јави се ту.';
 	@override String get noSongsMessage => 'Додајте прву пєсњу или импортујте резервну копију.';
 	@override String get noSongsTitle => 'Јешче нема пєснеј';
-	@override String get optional => 'Необвезно';
-	@override String get otherArtist => 'Другы изполнитељ';
+	@override String get optional => 'Опционално';
+	@override String get otherArtist => 'Другы артист';
 	@override String get pause => 'Пауза';
 	@override String get recentlyOpened => 'Недавно отворене';
 	@override String get recentlyPlayed => 'Недавно слушане каверы';
 	@override String get record => 'Запис';
 	@override String get required => 'Наполните то поље';
-	@override String get saveChanges => 'Сохранити измєны';
-	@override String get searchSongs => 'Искати пєсни или изполнитељев';
+	@override String get saveChanges => 'Схранити измєны';
+	@override String get searchSongs => 'Искати пєсње или артистов';
 	@override String get silentTake => 'Запис без звука. Провєрите микрофон (кнопка с микрофоном на панелу).';
 	@override String get songName => 'Назва пєсњи';
 	@override String songsCount({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('isv'))(n,
 		one: '${n} пєсња',
-		few: '${n} пєсни',
-		many: '${n} пєсењ',
-		other: '${n} пєсењ',
+		few: '${n} пєсње',
+		many: '${n} пєснеј',
+		other: '${n} пєснеј',
 	);
 	@override late final _Translations$song$sort$isv sort = _Translations$song$sort$isv._(_root);
-	@override String get speed => 'Скорост';
+	@override String get speed => 'Быстрость';
 	@override String get start => 'Старт';
 	@override String get statistics => 'Статистика';
 	@override String get stopRecording => 'Зауставити запис';
 	@override String get sync => 'Синхронизација';
 	@override String get tabCovers => 'Каверы';
 	@override String get tabHome => 'Дом';
-	@override String get tabSongs => 'Пєсни';
-	@override String get takeSaved => 'Запис сохрањены';
-	@override String get trimSilence => 'Обрєзати тишину';
+	@override String get tabSongs => 'Пєсње';
+	@override String get takeSaved => 'Запис схрањены';
+	@override String get trimSilence => 'Одрєзати тишину';
 }
 
 // Path: sync
@@ -347,25 +347,25 @@ class _Translations$sync$isv extends Translations$sync$en {
 	@override String get copyCode => 'Копировати код';
 	@override String coverTitle({required Object song, required Object date}) => 'Кавер «${song}» од ${date}';
 	@override String coversCount({required Object n}) => 'каверы: ${n}';
-	@override String deletedCount({required Object n}) => 'избрисано: ${n}';
-	@override String deletedHereAt({required Object date, required Object time}) => 'Избрисано ту ${date} в ${time}';
-	@override String deletedThereAt({required Object date, required Object time}) => 'Избрисано на другом устројству ${date} в ${time}';
-	@override String deletedThereAtDevice({required Object device, required Object date, required Object time}) => 'Избрисано на «${device}» ${date} в ${time}';
+	@override String deletedCount({required Object n}) => 'одстрањено: ${n}';
+	@override String deletedHereAt({required Object date, required Object time}) => 'Одстрањено ту ${date} в ${time}';
+	@override String deletedThereAt({required Object date, required Object time}) => 'Одстрањено на другом устројству ${date} в ${time}';
+	@override String deletedThereAtDevice({required Object device, required Object date, required Object time}) => 'Одстрањено на «${device}» ${date} в ${time}';
 	@override late final _Translations$sync$difference$isv difference = _Translations$sync$difference$isv._(_root);
 	@override String differs({required Object list}) => 'Различаје се: ${list}';
 	@override String get done => 'Готово';
 	@override late final _Translations$sync$failure$isv failure = _Translations$sync$failure$isv._(_root);
 	@override String get goneSong => 'пєсња, кторој уж нема';
-	@override String get intro => 'Пренесите пєсни, каверы, тренингы и историју меџу устројствами. Прєд каждой измєной видите все измєны за оба устројства, додавања и избрисања, и означајете те, ктоже треба внести.';
+	@override String get intro => 'Прєнесите пєсње, каверы, тренингы и хисторију међу устројствами. Прєд каждоју измєноју видите все измєны за оба устројства, додавања и одстрањења, и означајете те, кторе трєба внести.';
 	@override String get orPaste => 'или вставите код из другого устројства';
 	@override String peerStep({required Object device, required Object step}) => '${device}: ${step}';
 	@override String peerStopped({required Object device, required Object reason}) => '${device} зауставил синхронизацију: ${reason}';
 	@override String practiceItem({required Object n}) => 'Тренингы: ${n}';
 	@override String get qrHint => 'На другом устројству отворите «Синхронизација» → «Скановати QR-код». Оба устројства мора быти в једној сети Wi‑Fi.';
 	@override String get received => 'Додано ту';
-	@override String get restoredHere => 'Было избрисано на том устројству';
-	@override String restoredThere({required Object device}) => 'Было избрисано на «${device}»';
-	@override String get reviewMessage => 'Внесене будут само означене измєны. Неозначене остају, как сут, на обох устројствах и будут понуђене опет в следујучи раз.';
+	@override String get restoredHere => 'Было одстрањено на том устројству';
+	@override String restoredThere({required Object device}) => 'Было одстрањено на «${device}»';
+	@override String get reviewMessage => 'Внесене будут само означене измєны. Неозначене оставајут, како сут, на обох устројствах и будут прєдложене опет в слєдујучи раз.';
 	@override String get reviewTitle => 'Изберите, что синхронизовати';
 	@override String get scanQr => 'Скановати QR-код';
 	@override String get scanTitle => 'Сканујте QR-код';
@@ -373,16 +373,16 @@ class _Translations$sync$isv extends Translations$sync$en {
 	@override String sessionsCount({required Object n}) => 'тренингы: ${n}';
 	@override String get showQr => 'Показати QR-код';
 	@override String songItem({required Object song}) => 'Пєсња «${song}»';
-	@override String songsCount({required Object n}) => 'пєсни: ${n}';
+	@override String songsCount({required Object n}) => 'пєсње: ${n}';
 	@override late final _Translations$sync$step$isv step = _Translations$sync$step$isv._(_root);
 	@override String get synced => 'Синхронизовано';
 	@override String get title => 'Синхронизација';
 	@override String toHere({required Object device}) => 'Из «${device}» на то устројство';
 	@override String toThere({required Object device}) => 'Из того устројства на «${device}»';
-	@override String updateHere({required Object list, required Object device}) => 'Береје ${list} из «${device}»';
-	@override String updateThere({required Object device, required Object list}) => '«${device}» береје ${list} из того устројства';
+	@override String updateHere({required Object list, required Object device}) => 'Бере ${list} из «${device}»';
+	@override String updateThere({required Object device, required Object list}) => '«${device}» бере ${list} из того устројства';
 	@override String updatedCount({required Object n}) => 'обновјено: ${n}';
-	@override String get waiting => 'Чакају, докле друго устројство сканује код…';
+	@override String get waiting => 'Чекајемо, доколє друго устројство сканује код…';
 	@override String withCovers({required Object n}) => 'с каверами: ${n}';
 }
 
@@ -393,15 +393,15 @@ class _Translations$tuner$isv extends Translations$tuner$en {
 	final TranslationsIsv _root; // ignore: unused_field
 
 	// Translations
-	@override String get title => 'Тюнер';
-	@override String get open => 'Настроити инструмент';
-	@override String get playString => 'Заиграј на струнє';
-	@override String get inTune => 'Настроено';
-	@override String get tuneUp => 'Натягни выше';
-	@override String get tuneDown => 'Отпусти ниже';
+	@override String get title => 'Тјунер';
+	@override String get open => 'Настројити инструмент';
+	@override String get playString => 'Играј на струнє';
+	@override String get inTune => 'Настројено';
+	@override String get tuneUp => 'Натегни выше';
+	@override String get tuneDown => 'Опусти ниже';
 	@override String hertz({required Object value}) => '${value} Hz';
 	@override String cents({required Object value}) => '${value} центов';
-	@override String get retry => 'Попробовати знову';
+	@override String get retry => 'Попробовати поновно';
 	@override late final _Translations$tuner$instruments$isv instruments = _Translations$tuner$instruments$isv._(_root);
 	@override late final _Translations$tuner$failure$isv failure = _Translations$tuner$failure$isv._(_root);
 }
@@ -423,9 +423,9 @@ class _Translations$backup$failure$isv extends Translations$backup$failure$en {
 	final TranslationsIsv _root; // ignore: unused_field
 
 	// Translations
-	@override String get exportSongs => 'Не удало се експортовати пєсни';
-	@override String get importSongs => 'Не удало се импортовати пєсни';
-	@override String get shareBackup => 'Не удало се поделити резервну копију';
+	@override String get exportSongs => 'Не удало се експортовати пєсње';
+	@override String get importSongs => 'Не удало се импортовати пєсње';
+	@override String get shareBackup => 'Не удало се подєлити резервну копију';
 }
 
 // Path: history.failure
@@ -435,8 +435,8 @@ class _Translations$history$failure$isv extends Translations$history$failure$en 
 	final TranslationsIsv _root; // ignore: unused_field
 
 	// Translations
-	@override String get clear => 'Не удало се очистити историју';
-	@override String get save => 'Не удало се запомнити историју';
+	@override String get clear => 'Не удало се очистити хисторију';
+	@override String get save => 'Не удало се запаметати хисторију';
 }
 
 // Path: recordings.enhanceFailure
@@ -447,7 +447,7 @@ class _Translations$recordings$enhanceFailure$isv extends Translations$recording
 
 	// Translations
 	@override String get failed => 'Не удало се улєпшити запис';
-	@override String get interrupted => 'Улєпшење было прєрвано — пустите его јешче раз';
+	@override String get interrupted => 'Улєпшење было прєрвано — пустите јего јешче раз';
 	@override String get unavailable => 'Улєпшење звука не јест доступно на тој платформє';
 }
 
@@ -459,16 +459,16 @@ class _Translations$recordings$failure$isv extends Translations$recordings$failu
 
 	// Translations
 	@override String get busy => 'Запис уже иде';
-	@override String get delete => 'Не удало се избрисати запис';
-	@override String get fileMissing => 'Фајл записа не најден';
+	@override String get delete => 'Не удало се одстранити запис';
+	@override String get fileMissing => 'Фајл записа не најдены';
 	@override String get importRecordings => 'Не удало се додати записы из архива';
 	@override String get listMicrophones => 'Не удало се достати спис микрофонов';
-	@override String get microphonePermission => 'Нема доступа к микрофону. Дозволите его в наставјењах.';
-	@override String get notFound => 'Запис не најден';
+	@override String get microphonePermission => 'Нема доступа к микрофону. Дозволите јего в наставјењах.';
+	@override String get notFound => 'Запис не најдены';
 	@override String get notRecording => 'Запис не иде';
 	@override String get play => 'Не удало се пустити запис';
-	@override String get save => 'Не удало се сохранити запис';
-	@override String get savePreferences => 'Не удало се запомнити наставјења записа';
+	@override String get save => 'Не удало се схранити запис';
+	@override String get savePreferences => 'Не удало се запаметати наставјења записа';
 	@override String get share => 'Не удало се послати запис';
 	@override String get showInFolder => 'Не удало се отворити папку';
 	@override String get start => 'Не удало се начети запис';
@@ -485,7 +485,7 @@ class _Translations$settings$colors$isv extends Translations$settings$colors$en 
 	@override String get green => 'Зелена';
 	@override String get indigo => 'Индиго';
 	@override String get orange => 'Оранжева';
-	@override String get pink => 'Ружова';
+	@override String get pink => 'Розова';
 	@override String get red => 'Чрвена';
 	@override String get teal => 'Морска';
 	@override String get violet => 'Фиолетова';
@@ -513,14 +513,14 @@ class _Translations$song$failure$isv extends Translations$song$failure$en {
 	// Translations
 	@override String get addCover => 'Не удало се додати кавер.';
 	@override String get addSong => 'Не удало се додати пєсњу.';
-	@override String get addSongs => 'Не удало се додати пєсни.';
-	@override String get deleteCover => 'Не удало се избрисати кавер.';
-	@override String get deleteSong => 'Не удало се избрисати пєсњу.';
+	@override String get addSongs => 'Не удало се додати пєсње.';
+	@override String get deleteCover => 'Не удало се одстранити кавер.';
+	@override String get deleteSong => 'Не удало се одстранити пєсњу.';
 	@override String get updateCover => 'Не удало се обновити кавер.';
-	@override String get updateLeadIn => 'Не удало се сохранити отступ.';
-	@override String get updateLyrics => 'Не удало се сохранити текст.';
+	@override String get updateLeadIn => 'Не удало се схранити вступ.';
+	@override String get updateLyrics => 'Не удало се схранити текст.';
 	@override String get updateSong => 'Не удало се обновити пєсњу.';
-	@override String get updateSpeed => 'Не удало се сохранити скорост.';
+	@override String get updateSpeed => 'Не удало се схранити быстрость.';
 }
 
 // Path: song.sort
@@ -530,7 +530,7 @@ class _Translations$song$sort$isv extends Translations$song$sort$en {
 	final TranslationsIsv _root; // ignore: unused_field
 
 	// Translations
-	@override String get artists => 'Изполнитељи';
+	@override String get artists => 'Артисти';
 	@override String get covers => 'Каверы';
 	@override String get name => 'А–Ж';
 	@override String get recent => 'Недавне';
@@ -544,8 +544,8 @@ class _Translations$sync$badge$isv extends Translations$sync$badge$en {
 
 	// Translations
 	@override String get add => 'Додати';
-	@override String get restore => 'Вернути';
-	@override String get delete => 'Избрисати';
+	@override String get restore => 'Вратити';
+	@override String get delete => 'Одстранити';
 	@override String get update => 'Измєнити';
 }
 
@@ -568,14 +568,14 @@ class _Translations$sync$failure$isv extends Translations$sync$failure$en {
 
 	// Translations
 	@override String get busy => 'Синхронизација уже иде';
-	@override String get cancelled => 'Отмєњено';
+	@override String get cancelled => 'Ануловано';
 	@override String get connect => 'Не удало се подкључити к устројству. Провєрите, же оба сут в једној сети Wi‑Fi.';
 	@override String get emptyCode => 'Впишите или сканујте код';
 	@override String get host => 'Не удало се начети синхронизацију';
 	@override String get interrupted => 'Синхронизација прєрвала се';
-	@override String get noNetwork => 'Нема повезања с сетју. Подкључите се к Wi‑Fi.';
+	@override String get noNetwork => 'Нема свези с сетју. Подкључите се к Wi‑Fi.';
 	@override String get notACode => 'То не јест код синхронизације Hitwave Cover';
-	@override String get nothingWaits => 'Нема синхронизације, ктора чака на рєшења';
+	@override String get nothingWaits => 'Нема синхронизације, ктора чека на рєшења';
 	@override String get peerStopped => 'Друго устројство зауставило синхронизацију';
 }
 
@@ -586,14 +586,14 @@ class _Translations$sync$step$isv extends Translations$sync$step$en {
 	final TranslationsIsv _root; // ignore: unused_field
 
 	// Translations
-	@override String get applying => 'Примењају рєшења…';
-	@override String get choosing => 'избира, что дєлати с различијами…';
-	@override String get connecting => 'Подкључају се…';
-	@override String downloading({required Object done, required Object total}) => 'Скачивају каверы ${done} из ${total}';
+	@override String get applying => 'Примєњајемо рєшења…';
+	@override String get choosing => 'избира, что дєлати с разликами…';
+	@override String get connecting => 'Подкључајемо се…';
+	@override String downloading({required Object done, required Object total}) => 'Доставајемо каверы ${done} из ${total}';
 	@override String get joined => 'подкључило се, обмєњајемо дане…';
-	@override String get merging => 'Сједињају дане…';
-	@override String get reading => 'Достају спис пєснеј и каверов…';
-	@override String uploading({required Object done, required Object total}) => 'Посылају каверы ${done} из ${total}';
+	@override String get merging => 'Сједињајемо дане…';
+	@override String get reading => 'Доставајемо спис пєснеј и каверов…';
+	@override String uploading({required Object done, required Object total}) => 'Посылајемо каверы ${done} из ${total}';
 }
 
 // Path: tuner.instruments
@@ -617,8 +617,8 @@ class _Translations$tuner$failure$isv extends Translations$tuner$failure$en {
 	final TranslationsIsv _root; // ignore: unused_field
 
 	// Translations
-	@override String get microphonePermission => 'Дозволи микрофон, да бы користати тюнер.';
-	@override String get start => 'Не јест возможно отворити микрофон.';
+	@override String get microphonePermission => 'Дозволи микрофон, да бы користати тјунер.';
+	@override String get start => 'Не удало се отворити микрофон.';
 }
 
 // Path: vocalEnhance.failure
@@ -630,9 +630,9 @@ class _Translations$vocalEnhance$failure$isv extends Translations$vocalEnhance$f
 	// Translations
 	@override String get analyze => 'Не удало се измєрити запис';
 	@override String get enhance => 'Не удало се улєпшити запис';
-	@override String get negativeLeadIn => 'Тишина на початку не може быти негативна';
-	@override String get notWav => 'Улєпшены запис мора быти фајлом .wав';
-	@override String get samePath => 'Улєпшены запис мора быти оддєљным фајлом';
+	@override String get negativeLeadIn => 'Тишина на почетку не може быти негативна';
+	@override String get notWav => 'Улєпшены запис мора быти фајлом .wav';
+	@override String get samePath => 'Улєпшены запис мора быти оддєлным фајлом';
 	@override String get unavailable => 'Улєпшење звука не јест доступно на тој платформє';
 }
 
@@ -645,57 +645,57 @@ extension on TranslationsIsv {
 	dynamic _flatMapFunction(String path) {
 		return switch (path) {
 			'appTitle' => 'Hitwave Cover',
-			'backup.cancelImport' => 'Отменити импорт',
-			'backup.conflictMessage' => ({required Object song}) => '«${song}» уж јест међу вашими пєснями.',
+			'backup.cancelImport' => 'Ануловати импорт',
+			'backup.conflictMessage' => ({required Object song}) => '«${song}» уж јест међу вашими пєсњами.',
 			'backup.conflictTitle' => 'Та пєсња уж јест',
 			'backup.exportDialogTitle' => 'Изберите папку за експорт',
-			'backup.failure.exportSongs' => 'Не удало се експортовати пєсни',
-			'backup.failure.importSongs' => 'Не удало се импортовати пєсни',
-			'backup.failure.shareBackup' => 'Не удало се поделити резервну копију',
-			'backup.forOthers' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('isv'))(n, few: 'Сдєлати то само за друге ${n} пєсни', many: 'Сдєлати то само за другых ${n} пєсниј', one: 'Сдєлати то само за другу ${n} пєсњу', other: 'Сдєлати то само за другых ${n} пєсниј', ), 
+			'backup.failure.exportSongs' => 'Не удало се експортовати пєсње',
+			'backup.failure.importSongs' => 'Не удало се импортовати пєсње',
+			'backup.failure.shareBackup' => 'Не удало се подєлити резервну копију',
+			'backup.forOthers' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('isv'))(n, few: 'Сдєлати то само за друге ${n} пєсње', many: 'Сдєлати то само за другых ${n} пєснеј', one: 'Сдєлати то само за другу ${n} пєсњу', other: 'Сдєлати то само за другых ${n} пєснеј', ), 
 			'backup.importHint' => 'Из фајла, такоже из Google Drive',
-			'backup.importSummary' => ({required Object added, required Object replaced, required Object skipped}) => 'Импорт кончены: додано ${added}, замєнено ${replaced}, прескочено ${skipped}',
+			'backup.importSummary' => ({required Object added, required Object replaced, required Object skipped}) => 'Импорт укончены: додано ${added}, замєњено ${replaced}, пропушчено ${skipped}',
 			'backup.includeRecordings' => 'Вкључити записы',
 			'backup.keepBoth' => 'Оставити обе',
 			'backup.keepBothHint' => 'Додати пєсњу из фајла поред вашеј, с числом',
 			'backup.otherLyrics' => 'Текст в фајлу јест другы.',
-			'backup.recordingsNote' => 'Записы сут храњене само на том устројству; с ними фајл стање ZIP-архивом.',
+			'backup.recordingsNote' => 'Записы сут само на том устројству; с њими фајл стане ZIP-архивом.',
 			'backup.replace' => 'Замєнити',
-			'backup.replaceHint' => 'Взяти текст из фајла; ваши каверы и записы остајут',
+			'backup.replaceHint' => 'Взети текст из фајла; ваши каверы и записы оставајут',
 			'backup.sameLyrics' => 'Текст в фајлу јест једнаки.',
-			'backup.share' => 'Поделити резервну копију',
-			'backup.shareHint' => 'Сохраните ју в Google Drive или пошљите в другу апликацију',
-			'backup.shareQuestion' => 'Пєсни будут подељене како фајл, кторы можете сохранити в Google Drive. Записы идут само в ZIP-архиву.',
-			'backup.skip' => 'Прескочити',
+			'backup.share' => 'Подєлити резервну копију',
+			'backup.shareHint' => 'Схраните ју в Google Drive или пошлите в другу апликацију',
+			'backup.shareQuestion' => 'Пєсње будут подєљене како фајл, кторы можете схранити в Google Drive. Записы идут само в ZIP-архиву.',
+			'backup.skip' => 'Пропустити',
 			'backup.skipHint' => 'Оставити вашу како јест',
-			'common.cancel' => 'Отмєнити',
+			'common.cancel' => 'Ануловати',
 			'common.clear' => 'Очистити',
-			'common.delete' => 'Избрисати',
+			'common.delete' => 'Одстранити',
 			'common.nothingFound' => 'Ничто не најдено.',
-			'common.songDeleted' => 'Пєсња избрисана',
-			'history.failure.clear' => 'Не удало се очистити историју',
-			'history.failure.save' => 'Не удало се запомнити историју',
+			'common.songDeleted' => 'Пєсња одстрањена',
+			'history.failure.clear' => 'Не удало се очистити хисторију',
+			'history.failure.save' => 'Не удало се запаметати хисторију',
 			'practice.allStats' => 'Вса статистика',
 			'practice.clearFailed' => 'Не удало се очистити тренингы',
 			'practice.covers' => 'Каверы',
-			'practice.dayStreak' => 'Серија дниј',
-			'practice.days' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('isv'))(n, one: '${n} дењ', few: '${n} дни', many: '${n} дниј', other: '${n} дниј', ), 
-			'practice.deleteFailed' => 'Не удало се избрисати тренинг',
-			'practice.deleteMessage' => 'Он буде одстранены из статистики.',
-			'practice.deleteTakes' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('isv'))(n, one: 'Такоже избрисати ${n} запис', few: 'Такоже избрисати ${n} записы', many: 'Такоже избрисати ${n} записов', other: 'Такоже избрисати ${n} записов', ), 
-			'practice.deleteTitle' => 'Избрисати тот тренинг?',
-			'practice.filterAll' => 'Вся',
+			'practice.dayStreak' => 'Серија дњев',
+			'practice.days' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('isv'))(n, one: '${n} дењ', few: '${n} дни', many: '${n} дњев', other: '${n} дњев', ), 
+			'practice.deleteFailed' => 'Не удало се одстранити тренинг',
+			'practice.deleteMessage' => 'Он буде одстрањены из статистикы.',
+			'practice.deleteTakes' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('isv'))(n, one: 'Такоже одстранити ${n} запис', few: 'Такоже одстранити ${n} записы', many: 'Такоже одстранити ${n} записов', other: 'Такоже одстранити ${n} записов', ), 
+			'practice.deleteTitle' => 'Одстранити тутој тренинг?',
+			'practice.filterAll' => 'Все',
 			'practice.filterPracticeOnly' => 'Само тренинги',
 			'practice.filterWithTakes' => 'С записами',
 			'practice.hoursMinutes' => ({required Object hours, required Object minutes}) => '${hours} ч ${minutes} мин',
 			'practice.importFailed' => 'Не удало се додати тренингы',
-			'practice.lessThanMinute' => 'мење од минуты',
+			'practice.lessThanMinute' => '< 1 мин',
 			'practice.longest' => ({required Object value}) => 'рекорд ${value}',
 			'practice.minutes' => ({required Object minutes}) => '${minutes} мин',
 			'practice.monthNames.0' => 'Јануар',
-			'practice.monthNames.1' => 'Фебруар',
+			'practice.monthNames.1' => 'Февруар',
 			'practice.monthNames.2' => 'Марец',
-			'practice.monthNames.3' => 'Април',
+			'practice.monthNames.3' => 'Априљ',
 			'practice.monthNames.4' => 'Мај',
 			'practice.monthNames.5' => 'Јуниј',
 			'practice.monthNames.6' => 'Јулиј',
@@ -708,7 +708,7 @@ extension on TranslationsIsv {
 			'practice.noPracticeThisDay' => 'Того дња не было тренинга.',
 			'practice.noPracticeYet' => 'Јешче нема тренингов. Отворите пєсњу и притисните «Старт».',
 			'practice.previousMonth' => 'Прєдходны мєсец',
-			'practice.saveFailed' => 'Не удало се сохранити тренинг',
+			'practice.saveFailed' => 'Не удало се схранити тренинг',
 			'practice.sessions' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('isv'))(n, one: '${n} тренинг', few: '${n} тренингы', many: '${n} тренингов', other: '${n} тренингов', ), 
 			'practice.streak' => 'Серија',
 			'practice.takes' => 'Записы',
@@ -716,7 +716,7 @@ extension on TranslationsIsv {
 			'practice.thisMonth' => 'Тутој мєсец',
 			'practice.thisWeek' => 'Тутој тыдењ',
 			'practice.today' => 'Днес',
-			'practice.topSongs' => 'Најчестєјше',
+			'practice.topSongs' => 'Најчестєје',
 			'practice.total' => 'Всего',
 			'practice.week' => 'Тыдењ',
 			'practice.weekdayLetters.0' => 'П',
@@ -733,30 +733,30 @@ extension on TranslationsIsv {
 			'practice.weekdayNames.4' => 'Пет',
 			'practice.weekdayNames.5' => 'Соб',
 			'practice.weekdayNames.6' => 'Нед',
-			'recordings.captionCopied' => 'Опис скопированы — вставите его (⌘V) како подпис к фајлу.',
-			'recordings.deleteMessage' => 'Оригинал и улєпшены фајл будут избрисане с устројства.',
-			'recordings.deleteTitle' => 'Избрисати запис?',
+			'recordings.captionCopied' => 'Опис скопированы — вставите јего (⌘V) како подпис к фајлу.',
+			'recordings.deleteMessage' => 'Оригинал и улєпшены фајл будут одстрањене с устројства.',
+			'recordings.deleteTitle' => 'Одстранити запис?',
 			'recordings.enhanceFailure.failed' => 'Не удало се улєпшити запис',
-			'recordings.enhanceFailure.interrupted' => 'Улєпшење было прєрвано — пустите его јешче раз',
+			'recordings.enhanceFailure.interrupted' => 'Улєпшење было прєрвано — пустите јего јешче раз',
 			'recordings.enhanceFailure.unavailable' => 'Улєпшење звука не јест доступно на тој платформє',
 			'recordings.enhanceNow' => 'Улєпшити',
 			'recordings.enhanced' => 'Улєпшены',
-			'recordings.enhancing' => 'Улєпшају…',
+			'recordings.enhancing' => 'Улєпшајемо…',
 			'recordings.failure.busy' => 'Запис уже иде',
-			'recordings.failure.delete' => 'Не удало се избрисати запис',
-			'recordings.failure.fileMissing' => 'Фајл записа не најден',
+			'recordings.failure.delete' => 'Не удало се одстранити запис',
+			'recordings.failure.fileMissing' => 'Фајл записа не најдены',
 			'recordings.failure.importRecordings' => 'Не удало се додати записы из архива',
 			'recordings.failure.listMicrophones' => 'Не удало се достати спис микрофонов',
-			'recordings.failure.microphonePermission' => 'Нема доступа к микрофону. Дозволите его в наставјењах.',
-			'recordings.failure.notFound' => 'Запис не најден',
+			'recordings.failure.microphonePermission' => 'Нема доступа к микрофону. Дозволите јего в наставјењах.',
+			'recordings.failure.notFound' => 'Запис не најдены',
 			'recordings.failure.notRecording' => 'Запис не иде',
 			'recordings.failure.play' => 'Не удало се пустити запис',
-			'recordings.failure.save' => 'Не удало се сохранити запис',
-			'recordings.failure.savePreferences' => 'Не удало се запомнити наставјења записа',
+			'recordings.failure.save' => 'Не удало се схранити запис',
+			'recordings.failure.savePreferences' => 'Не удало се запаметати наставјења записа',
 			'recordings.failure.share' => 'Не удало се послати запис',
 			'recordings.failure.showInFolder' => 'Не удало се отворити папку',
 			'recordings.failure.start' => 'Не удало се начети запис',
-			'recordings.microphoneHint' => 'Ако слушалкы сут подкључене к гнєзду, система може записывати из них. Изберите вбудованы микрофон.',
+			'recordings.microphoneHint' => 'Ако слушалкы сут подкључене к гнєздку, система може записывати из њих. Изберите внутрны микрофон.',
 			'recordings.microphoneTitle' => 'Микрофон',
 			'recordings.noCovers' => 'Јешче нема каверов. Отворите пєсњу, означите «Запис» и притисните «Старт».',
 			'recordings.noTakes' => 'Јешче нема записов. Означите «Запис» и притисните «Старт».',
@@ -764,148 +764,148 @@ extension on TranslationsIsv {
 			'recordings.original' => 'Оригинал',
 			'recordings.pause' => 'Пауза',
 			'recordings.play' => 'Слушати',
-			'recordings.preparingMp3' => 'Приправјају MP3…',
+			'recordings.preparingMp3' => 'Приправјајемо MP3…',
 			'recordings.retry' => 'Улєпшити јешче раз',
 			'recordings.share' => 'Послати',
 			'recordings.showInFolder' => 'Показати в папке',
 			'recordings.silent' => 'Без звука — провєрите микрофон',
 			'recordings.systemMicrophone' => 'Како в системє',
 			'recordings.title' => 'Записы',
-			'settings.accentColor' => 'Акцентна барва',
+			'settings.accentColor' => 'Барва акцента',
 			'settings.clear' => 'Очистити',
 			'settings.clearCovers' => 'Каверы',
 			'settings.clearData' => 'Очистити дане',
 			'settings.clearHistory' => 'Недавно отворене и слушане',
-			'settings.clearMessage' => 'Изберите, что избрисати. То не можно вратити.',
+			'settings.clearMessage' => 'Изберите, что одстранити. То не можно вратити.',
 			'settings.clearPractice' => 'Статистика тренингов',
-			'settings.clearSongs' => 'Пєсни и јих каверы',
+			'settings.clearSongs' => 'Пєсње и јих каверы',
 			'settings.clearTitle' => 'Очистити дане?',
 			'settings.cleared' => 'Дане очишчене',
 			'settings.colors.blue' => 'Сиња',
 			'settings.colors.green' => 'Зелена',
 			'settings.colors.indigo' => 'Индиго',
 			'settings.colors.orange' => 'Оранжева',
-			'settings.colors.pink' => 'Ружова',
+			'settings.colors.pink' => 'Розова',
 			'settings.colors.red' => 'Чрвена',
 			'settings.colors.teal' => 'Морска',
 			'settings.colors.violet' => 'Фиолетова',
 			'settings.data' => 'Дане',
 			'settings.language' => 'Језык',
 			'settings.open' => 'Наставјења',
-			'settings.saveFailed' => 'Не удало се сохранити наставјења',
+			'settings.saveFailed' => 'Не удало се схранити наставјења',
 			'settings.theme' => 'Тема',
 			'settings.themes.glassDark' => 'Темно стекло',
 			'settings.themes.glassLight' => 'Свєтло стекло',
 			'settings.themes.neumorphicDark' => 'Темны неуморфизм',
 			'settings.themes.neumorphicLight' => 'Свєтлы неуморфизм',
 			'settings.title' => 'Наставјења',
-			'song.actions' => 'Дєјствија',
+			'song.actions' => 'Дєјања',
 			'song.add' => 'Додати',
 			'song.addSong' => 'Додати пєсњу',
 			'song.album' => 'Албум',
 			'song.all' => 'Все',
-			'song.allArtists' => 'Вси изполнитељи',
-			'song.artist' => 'Изполнитељ',
-			'song.artistSearch' => 'Искати изполнитеља',
+			'song.allArtists' => 'Вси артисти',
+			'song.artist' => 'Артист',
+			'song.artistSearch' => 'Искати артиста',
 			'song.countPractice' => 'Тренинг',
 			'song.coverSearch' => 'Искати каверы по пєсњи',
 			'song.coversTooltip' => 'Каверы',
-			'song.deleteMessage' => ({required Object name}) => 'Пєсња «${name}» буде избрисана навсегда.',
-			'song.deleteTitle' => 'Избрисати пєсњу?',
+			'song.deleteMessage' => ({required Object name}) => 'Пєсња «${name}» буде одстрањена навєкы.',
+			'song.deleteTitle' => 'Одстранити пєсњу?',
 			'song.edit' => 'Уредити',
 			'song.editSong' => 'Уредити пєсњу',
-			'song.exportDone' => 'Експорт кончены',
-			'song.exportQuestion' => 'Пєсни будут сохрањене в фајл в избраној папке.',
+			'song.exportDone' => 'Експорт укончены',
+			'song.exportQuestion' => 'Пєсње будут схрањене в фајл в избраној папке.',
 			'song.exportSongs' => 'Експортовати',
 			'song.failure.addCover' => 'Не удало се додати кавер.',
 			'song.failure.addSong' => 'Не удало се додати пєсњу.',
-			'song.failure.addSongs' => 'Не удало се додати пєсни.',
-			'song.failure.deleteCover' => 'Не удало се избрисати кавер.',
-			'song.failure.deleteSong' => 'Не удало се избрисати пєсњу.',
+			'song.failure.addSongs' => 'Не удало се додати пєсње.',
+			'song.failure.deleteCover' => 'Не удало се одстранити кавер.',
+			'song.failure.deleteSong' => 'Не удало се одстранити пєсњу.',
 			'song.failure.updateCover' => 'Не удало се обновити кавер.',
-			'song.failure.updateLeadIn' => 'Не удало се сохранити отступ.',
-			'song.failure.updateLyrics' => 'Не удало се сохранити текст.',
+			'song.failure.updateLeadIn' => 'Не удало се схранити вступ.',
+			'song.failure.updateLyrics' => 'Не удало се схранити текст.',
 			'song.failure.updateSong' => 'Не удало се обновити пєсњу.',
-			'song.failure.updateSpeed' => 'Не удало се сохранити скорост.',
-			'song.importQuestion' => 'Пєсни из фајла будут додане к вашим; за пєсњу, ктору уж имате, изберете, что сдєлати. Записы приходјат само из ZIP-архива.',
+			'song.failure.updateSpeed' => 'Не удало се схранити быстрость.',
+			'song.importQuestion' => 'Пєсње из фајла будут додане к вашим; за пєсњу, ктору уж имате, изберете, что сдєлати. Записы идут само из ZIP-архива.',
 			'song.importSongs' => 'Импортовати',
-			'song.leadIn' => 'Отступ',
+			'song.leadIn' => 'Вступ',
 			'song.lyrics' => 'Текст пєсњи',
 			'song.microphone' => ({required Object name}) => 'Микрофон: ${name}',
 			'song.myCovers' => 'Моје каверы',
-			'song.mySongs' => 'Моје пєсни',
+			'song.mySongs' => 'Моје пєсње',
 			'song.newSong' => 'Нова пєсња',
-			'song.noRecentCovers' => 'Послушајте свој кавер — он појави се ту.',
-			'song.noRecentSongs' => 'Отворите пєсњу — она појави се ту.',
+			'song.noRecentCovers' => 'Послушајте свој кавер — он јави се ту.',
+			'song.noRecentSongs' => 'Отворите пєсњу — она јави се ту.',
 			'song.noSongsMessage' => 'Додајте прву пєсњу или импортујте резервну копију.',
 			'song.noSongsTitle' => 'Јешче нема пєснеј',
-			'song.optional' => 'Необвезно',
-			'song.otherArtist' => 'Другы изполнитељ',
+			'song.optional' => 'Опционално',
+			'song.otherArtist' => 'Другы артист',
 			'song.pause' => 'Пауза',
 			'song.recentlyOpened' => 'Недавно отворене',
 			'song.recentlyPlayed' => 'Недавно слушане каверы',
 			'song.record' => 'Запис',
 			'song.required' => 'Наполните то поље',
-			'song.saveChanges' => 'Сохранити измєны',
-			'song.searchSongs' => 'Искати пєсни или изполнитељев',
+			'song.saveChanges' => 'Схранити измєны',
+			'song.searchSongs' => 'Искати пєсње или артистов',
 			'song.silentTake' => 'Запис без звука. Провєрите микрофон (кнопка с микрофоном на панелу).',
 			'song.songName' => 'Назва пєсњи',
-			'song.songsCount' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('isv'))(n, one: '${n} пєсња', few: '${n} пєсни', many: '${n} пєсењ', other: '${n} пєсењ', ), 
-			'song.sort.artists' => 'Изполнитељи',
+			'song.songsCount' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('isv'))(n, one: '${n} пєсња', few: '${n} пєсње', many: '${n} пєснеј', other: '${n} пєснеј', ), 
+			'song.sort.artists' => 'Артисти',
 			'song.sort.covers' => 'Каверы',
 			'song.sort.name' => 'А–Ж',
 			'song.sort.recent' => 'Недавне',
-			'song.speed' => 'Скорост',
+			'song.speed' => 'Быстрость',
 			'song.start' => 'Старт',
 			'song.statistics' => 'Статистика',
 			'song.stopRecording' => 'Зауставити запис',
 			'song.sync' => 'Синхронизација',
 			'song.tabCovers' => 'Каверы',
 			'song.tabHome' => 'Дом',
-			'song.tabSongs' => 'Пєсни',
-			'song.takeSaved' => 'Запис сохрањены',
-			'song.trimSilence' => 'Обрєзати тишину',
+			'song.tabSongs' => 'Пєсње',
+			'song.takeSaved' => 'Запис схрањены',
+			'song.trimSilence' => 'Одрєзати тишину',
 			'sync.all' => 'Все',
 			'sync.anotherDevice' => 'Друго устројство',
 			'sync.applyChosen' => ({required Object n}) => 'Синхронизовати означене (${n})',
 			'sync.badge.add' => 'Додати',
-			'sync.badge.restore' => 'Вернути',
-			'sync.badge.delete' => 'Избрисати',
+			'sync.badge.restore' => 'Вратити',
+			'sync.badge.delete' => 'Одстранити',
 			'sync.badge.update' => 'Измєнити',
 			'sync.codeCopied' => 'Код скопированы',
 			'sync.connect' => 'Подкључити се',
 			'sync.copyCode' => 'Копировати код',
 			'sync.coverTitle' => ({required Object song, required Object date}) => 'Кавер «${song}» од ${date}',
 			'sync.coversCount' => ({required Object n}) => 'каверы: ${n}',
-			'sync.deletedCount' => ({required Object n}) => 'избрисано: ${n}',
-			'sync.deletedHereAt' => ({required Object date, required Object time}) => 'Избрисано ту ${date} в ${time}',
-			'sync.deletedThereAt' => ({required Object date, required Object time}) => 'Избрисано на другом устројству ${date} в ${time}',
-			'sync.deletedThereAtDevice' => ({required Object device, required Object date, required Object time}) => 'Избрисано на «${device}» ${date} в ${time}',
+			'sync.deletedCount' => ({required Object n}) => 'одстрањено: ${n}',
+			'sync.deletedHereAt' => ({required Object date, required Object time}) => 'Одстрањено ту ${date} в ${time}',
+			'sync.deletedThereAt' => ({required Object date, required Object time}) => 'Одстрањено на другом устројству ${date} в ${time}',
+			'sync.deletedThereAtDevice' => ({required Object device, required Object date, required Object time}) => 'Одстрањено на «${device}» ${date} в ${time}',
 			'sync.difference.album' => 'албум',
 			'sync.difference.lyrics' => 'текст',
 			'sync.differs' => ({required Object list}) => 'Различаје се: ${list}',
 			'sync.done' => 'Готово',
 			'sync.failure.busy' => 'Синхронизација уже иде',
-			'sync.failure.cancelled' => 'Отмєњено',
+			'sync.failure.cancelled' => 'Ануловано',
 			'sync.failure.connect' => 'Не удало се подкључити к устројству. Провєрите, же оба сут в једној сети Wi‑Fi.',
 			'sync.failure.emptyCode' => 'Впишите или сканујте код',
 			'sync.failure.host' => 'Не удало се начети синхронизацију',
 			'sync.failure.interrupted' => 'Синхронизација прєрвала се',
-			'sync.failure.noNetwork' => 'Нема повезања с сетју. Подкључите се к Wi‑Fi.',
+			'sync.failure.noNetwork' => 'Нема свези с сетју. Подкључите се к Wi‑Fi.',
 			'sync.failure.notACode' => 'То не јест код синхронизације Hitwave Cover',
-			'sync.failure.nothingWaits' => 'Нема синхронизације, ктора чака на рєшења',
+			'sync.failure.nothingWaits' => 'Нема синхронизације, ктора чека на рєшења',
 			'sync.failure.peerStopped' => 'Друго устројство зауставило синхронизацију',
 			'sync.goneSong' => 'пєсња, кторој уж нема',
-			'sync.intro' => 'Пренесите пєсни, каверы, тренингы и историју меџу устројствами. Прєд каждой измєной видите все измєны за оба устројства, додавања и избрисања, и означајете те, ктоже треба внести.',
+			'sync.intro' => 'Прєнесите пєсње, каверы, тренингы и хисторију међу устројствами. Прєд каждоју измєноју видите все измєны за оба устројства, додавања и одстрањења, и означајете те, кторе трєба внести.',
 			'sync.orPaste' => 'или вставите код из другого устројства',
 			'sync.peerStep' => ({required Object device, required Object step}) => '${device}: ${step}',
 			'sync.peerStopped' => ({required Object device, required Object reason}) => '${device} зауставил синхронизацију: ${reason}',
 			'sync.practiceItem' => ({required Object n}) => 'Тренингы: ${n}',
 			'sync.qrHint' => 'На другом устројству отворите «Синхронизација» → «Скановати QR-код». Оба устројства мора быти в једној сети Wi‑Fi.',
 			'sync.received' => 'Додано ту',
-			'sync.restoredHere' => 'Было избрисано на том устројству',
-			'sync.restoredThere' => ({required Object device}) => 'Было избрисано на «${device}»',
-			'sync.reviewMessage' => 'Внесене будут само означене измєны. Неозначене остају, как сут, на обох устројствах и будут понуђене опет в следујучи раз.',
+			'sync.restoredHere' => 'Было одстрањено на том устројству',
+			'sync.restoredThere' => ({required Object device}) => 'Было одстрањено на «${device}»',
+			'sync.reviewMessage' => 'Внесене будут само означене измєны. Неозначене оставајут, како сут, на обох устројствах и будут прєдложене опет в слєдујучи раз.',
 			'sync.reviewTitle' => 'Изберите, что синхронизовати',
 			'sync.scanQr' => 'Скановати QR-код',
 			'sync.scanTitle' => 'Сканујте QR-код',
@@ -913,45 +913,45 @@ extension on TranslationsIsv {
 			'sync.sessionsCount' => ({required Object n}) => 'тренингы: ${n}',
 			'sync.showQr' => 'Показати QR-код',
 			'sync.songItem' => ({required Object song}) => 'Пєсња «${song}»',
-			'sync.songsCount' => ({required Object n}) => 'пєсни: ${n}',
-			'sync.step.applying' => 'Примењају рєшења…',
-			'sync.step.choosing' => 'избира, что дєлати с различијами…',
-			'sync.step.connecting' => 'Подкључају се…',
-			'sync.step.downloading' => ({required Object done, required Object total}) => 'Скачивају каверы ${done} из ${total}',
+			'sync.songsCount' => ({required Object n}) => 'пєсње: ${n}',
+			'sync.step.applying' => 'Примєњајемо рєшења…',
+			'sync.step.choosing' => 'избира, что дєлати с разликами…',
+			'sync.step.connecting' => 'Подкључајемо се…',
+			'sync.step.downloading' => ({required Object done, required Object total}) => 'Доставајемо каверы ${done} из ${total}',
 			'sync.step.joined' => 'подкључило се, обмєњајемо дане…',
-			'sync.step.merging' => 'Сједињају дане…',
-			'sync.step.reading' => 'Достају спис пєснеј и каверов…',
-			'sync.step.uploading' => ({required Object done, required Object total}) => 'Посылају каверы ${done} из ${total}',
+			'sync.step.merging' => 'Сједињајемо дане…',
+			'sync.step.reading' => 'Доставајемо спис пєснеј и каверов…',
+			'sync.step.uploading' => ({required Object done, required Object total}) => 'Посылајемо каверы ${done} из ${total}',
 			'sync.synced' => 'Синхронизовано',
 			'sync.title' => 'Синхронизација',
 			'sync.toHere' => ({required Object device}) => 'Из «${device}» на то устројство',
 			'sync.toThere' => ({required Object device}) => 'Из того устројства на «${device}»',
-			'sync.updateHere' => ({required Object list, required Object device}) => 'Береје ${list} из «${device}»',
-			'sync.updateThere' => ({required Object device, required Object list}) => '«${device}» береје ${list} из того устројства',
+			'sync.updateHere' => ({required Object list, required Object device}) => 'Бере ${list} из «${device}»',
+			'sync.updateThere' => ({required Object device, required Object list}) => '«${device}» бере ${list} из того устројства',
 			'sync.updatedCount' => ({required Object n}) => 'обновјено: ${n}',
-			'sync.waiting' => 'Чакају, докле друго устројство сканује код…',
+			'sync.waiting' => 'Чекајемо, доколє друго устројство сканује код…',
 			'sync.withCovers' => ({required Object n}) => 'с каверами: ${n}',
-			'tuner.title' => 'Тюнер',
-			'tuner.open' => 'Настроити инструмент',
-			'tuner.playString' => 'Заиграј на струнє',
-			'tuner.inTune' => 'Настроено',
-			'tuner.tuneUp' => 'Натягни выше',
-			'tuner.tuneDown' => 'Отпусти ниже',
+			'tuner.title' => 'Тјунер',
+			'tuner.open' => 'Настројити инструмент',
+			'tuner.playString' => 'Играј на струнє',
+			'tuner.inTune' => 'Настројено',
+			'tuner.tuneUp' => 'Натегни выше',
+			'tuner.tuneDown' => 'Опусти ниже',
 			'tuner.hertz' => ({required Object value}) => '${value} Hz',
 			'tuner.cents' => ({required Object value}) => '${value} центов',
-			'tuner.retry' => 'Попробовати знову',
+			'tuner.retry' => 'Попробовати поновно',
 			'tuner.instruments.guitar' => 'Гитара',
 			'tuner.instruments.ukulele' => 'Укулеле',
 			'tuner.instruments.bass' => 'Бас',
 			'tuner.instruments.violin' => 'Скрипка',
 			'tuner.instruments.chromatic' => 'Хроматичны',
-			'tuner.failure.microphonePermission' => 'Дозволи микрофон, да бы користати тюнер.',
-			'tuner.failure.start' => 'Не јест возможно отворити микрофон.',
+			'tuner.failure.microphonePermission' => 'Дозволи микрофон, да бы користати тјунер.',
+			'tuner.failure.start' => 'Не удало се отворити микрофон.',
 			'vocalEnhance.failure.analyze' => 'Не удало се измєрити запис',
 			'vocalEnhance.failure.enhance' => 'Не удало се улєпшити запис',
-			'vocalEnhance.failure.negativeLeadIn' => 'Тишина на початку не може быти негативна',
-			'vocalEnhance.failure.notWav' => 'Улєпшены запис мора быти фајлом .wав',
-			'vocalEnhance.failure.samePath' => 'Улєпшены запис мора быти оддєљным фајлом',
+			'vocalEnhance.failure.negativeLeadIn' => 'Тишина на почетку не може быти негативна',
+			'vocalEnhance.failure.notWav' => 'Улєпшены запис мора быти фајлом .wav',
+			'vocalEnhance.failure.samePath' => 'Улєпшены запис мора быти оддєлным фајлом',
 			'vocalEnhance.failure.unavailable' => 'Улєпшење звука не јест доступно на тој платформє',
 			_ => null,
 		};
