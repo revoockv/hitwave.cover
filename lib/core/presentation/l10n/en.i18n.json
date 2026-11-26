@@ -64,7 +64,7 @@
     "filterWithTakes": "With takes",
     "hoursMinutes": "{hours} h {minutes} min",
     "importFailed": "Could not add the practice sessions",
-    "lessThanMinute": "less than a minute",
+    "lessThanMinute": "< 1 min",
     "longest": "longest {value}",
     "minutes": "{minutes} min",
     "monthNames": [
