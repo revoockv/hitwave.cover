@@ -11,6 +11,7 @@ import 'package:hitwave.cover/features/vocal_enhance/domain/entities/enhance_rep
 import 'package:hitwave.cover/features/vocal_enhance/domain/use_cases/enhance_recording_use_case.dart';
 import 'package:logger/logger.dart';
 import 'package:hitwave.cover/features/vocal_enhance/domain/entities/vocal_enhance_failure.dart';
+import 'package:hitwave.cover/features/vocal_enhance/domain/entities/enhance_setting.dart';
 
 const RecordingAnalysisModel analysis = RecordingAnalysisModel(
   durationSeconds: 3,
@@ -98,7 +99,7 @@ void main() {
       preset: EnhancePreset.studio,
       roomToneSeconds: 1.5,
       trimSilence: true,
-      settings: const <String, double>{'air_db': 3},
+      settings: const <EnhanceSetting>[EnhanceSetting('air_db', 3)],
     );
 
     expect(result.isSuccess, isTrue);

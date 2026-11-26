@@ -34,14 +34,16 @@ final class PracticeStats {
   /// The longest run of days in a row with practice.
   final int longestStreak;
 
-  /// Every day with practice or takes, by its midnight.
-  final Map<DateTime, PracticeDay> days;
+  /// Every day with practice or takes, oldest first.
+  final List<PracticeDay> days;
+
+  final Map<DateTime, PracticeDay> _byDay;
 
   /// The most practised songs of all time, longest first.
   final List<SongPractice> topSongs;
 
   /// Creates [PracticeStats].
-  const PracticeStats({
+  PracticeStats({
     required this.weekTime,
     required this.weekDays,
     required this.monthTime,
@@ -53,7 +55,13 @@ final class PracticeStats {
     required this.longestStreak,
     required this.days,
     required this.topSongs,
-  });
+  }) : _byDay = <DateTime, PracticeDay>{for (final PracticeDay day in days) day.day: day};
+
+  /// The practice of the day that starts at midnight [day]; `null` without practice or takes.
+  PracticeDay? dayOn(DateTime day) => _byDay[day];
+
+  /// Whether there was practice or a take on the day that starts at midnight [day].
+  bool practisedOn(DateTime day) => _byDay.containsKey(day);
 
   /// Counts [sessions] and [recordings] as of [now].
   factory PracticeStats.from({
@@ -99,7 +107,7 @@ final class PracticeStats {
       totalTakes: recordings.length,
       currentStreak: _currentStreak(days.keys.toSet(), today),
       longestStreak: _longestStreak(days.keys.toList()),
-      days: days,
+      days: days.values.toList()..sort(_olderFirst),
       topSongs: _ranked(bySong).take(_topSongCount).toList(),
     );
   }
@@ -151,6 +159,8 @@ final class PracticeStats {
     final int byTime = b.time.compareTo(a.time);
     return byTime != 0 ? byTime : b.takes.compareTo(a.takes);
   }
+
+  static int _olderFirst(PracticeDay a, PracticeDay b) => a.day.compareTo(b.day);
 
   static Map<String, _Tally> _newSongTallies() => <String, _Tally>{};
 

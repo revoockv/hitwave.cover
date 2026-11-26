@@ -1,32 +1,52 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/presentation/l10n/app_translations.dart';
+/// The texts of [DeleteSongDialogWidget].
+final class DeleteSongDialogTexts {
+  /// Title of the dialog.
+  final String titleText;
+
+  /// What happens to the song, with its name.
+  final String messageText;
+
+  /// Label of the cancel button.
+  final String cancelLabel;
+
+  /// Label of the delete button.
+  final String deleteLabel;
+
+  /// Creates the texts.
+  const DeleteSongDialogTexts({
+    required this.titleText,
+    required this.messageText,
+    required this.cancelLabel,
+    required this.deleteLabel,
+  });
+}
 
 /// Confirmation dialog for deleting a song.
 ///
-/// Pops `true` when the user confirms and `false` when they cancel.
+/// Pops `true` when the user confirms and `false` when they cancel. Dumb: the texts come from above.
 final class DeleteSongDialogWidget extends StatelessWidget {
-  /// Name of the song to delete.
-  final String songName;
+  /// The texts, with the song's name in the message.
+  final DeleteSongDialogTexts texts;
 
   /// Creates a new [DeleteSongDialogWidget].
-  const DeleteSongDialogWidget({required this.songName, super.key});
+  const DeleteSongDialogWidget({required this.texts, super.key});
 
   @override
   Widget build(BuildContext context) {
-    final Translations t = context.t;
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
 
     return AlertDialog(
       icon: Icon(Icons.delete_outline, color: colorScheme.error),
-      title: Text(t.song.deleteTitle),
-      content: Text(t.song.deleteMessage(name: songName)),
+      title: Text(texts.titleText),
+      content: Text(texts.messageText),
       actions: <Widget>[
-        TextButton(onPressed: () => _onCancelPressed(context), child: Text(t.common.cancel)),
+        TextButton(onPressed: () => _onCancelPressed(context), child: Text(texts.cancelLabel)),
         FilledButton(
           style: FilledButton.styleFrom(backgroundColor: colorScheme.error, foregroundColor: colorScheme.onError),
           onPressed: () => _onDeletePressed(context),
-          child: Text(t.common.delete),
+          child: Text(texts.deleteLabel),
         ),
       ],
     );

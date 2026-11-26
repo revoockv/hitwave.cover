@@ -64,7 +64,7 @@
     "filterWithTakes": "With takes",
     "hoursMinutes": "{hours} h {minutes} min",
     "importFailed": "Could not add the practice sessions",
-    "lessThanMinute": "less than a minute",
+    "lessThanMinute": "< 1 min",
     "longest": "longest {value}",
     "minutes": "{minutes} min",
     "monthNames": [
@@ -177,11 +177,18 @@
     "clearTitle": "Clear data?",
     "cleared": "Data cleared",
     "colors": {
+      "azure": "Azure",
       "blue": "Blue",
+      "brown": "Brown",
+      "coral": "Coral",
+      "gold": "Gold",
       "green": "Green",
       "indigo": "Indigo",
+      "lilac": "Lilac",
+      "olive": "Olive",
       "orange": "Orange",
       "pink": "Pink",
+      "raspberry": "Raspberry",
       "red": "Red",
       "teal": "Teal",
       "violet": "Violet"
@@ -208,6 +215,7 @@
     "allArtists": "All artists",
     "artist": "Artist",
     "artistSearch": "Search artist",
+    "countPractice": "Practice",
     "coverSearch": "Search covers by song",
     "coversTooltip": "Covers",
     "deleteMessage": "“{name}” will be deleted forever.",
@@ -270,6 +278,7 @@
     "tabCovers": "Covers",
     "tabHome": "Home",
     "tabSongs": "Songs",
+    "tabStatistics": "Statistics",
     "takeSaved": "Take saved",
     "trimSilence": "Trim silence"
   },
@@ -348,6 +357,28 @@
     "updatedCount": "updated: {n}",
     "waiting": "Waiting for the other device to scan the code…",
     "withCovers": "with covers: {n}"
+  },
+  "tuner": {
+    "title": "Tuner",
+    "open": "Tune the instrument",
+    "playString": "Play a string",
+    "inTune": "In tune",
+    "tuneUp": "Tune up",
+    "tuneDown": "Tune down",
+    "hertz": "{value} Hz",
+    "cents": "{value} cents",
+    "retry": "Try again",
+    "instruments": {
+      "guitar": "Guitar",
+      "ukulele": "Ukulele",
+      "bass": "Bass",
+      "violin": "Violin",
+      "chromatic": "Chromatic"
+    },
+    "failure": {
+      "microphonePermission": "Allow the microphone to use the tuner.",
+      "start": "Could not open the microphone."
+    }
   },
   "vocalEnhance": {
     "failure": {

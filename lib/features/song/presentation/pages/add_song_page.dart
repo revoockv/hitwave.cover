@@ -7,7 +7,8 @@ import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../../core/presentation/theme.dart';
 import '../controllers/song_form_controller.dart';
 import '../di/song_getters.dart';
-import '../widgets/song_form_widget.dart';
+import '../l10n/song_widget_texts.dart';
+import '../wrappers/song_form_wrapper.dart';
 import '../../domain/entities/song_failure.dart';
 import '../l10n/song_texts.dart';
 
@@ -38,10 +39,11 @@ final class AddSongPage extends WatchingWidget {
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: AppTheme.maxContentWidth),
-          child: SongFormWidget(
+          child: SongFormWrapper(
             songFormController: songFormController,
+            texts: t.songForm,
             submitLabel: t.song.addSong,
-            onSubmit: () => _onSavePressed(songFormController),
+            onSubmitPressed: () => _onSavePressed(songFormController),
           ),
         ),
       ),

@@ -1,7 +1,29 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../domain/entities/song.dart';
+
+/// The texts of [SongTileWidget].
+final class SongTileTexts {
+  /// Tooltip of the number of covers.
+  final String coversTooltip;
+
+  /// Tooltip of the menu button.
+  final String actionsTooltip;
+
+  /// Label of "edit" in the menu.
+  final String editLabel;
+
+  /// Label of "delete" in the menu.
+  final String deleteLabel;
+
+  /// Creates the texts.
+  const SongTileTexts({
+    required this.coversTooltip,
+    required this.actionsTooltip,
+    required this.editLabel,
+    required this.deleteLabel,
+  });
+}
 
 /// Actions offered in the menu of a song tile.
 enum _SongTileAction { edit, delete }
@@ -36,19 +58,22 @@ final class SongTileWidget extends StatelessWidget {
   /// Number of covers of the song; nothing is shown for none.
   final int coverCount;
 
+  /// The tooltips and the menu labels.
+  final SongTileTexts texts;
+
   /// Creates a new [SongTileWidget].
   const SongTileWidget({
     required this.song,
     required this.onTap,
     required this.onEdit,
     required this.onDelete,
+    required this.texts,
     this.coverCount = 0,
     super.key,
   });
 
   @override
   Widget build(BuildContext context) {
-    final Translations t = context.t;
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final String? album = song.album;
     final String subtitle = album == null || album.isEmpty ? song.author : '${song.author}$_separator$album';
@@ -68,7 +93,7 @@ final class SongTileWidget extends StatelessWidget {
         children: <Widget>[
           if (coverCount > 0)
             Tooltip(
-              message: t.song.coversTooltip,
+              message: texts.coversTooltip,
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
@@ -78,7 +103,7 @@ final class SongTileWidget extends StatelessWidget {
               ),
             ),
           PopupMenuButton<_SongTileAction>(
-            tooltip: t.song.actions,
+            tooltip: texts.actionsTooltip,
             onSelected: _onActionSelected,
             itemBuilder: _buildMenuItems,
           ),
@@ -89,18 +114,17 @@ final class SongTileWidget extends StatelessWidget {
   }
 
   List<PopupMenuEntry<_SongTileAction>> _buildMenuItems(BuildContext context) {
-    final Translations t = context.t;
     final Color errorColor = Theme.of(context).colorScheme.error;
     return <PopupMenuEntry<_SongTileAction>>[
       PopupMenuItem<_SongTileAction>(
         value: _SongTileAction.edit,
-        child: ListTile(leading: const Icon(Icons.edit_outlined), title: Text(t.song.edit)),
+        child: ListTile(leading: const Icon(Icons.edit_outlined), title: Text(texts.editLabel)),
       ),
       PopupMenuItem<_SongTileAction>(
         value: _SongTileAction.delete,
         child: ListTile(
           leading: Icon(Icons.delete_outline, color: errorColor),
-          title: Text(t.common.delete, style: TextStyle(color: errorColor)),
+          title: Text(texts.deleteLabel, style: TextStyle(color: errorColor)),
         ),
       ),
     ];

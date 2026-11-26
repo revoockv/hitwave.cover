@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
 
 import '../../domain/entities/app_language.dart';
-import '../l10n/settings_texts.dart';
 
 /// The languages of the app as radio buttons; [selected] is marked.
 final class LanguagePickerWidget extends StatelessWidget {
   /// The language of the app now.
   final AppLanguage selected;
 
+  /// The name of a language as shown to the user.
+  final String Function(AppLanguage language) labelOf;
+
   /// Called with the language the user picked.
   final ValueChanged<AppLanguage> onSelected;
 
   /// Creates the picker.
-  const LanguagePickerWidget({required this.selected, required this.onSelected, super.key});
+  const LanguagePickerWidget({required this.selected, required this.labelOf, required this.onSelected, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +24,7 @@ final class LanguagePickerWidget extends StatelessWidget {
       child: Column(
         children: <Widget>[
           for (final AppLanguage language in AppLanguage.values)
-            RadioListTile<AppLanguage>(value: language, title: Text(language.nativeName)),
+            RadioListTile<AppLanguage>(value: language, title: Text(labelOf(language))),
         ],
       ),
     );

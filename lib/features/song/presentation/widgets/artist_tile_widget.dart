@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../../core/presentation/l10n/app_translations.dart';
 
 /// One artist in the artist list: initial avatar, name and song count.
 ///
@@ -8,13 +7,11 @@ final class ArtistTileWidget extends StatelessWidget {
   /// Shown in the avatar when the artist has no name.
   static const String _fallbackInitial = '?';
 
-  /// Separator between the count and the word "songs".
-
   /// Name of the artist.
   final String artist;
 
-  /// Number of the artist's songs.
-  final int songCount;
+  /// The number of the artist's songs as text ("3 songs").
+  final String songCountText;
 
   /// Whether this is the artist being shown.
   final bool selected;
@@ -25,7 +22,7 @@ final class ArtistTileWidget extends StatelessWidget {
   /// Creates a new [ArtistTileWidget].
   const ArtistTileWidget({
     required this.artist,
-    required this.songCount,
+    required this.songCountText,
     required this.onTap,
     this.selected = false,
     super.key,
@@ -44,7 +41,7 @@ final class ArtistTileWidget extends StatelessWidget {
         child: Text(trimmed.isEmpty ? _fallbackInitial : trimmed.characters.first.toUpperCase()),
       ),
       title: Text(artist, maxLines: 1, overflow: TextOverflow.ellipsis),
-      subtitle: Text(context.t.song.songsCount(n: songCount)),
+      subtitle: Text(songCountText),
       trailing: const Icon(Icons.chevron_right),
       onTap: _onTilePressed,
     );

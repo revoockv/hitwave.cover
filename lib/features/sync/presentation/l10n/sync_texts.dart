@@ -5,6 +5,10 @@ import '../../domain/entities/sync_change.dart';
 import '../../domain/entities/sync_failure.dart';
 import '../../domain/entities/sync_state.dart';
 import '../../domain/entities/sync_step.dart';
+import '../../domain/entities/sync_summary.dart';
+import '../widgets/sync_changes_widget.dart';
+import '../widgets/sync_qr_widget.dart';
+import '../widgets/sync_summary_widget.dart';
 
 /// The text of a [SyncFailure] shown to the user.
 extension SyncFailureText on SyncFailure {
@@ -114,4 +118,57 @@ extension SyncChangeText on SyncChange {
       '${_two(time.day)}$_dateSeparator${_two(time.month)}$_dateSeparator${time.year}';
 
   static String _two(int part) => part.toString().padLeft(AppTheme.twoDigits, _zero);
+}
+
+/// The texts of the sync widgets in the language of these [Translations].
+extension SyncWidgetTexts on Translations {
+  static const String _separator = ', ';
+
+  /// The texts of the QR code of this device.
+  SyncQrTexts get syncQr => SyncQrTexts(
+    hintText: sync.qrHint,
+    waitingText: sync.waiting,
+    copyCodeLabel: sync.copyCode,
+    cancelLabel: common.cancel,
+  );
+
+  /// The texts of the review of the changes with the device [peerName].
+  SyncChangesTexts syncChanges(String peerName) => SyncChangesTexts(
+    titleText: sync.reviewTitle,
+    messageText: sync.reviewMessage,
+    toHereTitle: sync.toHere(device: peerName),
+    toThereTitle: sync.toThere(device: peerName),
+    allLabel: sync.all,
+    applyLabel: _applyLabel,
+    cancelLabel: common.cancel,
+    badgeOf: _badgeOf,
+    titleOf: _titleOf,
+    detailOf: (SyncChange change) => change.detail(this, peerName),
+  );
+
+  /// The texts of the result of a synchronisation, counted.
+  SyncSummaryTexts syncSummary(SyncSummary summary) => SyncSummaryTexts(
+    titleText: sync.synced,
+    receivedTitle: sync.received,
+    receivedText:
+        _counts(summary.songsReceived, summary.coversReceived, summary.sessionsReceived) +
+        _changes(summary.deletedHere, summary.updatedHere),
+    sentTitle: sync.sent,
+    sentText:
+        _counts(summary.songsSent, summary.coversSent, summary.sessionsSent) +
+        _changes(summary.deletedThere, summary.updatedThere),
+    doneLabel: sync.done,
+  );
+
+  String _applyLabel(int count) => sync.applyChosen(n: count);
+
+  String _badgeOf(SyncChange change) => change.badge(this);
+
+  String _titleOf(SyncChange change) => change.title(this);
+
+  String _changes(int deleted, int updated) =>
+      '$_separator${sync.deletedCount(n: deleted)}$_separator${sync.updatedCount(n: updated)}';
+
+  String _counts(int songs, int covers, int sessions) =>
+      '${sync.songsCount(n: songs)}$_separator${sync.coversCount(n: covers)}$_separator${sync.sessionsCount(n: sessions)}';
 }

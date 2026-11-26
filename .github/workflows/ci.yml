@@ -27,12 +27,8 @@ jobs:
           channel: stable
           flutter-version: 3.47.0
           cache: true
-      - name: Get the architecture linter
-        uses: actions/checkout@v5
-        with:
-          repository: revoockv/revoockv-flutter-clean-arch
-          path: .clean-arch
-      # The same script as before a release (tool/release.sh), so a local pass means a CI pass.
+      # The same script as before a release (tool/release.sh), so a local pass means a CI pass. It fetches the
+      # architecture linter at the skill version pinned in tool/clean_arch_skill_version.
       - run: tool/check.sh
 
   build:

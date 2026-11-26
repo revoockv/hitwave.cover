@@ -164,8 +164,8 @@ final class SyncSnapshotModel {
       for (final dynamic session in json[_sessionsField] as List<dynamic>) _session(session as Map<String, dynamic>),
     ],
     history: UsageHistory(
-      songsOpenedAt: _times(json[_songsOpenedField] as Map<String, dynamic>),
-      coversPlayedAt: _times(json[_coversPlayedField] as Map<String, dynamic>),
+      songsOpened: _usageTimes(_times(json[_songsOpenedField] as Map<String, dynamic>)),
+      coversPlayed: _usageTimes(_times(json[_coversPlayedField] as Map<String, dynamic>)),
     ),
     deletedSongs: <SyncSongKeyModel>[
       for (final dynamic song in json[_deletedSongsField] as List<dynamic>? ?? const <dynamic>[])
@@ -194,8 +194,8 @@ final class SyncSnapshotModel {
           _secondsField: session.duration.inSeconds,
         },
     ],
-    _songsOpenedField: _encodeTimes(history.songsOpenedAt),
-    _coversPlayedField: _encodeTimes(history.coversPlayedAt),
+    _songsOpenedField: _encodeTimes(history.songsOpened),
+    _coversPlayedField: _encodeTimes(history.coversPlayed),
     _deletedSongsField: <Map<String, dynamic>>[for (final SyncSongKeyModel song in deletedSongs) song.toJson()],
     _deletedCoversField: <String, String?>{
       for (final MapEntry<String, DateTime?> entry in deletedCovers.entries)
@@ -243,7 +243,11 @@ final class SyncSnapshotModel {
       entry.key: DateTime.parse(entry.value as String).toLocal(),
   };
 
-  static Map<String, String> _encodeTimes(Map<String, DateTime> times) => <String, String>{
-    for (final MapEntry<String, DateTime> entry in times.entries) entry.key: entry.value.toUtc().toIso8601String(),
+  static List<UsageTime> _usageTimes(Map<String, DateTime> times) => <UsageTime>[
+    for (final MapEntry<String, DateTime> entry in times.entries) UsageTime(id: entry.key, at: entry.value),
+  ];
+
+  static Map<String, String> _encodeTimes(List<UsageTime> times) => <String, String>{
+    for (final UsageTime time in times) time.id: time.at.toUtc().toIso8601String(),
   };
 }

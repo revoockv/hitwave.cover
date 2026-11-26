@@ -17,11 +17,11 @@ void main() {
 
     expect(t.song.songsCount(n: 1), '1 пєсња');
     expect(t.song.songsCount(n: 21), '21 пєсња');
-    expect(t.song.songsCount(n: 3), '3 пєсни');
-    expect(t.song.songsCount(n: 24), '24 пєсни');
-    expect(t.song.songsCount(n: 5), '5 пєсењ');
-    expect(t.song.songsCount(n: 12), '12 пєсењ');
-    expect(t.song.songsCount(n: 0), '0 пєсењ');
+    expect(t.song.songsCount(n: 3), '3 пєсње');
+    expect(t.song.songsCount(n: 24), '24 пєсње');
+    expect(t.song.songsCount(n: 5), '5 пєснеј');
+    expect(t.song.songsCount(n: 12), '12 пєснеј');
+    expect(t.song.songsCount(n: 0), '0 пєснеј');
   });
 
   test('Interslavic is supported, other languages fall back to English', () {

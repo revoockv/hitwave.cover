@@ -3,12 +3,13 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:watch_it/watch_it.dart';
 
 import 'core/presentation/l10n/app_translations.dart';
-import 'core/presentation/widgets/app_background_widget.dart';
+import 'core/presentation/theme.dart';
+import 'core/presentation/widgets/app_frame_widget.dart';
 import 'di.dart';
 import 'features/settings/domain/entities/app_settings.dart';
 import 'features/settings/presentation/di/settings_getters.dart';
 import 'features/settings/presentation/l10n/settings_texts.dart';
-import 'features/song/presentation/pages/home_page.dart';
+import 'features/home/presentation/pages/home_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -46,7 +47,10 @@ final class HitwaveCoverAppWidget extends WatchingWidget {
       supportedLocales: AppLocaleUtils.supportedLocales,
       localizationsDelegates: _localizationsDelegates,
       theme: settings.themeStyle.theme(settings.accentColor),
-      builder: AppBackgroundWidget.wrap,
+      // A new theme or accent flows into the old one; a new language fades in.
+      themeAnimationDuration: AppTheme.themeChange,
+      themeAnimationCurve: AppTheme.themeChangeCurve,
+      builder: AppFrameWidget.wrap,
       home: const HomePage(),
     );
   }

@@ -79,6 +79,9 @@ final class RecordingModel {
     this.isSilent = false,
   });
 
+  /// Reads what Hive returned for one record.
+  factory RecordingModel.fromStored(Object? value) => RecordingModel.fromMap(value! as Map<dynamic, dynamic>);
+
   /// Reads a stored map.
   factory RecordingModel.fromMap(Map<dynamic, dynamic> map) {
     return RecordingModel(

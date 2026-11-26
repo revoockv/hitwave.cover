@@ -6,7 +6,7 @@ import '../../../../core/domain/entities/result.dart';
 import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../../core/presentation/theme.dart';
 import '../../../backup/domain/entities/backup_failure.dart';
-import '../../../backup/domain/entities/import_choice.dart';
+import '../../../backup/domain/entities/import_decision.dart';
 import '../../../backup/domain/entities/import_conflict.dart';
 import '../../../backup/domain/entities/import_plan.dart';
 import '../../../backup/domain/entities/import_summary.dart';
@@ -33,11 +33,11 @@ import '../../domain/entities/app_language.dart';
 import '../../domain/entities/app_settings.dart';
 import '../../domain/entities/app_theme_style.dart';
 import '../../domain/entities/settings_failure.dart';
-import '../controllers/clear_data_controller.dart';
+import '../../domain/entities/clearable_data.dart';
 import '../di/settings_getters.dart';
 import '../l10n/settings_texts.dart';
 import '../widgets/accent_color_picker_widget.dart';
-import '../widgets/clear_data_dialog_widget.dart';
+import 'clear_data_dialog_page.dart';
 import '../widgets/language_picker_widget.dart';
 import '../widgets/theme_picker_widget.dart';
 
@@ -76,22 +76,25 @@ final class SettingsPage extends WatchingWidget {
             : null,
       ),
       body: ListView(
-        padding: const EdgeInsets.only(bottom: AppTheme.spacingLarge),
+        padding: AppTheme.clearOfSystemBar(context, const EdgeInsets.only(bottom: AppTheme.spacingLarge)),
         children: <Widget>[
           ListTile(title: Text(t.settings.theme, style: sectionStyle)),
           ThemePickerWidget(
             selected: settings.themeStyle,
+            labelOf: t.themeStyleLabel,
             onSelected: (AppThemeStyle style) => _onThemeStyleSelected(context, style),
           ),
           ListTile(title: Text(t.settings.accentColor, style: sectionStyle)),
           AccentColorPickerWidget(
             selected: settings.accentColor,
+            labelOf: t.accentColorLabel,
             onSelected: (AccentColor color) => _onAccentColorSelected(context, color),
           ),
           const SizedBox(height: AppTheme.spacingMedium),
           ListTile(title: Text(t.settings.language, style: sectionStyle)),
           LanguagePickerWidget(
             selected: settings.language,
+            labelOf: t.languageLabel,
             onSelected: (AppLanguage language) => _onLanguageSelected(context, language),
           ),
           ListTile(title: Text(t.settings.data, style: sectionStyle)),
@@ -171,12 +174,12 @@ final class SettingsPage extends WatchingWidget {
       await cancelImportUseCase();
       return;
     }
-    final Map<int, ImportChoice>? choices = await _askImportChoices(context, plan.conflicts);
-    if (choices == null) {
+    final List<ImportDecision>? decisions = await _askImportDecisions(context, plan.conflicts);
+    if (decisions == null) {
       await cancelImportUseCase();
       return;
     }
-    final Result<ImportSummary, BackupFailure> result = await applyImportUseCase(choices);
+    final Result<ImportSummary, BackupFailure> result = await applyImportUseCase(decisions);
     if (!context.mounted) return;
     _showMessage(
       ScaffoldMessenger.of(context),
@@ -190,24 +193,26 @@ final class SettingsPage extends WatchingWidget {
 
   /// Asks, song by song, what to do with the [conflicts]; an answer may go for all the others.
   /// `null` when the import is cancelled.
-  Future<Map<int, ImportChoice>?> _askImportChoices(BuildContext context, List<ImportConflict> conflicts) async {
-    final Map<int, ImportChoice> choices = <int, ImportChoice>{};
+  Future<List<ImportDecision>?> _askImportDecisions(BuildContext context, List<ImportConflict> conflicts) async {
+    final List<ImportDecision> decisions = <ImportDecision>[];
     for (int i = 0; i < conflicts.length; i++) {
       if (!context.mounted) return null;
       final ImportConflictAnswer? answer = await showDialog<ImportConflictAnswer>(
         context: context,
         barrierDismissible: false,
-        builder: (BuildContext context) =>
-            ImportConflictDialogWidget(conflict: conflicts[i], othersCount: conflicts.length - i - 1),
+        builder: (BuildContext context) => ImportConflictDialogWidget(
+          othersCount: conflicts.length - i - 1,
+          texts: context.t.importConflict(conflicts[i], conflicts.length - i - 1),
+        ),
       );
       if (answer == null) return null;
       final Iterable<ImportConflict> answered = answer.isForOthers ? conflicts.skip(i) : <ImportConflict>[conflicts[i]];
       for (final ImportConflict conflict in answered) {
-        choices[conflict.index] = answer.choice;
+        decisions.add(ImportDecision.forConflict(conflict, answer.choice));
       }
       if (answer.isForOthers) break;
     }
-    return choices;
+    return decisions;
   }
 
   Future<void> _onSharePressed(BuildContext context) async {
@@ -226,7 +231,14 @@ final class SettingsPage extends WatchingWidget {
     if (kIsWeb) return false;
     return showDialog<bool>(
       context: context,
-      builder: (BuildContext context) => BackupOptionsDialogWidget(title: title, message: message, confirmLabel: title),
+      builder: (BuildContext context) => BackupOptionsDialogWidget(
+        title: title,
+        message: message,
+        confirmLabel: title,
+        includeRecordingsLabel: context.t.backup.includeRecordings,
+        recordingsNote: context.t.backup.recordingsNote,
+        cancelLabel: context.t.common.cancel,
+      ),
     );
   }
 
@@ -239,7 +251,7 @@ final class SettingsPage extends WatchingWidget {
     final Translations t = context.t;
     final Set<ClearableData>? chosen = await showDialog<Set<ClearableData>>(
       context: context,
-      builder: (BuildContext context) => const ClearDataDialogWidget(),
+      builder: (BuildContext context) => const ClearDataDialogPage(),
     );
     if (chosen == null || chosen.isEmpty) return;
     final String? failure = await _clear(t, chosen);

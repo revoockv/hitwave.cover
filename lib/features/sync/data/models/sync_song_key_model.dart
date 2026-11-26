@@ -17,6 +17,9 @@ final class SyncSongKeyModel {
   /// Creates a [SyncSongKeyModel].
   const SyncSongKeyModel({required this.author, required this.name, this.deletedAt});
 
+  /// Reads what Hive returned for one record.
+  factory SyncSongKeyModel.fromStored(Object? value) => SyncSongKeyModel.fromJson(value! as Map<dynamic, dynamic>);
+
   /// Reads the JSON of another device or of the store.
   factory SyncSongKeyModel.fromJson(Map<dynamic, dynamic> json) => SyncSongKeyModel(
     author: json[_authorField] as String,

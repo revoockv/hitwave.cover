@@ -6,6 +6,9 @@ import '../../domain/entities/accent_color.dart';
 import '../../domain/entities/app_language.dart';
 import '../../domain/entities/app_theme_style.dart';
 import '../../domain/entities/settings_failure.dart';
+import '../../domain/entities/clearable_data.dart';
+import '../widgets/clear_data_dialog_widget.dart';
+import '../widgets/accent_color_picker_widget.dart';
 
 /// The text of a [SettingsFailure] shown to the user.
 extension SettingsFailureText on SettingsFailure {
@@ -60,29 +63,52 @@ extension AppThemeStyleTexts on AppThemeStyle {
       AppTheme.build(style: surfaceStyle, brightness: brightness, accent: accent.color);
 }
 
-/// How an [AccentColor] is named and painted.
+/// How an [AccentColor] is named.
 extension AccentColorTexts on AccentColor {
   /// The name of the color in the language of [t].
   String text(Translations t) => switch (this) {
     AccentColor.orange => t.settings.colors.orange,
+    AccentColor.gold => t.settings.colors.gold,
+    AccentColor.olive => t.settings.colors.olive,
+    AccentColor.green => t.settings.colors.green,
+    AccentColor.teal => t.settings.colors.teal,
+    AccentColor.azure => t.settings.colors.azure,
     AccentColor.blue => t.settings.colors.blue,
     AccentColor.indigo => t.settings.colors.indigo,
     AccentColor.violet => t.settings.colors.violet,
+    AccentColor.lilac => t.settings.colors.lilac,
     AccentColor.pink => t.settings.colors.pink,
+    AccentColor.raspberry => t.settings.colors.raspberry,
     AccentColor.red => t.settings.colors.red,
-    AccentColor.green => t.settings.colors.green,
-    AccentColor.teal => t.settings.colors.teal,
+    AccentColor.coral => t.settings.colors.coral,
+    AccentColor.brown => t.settings.colors.brown,
   };
+}
 
-  /// The color.
-  Color get color => switch (this) {
-    AccentColor.orange => AppTheme.accentOrange,
-    AccentColor.blue => AppTheme.accentBlue,
-    AccentColor.indigo => AppTheme.accentIndigo,
-    AccentColor.violet => AppTheme.accentViolet,
-    AccentColor.pink => AppTheme.accentPink,
-    AccentColor.red => AppTheme.accentRed,
-    AccentColor.green => AppTheme.accentGreen,
-    AccentColor.teal => AppTheme.accentTeal,
+/// The texts of the settings widgets in the language of these [Translations].
+extension SettingsWidgetTexts on Translations {
+  /// The texts of the clear-data dialog.
+  ClearDataDialogTexts get clearDataDialog => ClearDataDialogTexts(
+    titleText: settings.clearTitle,
+    messageText: settings.clearMessage,
+    cancelLabel: common.cancel,
+    clearLabel: settings.clear,
+    labelOf: _clearableLabel,
+  );
+
+  /// The name of a look of the app.
+  String themeStyleLabel(AppThemeStyle style) => style.text(this);
+
+  /// The name of an accent color.
+  String accentColorLabel(AccentColor color) => color.text(this);
+
+  /// The name of a language in that language.
+  String languageLabel(AppLanguage language) => language.nativeName;
+
+  String _clearableLabel(ClearableData data) => switch (data) {
+    ClearableData.songs => settings.clearSongs,
+    ClearableData.covers => settings.clearCovers,
+    ClearableData.practice => settings.clearPractice,
+    ClearableData.history => settings.clearHistory,
   };
 }

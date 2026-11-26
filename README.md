@@ -4,15 +4,15 @@
 
 Hitwave Cover keeps your song lyrics and your cover recordings in one place. Open a song, let the
 lyrics scroll at your pace, sing along and record a take — the app cleans up the sound on the
-device, keeps every take next to its song and counts how much you practice.
+device, keeps every take next to its song and counts how much you practice. A tuner is built in.
 
 Built with Flutter for Android, iOS, macOS, Windows, Linux and the web.
 
 ## Screenshots
 
-| Home                                     | Lyrics                                       | My covers                                       | Statistics                                      |
-| ---------------------------------------- | -------------------------------------------- | ----------------------------------------------- | ----------------------------------------------- |
-| ![Home](docs/screenshots/phone_home.png) | ![Lyrics](docs/screenshots/phone_lyrics.png) | ![My covers](docs/screenshots/phone_covers.png) | ![Statistics](docs/screenshots/phone_stats.png) |
+| Home                                     | Lyrics                                       | My covers                                       | Statistics                                      | Tuner                                      |
+| ---------------------------------------- | -------------------------------------------- | ----------------------------------------------- | ----------------------------------------------- | ------------------------------------------ |
+| ![Home](docs/screenshots/phone_home.png) | ![Lyrics](docs/screenshots/phone_lyrics.png) | ![My covers](docs/screenshots/phone_covers.png) | ![Statistics](docs/screenshots/phone_stats.png) | ![Tuner](docs/screenshots/phone_tuner.png) |
 
 ![Home on a wide screen](docs/screenshots/wide_home.png)
 
@@ -20,7 +20,8 @@ Built with Flutter for Android, iOS, macOS, Windows, Linux and the web.
 
 ### Themes
 
-Four styles — light and dark glass, light and dark neumorphism — and eight accent colors, chosen in Settings:
+Four styles — light and dark glass, light and dark neumorphism — and fifteen accent colors, chosen in Settings;
+a new theme, accent or language flows in smoothly:
 
 ![Settings and the four theme styles](docs/screenshots/themes.png)
 
@@ -34,6 +35,10 @@ The screenshots are made from demo songs by `integration_test/readme_screenshots
 - Search by song or artist; sort by artists, A–Z, recently opened or by the number of covers.
 - The lyrics page scrolls the text by itself. The speed and the lead-in before the first line are
   remembered for every song.
+- **Chords** are coloured: chord lines (`Am   F   C`), runs of chords before words (`Intro: Em G`), chords in
+  brackets — also glued to a word as ChordPro writes them (`[Am]We folded every [F]promise`). A tap on a chord that
+  is really a word (`A girl to hold`) keeps it as text; a tap on it again makes it a chord.
+- **Tablatures** keep their columns in a fixed-width font and shrink to fit the screen.
 
 ### Recording covers
 
@@ -46,9 +51,17 @@ The screenshots are made from demo songs by `integration_test/readme_screenshots
 - Listen to the takes, share one as MP3 (with a ready caption) or show it in its folder.
 - **My covers**: every take of every song in one list, with search.
 
+### Tuner
+
+- Guitar, ukulele, bass and violin in standard tuning, or any note (chromatic).
+- The needle follows the string in real time (about 47 readings a second) on a scale of ±50 cents, with the nearest
+  string and what to do (tune up, tune down, in tune); the pitch is read to a fraction of a cent.
+- Its own tab and a button on the lyrics page; the microphone is freed when the tuner or the app is hidden.
+
 ### Practice
 
-- The time spent with each song is counted on its own.
+- The time spent with each song is counted on its own; untick **Practice** on the lyrics page to only scroll the
+  lyrics (or only record a take) without counting it.
 - Statistics: today, this week and this month, the day streak, the number of takes, a month
   calendar of practice days and the most practiced songs.
 - The home tab shows the recently opened songs and the recently played covers.
@@ -67,7 +80,7 @@ The screenshots are made from demo songs by `integration_test/readme_screenshots
 
 - **Language**: English (default) or Interslavic (Medžuslovjansky, written in Cyrillic).
 - **Theme**: light or dark glass, light or dark neumorphism.
-- **Accent color**: one of eight.
+- **Accent color**: one of fifteen.
 
 ## Getting started
 
@@ -100,6 +113,12 @@ the lyrics without recording and vocal enhancement.
 tool/check.sh   # analyze, tests and the architecture linter — exactly what CI runs
 ```
 
+**The skill's version** is pinned: `tool/clean_arch_skill_version` holds a release tag of the skill, and
+`tool/check.sh` (locally and in CI) lints with the linter of that tag, so a change in the skill never changes the
+result of an old commit. To move the project to a newer skill, change the tag (and `.clean_arch.toml` when a new
+template version is wanted) in one commit. To try an unreleased skill once:
+`CLEAN_ARCH_DIR=~/.agents/skills/revoockv-flutter-clean-arch tool/check.sh`.
+
 **Release**: `tool/release.sh X.Y.Z` on `develop`, after the CI of `develop` passed. It refuses to run on a
 dirty or unpushed `develop`, on a version that is not higher or a tag that exists, and when the checks fail; then
 it merges into `main`, tags `vX.Y.Z` and pushes everything at once. A tag is never moved: a failed release is
@@ -119,6 +138,15 @@ then copy the PNGs from the printed folder to `docs/screenshots/` (`themes.png` 
 ```bash
 flutter test integration_test/readme_screenshots_test.dart -d macos \
   --dart-define=HITWAVE_STORAGE_FOLDER=readme_screenshots
+```
+
+The demo songs, practice and takes are made up (`integration_test/demo_data.dart`). The same data, with long
+practice, drives the layout check: every screen on a 320 px phone in both languages, failing on any text that
+overflows, and leaving the screenshots for a look at cut texts:
+
+```bash
+flutter test integration_test/narrow_layout_test.dart -d macos \
+  --dart-define=HITWAVE_STORAGE_FOLDER=narrow_layout
 ```
 
 Git: `develop` collects the work; every change has its own branch — `feature/NNN-name`,

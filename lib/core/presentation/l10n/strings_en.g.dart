@@ -47,6 +47,7 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final Translations$settings$en settings = Translations$settings$en.internal(_root);
 	late final Translations$song$en song = Translations$song$en.internal(_root);
 	late final Translations$sync$en sync = Translations$sync$en.internal(_root);
+	late final Translations$tuner$en tuner = Translations$tuner$en.internal(_root);
 	late final Translations$vocalEnhance$en vocalEnhance = Translations$vocalEnhance$en.internal(_root);
 }
 
@@ -214,8 +215,8 @@ class Translations$practice$en {
 	/// en: 'Could not add the practice sessions'
 	String get importFailed => 'Could not add the practice sessions';
 
-	/// en: 'less than a minute'
-	String get lessThanMinute => 'less than a minute';
+	/// en: '< 1 min'
+	String get lessThanMinute => '< 1 min';
 
 	/// en: 'longest {value}'
 	String longest({required Object value}) => 'longest ${value}';
@@ -478,6 +479,9 @@ class Translations$song$en {
 	/// en: 'Search artist'
 	String get artistSearch => 'Search artist';
 
+	/// en: 'Practice'
+	String get countPractice => 'Practice';
+
 	/// en: 'Search covers by song'
 	String get coverSearch => 'Search covers by song';
 
@@ -607,6 +611,9 @@ class Translations$song$en {
 
 	/// en: 'Songs'
 	String get tabSongs => 'Songs';
+
+	/// en: 'Statistics'
+	String get tabStatistics => 'Statistics';
 
 	/// en: 'Take saved'
 	String get takeSaved => 'Take saved';
@@ -758,6 +765,45 @@ class Translations$sync$en {
 	String withCovers({required Object n}) => 'with covers: ${n}';
 }
 
+// Path: tuner
+class Translations$tuner$en {
+	Translations$tuner$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Tuner'
+	String get title => 'Tuner';
+
+	/// en: 'Tune the instrument'
+	String get open => 'Tune the instrument';
+
+	/// en: 'Play a string'
+	String get playString => 'Play a string';
+
+	/// en: 'In tune'
+	String get inTune => 'In tune';
+
+	/// en: 'Tune up'
+	String get tuneUp => 'Tune up';
+
+	/// en: 'Tune down'
+	String get tuneDown => 'Tune down';
+
+	/// en: '{value} Hz'
+	String hertz({required Object value}) => '${value} Hz';
+
+	/// en: '{value} cents'
+	String cents({required Object value}) => '${value} cents';
+
+	/// en: 'Try again'
+	String get retry => 'Try again';
+
+	late final Translations$tuner$instruments$en instruments = Translations$tuner$instruments$en.internal(_root);
+	late final Translations$tuner$failure$en failure = Translations$tuner$failure$en.internal(_root);
+}
+
 // Path: vocalEnhance
 class Translations$vocalEnhance$en {
 	Translations$vocalEnhance$en.internal(this._root);
@@ -878,8 +924,20 @@ class Translations$settings$colors$en {
 
 	// Translations
 
+	/// en: 'Azure'
+	String get azure => 'Azure';
+
 	/// en: 'Blue'
 	String get blue => 'Blue';
+
+	/// en: 'Brown'
+	String get brown => 'Brown';
+
+	/// en: 'Coral'
+	String get coral => 'Coral';
+
+	/// en: 'Gold'
+	String get gold => 'Gold';
 
 	/// en: 'Green'
 	String get green => 'Green';
@@ -887,11 +945,20 @@ class Translations$settings$colors$en {
 	/// en: 'Indigo'
 	String get indigo => 'Indigo';
 
+	/// en: 'Lilac'
+	String get lilac => 'Lilac';
+
+	/// en: 'Olive'
+	String get olive => 'Olive';
+
 	/// en: 'Orange'
 	String get orange => 'Orange';
 
 	/// en: 'Pink'
 	String get pink => 'Pink';
+
+	/// en: 'Raspberry'
+	String get raspberry => 'Raspberry';
 
 	/// en: 'Red'
 	String get red => 'Red';
@@ -1092,6 +1159,45 @@ class Translations$sync$step$en {
 	String uploading({required Object done, required Object total}) => 'Sending covers ${done} of ${total}';
 }
 
+// Path: tuner.instruments
+class Translations$tuner$instruments$en {
+	Translations$tuner$instruments$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Guitar'
+	String get guitar => 'Guitar';
+
+	/// en: 'Ukulele'
+	String get ukulele => 'Ukulele';
+
+	/// en: 'Bass'
+	String get bass => 'Bass';
+
+	/// en: 'Violin'
+	String get violin => 'Violin';
+
+	/// en: 'Chromatic'
+	String get chromatic => 'Chromatic';
+}
+
+// Path: tuner.failure
+class Translations$tuner$failure$en {
+	Translations$tuner$failure$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Allow the microphone to use the tuner.'
+	String get microphonePermission => 'Allow the microphone to use the tuner.';
+
+	/// en: 'Could not open the microphone.'
+	String get start => 'Could not open the microphone.';
+}
+
 // Path: vocalEnhance.failure
 class Translations$vocalEnhance$failure$en {
 	Translations$vocalEnhance$failure$en.internal(this._root);
@@ -1172,7 +1278,7 @@ extension on Translations {
 			'practice.filterWithTakes' => 'With takes',
 			'practice.hoursMinutes' => ({required Object hours, required Object minutes}) => '${hours} h ${minutes} min',
 			'practice.importFailed' => 'Could not add the practice sessions',
-			'practice.lessThanMinute' => 'less than a minute',
+			'practice.lessThanMinute' => '< 1 min',
 			'practice.longest' => ({required Object value}) => 'longest ${value}',
 			'practice.minutes' => ({required Object minutes}) => '${minutes} min',
 			'practice.monthNames.0' => 'January',
@@ -1264,11 +1370,18 @@ extension on Translations {
 			'settings.clearSongs' => 'Songs and their covers',
 			'settings.clearTitle' => 'Clear data?',
 			'settings.cleared' => 'Data cleared',
+			'settings.colors.azure' => 'Azure',
 			'settings.colors.blue' => 'Blue',
+			'settings.colors.brown' => 'Brown',
+			'settings.colors.coral' => 'Coral',
+			'settings.colors.gold' => 'Gold',
 			'settings.colors.green' => 'Green',
 			'settings.colors.indigo' => 'Indigo',
+			'settings.colors.lilac' => 'Lilac',
+			'settings.colors.olive' => 'Olive',
 			'settings.colors.orange' => 'Orange',
 			'settings.colors.pink' => 'Pink',
+			'settings.colors.raspberry' => 'Raspberry',
 			'settings.colors.red' => 'Red',
 			'settings.colors.teal' => 'Teal',
 			'settings.colors.violet' => 'Violet',
@@ -1290,6 +1403,7 @@ extension on Translations {
 			'song.allArtists' => 'All artists',
 			'song.artist' => 'Artist',
 			'song.artistSearch' => 'Search artist',
+			'song.countPractice' => 'Practice',
 			'song.coverSearch' => 'Search covers by song',
 			'song.coversTooltip' => 'Covers',
 			'song.deleteMessage' => ({required Object name}) => '“${name}” will be deleted forever.',
@@ -1345,6 +1459,7 @@ extension on Translations {
 			'song.tabCovers' => 'Covers',
 			'song.tabHome' => 'Home',
 			'song.tabSongs' => 'Songs',
+			'song.tabStatistics' => 'Statistics',
 			'song.takeSaved' => 'Take saved',
 			'song.trimSilence' => 'Trim silence',
 			'sync.all' => 'All',
@@ -1413,6 +1528,22 @@ extension on Translations {
 			'sync.updatedCount' => ({required Object n}) => 'updated: ${n}',
 			'sync.waiting' => 'Waiting for the other device to scan the code…',
 			'sync.withCovers' => ({required Object n}) => 'with covers: ${n}',
+			'tuner.title' => 'Tuner',
+			'tuner.open' => 'Tune the instrument',
+			'tuner.playString' => 'Play a string',
+			'tuner.inTune' => 'In tune',
+			'tuner.tuneUp' => 'Tune up',
+			'tuner.tuneDown' => 'Tune down',
+			'tuner.hertz' => ({required Object value}) => '${value} Hz',
+			'tuner.cents' => ({required Object value}) => '${value} cents',
+			'tuner.retry' => 'Try again',
+			'tuner.instruments.guitar' => 'Guitar',
+			'tuner.instruments.ukulele' => 'Ukulele',
+			'tuner.instruments.bass' => 'Bass',
+			'tuner.instruments.violin' => 'Violin',
+			'tuner.instruments.chromatic' => 'Chromatic',
+			'tuner.failure.microphonePermission' => 'Allow the microphone to use the tuner.',
+			'tuner.failure.start' => 'Could not open the microphone.',
 			'vocalEnhance.failure.analyze' => 'Could not measure the take',
 			'vocalEnhance.failure.enhance' => 'Could not enhance the take',
 			'vocalEnhance.failure.negativeLeadIn' => 'The silence at the start cannot be negative',

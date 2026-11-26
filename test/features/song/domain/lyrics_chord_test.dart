@@ -1,0 +1,116 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:hitwave.cover/features/song/domain/entities/lyrics_chord.dart';
+
+void main() {
+  List<String> chordsOf(String lyrics) => LyricsChord.findAll(lyrics).map((LyricsChord chord) => chord.text).toList();
+
+  test('every chord of a chord line, with bars, repeats and positions', () {
+    expect(chordsOf('       E             Am           E'), <String>['E', 'Am', 'E']);
+    expect(chordsOf('| G Em | Am G || Bbdim7 ||'), <String>['G', 'Em', 'Am', 'G', 'Bbdim7']);
+    expect(chordsOf('   A(V) C#m(IV) F G#(IV) G(III)  (2)'), <String>['A(V)', 'C#m(IV)', 'F', 'G#(IV)', 'G(III)']);
+    expect(chordsOf('E               G#m **'), <String>['E', 'G#m']);
+    expect(chordsOf('Cmaj7 D7/F# AmM7 Emadd9 A7sus4 Hm'), <String>['Cmaj7', 'D7/F#', 'AmM7', 'Emadd9', 'A7sus4', 'Hm']);
+    expect(chordsOf('D7sus C7sus F7sus D7sus4 C9sus G7add'), <String>[
+      'D7sus',
+      'C7sus',
+      'F7sus',
+      'D7sus4',
+      'C9sus',
+      'G7add',
+    ]);
+  });
+
+  test('a run of chords before or inside words', () {
+    expect(chordsOf('C#m Am Коли ти смієшся, тобто радієш,'), <String>['C#m', 'Am']);
+    expect(chordsOf('В. Івасюк - Колиска вітру | Intro: Em G Em C Em'), <String>['Em', 'G', 'Em', 'C', 'Em']);
+    expect(chordsOf('E - Am - E - Am - The bottle stands for lorn'), <String>['E', 'Am', 'E', 'Am']);
+  });
+
+  test('chords in brackets or parentheses anywhere', () {
+    expect(chordsOf('[C] No one knows'), <String>['[C]']);
+    expect(chordsOf('Because I (C) want a (G7) girl'), <String>['(C)', '(G7)']);
+    expect(chordsOf('Drea-ea- [F] ea- [C] eam'), <String>['[F]', '[C]']);
+  });
+
+  test('chords inside brackets that hold chords only', () {
+    expect(chordsOf('[F Dm] Duke, Duke, Duke, Duke of Earl.'), <String>['F', 'Dm']);
+    expect(chordsOf('(Am | G) la la'), <String>['Am', 'G']);
+    expect(chordsOf('[Verse 1] (2 guitars)'), isEmpty);
+  });
+
+  test('a lone chord among words in a song with chords', () {
+    const String duke =
+        '[F Dm] Duke, Duke, Duke, Duke of Earl.\n'
+        'Bb Duke, Duke, Duke of Earl.\n'
+        'C Duke, Duke, Duke of Earl.\n'
+        '2x\n'
+        'F Dm As I, I walk through this world,\n'
+        "C 'Cause I'm the Duke of Earl.\n"
+        'So, yeah, yeah, yeah, yeah.';
+
+    expect(chordsOf(duke), <String>['F', 'Dm', 'Bb', 'C', 'F', 'Dm', 'C']);
+    expect(chordsOf('C G Out of work\nAm I wrong, E7 the rent\nA girl to hold\nDm F We are\nAm Коли ти'), <String>[
+      'C',
+      'G',
+      'E7',
+      'Dm',
+      'F',
+      'Am',
+    ]);
+  });
+
+  test('a lone chord among words stays text in a song without chords', () {
+    expect(chordsOf('Bb Duke, Duke, Duke of Earl.\nC Duke, Duke, Duke of Earl.'), isEmpty);
+    expect(chordsOf('C G Out of work\nBb Duke of Earl'), <String>['C', 'G']);
+  });
+
+  test('words, sections and tabs are not chords', () {
+    expect(chordsOf('A girl to hold in my arms'), isEmpty);
+    expect(chordsOf('Am I wrong to love you'), isEmpty);
+    expect(chordsOf('[Verse 1]\n[Bridge]\n(2 guitars)\n(x3)'), isEmpty);
+    expect(chordsOf('e-----0---|\nB---1-----|'), isEmpty);
+    expect(chordsOf('Біль у серці не стихне,'), isEmpty);
+  });
+
+  test('offsets point at the chord in the whole lyrics', () {
+    const String lyrics = 'Intro\n  Am   G\nla la';
+    final LyricsChord g = LyricsChord.findAll(lyrics).last;
+
+    expect(lyrics.substring(g.start, g.end), 'G');
+  });
+
+  test('a chord in square brackets is found also when glued to a word, as ChordPro writes it', () {
+    const String lyrics = '[Am]We folded every [F]promise\n[C]and let the river [G7/B]carry';
+
+    expect(chordsOf(lyrics), <String>['[Am]', '[F]', '[C]', '[G7/B]']);
+    final LyricsChord f = LyricsChord.findAll(lyrics)[1];
+    expect(lyrics.substring(f.start, f.end), '[F]');
+    expect(chordsOf('[Hello]world [x2]'), isEmpty);
+  });
+
+  test('a chord the user called a word stays text, and becomes a chord again when unmarked', () {
+    const String lyrics = 'Am  C  G\nD  Em\nA girl to hold, G Em\n';
+    final LyricsChord g = LyricsChord.findAll(lyrics).firstWhere((LyricsChord chord) => chord.start > 15);
+
+    final String marked = LyricsChord.markAsText(lyrics, g);
+
+    expect(marked.replaceAll(LyricsChord.textMark, ''), lyrics);
+    expect(chordsOf(lyrics), <String>['Am', 'C', 'G', 'D', 'Em', 'G', 'Em']);
+    expect(chordsOf(marked), <String>['Am', 'C', 'G', 'D', 'Em', 'Em']);
+    final List<({int start, int end, String text})> words = LyricsChord.markedWords(marked);
+    expect(words.map((({int start, int end, String text}) word) => word.text), <String>['G']);
+    expect(words.single.start, g.start);
+    expect(LyricsChord.markedWords(lyrics), isEmpty);
+    expect(LyricsChord.unmark(marked, words.single.start, words.single.end), lyrics);
+  });
+
+  test('a chord in brackets called a word keeps its brackets and stays text', () {
+    const String lyrics = '[Am]We folded every [F]promise\n[C]and';
+    final LyricsChord f = LyricsChord.findAll(lyrics)[1];
+
+    final String marked = LyricsChord.markAsText(lyrics, f);
+
+    expect(chordsOf(marked), <String>['[Am]', '[C]']);
+    expect(marked, contains('[${LyricsChord.textMark}F]'));
+  });
+}

@@ -1,64 +1,77 @@
 import 'package:flutter/material.dart';
-import 'package:watch_it/watch_it.dart';
 
-import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../../core/presentation/theme.dart';
-import '../../../recordings/domain/entities/recording.dart';
-import '../../../recordings/presentation/di/recordings_getters.dart';
-import '../../../song/domain/entities/song.dart';
-import '../../../song/presentation/di/song_getters.dart';
 import '../../domain/entities/practice_day.dart';
-import '../../domain/entities/practice_session.dart';
 import '../../domain/entities/practice_stats.dart';
 import '../../domain/entities/song_practice.dart';
-import '../controllers/practice_page_controller.dart';
-import '../di/practice_getters.dart';
 import 'practice_calendar_widget.dart';
 import 'practice_summary_widget.dart';
 import 'practice_time_text_widget.dart';
 import 'song_practice_list_widget.dart';
 
-/// Practice statistics: totals and streaks, a calendar with the days of practice, the songs of
-/// the chosen day and the most practised songs.
-final class PracticeStatsWidget extends WatchingWidget {
-  static const String _titleSeparator = ' — ';
+/// Practice statistics: totals and streaks, a calendar with the days of practice, the songs of the chosen day and
+/// the most practised songs.
+///
+/// Dumb: the counted statistics, the calendar position, the titles of the songs and the callbacks come from above.
+final class PracticeStatsWidget extends StatelessWidget {
   static const String _dayTitleSeparator = ': ';
   static const String _dateSeparator = '.';
   static const String _zero = '0';
 
-  /// Opens a song (tapping it in a list).
-  final void Function(Song song) onSongPressed;
+  /// The statistics.
+  final PracticeStats stats;
+
+  /// First day of the month the calendar shows.
+  final DateTime month;
+
+  /// The chosen day.
+  final DateTime selectedDay;
+
+  /// Today (midnight).
+  final DateTime today;
+
+  /// The title of a song by its id ("Artist — Song").
+  final String Function(String songId) titleOf;
+
+  /// What tapping a song does, or `null` when the song is gone.
+  final VoidCallback? Function(String songId) onPressedOf;
+
+  /// The texts.
+  final PracticeTexts texts;
+
+  /// Called with the day tapped in the calendar.
+  final ValueChanged<DateTime> onDaySelected;
+
+  /// Called by the previous month button.
+  final VoidCallback onPreviousMonth;
+
+  /// Called by the next month button.
+  final VoidCallback onNextMonth;
 
   /// Creates a new [PracticeStatsWidget].
-  const PracticeStatsWidget({super.key, required this.onSongPressed});
+  const PracticeStatsWidget({
+    super.key,
+    required this.stats,
+    required this.month,
+    required this.selectedDay,
+    required this.today,
+    required this.titleOf,
+    required this.onPressedOf,
+    required this.texts,
+    required this.onDaySelected,
+    required this.onPreviousMonth,
+    required this.onNextMonth,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final Translations t = context.t;
-    final PracticePageController practicePageController = createOnce(
-      _createPracticePageController,
-      dispose: _disposePracticePageController,
-    );
-    final List<PracticeSession> sessions = watch(watchPracticeSessionsUseCase()).value;
-    final List<Recording> recordings = watch(watchRecordingsUseCase()).value;
-    final List<Song> songs = watch(watchListOfSongsUseCase()).value;
-    final DateTime month = watch(practicePageController.monthController).value;
-    final DateTime selectedDay = watch(practicePageController.selectedDayController).value;
-
-    final DateTime now = DateTime.now();
-    final PracticeStats stats = calculatePracticeStatsUseCase(sessions: sessions, recordings: recordings, now: now);
-    final Map<String, String> titles = <String, String>{
-      for (final Song song in songs) song.id: '${song.author}$_titleSeparator${song.name}',
-    };
-    final Map<String, Song> songsById = <String, Song>{for (final Song song in songs) song.id: song};
-    VoidCallback? pressedOf(String songId) => _pressedOf(songsById[songId]);
-    final PracticeDay? day = stats.days[selectedDay];
+    final PracticeDay? day = stats.dayOn(selectedDay);
     final ThemeData theme = Theme.of(context);
 
     return ListView(
-      padding: const EdgeInsets.all(AppTheme.spacingMedium),
+      padding: AppTheme.clearOfSystemBar(context, const EdgeInsets.all(AppTheme.spacingMedium)),
       children: <Widget>[
-        PracticeSummaryWidget(stats: stats),
+        PracticeSummaryWidget(stats: stats, texts: texts),
         const SizedBox(height: AppTheme.spacingMedium),
         Center(
           child: ConstrainedBox(
@@ -66,43 +79,39 @@ final class PracticeStatsWidget extends WatchingWidget {
             child: PracticeCalendarWidget(
               month: month,
               selectedDay: selectedDay,
-              today: PracticeStats.dayOf(now),
-              days: stats.days,
-              onDaySelected: practicePageController.selectDay,
-              onPreviousMonth: practicePageController.showPreviousMonth,
-              onNextMonth: practicePageController.showNextMonth,
+              today: today,
+              stats: stats,
+              texts: texts,
+              onDaySelected: onDaySelected,
+              onPreviousMonth: onPreviousMonth,
+              onNextMonth: onNextMonth,
             ),
           ),
         ),
         const SizedBox(height: AppTheme.spacingMedium),
         Text(
-          '${_formatDate(selectedDay)}$_dayTitleSeparator${PracticeTimeTextWidget.format(t, day?.time ?? Duration.zero)}',
+          '${_formatDate(selectedDay)}$_dayTitleSeparator${texts.timeText(day?.time ?? Duration.zero)}',
           style: theme.textTheme.titleMedium,
         ),
         SongPracticeListWidget(
           songs: day?.songs ?? const <SongPractice>[],
-          titleOf: (String songId) => titles[songId] ?? t.common.songDeleted,
-          onPressedOf: pressedOf,
-          emptyText: t.practice.noPracticeThisDay,
+          titleOf: titleOf,
+          onPressedOf: onPressedOf,
+          emptyText: texts.noPracticeThisDayText,
+          texts: texts,
         ),
         const SizedBox(height: AppTheme.spacingMedium),
-        Text(t.practice.topSongs, style: theme.textTheme.titleMedium),
+        Text(texts.topSongsTitle, style: theme.textTheme.titleMedium),
         SongPracticeListWidget(
           songs: stats.topSongs,
-          titleOf: (String songId) => titles[songId] ?? t.common.songDeleted,
-          onPressedOf: pressedOf,
-          emptyText: t.practice.noPracticeYet,
+          titleOf: titleOf,
+          onPressedOf: onPressedOf,
+          emptyText: texts.noPracticeYetText,
+          texts: texts,
         ),
       ],
     );
   }
-
-  VoidCallback? _pressedOf(Song? song) => song == null ? null : () => onSongPressed(song);
-
-  static PracticePageController _createPracticePageController() => PracticePageController(today: DateTime.now());
-
-  static void _disposePracticePageController(PracticePageController practicePageController) =>
-      practicePageController.dispose();
 
   static String _formatDate(DateTime day) {
     final String date = day.day.toString().padLeft(AppTheme.twoDigits, _zero);

@@ -10,6 +10,7 @@ import 'package:hitwave.cover/features/backup/data/data_sources/backup_data_sour
 import 'package:hitwave.cover/features/backup/data/repositories/backup_repository_impl.dart';
 import 'package:hitwave.cover/features/backup/domain/entities/backup_failure.dart';
 import 'package:hitwave.cover/features/backup/domain/entities/import_choice.dart';
+import 'package:hitwave.cover/features/backup/domain/entities/import_decision.dart';
 import 'package:hitwave.cover/features/backup/domain/entities/import_conflict.dart';
 import 'package:hitwave.cover/features/backup/domain/entities/import_plan.dart';
 import 'package:hitwave.cover/features/backup/domain/entities/import_summary.dart';
@@ -149,7 +150,10 @@ Future<ImportPlan> open(BackupRepositoryImpl repository, {bool includeRecordings
 }
 
 Future<ImportSummary> apply(BackupRepositoryImpl repository, Map<int, ImportChoice> choices) async {
-  final Result<ImportSummary, BackupFailure> result = await repository.applyImport(choices);
+  final Result<ImportSummary, BackupFailure> result = await repository.applyImport(<ImportDecision>[
+    for (final MapEntry<int, ImportChoice> entry in choices.entries)
+      ImportDecision(index: entry.key, choice: entry.value),
+  ]);
   return (result as SuccessResult<ImportSummary, BackupFailure>).value;
 }
 
@@ -218,10 +222,7 @@ void main() {
 
     await repository.cancelImport();
 
-    expect(
-      await repository.applyImport(const <int, ImportChoice>{}),
-      isA<FailureResult<ImportSummary, BackupFailure>>(),
-    );
+    expect(await repository.applyImport(const <ImportDecision>[]), isA<FailureResult<ImportSummary, BackupFailure>>());
     expect(songs.songs.value, hasLength(4));
   });
 

@@ -48,12 +48,13 @@ final class SyncPage extends WatchingWidget {
         appBar: AppBar(title: Text(t.sync.title)),
         body: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(AppTheme.spacingLarge),
+            padding: AppTheme.clearOfSystemBar(context, const EdgeInsets.all(AppTheme.spacingLarge)),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: AppTheme.maxContentWidth),
               child: switch (state) {
                 HostingSyncState(:final String code) => SyncQrWidget(
                   code: code,
+                  texts: t.syncQr,
                   onCopyPressed: () => _copy(ScaffoldMessenger.of(context), t, code),
                   onCancelPressed: stopSyncUseCase.call,
                 ),
@@ -68,15 +69,14 @@ final class SyncPage extends WatchingWidget {
                 ReviewSyncState(:final List<SyncChange> changes, :final String peerName) => SyncChangesWidget(
                   changes: changes,
                   chosen: chosen,
-                  peerName: peerName.isEmpty ? t.sync.anotherDevice : peerName,
+                  texts: t.syncChanges(peerName.isEmpty ? t.sync.anotherDevice : peerName),
                   onChosenChanged: syncPageController.setChosen,
                   onAllChosenChanged: syncPageController.setAllChosen,
                   onApplyPressed: () => _apply(syncPageController),
                   onCancelPressed: stopSyncUseCase.call,
                 ),
                 DoneSyncState(:final summary) => SyncSummaryWidget(
-                  summary: summary,
-                  doneLabel: t.sync.done,
+                  texts: t.syncSummary(summary),
                   onDonePressed: () => _onDonePressed(context),
                 ),
                 IdleSyncState() || FailedSyncState() => Column(

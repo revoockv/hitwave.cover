@@ -207,8 +207,8 @@ final class FakeHistory implements HistoryRepository {
   @override
   Future<Result<void, HistoryFailure>> importHistory(UsageHistory added) async {
     history.value = UsageHistory(
-      songsOpenedAt: <String, DateTime>{...history.value.songsOpenedAt, ...added.songsOpenedAt},
-      coversPlayedAt: <String, DateTime>{...history.value.coversPlayedAt, ...added.coversPlayedAt},
+      songsOpened: <UsageTime>[...history.value.songsOpened, ...added.songsOpened],
+      coversPlayed: <UsageTime>[...history.value.coversPlayed, ...added.coversPlayed],
     );
     return Result.ok;
   }
@@ -232,12 +232,12 @@ final class Device {
     required List<Song> songs,
     required Directory root,
     List<PracticeSession> sessions = const <PracticeSession>[],
-    UsageHistory history = UsageHistory.empty,
+    UsageHistory? history,
   }) async {
     final FakeSongs fakeSongs = FakeSongs(songs);
     final FakeRecordings recordings = FakeRecordings(await Directory('${root.path}/$name').create());
     final FakePractice practice = FakePractice(sessions);
-    final FakeHistory fakeHistory = FakeHistory(history);
+    final FakeHistory fakeHistory = FakeHistory(history ?? UsageHistory.empty);
     final HiveSyncTombstoneService tombstones = await HiveSyncTombstoneService(
       storage: LocalStorageService(),
       boxName: 'tombstones_$name',
@@ -305,8 +305,7 @@ void main() {
       songs: <Song>[song('a1', 'Океан Ельзи', 'Обійми')],
       sessions: <PracticeSession>[session('sa', 'a1')],
       history: UsageHistory(
-        songsOpenedAt: <String, DateTime>{'a1': DateTime(2026, 11, 12)},
-        coversPlayedAt: const <String, DateTime>{},
+        songsOpened: <UsageTime>[UsageTime(id: 'a1', at: DateTime(2026, 11, 12))],
       ),
     );
     host.recordings.add('ra', 'a1', enhanced: true);
@@ -339,7 +338,7 @@ void main() {
     expect(File(received.rawPath).readAsBytesSync(), <int>[1, 2, 3]);
     expect(File(received.enhancedPath!).readAsBytesSync(), <int>[4, 5]);
     expect(guest.practice.sessions.value.map((PracticeSession s) => s.songId), containsAll(<String>['b1', 'b2']));
-    expect(guest.history.history.value.songsOpenedAt.keys, <String>['b1']);
+    expect(guest.history.history.value.songsOpened.map((UsageTime time) => time.id), <String>['b1']);
 
     // The host got the song it missed, with its cover and session.
     expect(host.songNames, <String>['Обійми', 'Stefania']);

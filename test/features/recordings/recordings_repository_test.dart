@@ -29,6 +29,7 @@ import 'package:logger/logger.dart';
 import 'package:hitwave.cover/features/vocal_enhance/domain/entities/vocal_enhance_failure.dart';
 import 'package:hitwave.cover/features/recordings/domain/entities/enhance_failure.dart';
 import 'package:hitwave.cover/features/recordings/domain/entities/recordings_failure.dart';
+import 'package:hitwave.cover/features/vocal_enhance/domain/entities/enhance_setting.dart';
 
 /// A microphone that writes a few bytes when stopped.
 final class FakeRecorder implements RecorderDataSource {
@@ -110,7 +111,7 @@ final class FakeEngine implements VocalEnhanceRepository {
     required EnhancePreset preset,
     required double? roomToneSeconds,
     required bool trimSilence,
-    required Map<String, double> settings,
+    required List<EnhanceSetting> settings,
   }) async {
     trims.add(trimSilence);
     onEnhance?.call();
@@ -121,7 +122,7 @@ final class FakeEngine implements VocalEnhanceRepository {
       EnhanceReport(
         inputPath: inputPath,
         outputPath: outputPath,
-        settings: const <String, double>{},
+        settings: const <EnhanceSetting>[],
         before: analysis,
         after: analysis,
         secondsSpent: 0.1,

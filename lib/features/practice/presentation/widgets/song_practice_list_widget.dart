@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../domain/entities/song_practice.dart';
 import 'practice_time_text_widget.dart';
 
@@ -20,6 +19,9 @@ final class SongPracticeListWidget extends StatelessWidget {
   /// Shown when [songs] is empty.
   final String emptyText;
 
+  /// How times and takes are written.
+  final PracticeTexts texts;
+
   /// Creates a new [SongPracticeListWidget].
   const SongPracticeListWidget({
     super.key,
@@ -27,11 +29,11 @@ final class SongPracticeListWidget extends StatelessWidget {
     required this.titleOf,
     required this.onPressedOf,
     required this.emptyText,
+    required this.texts,
   });
 
   @override
   Widget build(BuildContext context) {
-    final Translations t = context.t;
     final ThemeData theme = Theme.of(context);
     if (songs.isEmpty) {
       return Text(emptyText, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant));
@@ -42,12 +44,13 @@ final class SongPracticeListWidget extends StatelessWidget {
           ListTile(
             contentPadding: EdgeInsets.zero,
             leading: const Icon(Icons.music_note_outlined),
-            title: Text(titleOf(song.songId), maxLines: 1, overflow: TextOverflow.ellipsis),
-            trailing: Text(
+            // The time goes under the name, so a long name keeps the whole line.
+            title: Text(titleOf(song.songId), maxLines: 2, overflow: TextOverflow.ellipsis),
+            subtitle: Text(
               song.takes > 0
-                  ? '${PracticeTimeTextWidget.format(t, song.time)}$_separator${t.practice.takesCount(n: song.takes)}'
-                  : PracticeTimeTextWidget.format(t, song.time),
-              style: theme.textTheme.bodyMedium,
+                  ? '${texts.timeText(song.time)}$_separator${texts.takesText(song.takes)}'
+                  : texts.timeText(song.time),
+              style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
             ),
             onTap: onPressedOf(song.songId),
           ),

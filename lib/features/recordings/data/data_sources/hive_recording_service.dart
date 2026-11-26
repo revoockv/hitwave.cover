@@ -89,5 +89,5 @@ final class HiveRecordingService {
     }
   }
 
-  RecordingModel _toModel(dynamic value) => RecordingModel.fromMap(value as Map<dynamic, dynamic>);
+  RecordingModel _toModel(dynamic value) => RecordingModel.fromStored(value);
 }

@@ -21,6 +21,10 @@ final class AppSettingsModel {
   /// Creates an [AppSettingsModel].
   const AppSettingsModel({required this.language, required this.themeStyle, required this.accentColor});
 
+  /// Reads what Hive returned: `null` when nothing (or no map) was stored.
+  static AppSettingsModel? fromStored(Object? value) =>
+      value is Map<dynamic, dynamic> ? AppSettingsModel.fromMap(value) : null;
+
   /// Reads a stored map; a missing field keeps its first-start value.
   factory AppSettingsModel.fromMap(Map<dynamic, dynamic> map) => AppSettingsModel(
     language: map[_languageField] as String? ?? AppSettings.initial.language.name,

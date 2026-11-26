@@ -1,10 +1,10 @@
 import '../../../../core/presentation/widgets/surface_widget.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../../core/presentation/theme.dart';
-import '../../domain/entities/practice_day.dart';
+import '../../domain/entities/practice_stats.dart';
 import 'practice_day_cell_widget.dart';
+import 'practice_time_text_widget.dart';
 
 /// Month calendar with a mark on every day of practice ([PracticeDayCellWidget]); weeks start
 /// on Monday.
@@ -21,8 +21,8 @@ final class PracticeCalendarWidget extends StatelessWidget {
   /// Today (midnight).
   final DateTime today;
 
-  /// Days with practice, by midnight.
-  final Map<DateTime, PracticeDay> days;
+  /// The practice whose days are marked.
+  final PracticeStats stats;
 
   /// Called with the tapped day.
   final ValueChanged<DateTime> onDaySelected;
@@ -33,21 +33,24 @@ final class PracticeCalendarWidget extends StatelessWidget {
   /// Called by the "next month" button.
   final VoidCallback onNextMonth;
 
+  /// The names of months and weekdays and the tooltips.
+  final PracticeTexts texts;
+
   /// Creates a new [PracticeCalendarWidget].
   const PracticeCalendarWidget({
     super.key,
     required this.month,
     required this.selectedDay,
     required this.today,
-    required this.days,
+    required this.stats,
     required this.onDaySelected,
     required this.onPreviousMonth,
     required this.onNextMonth,
+    required this.texts,
   });
 
   @override
   Widget build(BuildContext context) {
-    final Translations t = context.t;
     final ThemeData theme = Theme.of(context);
     final int leading = month.weekday - DateTime.monday;
     final int length = DateTime(month.year, month.month + 1, 0).day;
@@ -62,19 +65,19 @@ final class PracticeCalendarWidget extends StatelessWidget {
             Row(
               children: <Widget>[
                 IconButton(
-                  tooltip: t.practice.previousMonth,
+                  tooltip: texts.previousMonthTooltip,
                   onPressed: onPreviousMonth,
                   icon: const Icon(Icons.chevron_left),
                 ),
                 Expanded(
                   child: Text(
-                    '${t.practice.monthNames[month.month - 1]}$_space${month.year}',
+                    '${texts.monthNames[month.month - 1]}$_space${month.year}',
                     textAlign: TextAlign.center,
                     style: theme.textTheme.titleMedium,
                   ),
                 ),
                 IconButton(
-                  tooltip: t.practice.nextMonth,
+                  tooltip: texts.nextMonthTooltip,
                   onPressed: onNextMonth,
                   icon: const Icon(Icons.chevron_right),
                 ),
@@ -82,7 +85,7 @@ final class PracticeCalendarWidget extends StatelessWidget {
             ),
             Row(
               children: <Widget>[
-                for (final String name in t.practice.weekdayNames)
+                for (final String name in texts.weekdayNames)
                   Expanded(
                     child: Text(
                       name,
@@ -112,7 +115,7 @@ final class PracticeCalendarWidget extends StatelessWidget {
 
   PracticeDayCellWidget _cell(DateTime day) => PracticeDayCellWidget(
     day: day,
-    practice: days[day],
+    practice: stats.dayOn(day),
     isSelected: day == selectedDay,
     isToday: day == today,
     onSelected: onDaySelected,

@@ -13,6 +13,7 @@ import '../models/enhance_progress_model.dart';
 import '../models/enhance_report_model.dart';
 import '../models/recording_analysis_model.dart';
 import '../../domain/entities/vocal_enhance_failure.dart';
+import '../../domain/entities/enhance_setting.dart';
 
 /// [VocalEnhanceRepository] on top of the audio engine; converts engine errors to failures.
 final class VocalEnhanceRepositoryImpl implements VocalEnhanceRepository, DisposableResource {
@@ -65,7 +66,7 @@ final class VocalEnhanceRepositoryImpl implements VocalEnhanceRepository, Dispos
     required EnhancePreset preset,
     required double? roomToneSeconds,
     required bool trimSilence,
-    required Map<String, double> settings,
+    required List<EnhanceSetting> settings,
   }) async {
     _logger.i('$_enhanceStartLog$inputPath$_arrowLog$outputPath');
     try {
@@ -74,7 +75,7 @@ final class VocalEnhanceRepositoryImpl implements VocalEnhanceRepository, Dispos
         outputPath: outputPath,
         preset: preset.name,
         settings: <String, double>{
-          ...settings,
+          for (final EnhanceSetting setting in settings) setting.name: setting.value,
           _noiseProfileSetting: ?roomToneSeconds,
           if (trimSilence) _trimSilenceSetting: _on,
         },

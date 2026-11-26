@@ -57,8 +57,8 @@ void main() {
     Hive.init(directory.path);
     final UsageHistory history = (await open()).watchHistory().value;
 
-    expect(history.songsOpenedAt['song-1'], DateTime(2026, 11, 12, 10, 5));
-    expect(history.coversPlayedAt['cover-1'], DateTime(2026, 11, 12, 10, 5));
+    expect(history.songOpenedAt('song-1'), DateTime(2026, 11, 12, 10, 5));
+    expect(history.coverPlayedAt('cover-1'), DateTime(2026, 11, 12, 10, 5));
   });
 
   test('openings follow a song moved into the account and go with a deleted one', () async {
@@ -70,7 +70,7 @@ void main() {
     songs.changes.add(const SongDeletedIdChange('local-2'));
     await Future<void>.delayed(const Duration(milliseconds: 50));
 
-    expect(repository.watchHistory().value.songsOpenedAt.keys, <String>['account-1']);
+    expect(repository.watchHistory().value.songsOpened.map((UsageTime time) => time.id), <String>['account-1']);
   });
 
   test('clearing forgets the openings and playbacks, also after a restart', () async {
@@ -79,13 +79,11 @@ void main() {
     await repository.markCoverPlayed('cover-1');
 
     expect((await repository.clearHistory()).isSuccess, isTrue);
-    expect(repository.watchHistory().value.songsOpenedAt, isEmpty);
-    expect(repository.watchHistory().value.coversPlayedAt, isEmpty);
+    expect(repository.watchHistory().value.isEmpty, isTrue);
 
     await Hive.close();
     Hive.init(directory.path);
     final HistoryRepositoryImpl reopened = await open();
-    expect(reopened.watchHistory().value.songsOpenedAt, isEmpty);
-    expect(reopened.watchHistory().value.coversPlayedAt, isEmpty);
+    expect(reopened.watchHistory().value.isEmpty, isTrue);
   });
 }
