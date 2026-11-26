@@ -215,6 +215,7 @@
     "allArtists": "All artists",
     "artist": "Artist",
     "artistSearch": "Search artist",
+    "chordTapped": "“{chord}” is a chord",
     "countPractice": "Practice",
     "coverSearch": "Search covers by song",
     "coversTooltip": "Covers",
@@ -241,6 +242,8 @@
     "importSongs": "Import",
     "leadIn": "Lead-in",
     "lyrics": "Lyrics",
+    "makeChord": "It is a chord",
+    "makeWord": "It is a word",
     "microphone": "Microphone: {name}",
     "myCovers": "My covers",
     "mySongs": "My songs",
@@ -280,7 +283,8 @@
     "tabSongs": "Songs",
     "tabStatistics": "Statistics",
     "takeSaved": "Take saved",
-    "trimSilence": "Trim silence"
+    "trimSilence": "Trim silence",
+    "wordTapped": "“{word}” is a word"
   },
   "sync": {
     "all": "All",

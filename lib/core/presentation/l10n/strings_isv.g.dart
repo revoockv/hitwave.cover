@@ -278,6 +278,7 @@ class _Translations$song$isv extends Translations$song$en {
 	@override String get allArtists => 'Вси артисти';
 	@override String get artist => 'Артист';
 	@override String get artistSearch => 'Искати артиста';
+	@override String chordTapped({required Object chord}) => '«${chord}» јест акорд';
 	@override String get countPractice => 'Тренинг';
 	@override String get coverSearch => 'Искати каверы по пєсњи';
 	@override String get coversTooltip => 'Каверы';
@@ -293,6 +294,8 @@ class _Translations$song$isv extends Translations$song$en {
 	@override String get importSongs => 'Импортовати';
 	@override String get leadIn => 'Вступ';
 	@override String get lyrics => 'Текст пєсњи';
+	@override String get makeChord => 'То јест акорд';
+	@override String get makeWord => 'То јест слово';
 	@override String microphone({required Object name}) => 'Микрофон: ${name}';
 	@override String get myCovers => 'Моје каверы';
 	@override String get mySongs => 'Моје пєсње';
@@ -330,6 +333,7 @@ class _Translations$song$isv extends Translations$song$en {
 	@override String get tabStatistics => 'Прогрес';
 	@override String get takeSaved => 'Запис схрањены';
 	@override String get trimSilence => 'Одрєзати тишину';
+	@override String wordTapped({required Object word}) => '«${word}» јест слово';
 }
 
 // Path: sync
@@ -822,6 +826,7 @@ extension on TranslationsIsv {
 			'song.allArtists' => 'Вси артисти',
 			'song.artist' => 'Артист',
 			'song.artistSearch' => 'Искати артиста',
+			'song.chordTapped' => ({required Object chord}) => '«${chord}» јест акорд',
 			'song.countPractice' => 'Тренинг',
 			'song.coverSearch' => 'Искати каверы по пєсњи',
 			'song.coversTooltip' => 'Каверы',
@@ -846,6 +851,8 @@ extension on TranslationsIsv {
 			'song.importSongs' => 'Импортовати',
 			'song.leadIn' => 'Вступ',
 			'song.lyrics' => 'Текст пєсњи',
+			'song.makeChord' => 'То јест акорд',
+			'song.makeWord' => 'То јест слово',
 			'song.microphone' => ({required Object name}) => 'Микрофон: ${name}',
 			'song.myCovers' => 'Моје каверы',
 			'song.mySongs' => 'Моје пєсње',
@@ -881,6 +888,7 @@ extension on TranslationsIsv {
 			'song.tabStatistics' => 'Прогрес',
 			'song.takeSaved' => 'Запис схрањены',
 			'song.trimSilence' => 'Одрєзати тишину',
+			'song.wordTapped' => ({required Object word}) => '«${word}» јест слово',
 			'sync.all' => 'Все',
 			'sync.anotherDevice' => 'Друго устројство',
 			'sync.applyChosen' => ({required Object n}) => 'Синхронизовати означене (${n})',

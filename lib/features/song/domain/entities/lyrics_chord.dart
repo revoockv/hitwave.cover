@@ -7,12 +7,16 @@ import 'tab_block.dart';
 /// - on a line with words, a run of two or more chords (`C#m Am Коли ти смієшся`, `Intro: Em G Em`);
 /// - anywhere, a chord in brackets or parentheses (`[Am]`, `Because I (C) want`), and every chord of brackets that
 ///   hold chords only (`[F Dm] Duke, Duke`, `(Am | G)`);
+/// - a chord in square brackets even inside a word, as ChordPro writes it (`[Am]We folded every [F]promise`);
 /// - in a song with chords (chords on at least two lines by the rules above), also a lone chord among words
 ///   (`Bb Duke, Duke of Earl`, `C 'Cause I'm the Duke`).
 ///
 /// Elsewhere a single plain word like `A` or `Am` among words stays text: in lyrics it is more often a word. Even in a
 /// song with chords `A` and `Am` before a Latin word (`A girl to hold`, `Am I wrong`) stay text.
 /// Tab lines ([TabBlock.isTabLine]) have no chords.
+///
+/// A chord the user said is a word ([markAsText]) has an invisible [textMark] before it and stays text; the mark
+/// goes with the lyrics everywhere (sync, backup), and [unmark] takes it away.
 final class LyricsChord {
   /// A chord: root (`A`–`H`), accidental, quality, extensions, a position or an option in
   /// parentheses, a bass note, trailing marks (`G#m**`).
@@ -22,6 +26,12 @@ final class LyricsChord {
 
   static final RegExp _plainChord = RegExp('^$_chord\$');
   static final RegExp _enclosedChord = RegExp('^(?:\\[$_chord\\]|\\($_chord\\))\$');
+
+  /// A chord in square brackets anywhere in a line, also glued to a word (`[Am]We`).
+  static final RegExp _inlineChord = RegExp('\\[$_chord\\]');
+
+  /// Put before a chord the user said is a word, so it stays text (U+2060 WORD JOINER: invisible, no space).
+  static const String textMark = '\u2060';
 
   /// Bars, repeats and fillers a chord line may hold besides chords.
   static final RegExp _neutral = RegExp(
@@ -121,6 +131,12 @@ final class LyricsChord {
       }
     }
     closeRun(tokens.length);
+    for (final Match inline in _inlineChord.allMatches(line)) {
+      final int start = offset + inline.start;
+      if (chords.any((LyricsChord chord) => chord.start <= start && start < chord.end)) continue;
+      chords.add(LyricsChord(start: start, end: offset + inline.end, text: inline[0]!));
+    }
+    chords.sort(_byStart);
     return _Line(chords: chords, lone: lone);
   }
 
@@ -161,6 +177,27 @@ final class LyricsChord {
   }
 
   static bool _isChord(_Kind kind) => kind == _Kind.plain || kind == _Kind.enclosed;
+
+  /// [lyrics] with [chord] marked as a word: [textMark] before its first letter (inside its bracket).
+  static String markAsText(String lyrics, LyricsChord chord) {
+    final int at = chord.start + (chord.text.startsWith('[') || chord.text.startsWith('(') ? 1 : 0);
+    return lyrics.replaceRange(at, at, textMark);
+  }
+
+  /// The word at [offset] of [lyrics] that was a chord marked as a word, or `null`: its range and its text without
+  /// the mark.
+  static ({int start, int end, String text})? markedWordAt(String lyrics, int offset) {
+    for (final Match word in _token.allMatches(lyrics)) {
+      if (word.start > offset) break;
+      if (offset > word.end || !word[0]!.contains(textMark)) continue;
+      return (start: word.start, end: word.end, text: word[0]!.replaceAll(textMark, ''));
+    }
+    return null;
+  }
+
+  /// [lyrics] without the [textMark]s between [start] and [end]: the word there may be a chord again.
+  static String unmark(String lyrics, int start, int end) =>
+      lyrics.replaceRange(start, end, lyrics.substring(start, end).replaceAll(textMark, ''));
 
   @override
   bool operator ==(Object other) =>

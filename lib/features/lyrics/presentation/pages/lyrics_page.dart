@@ -20,6 +20,8 @@ import '../../../recordings/presentation/pages/recordings_sheet_page.dart';
 import '../../../song/domain/entities/lyrics_layout.dart';
 import '../../../song/domain/entities/song.dart';
 import '../controllers/lyrics_page_controller.dart';
+import '../controllers/lyrics_text_controller.dart';
+import '../../../song/domain/entities/lyrics_chord.dart';
 import '../../../song/presentation/di/song_getters.dart';
 import '../wrappers/lyrics_controls_wrapper.dart';
 import '../wrappers/recording_indicator_wrapper.dart';
@@ -164,6 +166,8 @@ final class LyricsPage extends WatchingWidget {
                             builder: (BuildContext context, BoxConstraints constraints) => TextField(
                               controller: lyricsPageController.lyricsTextController..lineWidth = constraints.maxWidth,
                               onChanged: (String lyrics) => _onLyricsChanged(lyricsPageController, lyrics),
+                              onTap: () =>
+                                  _onLyricsFieldTapped(ScaffoldMessenger.of(context), context.t, lyricsPageController),
                               focusNode: lyricsPageController.lyricsFocusNode,
                               readOnly: isScrolling,
                               textInputAction: TextInputAction.done,
@@ -303,9 +307,78 @@ final class LyricsPage extends WatchingWidget {
       ..chords = findChordsUseCase(lyrics);
   }
 
+  /// A tap on a chord offers to keep it as a word (`A girl` is no chord), a tap on such a word to make it a chord
+  /// again.
+  void _onLyricsFieldTapped(
+    ScaffoldMessengerState messenger,
+    Translations t,
+    LyricsPageController lyricsPageController,
+  ) {
+    final LyricsTextController field = lyricsPageController.lyricsTextController;
+    final int offset = field.selection.baseOffset;
+    if (offset < 0) return;
+    final String lyrics = field.text;
+    final LyricsChord? chord = field.chords
+        .where((LyricsChord chord) => chord.start <= offset && offset <= chord.end)
+        .firstOrNull;
+    if (chord != null) {
+      _showChordChoice(
+        messenger,
+        text: t.song.chordTapped(chord: chord.text),
+        action: t.song.makeWord,
+        onPressed: () => _replaceLyrics(lyricsPageController, lyrics, markChordAsTextUseCase(lyrics, chord)),
+      );
+      return;
+    }
+    final ({int start, int end, String text})? word = findMarkedWordUseCase(lyrics, offset);
+    if (word == null) return;
+    _showChordChoice(
+      messenger,
+      text: t.song.wordTapped(word: word.text),
+      action: t.song.makeChord,
+      onPressed: () => _replaceLyrics(lyricsPageController, lyrics, unmarkChordUseCase(lyrics, word.start, word.end)),
+    );
+  }
+
+  static void _showChordChoice(
+    ScaffoldMessengerState messenger, {
+    required String text,
+    required String action,
+    required VoidCallback onPressed,
+  }) {
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(text),
+          action: SnackBarAction(label: action, onPressed: onPressed),
+        ),
+      );
+  }
+
+  /// Puts [changed] in place of [before] (unless the lyrics were edited meanwhile), colours it and saves it.
+  Future<void> _replaceLyrics(LyricsPageController lyricsPageController, String before, String changed) async {
+    if (lyricsPageController.isDisposed) return;
+    final LyricsTextController field = lyricsPageController.lyricsTextController;
+    if (field.text != before) return;
+    final int offset = field.selection.baseOffset.clamp(0, changed.length);
+    field.value = TextEditingValue(
+      text: changed,
+      selection: TextSelection.collapsed(offset: offset),
+    );
+    _onLyricsChanged(lyricsPageController, changed);
+    await _saveLyrics(lyricsPageController);
+  }
+
   /// Saves the edited lyrics when the field loses focus.
   Future<void> _onLyricsFocusChanged(LyricsPageController lyricsPageController, bool hasFocus) async {
-    if (hasFocus || !lyricsPageController.canSaveLyrics()) return;
+    if (hasFocus) return;
+    await _saveLyrics(lyricsPageController);
+  }
+
+  /// Saves the lyrics in the field when they changed; ignored while a save runs.
+  Future<void> _saveLyrics(LyricsPageController lyricsPageController) async {
+    if (!lyricsPageController.canSaveLyrics()) return;
     final ValueNotifier<ResultState<void, SongFailure>> lyricsSavingStateController =
         lyricsPageController.lyricsSavingStateController;
     final String lyrics = lyricsPageController.lyrics;
