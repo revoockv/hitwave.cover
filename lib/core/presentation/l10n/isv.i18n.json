@@ -225,6 +225,7 @@
     "allArtists": "Вси артисти",
     "artist": "Артист",
     "artistSearch": "Искати артиста",
+    "chordTapped": "«{chord}» јест акорд",
     "countPractice": "Тренинг",
     "coverSearch": "Искати каверы по пєсњи",
     "coversTooltip": "Каверы",
@@ -251,6 +252,8 @@
     "importSongs": "Импортовати",
     "leadIn": "Вступ",
     "lyrics": "Текст пєсњи",
+    "makeChord": "То јест акорд",
+    "makeWord": "То јест слово",
     "microphone": "Микрофон: {name}",
     "myCovers": "Моје каверы",
     "mySongs": "Моје пєсње",
@@ -292,7 +295,8 @@
     "tabSongs": "Пєсње",
     "tabStatistics": "Прогрес",
     "takeSaved": "Запис схрањены",
-    "trimSilence": "Одрєзати тишину"
+    "trimSilence": "Одрєзати тишину",
+    "wordTapped": "«{word}» јест слово"
   },
   "sync": {
     "all": "Все",

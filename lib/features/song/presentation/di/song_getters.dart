@@ -6,6 +6,9 @@ import '../../domain/use_cases/delete_all_songs_use_case.dart';
 import '../../domain/use_cases/delete_cover_use_case.dart';
 import '../../domain/use_cases/delete_song_use_case.dart';
 import '../../domain/use_cases/find_chords_use_case.dart';
+import '../../domain/use_cases/find_marked_word_use_case.dart';
+import '../../domain/use_cases/mark_chord_as_text_use_case.dart';
+import '../../domain/use_cases/unmark_chord_use_case.dart';
 import '../../domain/use_cases/find_tab_blocks_use_case.dart';
 import '../../domain/use_cases/update_cover_use_case.dart';
 import '../../domain/use_cases/update_song_lead_in_use_case.dart';
@@ -52,3 +55,12 @@ FindTabBlocksUseCase get findTabBlocksUseCase => di<FindTabBlocksUseCase>();
 
 /// The use case that finds the chords in the lyrics of a song.
 FindChordsUseCase get findChordsUseCase => di<FindChordsUseCase>();
+
+/// The use case that keeps a found chord as a word, when the user says it is not a chord.
+MarkChordAsTextUseCase get markChordAsTextUseCase => di<MarkChordAsTextUseCase>();
+
+/// The use case that finds a word the user said is not a chord.
+FindMarkedWordUseCase get findMarkedWordUseCase => di<FindMarkedWordUseCase>();
+
+/// The use case that lets a marked word be a chord again.
+UnmarkChordUseCase get unmarkChordUseCase => di<UnmarkChordUseCase>();

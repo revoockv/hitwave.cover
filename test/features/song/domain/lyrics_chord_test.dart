@@ -78,4 +78,38 @@ void main() {
 
     expect(lyrics.substring(g.start, g.end), 'G');
   });
+
+  test('a chord in square brackets is found also when glued to a word, as ChordPro writes it', () {
+    const String lyrics = '[Am]We folded every [F]promise\n[C]and let the river [G7/B]carry';
+
+    expect(chordsOf(lyrics), <String>['[Am]', '[F]', '[C]', '[G7/B]']);
+    final LyricsChord f = LyricsChord.findAll(lyrics)[1];
+    expect(lyrics.substring(f.start, f.end), '[F]');
+    expect(chordsOf('[Hello]world [x2]'), isEmpty);
+  });
+
+  test('a chord the user called a word stays text, and becomes a chord again when unmarked', () {
+    const String lyrics = 'Am  C  G\nD  Em\nA girl to hold, G Em\n';
+    final LyricsChord g = LyricsChord.findAll(lyrics).firstWhere((LyricsChord chord) => chord.start > 15);
+
+    final String marked = LyricsChord.markAsText(lyrics, g);
+
+    expect(marked.replaceAll(LyricsChord.textMark, ''), lyrics);
+    expect(chordsOf(lyrics), <String>['Am', 'C', 'G', 'D', 'Em', 'G', 'Em']);
+    expect(chordsOf(marked), <String>['Am', 'C', 'G', 'D', 'Em', 'Em']);
+    final ({int start, int end, String text})? word = LyricsChord.markedWordAt(marked, g.start + 1);
+    expect(word?.text, 'G');
+    expect(LyricsChord.markedWordAt(marked, 0), isNull);
+    expect(LyricsChord.unmark(marked, word!.start, word.end), lyrics);
+  });
+
+  test('a chord in brackets called a word keeps its brackets and stays text', () {
+    const String lyrics = '[Am]We folded every [F]promise\n[C]and';
+    final LyricsChord f = LyricsChord.findAll(lyrics)[1];
+
+    final String marked = LyricsChord.markAsText(lyrics, f);
+
+    expect(chordsOf(marked), <String>['[Am]', '[C]']);
+    expect(marked, contains('[${LyricsChord.textMark}F]'));
+  });
 }
