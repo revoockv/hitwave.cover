@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:flutter/material.dart';
 
 /// Values shared by more than one feature: spacing, sizes, colors and the
@@ -59,6 +60,24 @@ final class AppTheme {
   static EdgeInsets clearOfSystemBar(BuildContext context, EdgeInsets padding) =>
       padding.copyWith(bottom: padding.bottom + MediaQuery.paddingOf(context).bottom);
 
+  /// How long the app takes to change into another theme, accent color or language.
+  static const Duration themeChange = Duration(milliseconds: 450);
+
+  /// The curve of a theme, accent or language change.
+  static const Curve themeChangeCurve = Curves.easeInOutCubic;
+
+  /// Pages slide in and fade over the app background; iOS keeps its own transition for the swipe back.
+  static const PageTransitionsTheme _pageTransitions = PageTransitionsTheme(
+    builders: <TargetPlatform, PageTransitionsBuilder>{
+      TargetPlatform.android: FadeForwardsPageTransitionsBuilder(backgroundColor: _transparent),
+      TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+      TargetPlatform.macOS: FadeForwardsPageTransitionsBuilder(backgroundColor: _transparent),
+      TargetPlatform.windows: FadeForwardsPageTransitionsBuilder(backgroundColor: _transparent),
+      TargetPlatform.linux: FadeForwardsPageTransitionsBuilder(backgroundColor: _transparent),
+      TargetPlatform.fuchsia: FadeForwardsPageTransitionsBuilder(backgroundColor: _transparent),
+    },
+  );
+
   /// Line height of lyrics and other long text.
   static const double readingLineHeight = 1.5;
 
@@ -69,28 +88,50 @@ final class AppTheme {
   static const int twoDigits = 2;
 
   /// Accent colors the user can choose from.
+  /// Orange — the accent of a first start.
   static const Color accentOrange = Color(0xFFF97316);
 
-  /// Neon blue accent.
-  static const Color accentBlue = Color(0xFF3B9EFF);
+  /// Gold.
+  static const Color accentGold = Color(0xFFE5A50A);
 
-  /// Indigo accent.
-  static const Color accentIndigo = Color(0xFF6366F1);
+  /// Olive green.
+  static const Color accentOlive = Color(0xFF7FA32B);
 
-  /// Violet accent.
-  static const Color accentViolet = Color(0xFFA855F7);
-
-  /// Pink accent.
-  static const Color accentPink = Color(0xFFEC4899);
-
-  /// Red accent.
-  static const Color accentRed = Color(0xFFEF4444);
-
-  /// Green accent.
+  /// Green.
   static const Color accentGreen = Color(0xFF22C55E);
 
-  /// Teal accent.
+  /// Teal.
   static const Color accentTeal = Color(0xFF14B8A6);
+
+  /// Azure, a light sky blue.
+  static const Color accentAzure = Color(0xFF0EA5E9);
+
+  /// Neon blue.
+  static const Color accentBlue = Color(0xFF3B9EFF);
+
+  /// Indigo.
+  static const Color accentIndigo = Color(0xFF6366F1);
+
+  /// Violet.
+  static const Color accentViolet = Color(0xFFA855F7);
+
+  /// Lilac, a pale violet.
+  static const Color accentLilac = Color(0xFFC084FC);
+
+  /// Pink.
+  static const Color accentPink = Color(0xFFEC4899);
+
+  /// Raspberry.
+  static const Color accentRaspberry = Color(0xFFD61F69);
+
+  /// Red.
+  static const Color accentRed = Color(0xFFEF4444);
+
+  /// Coral.
+  static const Color accentCoral = Color(0xFFFF6F61);
+
+  /// Chestnut brown.
+  static const Color accentBrown = Color(0xFFA0623A);
 
   /// The theme of [style] in [brightness] with [accent] as the main color.
   static ThemeData build({required SurfaceStyle style, required Brightness brightness, required Color accent}) {
@@ -135,6 +176,7 @@ final class AppTheme {
         scrolledUnderElevation: 0,
         centerTitle: false,
       ),
+      pageTransitionsTheme: _pageTransitions,
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: surfaces.panel,
         surfaceTintColor: _transparent,
@@ -391,10 +433,28 @@ final class SurfaceTheme extends ThemeExtension<SurfaceTheme> {
     blur: blur ?? this.blur,
   );
 
-  /// Switching themes swaps the colors at once; the style cannot be blended.
+  /// Blends the colors, so a change of theme or accent flows; the style (glass or relief) switches halfway.
   @override
-  SurfaceTheme lerp(covariant ThemeExtension<SurfaceTheme>? other, double t) =>
-      other is SurfaceTheme && t >= _half ? other : this;
+  SurfaceTheme lerp(covariant ThemeExtension<SurfaceTheme>? other, double t) {
+    if (other is! SurfaceTheme) return this;
+    final int stops = background.length > other.background.length ? background.length : other.background.length;
+    return SurfaceTheme(
+      style: t < _half ? style : other.style,
+      background: <Color>[
+        for (int i = 0; i < stops; i++) Color.lerp(_stop(background, i), _stop(other.background, i), t)!,
+      ],
+      panel: Color.lerp(panel, other.panel, t)!,
+      field: Color.lerp(field, other.field, t)!,
+      solid: Color.lerp(solid, other.solid, t)!,
+      border: Color.lerp(border, other.border, t)!,
+      highlight: Color.lerp(highlight, other.highlight, t)!,
+      shade: Color.lerp(shade, other.shade, t)!,
+      blur: blur + (other.blur - blur) * t,
+    );
+  }
+
+  /// The [index]th color of a gradient, its last one past its end (a flat background has two, glass three).
+  static Color _stop(List<Color> colors, int index) => colors[index < colors.length ? index : colors.length - 1];
 
   static const double _half = 0.5;
 }

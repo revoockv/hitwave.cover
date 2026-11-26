@@ -481,11 +481,18 @@ class _Translations$settings$colors$isv extends Translations$settings$colors$en 
 	final TranslationsIsv _root; // ignore: unused_field
 
 	// Translations
+	@override String get azure => 'Азурна';
 	@override String get blue => 'Сиња';
+	@override String get brown => 'Каштанова';
+	@override String get coral => 'Коралова';
+	@override String get gold => 'Злата';
 	@override String get green => 'Зелена';
 	@override String get indigo => 'Индиго';
+	@override String get lilac => 'Лилова';
+	@override String get olive => 'Маслинова';
 	@override String get orange => 'Оранжева';
 	@override String get pink => 'Розова';
+	@override String get raspberry => 'Малинова';
 	@override String get red => 'Чрвена';
 	@override String get teal => 'Морска';
 	@override String get violet => 'Фиолетова';
@@ -781,11 +788,18 @@ extension on TranslationsIsv {
 			'settings.clearSongs' => 'Пєсње и јих каверы',
 			'settings.clearTitle' => 'Очистити дане?',
 			'settings.cleared' => 'Дане очишчене',
+			'settings.colors.azure' => 'Азурна',
 			'settings.colors.blue' => 'Сиња',
+			'settings.colors.brown' => 'Каштанова',
+			'settings.colors.coral' => 'Коралова',
+			'settings.colors.gold' => 'Злата',
 			'settings.colors.green' => 'Зелена',
 			'settings.colors.indigo' => 'Индиго',
+			'settings.colors.lilac' => 'Лилова',
+			'settings.colors.olive' => 'Маслинова',
 			'settings.colors.orange' => 'Оранжева',
 			'settings.colors.pink' => 'Розова',
+			'settings.colors.raspberry' => 'Малинова',
 			'settings.colors.red' => 'Чрвена',
 			'settings.colors.teal' => 'Морска',
 			'settings.colors.violet' => 'Фиолетова',

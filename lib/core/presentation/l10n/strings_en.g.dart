@@ -921,8 +921,20 @@ class Translations$settings$colors$en {
 
 	// Translations
 
+	/// en: 'Azure'
+	String get azure => 'Azure';
+
 	/// en: 'Blue'
 	String get blue => 'Blue';
+
+	/// en: 'Brown'
+	String get brown => 'Brown';
+
+	/// en: 'Coral'
+	String get coral => 'Coral';
+
+	/// en: 'Gold'
+	String get gold => 'Gold';
 
 	/// en: 'Green'
 	String get green => 'Green';
@@ -930,11 +942,20 @@ class Translations$settings$colors$en {
 	/// en: 'Indigo'
 	String get indigo => 'Indigo';
 
+	/// en: 'Lilac'
+	String get lilac => 'Lilac';
+
+	/// en: 'Olive'
+	String get olive => 'Olive';
+
 	/// en: 'Orange'
 	String get orange => 'Orange';
 
 	/// en: 'Pink'
 	String get pink => 'Pink';
+
+	/// en: 'Raspberry'
+	String get raspberry => 'Raspberry';
 
 	/// en: 'Red'
 	String get red => 'Red';
@@ -1346,11 +1367,18 @@ extension on Translations {
 			'settings.clearSongs' => 'Songs and their covers',
 			'settings.clearTitle' => 'Clear data?',
 			'settings.cleared' => 'Data cleared',
+			'settings.colors.azure' => 'Azure',
 			'settings.colors.blue' => 'Blue',
+			'settings.colors.brown' => 'Brown',
+			'settings.colors.coral' => 'Coral',
+			'settings.colors.gold' => 'Gold',
 			'settings.colors.green' => 'Green',
 			'settings.colors.indigo' => 'Indigo',
+			'settings.colors.lilac' => 'Lilac',
+			'settings.colors.olive' => 'Olive',
 			'settings.colors.orange' => 'Orange',
 			'settings.colors.pink' => 'Pink',
+			'settings.colors.raspberry' => 'Raspberry',
 			'settings.colors.red' => 'Red',
 			'settings.colors.teal' => 'Teal',
 			'settings.colors.violet' => 'Violet',

@@ -68,13 +68,20 @@ extension AccentColorTexts on AccentColor {
   /// The name of the color in the language of [t].
   String text(Translations t) => switch (this) {
     AccentColor.orange => t.settings.colors.orange,
+    AccentColor.gold => t.settings.colors.gold,
+    AccentColor.olive => t.settings.colors.olive,
+    AccentColor.green => t.settings.colors.green,
+    AccentColor.teal => t.settings.colors.teal,
+    AccentColor.azure => t.settings.colors.azure,
     AccentColor.blue => t.settings.colors.blue,
     AccentColor.indigo => t.settings.colors.indigo,
     AccentColor.violet => t.settings.colors.violet,
+    AccentColor.lilac => t.settings.colors.lilac,
     AccentColor.pink => t.settings.colors.pink,
+    AccentColor.raspberry => t.settings.colors.raspberry,
     AccentColor.red => t.settings.colors.red,
-    AccentColor.green => t.settings.colors.green,
-    AccentColor.teal => t.settings.colors.teal,
+    AccentColor.coral => t.settings.colors.coral,
+    AccentColor.brown => t.settings.colors.brown,
   };
 }
 

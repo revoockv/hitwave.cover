@@ -9,13 +9,20 @@ extension AccentColorPaint on AccentColor {
   /// The color.
   Color get color => switch (this) {
     AccentColor.orange => AppTheme.accentOrange,
+    AccentColor.gold => AppTheme.accentGold,
+    AccentColor.olive => AppTheme.accentOlive,
+    AccentColor.green => AppTheme.accentGreen,
+    AccentColor.teal => AppTheme.accentTeal,
+    AccentColor.azure => AppTheme.accentAzure,
     AccentColor.blue => AppTheme.accentBlue,
     AccentColor.indigo => AppTheme.accentIndigo,
     AccentColor.violet => AppTheme.accentViolet,
+    AccentColor.lilac => AppTheme.accentLilac,
     AccentColor.pink => AppTheme.accentPink,
+    AccentColor.raspberry => AppTheme.accentRaspberry,
     AccentColor.red => AppTheme.accentRed,
-    AccentColor.green => AppTheme.accentGreen,
-    AccentColor.teal => AppTheme.accentTeal,
+    AccentColor.coral => AppTheme.accentCoral,
+    AccentColor.brown => AppTheme.accentBrown,
   };
 }
 
