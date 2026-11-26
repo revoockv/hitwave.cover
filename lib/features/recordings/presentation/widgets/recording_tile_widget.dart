@@ -98,7 +98,7 @@ final class RecordingTileWidget extends StatelessWidget {
   static const int _millisecondsPerSecond = 1000;
 
   /// Narrower than this, the actions go to a line of their own under the date.
-  static const double _oneLineWidth = 360;
+  static const double _oneLineWidth = 330;
 
   /// The recording.
   final Recording recording;
