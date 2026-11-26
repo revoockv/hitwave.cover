@@ -479,9 +479,6 @@ class Translations$song$en {
 	/// en: 'Search artist'
 	String get artistSearch => 'Search artist';
 
-	/// en: '“{chord}” is a chord'
-	String chordTapped({required Object chord}) => '“${chord}” is a chord';
-
 	/// en: 'Practice'
 	String get countPractice => 'Practice';
 
@@ -525,12 +522,6 @@ class Translations$song$en {
 
 	/// en: 'Lyrics'
 	String get lyrics => 'Lyrics';
-
-	/// en: 'It is a chord'
-	String get makeChord => 'It is a chord';
-
-	/// en: 'It is a word'
-	String get makeWord => 'It is a word';
 
 	/// en: 'Microphone: {name}'
 	String microphone({required Object name}) => 'Microphone: ${name}';
@@ -629,9 +620,6 @@ class Translations$song$en {
 
 	/// en: 'Trim silence'
 	String get trimSilence => 'Trim silence';
-
-	/// en: '“{word}” is a word'
-	String wordTapped({required Object word}) => '“${word}” is a word';
 }
 
 // Path: sync
@@ -1415,7 +1403,6 @@ extension on Translations {
 			'song.allArtists' => 'All artists',
 			'song.artist' => 'Artist',
 			'song.artistSearch' => 'Search artist',
-			'song.chordTapped' => ({required Object chord}) => '“${chord}” is a chord',
 			'song.countPractice' => 'Practice',
 			'song.coverSearch' => 'Search covers by song',
 			'song.coversTooltip' => 'Covers',
@@ -1440,8 +1427,6 @@ extension on Translations {
 			'song.importSongs' => 'Import',
 			'song.leadIn' => 'Lead-in',
 			'song.lyrics' => 'Lyrics',
-			'song.makeChord' => 'It is a chord',
-			'song.makeWord' => 'It is a word',
 			'song.microphone' => ({required Object name}) => 'Microphone: ${name}',
 			'song.myCovers' => 'My covers',
 			'song.mySongs' => 'My songs',
@@ -1477,7 +1462,6 @@ extension on Translations {
 			'song.tabStatistics' => 'Statistics',
 			'song.takeSaved' => 'Take saved',
 			'song.trimSilence' => 'Trim silence',
-			'song.wordTapped' => ({required Object word}) => '“${word}” is a word',
 			'sync.all' => 'All',
 			'sync.anotherDevice' => 'Another device',
 			'sync.applyChosen' => ({required Object n}) => 'Sync the ticked (${n})',

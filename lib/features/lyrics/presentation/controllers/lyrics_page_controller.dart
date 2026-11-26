@@ -92,6 +92,9 @@ final class LyricsPageController {
   /// Focus of the lyrics text field.
   final FocusNode lyricsFocusNode = FocusNode();
 
+  /// The lyrics text field, so the taps on its chords can be laid over it.
+  final GlobalKey lyricsFieldKey = GlobalKey();
+
   /// The screen the page was opened on: the speed and the space are saved for it.
   final LyricsLayout layout;
 

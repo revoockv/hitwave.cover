@@ -12,7 +12,7 @@ import '../../domain/use_cases/delete_all_songs_use_case.dart';
 import '../../domain/use_cases/delete_cover_use_case.dart';
 import '../../domain/use_cases/delete_song_use_case.dart';
 import '../../domain/use_cases/find_chords_use_case.dart';
-import '../../domain/use_cases/find_marked_word_use_case.dart';
+import '../../domain/use_cases/find_marked_words_use_case.dart';
 import '../../domain/use_cases/mark_chord_as_text_use_case.dart';
 import '../../domain/use_cases/unmark_chord_use_case.dart';
 import '../../domain/use_cases/find_tab_blocks_use_case.dart';
@@ -56,6 +56,6 @@ void registerAndInitSong() {
   di.registerLazySingleton<FindTabBlocksUseCase>(FindTabBlocksUseCase.new);
   di.registerLazySingleton<FindChordsUseCase>(FindChordsUseCase.new);
   di.registerLazySingleton<MarkChordAsTextUseCase>(MarkChordAsTextUseCase.new);
-  di.registerLazySingleton<FindMarkedWordUseCase>(FindMarkedWordUseCase.new);
+  di.registerLazySingleton<FindMarkedWordsUseCase>(FindMarkedWordsUseCase.new);
   di.registerLazySingleton<UnmarkChordUseCase>(UnmarkChordUseCase.new);
 }
