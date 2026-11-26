@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hitwave.cover/features/lyrics/presentation/widgets/chord_tap_layer_widget.dart';
+import 'package:hitwave.cover/features/lyrics/presentation/wrappers/chord_tap_layer_wrapper.dart';
 
 void main() {
   testWidgets('a tap on a range turns it over without focusing the field; a tap elsewhere edits', (
@@ -18,7 +18,7 @@ void main() {
         home: Scaffold(
           body: Padding(
             padding: const EdgeInsets.all(40),
-            child: ChordTapLayerWidget(
+            child: ChordTapLayerWrapper(
               fieldKey: fieldKey,
               listenable: controller,
               rangesOf: () => <({int start, int end})>[(start: 0, end: 2)],

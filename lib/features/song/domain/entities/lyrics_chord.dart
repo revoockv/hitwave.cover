@@ -54,6 +54,8 @@ final class LyricsChord {
   static const int _minChordLines = 2;
 
   static const String _lineBreak = '\n';
+  static const String _openBracket = '[';
+  static const String _openParenthesis = '(';
 
   /// Fewest chords of a run on a line with words.
   static const int _minRun = 2;
@@ -180,7 +182,8 @@ final class LyricsChord {
 
   /// [lyrics] with [chord] marked as a word: [textMark] before its first letter (inside its bracket).
   static String markAsText(String lyrics, LyricsChord chord) {
-    final int at = chord.start + (chord.text.startsWith('[') || chord.text.startsWith('(') ? 1 : 0);
+    final int at =
+        chord.start + (chord.text.startsWith(_openBracket) || chord.text.startsWith(_openParenthesis) ? 1 : 0);
     return lyrics.replaceRange(at, at, textMark);
   }
 

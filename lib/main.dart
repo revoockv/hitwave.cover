@@ -4,8 +4,7 @@ import 'package:watch_it/watch_it.dart';
 
 import 'core/presentation/l10n/app_translations.dart';
 import 'core/presentation/theme.dart';
-import 'core/presentation/widgets/app_background_widget.dart';
-import 'core/presentation/widgets/locale_fade_widget.dart';
+import 'core/presentation/widgets/app_frame_widget.dart';
 import 'di.dart';
 import 'features/settings/domain/entities/app_settings.dart';
 import 'features/settings/presentation/di/settings_getters.dart';
@@ -51,14 +50,10 @@ final class HitwaveCoverAppWidget extends WatchingWidget {
       // A new theme or accent flows into the old one; a new language fades in.
       themeAnimationDuration: AppTheme.themeChange,
       themeAnimationCurve: AppTheme.themeChangeCurve,
-      builder: _wrap,
+      builder: AppFrameWidget.wrap,
       home: const HomePage(),
     );
   }
 
   static String _title(BuildContext context) => context.t.appTitle;
-
-  /// The background under every page, and the fade of a language change over them.
-  static Widget _wrap(BuildContext context, Widget? child) =>
-      AppBackgroundWidget.wrap(context, LocaleFadeWidget(child: child ?? const SizedBox.shrink()));
 }
