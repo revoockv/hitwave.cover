@@ -11,6 +11,7 @@ import 'package:hitwave.cover/features/practice/domain/entities/practice_stats.d
 import 'package:hitwave.cover/features/recordings/data/data_sources/hive_recording_preferences_service.dart';
 import 'package:hitwave.cover/features/recordings/data/repositories/recording_preferences_repository_impl.dart';
 import 'package:hitwave.cover/features/recordings/domain/entities/recording.dart';
+import 'package:hitwave.cover/features/recordings/data/models/recording_preferences_model.dart';
 import 'package:hitwave.cover/features/recordings/domain/entities/recording_preferences.dart';
 import 'package:hitwave.cover/features/recordings/domain/entities/recording_status.dart';
 import 'package:hitwave.cover/features/recordings/domain/repositories/recordings_repository.dart';
@@ -281,14 +282,28 @@ void main() {
       final RecordingPreferencesRepositoryImpl preferences = await openPreferences();
       expect(preferences.watchRecordingPreferences().value.record, isFalse);
       expect(preferences.watchRecordingPreferences().value.trimSilence, isTrue);
+      expect(preferences.watchRecordingPreferences().value.countPractice, isTrue);
 
-      await preferences.updateRecordingPreferences(const RecordingPreferences(record: true, trimSilence: false));
+      await preferences.updateRecordingPreferences(
+        const RecordingPreferences(record: true, trimSilence: false, countPractice: false),
+      );
       await Hive.close();
       Hive.init(directory.path);
 
       final RecordingPreferences restored = (await openPreferences()).watchRecordingPreferences().value;
       expect(restored.record, isTrue);
       expect(restored.trimSilence, isFalse);
+      expect(restored.countPractice, isFalse);
+    });
+
+    test('options saved before the practice checkbox existed count as practice', () {
+      final RecordingPreferences old = RecordingPreferencesModel.fromMap(<String, Object?>{
+        'record': true,
+        'trimSilence': false,
+      }).toEntity();
+
+      expect(old.countPractice, isTrue);
+      expect(old.copyWith(countPractice: false).withMicrophone(id: 'usb', label: 'USB').countPractice, isFalse);
     });
   });
 }

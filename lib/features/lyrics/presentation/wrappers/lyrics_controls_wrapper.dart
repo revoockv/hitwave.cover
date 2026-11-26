@@ -37,6 +37,9 @@ final class LyricsControlsWrapper extends WatchingWidget {
   /// Label of the trim-silence checkbox.
   final String trimSilenceLabel;
 
+  /// Label of the checkbox that counts the start as practice.
+  final String countPracticeLabel;
+
   /// Called when the play/pause button is pressed.
   final VoidCallback onPlayPressed;
 
@@ -65,6 +68,7 @@ final class LyricsControlsWrapper extends WatchingWidget {
     required this.stopRecordingLabel,
     required this.recordLabel,
     required this.trimSilenceLabel,
+    required this.countPracticeLabel,
     required this.onPlayPressed,
     required this.microphoneLabel,
     required this.onMicrophonePressed,
@@ -80,6 +84,7 @@ final class LyricsControlsWrapper extends WatchingWidget {
     final double leadIn = watch(lyricsPageController.leadInController).value;
     final bool record = watch(lyricsPageController.recordController).value;
     final bool trimSilence = watch(lyricsPageController.trimSilenceController).value;
+    final bool countPractice = watch(lyricsPageController.countPracticeController).value;
     return LyricsControlsWidget(
       visible: visible,
       isScrolling: isScrolling,
@@ -91,10 +96,12 @@ final class LyricsControlsWrapper extends WatchingWidget {
       maxLeadIn: LyricsPageController.maxLeadIn,
       record: record,
       trimSilence: trimSilence,
+      countPractice: countPractice,
       onSpeedChanged: _onSpeedChanged,
       onLeadInChanged: _onLeadInChanged,
       onRecordChanged: _onRecordChanged,
       onTrimSilenceChanged: _onTrimSilenceChanged,
+      onCountPracticeChanged: _onCountPracticeChanged,
       onSpeedChosen: onSpeedChosen,
       onLeadInChosen: onLeadInChosen,
       leadInLabel: leadInLabel,
@@ -104,6 +111,7 @@ final class LyricsControlsWrapper extends WatchingWidget {
       stopRecordingLabel: stopRecordingLabel,
       recordLabel: recordLabel,
       trimSilenceLabel: trimSilenceLabel,
+      countPracticeLabel: countPracticeLabel,
       onPlayPressed: onPlayPressed,
       microphoneLabel: microphoneLabel,
       onMicrophonePressed: onMicrophonePressed,
@@ -129,6 +137,11 @@ final class LyricsControlsWrapper extends WatchingWidget {
 
   void _onTrimSilenceChanged(bool value) {
     lyricsPageController.trimSilenceController.value = value;
+    lyricsPageController.resetHideTimer();
+  }
+
+  void _onCountPracticeChanged(bool value) {
+    lyricsPageController.countPracticeController.value = value;
     lyricsPageController.resetHideTimer();
   }
 }

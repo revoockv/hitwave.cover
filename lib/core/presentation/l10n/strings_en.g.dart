@@ -479,6 +479,9 @@ class Translations$song$en {
 	/// en: 'Search artist'
 	String get artistSearch => 'Search artist';
 
+	/// en: 'Practice'
+	String get countPractice => 'Practice';
+
 	/// en: 'Search covers by song'
 	String get coverSearch => 'Search covers by song';
 
@@ -1369,6 +1372,7 @@ extension on Translations {
 			'song.allArtists' => 'All artists',
 			'song.artist' => 'Artist',
 			'song.artistSearch' => 'Search artist',
+			'song.countPractice' => 'Practice',
 			'song.coverSearch' => 'Search covers by song',
 			'song.coversTooltip' => 'Covers',
 			'song.deleteMessage' => ({required Object name}) => '“${name}” will be deleted forever.',

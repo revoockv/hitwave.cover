@@ -80,6 +80,9 @@ final class LyricsPageController {
   /// Whether the silence before and after the singing is cut from the enhanced take.
   final ValueNotifier<bool> trimSilenceController;
 
+  /// Whether start counts the time until stop as practice (the "practice" checkbox); off, the lyrics only scroll.
+  final ValueNotifier<bool> countPracticeController;
+
   /// Text of the lyrics field; draws its tablatures in a fixed-width font.
   final LyricsTextController lyricsTextController;
 
@@ -95,7 +98,7 @@ final class LyricsPageController {
   /// Creates the controller with the [lyrics] to show on [layout], their [tabBlocks] and [chords].
   ///
   /// Starts at [initialSpeed] and [initialLeadIn] (saved with the song) or the defaults, with the
-  /// checkboxes as they were last chosen ([record], [trimSilence]).
+  /// checkboxes as they were last chosen ([record], [trimSilence], [countPractice]).
   LyricsPageController({
     required String lyrics,
     List<TabBlock> tabBlocks = const <TabBlock>[],
@@ -105,6 +108,7 @@ final class LyricsPageController {
     double? initialLeadIn,
     bool record = false,
     bool trimSilence = true,
+    bool countPractice = true,
   }) : this._(
          lyrics,
          tabBlocks,
@@ -113,6 +117,7 @@ final class LyricsPageController {
          (initialLeadIn ?? _defaultLeadIn).clamp(minLeadIn, maxLeadIn),
          record,
          trimSilence,
+         countPractice,
          layout,
        );
 
@@ -124,9 +129,11 @@ final class LyricsPageController {
     double startLeadIn,
     bool record,
     bool trimSilence,
+    bool countPractice,
     this.layout,
   ) : recordController = ValueNotifier<bool>(record),
       trimSilenceController = ValueNotifier<bool>(trimSilence),
+      countPracticeController = ValueNotifier<bool>(countPractice),
       lyricsTextController = LyricsTextController(text: lyrics, tabBlocks: tabBlocks, chords: chords),
       speedController = ValueNotifier<double>(startSpeed),
       leadInController = ValueNotifier<double>(startLeadIn),
@@ -213,6 +220,7 @@ final class LyricsPageController {
     controlsVisibilityController.dispose();
     recordController.dispose();
     trimSilenceController.dispose();
+    countPracticeController.dispose();
     lyricsTextController.dispose();
     lyricsScrollController.dispose();
     lyricsFocusNode.dispose();
