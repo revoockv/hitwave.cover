@@ -10,14 +10,21 @@ final class YinPitchDetector {
   static const double _minHertz = 30;
   static const double _maxHertz = 1500;
 
-  /// The highest normalized difference that still counts as a period (YIN's absolute threshold).
-  static const double _threshold = 0.15;
+  /// The highest normalized difference that still counts as a period (YIN's absolute threshold): a quiet string
+  /// over the room's noise dips less deep than a loud one, noise does not dip at all.
+  static const double _threshold = 0.25;
 
-  /// Root mean square below which the piece is silence.
-  static const double _silenceRms = 0.008;
+  /// Root mean square below which the piece is silence (about -56 dBFS): the raw microphone, without gain, gives a
+  /// string played softly at a phone's distance not much more. Whether it is a pitch is the threshold's job.
+  static const double _silenceRms = 0.0015;
 
   /// Samples averaged into one of the coarse search.
   static const int _coarseFactor = 2;
+
+  /// Samples of the moving average that is run twice over a piece: keeps the strings (1 % weaker at 330 Hz, 15 % at
+  /// 1300 Hz, the pitch itself unchanged) and takes away most of the hiss above them.
+  static const int _smoothWidth = 8;
+  static const int _smoothPasses = 2;
 
   /// Full-rate lags around the coarse period that the refinement tries on each side.
   static const int _refineReach = 3;
@@ -34,9 +41,13 @@ final class YinPitchDetector {
   /// The pitch of [samples] in hertz, or `null` when there is no clear one (silence, noise).
   double? detect(Float64List samples) {
     if (_rms(samples) < _silenceRms) return null;
-    final double? coarseLag = _coarsePeriod(_halved(samples), sampleRate / _coarseFactor);
+    Float64List smooth = samples;
+    for (int pass = 0; pass < _smoothPasses; pass++) {
+      smooth = _movingAverage(smooth);
+    }
+    final double? coarseLag = _coarsePeriod(_halved(smooth), sampleRate / _coarseFactor);
     if (coarseLag == null) return null;
-    return sampleRate / _refinedPeriod(samples, coarseLag * _coarseFactor);
+    return sampleRate / _refinedPeriod(smooth, coarseLag * _coarseFactor);
   }
 
   /// The period of [samples] in samples by YIN, or `null` when no dip goes under the threshold.
@@ -106,6 +117,18 @@ final class YinPitchDetector {
     final double bend = before - 2 * at + after;
     if (bend <= 0) return 0;
     return ((before - after) / (2 * bend)).clamp(-0.5, 0.5);
+  }
+
+  /// The mean of every [_smoothWidth] neighbouring samples of [samples].
+  static Float64List _movingAverage(Float64List samples) {
+    final Float64List averaged = Float64List(samples.length - _smoothWidth + 1);
+    double sum = 0;
+    for (int i = 0; i < samples.length; i++) {
+      sum += samples[i];
+      if (i >= _smoothWidth) sum -= samples[i - _smoothWidth];
+      if (i >= _smoothWidth - 1) averaged[i - _smoothWidth + 1] = sum / _smoothWidth;
+    }
+    return averaged;
   }
 
   /// [samples] at half the rate: every two averaged.

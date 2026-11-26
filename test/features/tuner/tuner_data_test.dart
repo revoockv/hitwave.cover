@@ -98,6 +98,29 @@ void main() {
     expect(cents(detector.detect(noisy)!, 146.0).abs(), lessThan(1));
   });
 
+  test('a softly played string over the noise of a room is still heard', () {
+    final math.Random random = math.Random(3);
+    for (final double hertz in <double>[82.41, 110, 196, 329.63]) {
+      final Float64List soft = tone(hertz, rate, detector.windowSize, amplitude: 0.006);
+      for (int i = 0; i < soft.length; i++) {
+        soft[i] += (random.nextDouble() - 0.5) * 0.003;
+      }
+
+      final double? heard = detector.detect(soft);
+      expect(heard, isNotNull, reason: '$hertz Hz');
+      expect(cents(heard!, hertz).abs(), lessThan(3), reason: '$hertz Hz');
+    }
+  });
+
+  test('the quiet noise of a room is no pitch', () {
+    final math.Random random = math.Random(4);
+    final Float64List hiss = Float64List.fromList(
+      List<double>.generate(detector.windowSize, (_) => (random.nextDouble() - 0.5) * 0.01),
+    );
+
+    expect(detector.detect(hiss), isNull);
+  });
+
   test('the framer turns PCM chunks of any size into pitches, one per hop', () {
     const int hop = 1024;
     final PcmPitchFramer framer = PcmPitchFramer(detector, hopSize: hop);
