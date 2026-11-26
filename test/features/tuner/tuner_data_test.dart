@@ -63,16 +63,16 @@ final class FakePitchDataSource implements PitchDataSource {
 }
 
 void main() {
-  const double rate = 24000;
+  const double rate = 48000;
   const YinPitchDetector detector = YinPitchDetector(sampleRate: rate);
 
   group('YinPitchDetector', () {
     for (final double hertz in <double>[41.2, 82.41, 110, 196, 261.63, 392, 440, 659.26, 1318.5]) {
-      test('finds $hertz Hz within 2 cents', () {
+      test('finds $hertz Hz within half a cent', () {
         final double? heard = detector.detect(tone(hertz, rate, detector.windowSize));
 
         expect(heard, isNotNull);
-        expect(cents(heard!, hertz).abs(), lessThan(2));
+        expect(cents(heard!, hertz).abs(), lessThan(0.5));
       });
     }
 
@@ -87,9 +87,21 @@ void main() {
     });
   });
 
-  test('the framer turns PCM chunks of any size into pitches', () {
-    final PcmPitchFramer framer = PcmPitchFramer(detector, decimation: 2, hopSize: 1024);
-    final Uint8List bytes = pcm(tone(110, rate * 2, detector.windowSize * 2 * 3));
+  test('a detuned string and a noisy tone are read within a cent', () {
+    final math.Random random = math.Random(2);
+    final Float64List noisy = tone(146.0, rate, detector.windowSize, amplitude: 0.3);
+    for (int i = 0; i < noisy.length; i++) {
+      noisy[i] += (random.nextDouble() - 0.5) * 0.03;
+    }
+
+    expect(cents(detector.detect(tone(108.5, rate, detector.windowSize))!, 108.5).abs(), lessThan(0.5));
+    expect(cents(detector.detect(noisy)!, 146.0).abs(), lessThan(1));
+  });
+
+  test('the framer turns PCM chunks of any size into pitches, one per hop', () {
+    const int hop = 1024;
+    final PcmPitchFramer framer = PcmPitchFramer(detector, hopSize: hop);
+    final Uint8List bytes = pcm(tone(110, rate, detector.windowSize * 3));
     final List<double?> pitches = <double?>[];
     // Odd chunk sizes split samples between chunks.
     for (int start = 0; start < bytes.length; start += 1001) {
@@ -98,8 +110,14 @@ void main() {
 
     expect(pitches, isNotEmpty);
     for (final double? pitch in pitches) {
-      expect(cents(pitch!, 110).abs(), lessThan(3));
+      expect(cents(pitch!, 110).abs(), lessThan(1));
     }
+  });
+
+  test('a chunk that completes several hops gives only its newest pitch', () {
+    final PcmPitchFramer framer = PcmPitchFramer(detector, hopSize: 256);
+
+    expect(framer.add(pcm(tone(110, rate, detector.windowSize * 2))), hasLength(1));
   });
 
   group('TunerRepositoryImpl', () {
@@ -139,17 +157,55 @@ void main() {
       await repository.start();
       source.pitches
         ..add(110)
-        ..add(111)
+        ..add(110)
         ..add(220);
-      expect(await heard(), 111);
+      expect(await heard(), 110);
 
       source.pitches.add(null);
-      expect(await heard(), 111);
+      expect(await heard(), 110);
 
-      for (int i = 0; i < 4; i++) {
+      for (int i = 0; i < 15; i++) {
         source.pitches.add(null);
       }
       expect(await heard(), isNull);
+    });
+
+    test('a small step is smoothed toward the new pitch, another string is shown at once', () async {
+      await repository.start();
+      source.pitches
+        ..add(110)
+        ..add(111)
+        ..add(111);
+      final double smoothed = (await heard())!;
+      expect(smoothed, greaterThan(110));
+      expect(smoothed, lessThan(111));
+
+      source.pitches
+        ..add(147)
+        ..add(147);
+      expect(await heard(), 147);
+    });
+
+    test('a start right after a stop opens the microphone again', () async {
+      await repository.start();
+      final Future<void> stopping = repository.stop();
+      final Result<void, TunerFailure> started = await repository.start();
+      await stopping;
+
+      expect(started.isFailure, isFalse);
+      expect(source.stops, 1);
+      expect(repository.watchTuner().value, isA<ListeningTunerState>());
+    });
+
+    test('when the system ends the stream the next start listens again', () async {
+      await repository.start();
+      final StreamController<double?> first = source.pitches;
+      await first.close();
+      await Future<void>.delayed(Duration.zero);
+      expect(repository.watchTuner().value, isA<OffTunerState>());
+
+      await repository.start();
+      expect(identical(source.pitches, first), isFalse);
     });
 
     test('stopping frees the microphone once and turns the tuner off', () async {
