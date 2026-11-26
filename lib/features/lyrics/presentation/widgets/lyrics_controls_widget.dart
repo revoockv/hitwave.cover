@@ -7,7 +7,7 @@ import 'lyrics_slider_row_widget.dart';
 /// Floating control panel of the lyrics page.
 ///
 /// Shows the play/stop button, the speed slider, the slider of the space above
-/// the lyrics and the record / trim-silence checkboxes; while a take is being
+/// the lyrics and the practice / record / trim-silence checkboxes; while a take is being
 /// recorded, [recordingIndicator] (the time and the input level). Fades out (and stops
 /// taking touches) when the controller hides the controls during scrolling.
 /// Dumb: the values, the texts and the callbacks come from above — a moved slider calls [onSpeedChanged], a released
@@ -64,6 +64,9 @@ final class LyricsControlsWidget extends StatelessWidget {
   /// Whether the silence is cut from the enhanced take.
   final bool trimSilence;
 
+  /// Whether start counts the time until stop as practice.
+  final bool countPractice;
+
   /// Called while the speed slider moves.
   final ValueChanged<double> onSpeedChanged;
 
@@ -75,6 +78,9 @@ final class LyricsControlsWidget extends StatelessWidget {
 
   /// Called with the trim-silence checkbox's new value.
   final ValueChanged<bool> onTrimSilenceChanged;
+
+  /// Called with the practice checkbox's new value.
+  final ValueChanged<bool> onCountPracticeChanged;
 
   /// Called with the speed when the user releases the slider.
   final ValueChanged<double> onSpeedChosen;
@@ -102,6 +108,9 @@ final class LyricsControlsWidget extends StatelessWidget {
 
   /// Label of the trim-silence checkbox.
   final String trimSilenceLabel;
+
+  /// Label of the practice checkbox.
+  final String countPracticeLabel;
 
   /// Called when the play/pause button is pressed.
   final VoidCallback onPlayPressed;
@@ -131,10 +140,12 @@ final class LyricsControlsWidget extends StatelessWidget {
     required this.maxLeadIn,
     required this.record,
     required this.trimSilence,
+    required this.countPractice,
     required this.onSpeedChanged,
     required this.onLeadInChanged,
     required this.onRecordChanged,
     required this.onTrimSilenceChanged,
+    required this.onCountPracticeChanged,
     required this.onSpeedChosen,
     required this.onLeadInChosen,
     required this.leadInLabel,
@@ -144,6 +155,7 @@ final class LyricsControlsWidget extends StatelessWidget {
     required this.stopRecordingLabel,
     required this.recordLabel,
     required this.trimSilenceLabel,
+    required this.countPracticeLabel,
     required this.onPlayPressed,
     required this.microphoneLabel,
     required this.onMicrophonePressed,
@@ -216,6 +228,11 @@ final class LyricsControlsWidget extends StatelessWidget {
                             crossAxisAlignment: WrapCrossAlignment.center,
                             children: <Widget>[
                               _CheckboxWidget(
+                                label: countPracticeLabel,
+                                value: countPractice,
+                                onChanged: canChangeOptions ? _onCountPracticeChanged : null,
+                              ),
+                              _CheckboxWidget(
                                 label: recordLabel,
                                 value: record,
                                 onChanged: canChangeOptions ? _onRecordChanged : null,
@@ -252,6 +269,10 @@ final class LyricsControlsWidget extends StatelessWidget {
 
   void _onTrimSilenceChanged(bool? value) {
     onTrimSilenceChanged(value ?? false);
+  }
+
+  void _onCountPracticeChanged(bool? value) {
+    onCountPracticeChanged(value ?? false);
   }
 }
 

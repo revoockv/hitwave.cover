@@ -31,6 +31,7 @@ void main() {
                 stopRecordingLabel: 'Зупинити запис',
                 recordLabel: 'Запис',
                 trimSilenceLabel: 'Обрізати тишу',
+                countPracticeLabel: 'Тренування',
                 onPlayPressed: () {},
                 microphoneLabel: 'Мікрофон: Як у системі',
                 onMicrophonePressed: () {},

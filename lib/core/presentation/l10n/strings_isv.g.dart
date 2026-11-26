@@ -278,6 +278,7 @@ class _Translations$song$isv extends Translations$song$en {
 	@override String get allArtists => 'Вси изполнитељи';
 	@override String get artist => 'Изполнитељ';
 	@override String get artistSearch => 'Искати изполнитеља';
+	@override String get countPractice => 'Тренинг';
 	@override String get coverSearch => 'Искати каверы по пєсњи';
 	@override String get coversTooltip => 'Каверы';
 	@override String deleteMessage({required Object name}) => 'Пєсња «${name}» буде избрисана навсегда.';
@@ -806,6 +807,7 @@ extension on TranslationsIsv {
 			'song.allArtists' => 'Вси изполнитељи',
 			'song.artist' => 'Изполнитељ',
 			'song.artistSearch' => 'Искати изполнитеља',
+			'song.countPractice' => 'Тренинг',
 			'song.coverSearch' => 'Искати каверы по пєсњи',
 			'song.coversTooltip' => 'Каверы',
 			'song.deleteMessage' => ({required Object name}) => 'Пєсња «${name}» буде избрисана навсегда.',

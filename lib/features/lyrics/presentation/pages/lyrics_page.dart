@@ -41,8 +41,8 @@ import '../../../tuner/presentation/pages/tuner_page.dart';
 /// With "record" checked, start also records a take; the take goes on after
 /// the lyrics end and stops only with the stop button or when the page closes,
 /// then it is kept on the device and enhanced. The checkboxes are remembered.
-/// The time between start and the end of both the scrolling and the take is
-/// counted as practice. The recordings button opens the takes of this song.
+/// With "practice" checked, the time between start and the end of both the
+/// scrolling and the take is counted as practice; unchecked, the lyrics only scroll. The recordings button opens the takes of this song.
 final class LyricsPage extends WatchingWidget {
   /// Font size for lyrics text.
   static const double _lyricsFontSize = 20;
@@ -86,6 +86,11 @@ final class LyricsPage extends WatchingWidget {
     registerHandler(
       target: lyricsPageController.trimSilenceController,
       handler: (BuildContext context, bool trimSilence, void Function() cancel) =>
+          _onRecordingOptionsChanged(lyricsPageController),
+    );
+    registerHandler(
+      target: lyricsPageController.countPracticeController,
+      handler: (BuildContext context, bool countPractice, void Function() cancel) =>
           _onRecordingOptionsChanged(lyricsPageController),
     );
     registerHandler(
@@ -199,6 +204,7 @@ final class LyricsPage extends WatchingWidget {
                     stopRecordingLabel: t.song.stopRecording,
                     recordLabel: t.song.record,
                     trimSilenceLabel: t.song.trimSilence,
+                    countPracticeLabel: t.song.countPractice,
                     onPlayPressed: () => _onPlayPressed(ScaffoldMessenger.of(context), context.t, lyricsPageController),
                     microphoneLabel: t.song.microphone(name: microphoneLabel ?? t.recordings.systemMicrophone),
                     onMicrophonePressed: () => _chooseMicrophone(context, ScaffoldMessenger.of(context)),
@@ -226,6 +232,7 @@ final class LyricsPage extends WatchingWidget {
       initialLeadIn: song.leadInOn(layout),
       record: preferences.record,
       trimSilence: preferences.trimSilence,
+      countPractice: preferences.countPractice,
     );
   }
 
@@ -323,7 +330,7 @@ final class LyricsPage extends WatchingWidget {
   }
 
   /// Stops the take being recorded (and the scrolling), pauses, or starts scrolling — first
-  /// starting a take when "record" is checked. The take goes on after the lyrics end: only this
+  /// starting a take when "record" is checked, and the practice session when "practice" is. The take goes on after the lyrics end: only this
   /// button or leaving the page stops it.
   Future<void> _onPlayPressed(
     ScaffoldMessengerState messenger,
@@ -355,7 +362,7 @@ final class LyricsPage extends WatchingWidget {
         return;
       }
     }
-    unawaited(startPracticeUseCase(song.id));
+    if (lyricsPageController.countPracticeController.value) unawaited(startPracticeUseCase(song.id));
     lyricsPageController.startScrolling();
   }
 
@@ -393,6 +400,7 @@ final class LyricsPage extends WatchingWidget {
         watchRecordingPreferencesUseCase().value.copyWith(
           record: lyricsPageController.recordController.value,
           trimSilence: lyricsPageController.trimSilenceController.value,
+          countPractice: lyricsPageController.countPracticeController.value,
         ),
       ),
     );
