@@ -1,13 +1,14 @@
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
+import 'package:watch_it/watch_it.dart';
 
 /// Lays a tap target over every range of the text field's text ([rangesOf], e.g. the chords): a tap there calls
 /// [onRangeTapped] with the index of the range and never reaches the field, so it does not focus it or open the
 /// keyboard. Taps elsewhere go to the field as before.
 ///
 /// The targets follow the text: they are measured again after every change of [listenable] and every layout.
-final class ChordTapLayerWidget extends StatefulWidget {
+final class ChordTapLayerWrapper extends WatchingStatefulWidget {
   /// The key of the field whose text holds the ranges.
   final GlobalKey fieldKey;
 
@@ -24,7 +25,7 @@ final class ChordTapLayerWidget extends StatefulWidget {
   final Widget child;
 
   /// Creates the layer.
-  const ChordTapLayerWidget({
+  const ChordTapLayerWrapper({
     required this.fieldKey,
     required this.listenable,
     required this.rangesOf,
@@ -34,14 +35,16 @@ final class ChordTapLayerWidget extends StatefulWidget {
   });
 
   @override
-  State<ChordTapLayerWidget> createState() => _ChordTapLayerWidgetState();
+  State<ChordTapLayerWrapper> createState() => _ChordTapLayerWrapperState();
 }
 
-final class _ChordTapLayerWidgetState extends State<ChordTapLayerWidget> {
+final class _ChordTapLayerWrapperState extends State<ChordTapLayerWrapper> {
   /// A little more than the letters, so a short chord (`A`) is easy to hit.
   static const double _slop = 4;
 
-  List<({int index, Rect rect})> _targets = const <({int index, Rect rect})>[];
+  /// Where the ranges are drawn now, with the index of each.
+  final ValueNotifier<List<({int index, Rect rect})>> _targetsController =
+      ValueNotifier<List<({int index, Rect rect})>>(const <({int index, Rect rect})>[]);
   bool _isMeasureScheduled = false;
 
   @override
@@ -51,7 +54,7 @@ final class _ChordTapLayerWidgetState extends State<ChordTapLayerWidget> {
   }
 
   @override
-  void didUpdateWidget(ChordTapLayerWidget oldWidget) {
+  void didUpdateWidget(ChordTapLayerWrapper oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.listenable == widget.listenable) return;
     oldWidget.listenable.removeListener(_scheduleMeasure);
@@ -61,6 +64,7 @@ final class _ChordTapLayerWidgetState extends State<ChordTapLayerWidget> {
   @override
   void dispose() {
     widget.listenable.removeListener(_scheduleMeasure);
+    _targetsController.dispose();
     super.dispose();
   }
 
@@ -94,13 +98,14 @@ final class _ChordTapLayerWidgetState extends State<ChordTapLayerWidget> {
       }
     }
     if (_sameTargets(targets)) return;
-    setState(() => _targets = targets);
+    _targetsController.value = targets;
   }
 
   bool _sameTargets(List<({int index, Rect rect})> targets) {
-    if (targets.length != _targets.length) return false;
+    final List<({int index, Rect rect})> shown = _targetsController.value;
+    if (targets.length != shown.length) return false;
     for (int i = 0; i < targets.length; i++) {
-      if (targets[i] != _targets[i]) return false;
+      if (targets[i] != shown[i]) return false;
     }
     return true;
   }
@@ -116,15 +121,29 @@ final class _ChordTapLayerWidgetState extends State<ChordTapLayerWidget> {
   Widget build(BuildContext context) {
     // A new layout (another width, another font size) moves the text: measure after it.
     _scheduleMeasure();
+    final List<({int index, Rect rect})> targets = watch(_targetsController).value;
     return Stack(
       children: <Widget>[
         widget.child,
-        for (final ({int index, Rect rect}) target in _targets)
+        for (final ({int index, Rect rect}) target in targets)
           Positioned.fromRect(
             rect: target.rect,
-            child: GestureDetector(behavior: HitTestBehavior.opaque, onTap: () => widget.onRangeTapped(target.index)),
+            child: _TapTargetWrapper(index: target.index, onTapped: widget.onRangeTapped),
           ),
       ],
     );
   }
+}
+
+/// A place over a range that takes the tap before the field does.
+final class _TapTargetWrapper extends StatelessWidget {
+  final int index;
+  final ValueChanged<int> onTapped;
+
+  const _TapTargetWrapper({required this.index, required this.onTapped});
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(behavior: HitTestBehavior.opaque, onTap: _onTap);
+
+  void _onTap() => onTapped(index);
 }

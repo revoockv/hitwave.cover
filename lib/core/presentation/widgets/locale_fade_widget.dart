@@ -20,7 +20,7 @@ final class _LocaleFadeWidgetState extends State<LocaleFadeWidget> with SingleTi
   /// How dim the texts are when the new language comes in.
   static const double _dimmest = 0.25;
 
-  late final AnimationController _controller = AnimationController(
+  late final AnimationController _fadeController = AnimationController(
     vsync: this,
     duration: AppTheme.themeChange,
     value: 1,
@@ -28,20 +28,20 @@ final class _LocaleFadeWidgetState extends State<LocaleFadeWidget> with SingleTi
   late final Animation<double> _opacity = Tween<double>(
     begin: _dimmest,
     end: 1,
-  ).animate(CurvedAnimation(parent: _controller, curve: AppTheme.themeChangeCurve));
+  ).animate(CurvedAnimation(parent: _fadeController, curve: AppTheme.themeChangeCurve));
   Locale? _locale;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final Locale locale = Localizations.localeOf(context);
-    if (_locale != null && _locale != locale) _controller.forward(from: 0);
+    if (_locale != null && _locale != locale) _fadeController.forward(from: 0);
     _locale = locale;
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _fadeController.dispose();
     super.dispose();
   }
 

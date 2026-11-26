@@ -23,7 +23,7 @@ import '../controllers/lyrics_page_controller.dart';
 import '../controllers/lyrics_text_controller.dart';
 import '../../../song/domain/entities/lyrics_chord.dart';
 import '../../../song/presentation/di/song_getters.dart';
-import '../widgets/chord_tap_layer_widget.dart';
+import '../wrappers/chord_tap_layer_wrapper.dart';
 import '../wrappers/lyrics_controls_wrapper.dart';
 import '../wrappers/recording_indicator_wrapper.dart';
 import '../../../../core/presentation/l10n/app_translations.dart';
@@ -165,7 +165,7 @@ final class LyricsPage extends WatchingWidget {
                           onFocusChange: (bool hasFocus) => _onLyricsFocusChanged(lyricsPageController, hasFocus),
                           child: LayoutBuilder(
                             // A tap on a chord turns it into a word and back, without the keyboard.
-                            builder: (BuildContext context, BoxConstraints constraints) => ChordTapLayerWidget(
+                            builder: (BuildContext context, BoxConstraints constraints) => ChordTapLayerWrapper(
                               fieldKey: lyricsPageController.lyricsFieldKey,
                               listenable: lyricsPageController.lyricsTextController,
                               rangesOf: () => _tapRangesOf(lyricsPageController),
@@ -316,19 +316,19 @@ final class LyricsPage extends WatchingWidget {
 
   /// What a tap turns over: the chords, then the words the user said are not chords.
   static List<({int start, int end})> _tapRangesOf(LyricsPageController lyricsPageController) {
-    final LyricsTextController field = lyricsPageController.lyricsTextController;
+    final LyricsTextController lyricsTextController = lyricsPageController.lyricsTextController;
     return <({int start, int end})>[
-      for (final LyricsChord chord in field.chords) (start: chord.start, end: chord.end),
-      for (final ({int start, int end, String text}) word in findMarkedWordsUseCase(field.text))
+      for (final LyricsChord chord in lyricsTextController.chords) (start: chord.start, end: chord.end),
+      for (final ({int start, int end, String text}) word in findMarkedWordsUseCase(lyricsTextController.text))
         (start: word.start, end: word.end),
     ];
   }
 
   /// A tapped chord becomes a word (`A girl` is no chord), a tapped marked word a chord again.
   void _onTapRangeTapped(LyricsPageController lyricsPageController, int index) {
-    final LyricsTextController field = lyricsPageController.lyricsTextController;
-    final String lyrics = field.text;
-    final List<LyricsChord> chords = field.chords;
+    final LyricsTextController lyricsTextController = lyricsPageController.lyricsTextController;
+    final String lyrics = lyricsTextController.text;
+    final List<LyricsChord> chords = lyricsTextController.chords;
     if (index < chords.length) {
       unawaited(_replaceLyrics(lyricsPageController, lyrics, markChordAsTextUseCase(lyrics, chords[index])));
       return;
@@ -342,11 +342,11 @@ final class LyricsPage extends WatchingWidget {
   /// Puts [changed] in place of [before] (unless the lyrics were edited meanwhile), colours it and saves it.
   Future<void> _replaceLyrics(LyricsPageController lyricsPageController, String before, String changed) async {
     if (lyricsPageController.isDisposed) return;
-    final LyricsTextController field = lyricsPageController.lyricsTextController;
-    if (field.text != before) return;
+    final LyricsTextController lyricsTextController = lyricsPageController.lyricsTextController;
+    if (lyricsTextController.text != before) return;
     // The cursor stays where it was; a field without focus keeps no cursor.
-    final int offset = field.selection.baseOffset;
-    field.value = TextEditingValue(
+    final int offset = lyricsTextController.selection.baseOffset;
+    lyricsTextController.value = TextEditingValue(
       text: changed,
       selection: TextSelection.collapsed(offset: offset < 0 ? -1 : offset.clamp(0, changed.length)),
     );
