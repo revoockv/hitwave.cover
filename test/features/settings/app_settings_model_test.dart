@@ -1,4 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hitwave.cover/core/presentation/l10n/strings.g.dart';
+import 'package:hitwave.cover/features/settings/presentation/l10n/settings_texts.dart';
+import 'package:hitwave.cover/features/settings/presentation/widgets/accent_color_picker_widget.dart';
 import 'package:hitwave.cover/features/settings/data/models/app_settings_model.dart';
 import 'package:hitwave.cover/features/settings/domain/entities/accent_color.dart';
 import 'package:hitwave.cover/features/settings/domain/entities/app_language.dart';
@@ -31,7 +34,7 @@ void main() {
     final AppSettings unknown = AppSettingsModel.fromMap(<String, dynamic>{
       'language': 'klingon',
       'themeStyle': 'paper',
-      'accentColor': 'gold',
+      'accentColor': 'plaid',
     }).toEntity();
 
     expect(old.language, AppLanguage.interslavic);
@@ -39,5 +42,21 @@ void main() {
     expect(unknown.language, AppLanguage.english);
     expect(unknown.themeStyle, AppThemeStyle.glassLight);
     expect(unknown.accentColor, AccentColor.orange);
+  });
+
+  test('every accent has its own color, a name in both languages and comes back by its name', () {
+    final Set<int> colors = <int>{for (final AccentColor accent in AccentColor.values) accent.color.toARGB32()};
+
+    expect(AccentColor.values, hasLength(15));
+    expect(colors, hasLength(AccentColor.values.length));
+    for (final AppLocale locale in AppLocale.values) {
+      final Translations t = locale.buildSync();
+      final Set<String> names = <String>{for (final AccentColor accent in AccentColor.values) accent.text(t)};
+      expect(names, hasLength(AccentColor.values.length), reason: '$locale');
+    }
+    for (final AccentColor accent in AccentColor.values) {
+      final AppSettings settings = AppSettings.initial.copyWith(accentColor: accent);
+      expect(AppSettingsModel.fromMap(AppSettingsModel.fromEntity(settings).toMap()).toEntity().accentColor, accent);
+    }
   });
 }

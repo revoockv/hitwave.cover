@@ -25,6 +25,7 @@ import '../../../../core/presentation/l10n/app_translations.dart';
 import '../../../song/domain/entities/song_failure.dart';
 import '../../../song/presentation/l10n/song_texts.dart';
 import '../../../tuner/presentation/pages/tuner_panel_page.dart';
+import '../../../../core/presentation/widgets/fade_in_switcher_widget.dart';
 import '../../../song/presentation/l10n/song_widget_texts.dart';
 
 /// Main page with the bottom navigation: home (mini statistics, recent songs and covers),
@@ -105,7 +106,7 @@ final class HomePage extends WatchingWidget {
       _Tab(Icons.graphic_eq_outlined, Icons.graphic_eq, t.tuner.title),
     ];
     // Every tab watches the data it shows itself, so a change of it does not rebuild the page and the other tabs.
-    final Widget body = switch (tab) {
+    final Widget page = switch (tab) {
       HomeTab.home => HomeDashboardWrapper(
         songs: songs,
         onStatsPressed: () => _selectTab(homeController, HomeTab.stats),
@@ -132,6 +133,8 @@ final class HomePage extends WatchingWidget {
       HomeTab.stats => PracticeStatsPage(onSongPressed: (Song song) => _navigateToLyrics(context, song)),
       HomeTab.tuner => const TunerPanelPage(),
     };
+    // Another tab fades in; the old one goes at once.
+    final Widget body = FadeInSwitcherWidget(switchKey: tab, child: page);
 
     return PopScope(
       canPop: !hasSelectedArtist,

@@ -177,11 +177,18 @@
     "clearTitle": "Clear data?",
     "cleared": "Data cleared",
     "colors": {
+      "azure": "Azure",
       "blue": "Blue",
+      "brown": "Brown",
+      "coral": "Coral",
+      "gold": "Gold",
       "green": "Green",
       "indigo": "Indigo",
+      "lilac": "Lilac",
+      "olive": "Olive",
       "orange": "Orange",
       "pink": "Pink",
+      "raspberry": "Raspberry",
       "red": "Red",
       "teal": "Teal",
       "violet": "Violet"
